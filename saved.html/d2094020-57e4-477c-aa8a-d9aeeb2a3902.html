@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        // Note: This is a raw React component dump. 
+        // For full preview, use the dashboard.
+        console.log("Generated Code:", "import React from \"react\"\nimport {\n  Button,\n} from \"@/components/ui/button\"\nimport {\n  Card,\n  CardHeader,\n  CardContent,\n  CardFooter,\n  CardTitle,\n  CardDescription,\n} from \"@/components/ui/card\"\nimport { Badge } from \"@/components/ui/badge\"\nimport { Separator } from \"@/components/ui/separator\"\nimport {\n  Wrench,\n  Car,\n  ShieldCheck,\n  CheckCircle,\n  Star,\n  Facebook,\n  Twitter,\n  Instagram,\n  Mail,\n  Phone,\n} from \"lucide-react\"\n\nexport default function GeneratedPage() {\n  const services = [\n    {\n      title: \"On-Site Breakdown Support\",\n      description: \"Immediate roadside assistance wherever you are.\",\n      icon: Car,\n      popular: true,\n    },\n    {\n      title: \"Bumper & Bodywork Repair\",\n      description: \"Flawless fixes that keep your car looking brand-new.\",\n      icon: ShieldCheck,\n      popular: false,\n    },\n    {\n      title: \"Full Mechanical Services\",\n      description: \"From engine overhauls to routine oil changes—we do it all.\",\n      icon: Wrench,\n      popular: false,\n    },\n    {\n      title: \"Safety & Quality Assurance\",\n      description: \"Industry-grade diagnostics & multi-point checks.\",\n      icon: CheckCircle,\n      popular: false,\n    },\n  ]\n\n  const stats = [\n    { label: \"Happy Clients\", value: \"1,200+\" },\n    { label: \"Repairs Completed\", value: \"5,000+\" },\n    { label: \"Years of Service\", value: \"8+\" },\n    { label: \"Satisfaction Rate\", value: \"98%\" },\n  ]\n\n  const testimonials = [\n    {\n      name: \"Aarav K.\",\n      role: \"Product Manager, FinTech\",\n      quote:\n        \"Car repair nayaz turned a stressful breakdown into a seamless experience. Fast, honest, and professional!\",\n      stars: 5,\n    },\n    {\n      name: \"Sneha P.\",\n      role: \"Designer, Startup\",\n      quote:\n        \"The bumper repair was flawless—my car looks showroom-new. Highly recommended!\",\n      stars: 5,\n    },\n    {\n      name: \"Rahul D.\",\n      role: \"Software Engineer\",\n      quote:\n        \"Transparent pricing and quality workmanship. I won’t trust my car with anyone else in HSR.\",\n      stars: 5,\n    },\n  ]\n\n  const footerLinks = {\n    Company: [\"About\", \"Careers\", \"Blog\", \"Press\"],\n    Services: [\n      \"Breakdown Support\",\n      \"Bodywork Repair\",\n      \"Mechanical Services\",\n      \"Quality Checks\",\n    ],\n    Support: [\"Contact\", \"FAQs\", \"Warranty\", \"Service Areas\"],\n    Legal: [\"Privacy Policy\", \"Terms of Service\", \"Cookie Policy\"],\n  }\n\n  return (\n    <main className=\"font-sans text-white bg-neutral-900\">\n      {/* HERO */}\n      <section className=\"relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-500/10 via-neutral-900 to-neutral-900\">\n        {/* Decorative Blobs */}\n        <div className=\"absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-40 rounded-full blur-3xl animate-pulse-slow\" />\n        <div className=\"absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-cyan-500 to-blue-500 opacity-30 rounded-full blur-2xl translate-x-20 translate-y-20\" />\n\n        <div className=\"relative z-10 max-w-7xl mx-auto px-4 md:px-8 text-center space-y-8\">\n          <h1 className=\"text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight\">\n            Quick, <span className=\"bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent\">Honest</span>, &amp; Professional <br /> Car Repair in HSR Layout\n          </h1>\n          <p className=\"text-base md:text-lg text-white/80 max-w-2xl mx-auto\">\n            From sudden breakdowns to seamless bumper fixes, Car repair nayaz\n            gets you back on the road—fast.\n          </p>\n          <div className=\"flex flex-col sm:flex-row gap-4 justify-center pt-2\">\n            <Button\n              variant=\"default\"\n              className=\"px-8 py-6 text-lg font-semibold rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:scale-105 hover:-translate-y-1 transition-all duration-300\"\n              aria-label=\"Book Now\"\n            >\n              Book Now\n            </Button>\n            <Button\n              variant=\"outline\"\n              className=\"px-8 py-6 text-lg font-semibold rounded-full border-blue-600 text-blue-500 hover:bg-blue-600/10 hover:scale-105 hover:-translate-y-1 transition-all duration-300\"\n              aria-label=\"Call 90350\"\n            >\n              Call 90350\n            </Button>\n          </div>\n\n          {/* Trust Badges */}\n          <div className=\"flex flex-col sm:flex-row items-center justify-center gap-3 pt-8\">\n            <span className=\"text-white/70\">Trusted by 1,000+ drivers</span>\n            <Separator orientation=\"vertical\" className=\"hidden sm:block h-4 bg-white/20\" />\n            <div className=\"flex gap-4 opacity-80\">\n              <Car className=\"w-6 h-6\" />\n              <ShieldCheck className=\"w-6 h-6\" />\n              <Wrench className=\"w-6 h-6\" />\n            </div>\n          </div>\n        </div>\n      </section>\n\n      {/* FEATURES / SERVICES */}\n      <section className=\"relative py-20 md:py-32 px-4 md:px-8\">\n        <div className=\"max-w-7xl mx-auto space-y-12\">\n          <h2 className=\"text-3xl md:text-4xl font-bold text-center\">\n            Our <span className=\"bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent\">Services</span>\n          </h2>\n\n          <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8\">\n            {services.map((service) => {\n              const Icon = service.icon\n              return (\n                <Card\n                  key={service.title}\n                  className=\"group bg-white/5 border-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl hover:border-blue-600/50 hover:scale-105 hover:-translate-y-2 transition-all duration-500\"\n                >\n                  <CardHeader className=\"p-0 mb-4 flex items-center gap-4\">\n                    <div className=\"p-3 rounded-full bg-blue-600/20 ring-2 ring-blue-600/20 group-hover:ring-blue-600/40 transition\">\n                      <Icon className=\"w-6 h-6 text-blue-500 group-hover:rotate-12 transition-transform duration-500\" />\n                    </div>\n                    <CardTitle className=\"text-xl font-semibold\">\n                      {service.title}\n                    </CardTitle>\n                    {service.popular && (\n                      <Badge className=\"ml-auto bg-blue-600 text-white\">\n                        Popular\n                      </Badge>\n                    )}\n                  </CardHeader>\n                  <CardContent className=\"p-0\">\n                    <p className=\"text-base text-white/70\">\n                      {service.description}\n                    </p>\n                  </CardContent>\n                </Card>\n              )\n            })}\n          </div>\n        </div>\n      </section>\n\n      {/* STATS / TRUST */}\n      <section className=\"py-20 md:py-32 px-4 md:px-8 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900\">\n        <div className=\"max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 text-center\">\n          {stats.map((stat) => (\n            <div key={stat.label} className=\"space-y-2\">\n              <p className=\"text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent\">\n                {stat.value}\n              </p>\n              <p className=\"text-base md:text-lg text-white/70\">\n                {stat.label}\n              </p>\n            </div>\n          ))}\n        </div>\n      </section>\n\n      {/* TESTIMONIALS */}\n      <section className=\"py-20 md:py-32 px-4 md:px-8\">\n        <div className=\"max-w-7xl mx-auto space-y-12\">\n          <h2 className=\"text-3xl md:text-4xl font-bold text-center\">\n            What Our Customers <span className=\"bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent\">Say</span>\n          </h2>\n\n          <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8\">\n            {testimonials.map((t, idx) => (\n              <Card\n                key={idx}\n                className=\"bg-white/5 border-white/10 backdrop-blur-xl rounded-3xl p-8 hover:shadow-2xl hover:border-blue-600/50 hover:scale-105 hover:-translate-y-2 transition-all duration-500\"\n              >\n                <CardContent className=\"p-0 space-y-4\">\n                  <div className=\"flex items-center gap-1\">\n                    {Array.from({ length: t.stars }).map((_, i) => (\n                      <Star key={i} className=\"w-4 h-4 fill-blue-500 text-blue-500\" />\n                    ))}\n                  </div>\n                  <p className=\"text-base text-white/80\">“{t.quote}”</p>\n                  <Separator className=\"bg-white/10\" />\n                  <p className=\"text-sm text-white/70 font-medium\">\n                    {t.name} • {t.role}\n                  </p>\n                </CardContent>\n              </Card>\n            ))}\n          </div>\n        </div>\n      </section>\n\n      {/* CTA BANNER */}\n      <section className=\"relative py-20 md:py-24 px-4 md:px-8\">\n        <div className=\"max-w-5xl mx-auto bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl p-12 md:p-20 text-center shadow-2xl hover:shadow-3xl transition-all duration-500\">\n          <h2 className=\"text-3xl md:text-4xl font-bold text-neutral-900\">\n            Need Immediate Help?\n          </h2>\n          <p className=\"text-white/90 mt-4 mb-8 max-w-xl mx-auto\">\n            We’re on-call and ready to get you moving again. No credit card\n            required—book your repair today.\n          </p>\n          <Button\n            variant=\"default\"\n            className=\"px-10 py-6 text-lg font-semibold rounded-full bg-neutral-900 text-white hover:scale-105 active:scale-95 transition-all duration-300\"\n            aria-label=\"Get a Free Estimate\"\n          >\n            Get a Free Estimate\n          </Button>\n        </div>\n      </section>\n\n      {/* FOOTER */}\n      <footer className=\"bg-neutral-900 pt-20 pb-10 px-4 md:px-8\">\n        <div className=\"max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-12\">\n          {/* Brand */}\n          <div className=\"space-y-4 col-span-2\">\n            <h3 className=\"text-2xl font-bold\">\n              Car repair{\" \"}\n              <span className=\"bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent\">\n                nayaz\n              </span>\n            </h3>\n            <p className=\"text-white/70\">\n              Quick, honest, and professional car repair in HSR Layout.\n            </p>\n            <div className=\"flex items-center gap-4\">\n              <Mail className=\"w-5 h-5 text-blue-500\" />\n              <span className=\"text-white/70\">hello@techventures.com</span>\n            </div>\n            <div className=\"flex items-center gap-4\">\n              <Phone className=\"w-5 h-5 text-blue-500\" />\n              <span className=\"text-white/70\">90350</span>\n            </div>\n            <div className=\"flex gap-4 pt-4\">\n              <Button\n                variant=\"ghost\"\n                size=\"icon\"\n                aria-label=\"Facebook\"\n                className=\"hover:bg-blue-600/10\"\n              >\n                <Facebook className=\"w-5 h-5 text-white/70\" />\n              </Button>\n              <Button\n                variant=\"ghost\"\n                size=\"icon\"\n                aria-label=\"Twitter\"\n                className=\"hover:bg-blue-600/10\"\n              >\n                <Twitter className=\"w-5 h-5 text-white/70\" />\n              </Button>\n              <Button\n                variant=\"ghost\"\n                size=\"icon\"\n                aria-label=\"Instagram\"\n                className=\"hover:bg-blue-600/10\"\n              >\n                <Instagram className=\"w-5 h-5 text-white/70\" />\n              </Button>\n            </div>\n          </div>\n\n          {/* Links */}\n          {Object.entries(footerLinks).map(([section, links]) => (\n            <div key={section} className=\"space-y-4\">\n              <h4 className=\"text-lg font-semibold\">{section}</h4>\n              <ul className=\"space-y-2\">\n                {links.map((link) => (\n                  <li key={link}>\n                    <a\n                      href=\"#\"\n                      className=\"text-white/70 hover:text-white transition-colors\"\n                    >\n                      {link}\n                    </a>\n                  </li>\n                ))}\n              </ul>\n            </div>\n          ))}\n        </div>\n\n        <Separator className=\"my-10 bg-white/10\" />\n        <p className=\"text-center text-white/50 text-sm\">\n          © {new Date().getFullYear()} Car repair nayaz. All rights reserved.\n        </p>\n      </footer>\n    </main>\n  )\n}");
+    </script>
+    <pre class="p-4 bg-gray-100 overflow-auto h-screen font-mono text-xs">
+import React from "react"
+import {
+  Button,
+} from "@/components/ui/button"
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import {
+  Wrench,
+  Car,
+  ShieldCheck,
+  CheckCircle,
+  Star,
+  Facebook,
+  Twitter,
+  Instagram,
+  Mail,
+  Phone,
+} from "lucide-react"
+
+export default function GeneratedPage() {
+  const services = [
+    {
+      title: "On-Site Breakdown Support",
+      description: "Immediate roadside assistance wherever you are.",
+      icon: Car,
+      popular: true,
+    },
+    {
+      title: "Bumper & Bodywork Repair",
+      description: "Flawless fixes that keep your car looking brand-new.",
+      icon: ShieldCheck,
+      popular: false,
+    },
+    {
+      title: "Full Mechanical Services",
+      description: "From engine overhauls to routine oil changes—we do it all.",
+      icon: Wrench,
+      popular: false,
+    },
+    {
+      title: "Safety & Quality Assurance",
+      description: "Industry-grade diagnostics & multi-point checks.",
+      icon: CheckCircle,
+      popular: false,
+    },
+  ]
+
+  const stats = [
+    { label: "Happy Clients", value: "1,200+" },
+    { label: "Repairs Completed", value: "5,000+" },
+    { label: "Years of Service", value: "8+" },
+    { label: "Satisfaction Rate", value: "98%" },
+  ]
+
+  const testimonials = [
+    {
+      name: "Aarav K.",
+      role: "Product Manager, FinTech",
+      quote:
+        "Car repair nayaz turned a stressful breakdown into a seamless experience. Fast, honest, and professional!",
+      stars: 5,
+    },
+    {
+      name: "Sneha P.",
+      role: "Designer, Startup",
+      quote:
+        "The bumper repair was flawless—my car looks showroom-new. Highly recommended!",
+      stars: 5,
+    },
+    {
+      name: "Rahul D.",
+      role: "Software Engineer",
+      quote:
+        "Transparent pricing and quality workmanship. I won’t trust my car with anyone else in HSR.",
+      stars: 5,
+    },
+  ]
+
+  const footerLinks = {
+    Company: ["About", "Careers", "Blog", "Press"],
+    Services: [
+      "Breakdown Support",
+      "Bodywork Repair",
+      "Mechanical Services",
+      "Quality Checks",
+    ],
+    Support: ["Contact", "FAQs", "Warranty", "Service Areas"],
+    Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy"],
+  }
+
+  return (
+    &lt;main className="font-sans text-white bg-neutral-900"&gt;
+      {/* HERO */}
+      &lt;section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-500/10 via-neutral-900 to-neutral-900"&gt;
+        {/* Decorative Blobs */}
+        &lt;div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-40 rounded-full blur-3xl animate-pulse-slow" /&gt;
+        &lt;div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-cyan-500 to-blue-500 opacity-30 rounded-full blur-2xl translate-x-20 translate-y-20" /&gt;
+
+        &lt;div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 text-center space-y-8"&gt;
+          &lt;h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight"&gt;
+            Quick, &lt;span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"&gt;Honest&lt;/span&gt;, &amp; Professional &lt;br /&gt; Car Repair in HSR Layout
+          &lt;/h1&gt;
+          &lt;p className="text-base md:text-lg text-white/80 max-w-2xl mx-auto"&gt;
+            From sudden breakdowns to seamless bumper fixes, Car repair nayaz
+            gets you back on the road—fast.
+          &lt;/p&gt;
+          &lt;div className="flex flex-col sm:flex-row gap-4 justify-center pt-2"&gt;
+            &lt;Button
+              variant="default"
+              className="px-8 py-6 text-lg font-semibold rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:scale-105 hover:-translate-y-1 transition-all duration-300"
+              aria-label="Book Now"
+            &gt;
+              Book Now
+            &lt;/Button&gt;
+            &lt;Button
+              variant="outline"
+              className="px-8 py-6 text-lg font-semibold rounded-full border-blue-600 text-blue-500 hover:bg-blue-600/10 hover:scale-105 hover:-translate-y-1 transition-all duration-300"
+              aria-label="Call 90350"
+            &gt;
+              Call 90350
+            &lt;/Button&gt;
+          &lt;/div&gt;
+
+          {/* Trust Badges */}
+          &lt;div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-8"&gt;
+            &lt;span className="text-white/70"&gt;Trusted by 1,000+ drivers&lt;/span&gt;
+            &lt;Separator orientation="vertical" className="hidden sm:block h-4 bg-white/20" /&gt;
+            &lt;div className="flex gap-4 opacity-80"&gt;
+              &lt;Car className="w-6 h-6" /&gt;
+              &lt;ShieldCheck className="w-6 h-6" /&gt;
+              &lt;Wrench className="w-6 h-6" /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      {/* FEATURES / SERVICES */}
+      &lt;section className="relative py-20 md:py-32 px-4 md:px-8"&gt;
+        &lt;div className="max-w-7xl mx-auto space-y-12"&gt;
+          &lt;h2 className="text-3xl md:text-4xl font-bold text-center"&gt;
+            Our &lt;span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"&gt;Services&lt;/span&gt;
+          &lt;/h2&gt;
+
+          &lt;div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"&gt;
+            {services.map((service) =&gt; {
+              const Icon = service.icon
+              return (
+                &lt;Card
+                  key={service.title}
+                  className="group bg-white/5 border-white/10 backdrop-blur-xl rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl hover:border-blue-600/50 hover:scale-105 hover:-translate-y-2 transition-all duration-500"
+                &gt;
+                  &lt;CardHeader className="p-0 mb-4 flex items-center gap-4"&gt;
+                    &lt;div className="p-3 rounded-full bg-blue-600/20 ring-2 ring-blue-600/20 group-hover:ring-blue-600/40 transition"&gt;
+                      &lt;Icon className="w-6 h-6 text-blue-500 group-hover:rotate-12 transition-transform duration-500" /&gt;
+                    &lt;/div&gt;
+                    &lt;CardTitle className="text-xl font-semibold"&gt;
+                      {service.title}
+                    &lt;/CardTitle&gt;
+                    {service.popular && (
+                      &lt;Badge className="ml-auto bg-blue-600 text-white"&gt;
+                        Popular
+                      &lt;/Badge&gt;
+                    )}
+                  &lt;/CardHeader&gt;
+                  &lt;CardContent className="p-0"&gt;
+                    &lt;p className="text-base text-white/70"&gt;
+                      {service.description}
+                    &lt;/p&gt;
+                  &lt;/CardContent&gt;
+                &lt;/Card&gt;
+              )
+            })}
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      {/* STATS / TRUST */}
+      &lt;section className="py-20 md:py-32 px-4 md:px-8 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900"&gt;
+        &lt;div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 text-center"&gt;
+          {stats.map((stat) =&gt; (
+            &lt;div key={stat.label} className="space-y-2"&gt;
+              &lt;p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"&gt;
+                {stat.value}
+              &lt;/p&gt;
+              &lt;p className="text-base md:text-lg text-white/70"&gt;
+                {stat.label}
+              &lt;/p&gt;
+            &lt;/div&gt;
+          ))}
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      {/* TESTIMONIALS */}
+      &lt;section className="py-20 md:py-32 px-4 md:px-8"&gt;
+        &lt;div className="max-w-7xl mx-auto space-y-12"&gt;
+          &lt;h2 className="text-3xl md:text-4xl font-bold text-center"&gt;
+            What Our Customers &lt;span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"&gt;Say&lt;/span&gt;
+          &lt;/h2&gt;
+
+          &lt;div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"&gt;
+            {testimonials.map((t, idx) =&gt; (
+              &lt;Card
+                key={idx}
+                className="bg-white/5 border-white/10 backdrop-blur-xl rounded-3xl p-8 hover:shadow-2xl hover:border-blue-600/50 hover:scale-105 hover:-translate-y-2 transition-all duration-500"
+              &gt;
+                &lt;CardContent className="p-0 space-y-4"&gt;
+                  &lt;div className="flex items-center gap-1"&gt;
+                    {Array.from({ length: t.stars }).map((_, i) =&gt; (
+                      &lt;Star key={i} className="w-4 h-4 fill-blue-500 text-blue-500" /&gt;
+                    ))}
+                  &lt;/div&gt;
+                  &lt;p className="text-base text-white/80"&gt;“{t.quote}”&lt;/p&gt;
+                  &lt;Separator className="bg-white/10" /&gt;
+                  &lt;p className="text-sm text-white/70 font-medium"&gt;
+                    {t.name} • {t.role}
+                  &lt;/p&gt;
+                &lt;/CardContent&gt;
+              &lt;/Card&gt;
+            ))}
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      {/* CTA BANNER */}
+      &lt;section className="relative py-20 md:py-24 px-4 md:px-8"&gt;
+        &lt;div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl p-12 md:p-20 text-center shadow-2xl hover:shadow-3xl transition-all duration-500"&gt;
+          &lt;h2 className="text-3xl md:text-4xl font-bold text-neutral-900"&gt;
+            Need Immediate Help?
+          &lt;/h2&gt;
+          &lt;p className="text-white/90 mt-4 mb-8 max-w-xl mx-auto"&gt;
+            We’re on-call and ready to get you moving again. No credit card
+            required—book your repair today.
+          &lt;/p&gt;
+          &lt;Button
+            variant="default"
+            className="px-10 py-6 text-lg font-semibold rounded-full bg-neutral-900 text-white hover:scale-105 active:scale-95 transition-all duration-300"
+            aria-label="Get a Free Estimate"
+          &gt;
+            Get a Free Estimate
+          &lt;/Button&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      {/* FOOTER */}
+      &lt;footer className="bg-neutral-900 pt-20 pb-10 px-4 md:px-8"&gt;
+        &lt;div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-12"&gt;
+          {/* Brand */}
+          &lt;div className="space-y-4 col-span-2"&gt;
+            &lt;h3 className="text-2xl font-bold"&gt;
+              Car repair{" "}
+              &lt;span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"&gt;
+                nayaz
+              &lt;/span&gt;
+            &lt;/h3&gt;
+            &lt;p className="text-white/70"&gt;
+              Quick, honest, and professional car repair in HSR Layout.
+            &lt;/p&gt;
+            &lt;div className="flex items-center gap-4"&gt;
+              &lt;Mail className="w-5 h-5 text-blue-500" /&gt;
+              &lt;span className="text-white/70"&gt;hello@techventures.com&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div className="flex items-center gap-4"&gt;
+              &lt;Phone className="w-5 h-5 text-blue-500" /&gt;
+              &lt;span className="text-white/70"&gt;90350&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div className="flex gap-4 pt-4"&gt;
+              &lt;Button
+                variant="ghost"
+                size="icon"
+                aria-label="Facebook"
+                className="hover:bg-blue-600/10"
+              &gt;
+                &lt;Facebook className="w-5 h-5 text-white/70" /&gt;
+              &lt;/Button&gt;
+              &lt;Button
+                variant="ghost"
+                size="icon"
+                aria-label="Twitter"
+                className="hover:bg-blue-600/10"
+              &gt;
+                &lt;Twitter className="w-5 h-5 text-white/70" /&gt;
+              &lt;/Button&gt;
+              &lt;Button
+                variant="ghost"
+                size="icon"
+                aria-label="Instagram"
+                className="hover:bg-blue-600/10"
+              &gt;
+                &lt;Instagram className="w-5 h-5 text-white/70" /&gt;
+              &lt;/Button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          {/* Links */}
+          {Object.entries(footerLinks).map(([section, links]) =&gt; (
+            &lt;div key={section} className="space-y-4"&gt;
+              &lt;h4 className="text-lg font-semibold"&gt;{section}&lt;/h4&gt;
+              &lt;ul className="space-y-2"&gt;
+                {links.map((link) =&gt; (
+                  &lt;li key={link}&gt;
+                    &lt;a
+                      href="#"
+                      className="text-white/70 hover:text-white transition-colors"
+                    &gt;
+                      {link}
+                    &lt;/a&gt;
+                  &lt;/li&gt;
+                ))}
+              &lt;/ul&gt;
+            &lt;/div&gt;
+          ))}
+        &lt;/div&gt;
+
+        &lt;Separator className="my-10 bg-white/10" /&gt;
+        &lt;p className="text-center text-white/50 text-sm"&gt;
+          © {new Date().getFullYear()} Car repair nayaz. All rights reserved.
+        &lt;/p&gt;
+      &lt;/footer&gt;
+    &lt;/main&gt;
+  )
+}
+    </pre>
+</body>
+</html>

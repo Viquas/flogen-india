@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #fff; }
+    #root { min-height: 100vh; }
+    .error-container { 
+      padding: 20px; 
+      background: #fef2f2; 
+      color: #dc2626; 
+      font-family: monospace;
+      white-space: pre-wrap;
+      border: 1px solid #fee2e2;
+      margin: 20px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"><p style="padding:20px;">Loading...</p></div>
+  <script type="text/babel" data-presets="react">
+    // Global error handler
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error("Runtime error:", message, error);
+      document.getElementById('root').innerHTML = '<div class="error-container"><b>Runtime Error:</b><br/>' + message + '</div>';
+    };
+
+    // Mock Button component
+    const Button = ({ children, className = '', ...props }) => 
+      React.createElement('button', {
+        className: `inline-flex items-center justify-center rounded-md font-medium bg-zinc-900 text-white hover:bg-zinc-800 h-10 px-4 py-2 ${className}`,
+        ...props
+      }, children);
+
+    // Mock Card components
+    const Card = ({ children, className = '', ...props }) => 
+      React.createElement('div', { className: `rounded-lg border bg-white shadow-sm ${className}`, ...props }, children);
+    const CardHeader = ({ children, className = '', ...props }) => 
+      React.createElement('div', { className: `flex flex-col space-y-1.5 p-6 ${className}`, ...props }, children);
+    const CardTitle = ({ children, className = '', ...props }) => 
+      React.createElement('h3', { className: `text-2xl font-semibold ${className}`, ...props }, children);
+    const CardContent = ({ children, className = '', ...props }) => 
+      React.createElement('div', { className: `p-6 pt-0 ${className}`, ...props }, children);
+
+    // Simple test component
+    function GeneratedPage() {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800">
+          <div className="container mx-auto px-4 py-16">
+            <div className="text-center text-white">
+              <h1 className="text-5xl font-bold mb-4">TechVentures Inc</h1>
+              <p className="text-xl mb-8">AI-powered solutions for modern businesses</p>
+              <Button className="bg-white text-blue-600 hover:bg-gray-100">Get Started</Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+              <Card>
+                <CardHeader>
+                  <CardTitle>AI Consulting</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-zinc-500">Expert guidance on AI implementation and strategy.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Cloud Migration</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-zinc-500">Seamless transition to cloud infrastructure.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Data Analytics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-zinc-500">Turn your data into actionable insights.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    try {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(GeneratedPage));
+      console.log('Render successful!');
+    } catch (err) {
+      console.error('Mount Error:', err);
+      document.getElementById('root').innerHTML = '<div class="error-container"><b>Mount Error:</b><br/>' + err.message + '</div>';
+    }
+  </script>
+</body>
+</html>
