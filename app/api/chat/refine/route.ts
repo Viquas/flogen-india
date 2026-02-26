@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
-import { createClient } from '@/lib/supabase/server'
+import { openai, createOpenAI } from '@ai-sdk/openai'
+import { google } from '@ai-sdk/google'
 
 const REFINEMENT_SYSTEM_PROMPT = `You are an expert React Developer refining an existing landing page component.
 
@@ -32,6 +32,24 @@ You must modify the code according to the user's request and return the COMPLETE
 - Keep the layout responsive
 - Apply the user's requested changes precisely`
 
+const getRefineModel = () => {
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+        return google('gemini-3.1-pro-preview')
+    }
+    if (process.env.OPENAI_API_KEY) {
+        return openai('gpt-4o')
+    }
+    if (process.env.OPENROUTER_API_KEY) {
+        const openrouter = createOpenAI({
+            name: 'openrouter',
+            apiKey: process.env.OPENROUTER_API_KEY,
+            baseURL: 'https://openrouter.ai/api/v1',
+        })
+        return openrouter('openai/gpt-4o')
+    }
+    return openai('gpt-4o')
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { projectId, message, imageUrls } = await req.json()
@@ -43,10 +61,9 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        // Check for API key
-        if (!process.env.OPENAI_API_KEY) {
+        if (!process.env.OPENAI_API_KEY && !process.env.OPENROUTER_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
             return NextResponse.json(
-                { success: false, error: 'OpenAI API key not configured' },
+                { success: false, error: 'AI API key not configured' },
                 { status: 500 }
             )
         }
@@ -79,7 +96,7 @@ export async function POST(req: NextRequest) {
 
         // Generate refined code
         const { text } = await generateText({
-            model: openai('gpt-4o'),
+            model: getRefineModel(),
             system: REFINEMENT_SYSTEM_PROMPT,
             prompt: userPrompt,
         })
@@ -91,30 +108,16 @@ export async function POST(req: NextRequest) {
             code = code.replace(/\n?```$/, '')
         }
 
-        // Update project with new code
-        const { error: updateError } = await supabase
-            .from('projects')
-            .update({
-                generated_code: code,
-                status: 'review' as const,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', projectId)
+        // Update project with new code and create revision snapshot
+        const { updateProjectWithCode } = await import('@/lib/ai/generator')
+        const updateResult = await updateProjectWithCode(projectId, code)
 
-        if (updateError) {
-            console.error('Failed to update project:', updateError)
+        if (!updateResult.success) {
+            console.error('Failed to update project:', updateResult.error)
             return NextResponse.json(
                 { success: false, error: 'Failed to save updated code' },
                 { status: 500 }
             )
-        }
-
-        // Save to local disk as requested
-        try {
-            const { saveCodeToDisk } = await import('@/lib/file-utils')
-            await saveCodeToDisk(projectId, code)
-        } catch (e) {
-            console.warn('Failed to save to local disk during refinement', e)
         }
 
         return NextResponse.json({ success: true, code })

@@ -12,17 +12,12 @@ export async function GET() {
         .rpc('list_tables_v1') // Try a custom function if it exists
 
     if (error) {
-        // Fallback to a simple select from a common table if possible, 
-        // or just try to select everything from information_schema
-        const { data: infoTables, error: infoError } = await supabase
-            .from('information_schema.tables')
-            .select('table_name')
-            .eq('table_schema', 'public')
-
-        if (infoError) {
-            return NextResponse.json({ error: infoError.message, details: infoError }, { status: 200 })
-        }
-        return NextResponse.json({ tables: infoTables })
+        // Fallback: return known schema tables (typed client cannot query information_schema)
+        return NextResponse.json({
+            tables: ['batches', 'projects', 'assets'],
+            note: 'RPC list_tables_v1 not available. Showing known schema tables.',
+            rpcError: error.message,
+        })
     }
 
     return NextResponse.json({ tables })

@@ -11,12 +11,15 @@ import { LivePreview } from './live-preview'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { Code2, Eye, Database, MessageSquare, RefreshCw } from 'lucide-react'
+import { Code2, Eye, Database, MessageSquare, RefreshCw, History } from 'lucide-react'
 import { useState } from 'react'
+import { Editor, DiffEditor } from '@monaco-editor/react'
+import { RevisionHistory } from './revision-history'
 
 interface SplitWorkbenchProps {
     project: {
         id: string
+        version: number
         business_data: {
             businessName: string
             description?: string
@@ -33,6 +36,15 @@ interface SplitWorkbenchProps {
 
 export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUpdate }: SplitWorkbenchProps) {
     const [rightView, setRightView] = useState<'preview' | 'code'>('preview')
+    const [diffCode, setDiffCode] = useState<string | null>(null)
+
+    // Handle when user opts to view diff from history
+    const handleViewDiff = (code: string | null) => {
+        setDiffCode(code)
+        if (code) {
+            setRightView('code')
+        }
+    }
 
     return (
         <div className="h-[calc(100vh-12rem)] border rounded-lg overflow-hidden bg-background">
@@ -50,6 +62,10 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                                     <TabsTrigger value="chat" className="text-xs">
                                         <MessageSquare className="h-3 w-3 mr-1" />
                                         Refine
+                                    </TabsTrigger>
+                                    <TabsTrigger value="history" className="text-xs">
+                                        <History className="h-3 w-3 mr-1" />
+                                        History
                                     </TabsTrigger>
                                 </TabsList>
                                 <Button
@@ -73,6 +89,16 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                             <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
                                 <div className="h-full">
                                     <RefinementChat projectId={project.id} onCodeUpdate={onCodeUpdate} />
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="history" className="flex-1 m-0 overflow-hidden">
+                                <div className="h-full">
+                                    <RevisionHistory
+                                        projectId={project.id}
+                                        currentVersion={project.version || 1}
+                                        onViewDiff={handleViewDiff}
+                                    />
                                 </div>
                             </TabsContent>
                         </Tabs>
@@ -103,8 +129,13 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                                     className="h-7 text-xs"
                                 >
                                     <Code2 className="h-3 w-3 mr-1" />
-                                    Code
+                                    {diffCode ? 'Diff View' : 'Code'}
                                 </Button>
+                                {diffCode && rightView === 'code' && (
+                                    <span className="text-xs ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md animate-pulse">
+                                        Viewing Diff (Old vs New)
+                                    </span>
+                                )}
                             </div>
                             <span className="text-xs text-muted-foreground">
                                 {project.status === 'generating' ? 'Generating...' : project.status}
@@ -119,17 +150,42 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                                     isLoading={project.status === 'generating'}
                                 />
                             ) : (
-                                <ScrollArea className="h-full">
+                                <div className="h-full w-full">
                                     {project.generated_code ? (
-                                        <pre className="text-xs p-4 bg-zinc-900 text-zinc-100 min-h-full">
-                                            {project.generated_code}
-                                        </pre>
+                                        diffCode ? (
+                                            <DiffEditor
+                                                height="100%"
+                                                language="typescript"
+                                                theme="vs-dark"
+                                                original={diffCode} // Old version
+                                                modified={project.generated_code} // Current version
+                                                options={{
+                                                    readOnly: true,
+                                                    minimap: { enabled: false },
+                                                    wordWrap: 'on',
+                                                    padding: { top: 16 }
+                                                }}
+                                            />
+                                        ) : (
+                                            <Editor
+                                                height="100%"
+                                                defaultLanguage="typescript"
+                                                theme="vs-dark"
+                                                value={project.generated_code}
+                                                options={{
+                                                    readOnly: true,
+                                                    minimap: { enabled: false },
+                                                    wordWrap: 'on',
+                                                    padding: { top: 16 }
+                                                }}
+                                            />
+                                        )
                                     ) : (
-                                        <div className="p-4 text-center text-muted-foreground">
+                                        <div className="p-4 text-center text-muted-foreground flex items-center justify-center h-full">
                                             No code generated yet
                                         </div>
                                     )}
-                                </ScrollArea>
+                                </div>
                             )}
                         </div>
                     </div>

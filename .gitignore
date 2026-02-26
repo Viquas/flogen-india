@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+*.txt
+*.log
 
 # debug
 npm-debug.log*
@@ -32,6 +34,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+webgen.env.local
 
 # vercel
 .vercel
@@ -42,3 +45,16 @@ next-env.d.ts
 
 # gemini
 .gemini/
+
+# Generated content
+saved_html/
+saved.html/
+
+# Temporary files
+public/test*.html
+failing_projects.json
+ashwini_*.txt
+failed_code.txt
+processed_output.txt
+supabase-*-log.txt
+*.dump

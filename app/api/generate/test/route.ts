@@ -6,25 +6,30 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
-        const { rules, markdownContext, mode, ...otherData } = body
+        const { rules, markdownContext, mode, model, ...otherData } = body
 
         let businessData = null
         if (mode === 'json') {
             // Validate input for JSON mode
+            // Try basic schema first, then accept any valid JSON object with minimum fields
             const validationResult = BusinessDataSchema.safeParse(otherData)
-            if (!validationResult.success) {
+            if (validationResult.success) {
+                businessData = validationResult.data
+            } else if (otherData.businessName || otherData.brandName || otherData.BrandIdentity || otherData.$$manifest) {
+                // Accept enriched/rich JSON format that has different structure
+                businessData = otherData
+            } else {
                 return NextResponse.json(
                     { success: false, error: 'Invalid business data', details: validationResult.error.flatten() },
                     { status: 400 }
                 )
             }
-            businessData = validationResult.data
         }
 
         // Check for API key
-        if (!process.env.OPENAI_API_KEY) {
+        if (!process.env.OPENAI_API_KEY && !process.env.OPENROUTER_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
             return NextResponse.json(
-                { success: false, error: 'OpenAI API key not configured' },
+                { success: false, error: 'AI API key not configured' },
                 { status: 500 }
             )
         }
@@ -32,7 +37,7 @@ export async function POST(req: NextRequest) {
         console.log(`[API/Generate/Test] Data validated (${mode} mode), proceeding to AI generation`)
 
         // Generate code first (since this is the primary goal)
-        const code = await generateWebsiteCode(businessData, rules, markdownContext)
+        const code = await generateWebsiteCode(businessData, rules, markdownContext, model)
         console.log('[API/Generate/Test] AI generation successful, length:', code.length)
 
         // Try database operations but don't fail the whole request if they fail

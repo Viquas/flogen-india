@@ -14,7 +14,7 @@ export const BusinessDataSchema = z.object({
     description: z.string().min(1, "Description is required"),
     services: z.array(z.string()).min(1, "At least one service is required"),
     contactInfo: ContactInfoSchema.optional(),
-})
+}).passthrough()
 
 // Full Project schema for validation
 export const ProjectSchema = z.object({

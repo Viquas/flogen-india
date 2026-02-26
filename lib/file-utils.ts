@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const SAVED_DIR = path.join(process.cwd(), 'saved.html')
+const SAVED_DIR = path.join(process.cwd(), 'saved_html')
 
 export async function saveCodeToDisk(projectId: string, code: string, filename?: string) {
     try {

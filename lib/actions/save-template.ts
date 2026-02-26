@@ -59,9 +59,9 @@ export async function saveTemplateLocally(projectName: string, htmlContent: stri
                     .from('projects')
                     .insert({
                         batch_id: batch.id,
-                        business_data: businessData,
+                        business_data: businessData as any,
                         generated_code: htmlContent,
-                        status: 'approved',
+                        status: 'approved' as const,
                         version: 1
                     })
 

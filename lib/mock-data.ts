@@ -2,9 +2,12 @@ export interface ProjectHistoryItem {
     id: string;
     name: string;
     industry: string;
-    date: string;
-    month: string;
+    date?: string;
+    month?: string;
     data: any;
+    status?: string;
+    timestamp?: string;
+    generated_code?: string;
 }
 
 export interface Template {

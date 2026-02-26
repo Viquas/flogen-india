@@ -25,6 +25,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         <WorkbenchClient
             project={{
                 id: project.id,
+                version: project.version,
                 business_data: project.business_data as any,
                 generated_code: project.generated_code,
                 status: project.status,

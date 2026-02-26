@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         // 4. Insert projects
         const projectsToInsert = items.map((data) => ({
             batch_id: batch.id,
-            business_data: data,
+            business_data: data as any,
             status: 'queued' as const,
             version: 1,
         }))

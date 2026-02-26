@@ -53,3 +53,51 @@ alter table assets enable row level security;
 create policy "Allow all access to batches" on batches for all using (true) with check (true);
 create policy "Allow all access to projects" on projects for all using (true) with check (true);
 create policy "Allow all access to assets" on assets for all using (true) with check (true);
+
+-- 4. Configurations Table: The Brain (rules.md)
+create table if not exists configurations (
+  id uuid default uuid_generate_v4() primary key,
+  key text unique not null,
+  value text not null,
+  updated_at timestamp with time zone default now()
+);
+
+alter table configurations enable row level security;
+create policy "Allow all access to configurations" on configurations for all using (true) with check (true);
+
+-- 5. Queue Jobs Table: Robust background task processing
+create table if not exists queue_jobs (
+  id uuid default uuid_generate_v4() primary key,
+  project_id uuid references projects(id) on delete cascade,
+  rules text,
+  status text check (status in ('pending', 'processing', 'completed', 'failed')) default 'pending',
+  error_message text,
+  attempts int default 0,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+alter table queue_jobs enable row level security;
+create policy "Allow all access to queue_jobs" on queue_jobs for all using (true) with check (true);
+
+-- 6. Templates Table: Reusable website templates to save API costs
+create table if not exists templates (
+  id uuid default uuid_generate_v4() primary key,
+  name text not null,
+  industry_tag text not null default 'General',
+  rating integer not null default 0 check (rating between 0 and 3),
+  generated_code text not null,
+  business_data jsonb,
+  source_project_id uuid references projects(id) on delete set null,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+create index if not exists idx_templates_industry on templates(industry_tag);
+create index if not exists idx_templates_rating on templates(rating);
+
+alter table templates enable row level security;
+create policy "Allow all access to templates" on templates for all using (true) with check (true);
+
+-- Add template_id to queue_jobs for template-based generation
+alter table queue_jobs add column if not exists template_id uuid references templates(id) on delete set null;

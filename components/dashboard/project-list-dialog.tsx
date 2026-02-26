@@ -81,7 +81,7 @@ export function ProjectListDialog({ date, isOpen, onClose }: ProjectListDialogPr
                                     >
                                         <div>
                                             <h4 className="font-semibold text-gray-900">
-                                                {project.business_data?.businessName || "Untitled Project"}
+                                                {project.business_data?.businessName || project.business_data?.brandIdentity?.core?.brandName || "Untitled Project"}
                                             </h4>
                                             <p className="text-xs text-gray-500">
                                                 {project.business_data?.industry || "Industrial"} • {format(parseISO(project.created_at), "h:mm a")}

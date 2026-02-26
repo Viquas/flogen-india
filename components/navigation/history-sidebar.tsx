@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
     ChevronDown,
@@ -17,7 +17,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { MOCK_PROJECT_HISTORY, ProjectHistoryItem, Template } from "@/lib/mock-data"
+import { ProjectHistoryItem, Template } from "@/lib/mock-data"
 import { constructHtmlBoilerplate } from "@/lib/utils/html-boilerplate"
 import { format, isToday, isYesterday, parseISO } from "date-fns"
 
@@ -27,6 +27,7 @@ interface HistorySidebarProps {
     onSelectProject: (project: ProjectHistoryItem) => void
     activeProjectId: string | null
     savedTemplates: Template[]
+    projectHistory?: any[]
 }
 
 // Helper to format date for display
@@ -43,36 +44,42 @@ function getDateKey(timestamp: string): string {
     return format(date, "yyyy-MM-dd")
 }
 
-export function HistorySidebar({ isOpen, onClose, onSelectProject, activeProjectId, savedTemplates }: HistorySidebarProps) {
-    const [activeTab, setActiveTab] = useState<'history' | 'templates'>('templates')
+export function HistorySidebar({ isOpen, onClose, onSelectProject, activeProjectId, savedTemplates, projectHistory = [] }: HistorySidebarProps) {
+    const [activeTab, setActiveTab] = useState<'history' | 'templates'>('history')
     const [starFilter, setStarFilter] = useState<number | null>(null)
 
-    // Extract unique dates from saved templates (sorted newest first)
-    const uniqueDates = useMemo(() => {
+    // Extract unique dates from PROJECT HISTORY (sorted newest first)
+    const historyDates = useMemo(() => {
         const dateSet = new Set<string>()
-        savedTemplates.forEach(t => {
-            if (t.timestamp) {
-                dateSet.add(getDateKey(t.timestamp))
+        projectHistory.forEach(t => {
+            if (t.date || t.timestamp) {
+                dateSet.add(getDateKey(t.date || t.timestamp))
             }
         })
         return Array.from(dateSet).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-    }, [savedTemplates])
+    }, [projectHistory])
 
     // Default to today's date or the first available date
     const todayKey = format(new Date(), "yyyy-MM-dd")
-    const [selectedDateKey, setSelectedDateKey] = useState<string>(
-        uniqueDates.includes(todayKey) ? todayKey : (uniqueDates[0] || todayKey)
-    )
+    const [selectedDateKey, setSelectedDateKey] = useState<string>(todayKey)
 
-    // Filter templates by selected date
-    const templatesForDate = useMemo(() => {
-        return savedTemplates.filter(t => {
-            if (!t.timestamp) return false
-            return getDateKey(t.timestamp) === selectedDateKey
-        })
-    }, [savedTemplates, selectedDateKey])
+    // Ensure we select a valid date if today has no projects
+    useEffect(() => {
+        if (historyDates.length > 0 && !historyDates.includes(selectedDateKey)) {
+            setSelectedDateKey(historyDates[0])
+        }
+    }, [historyDates, selectedDateKey])
 
-    // Filter templates by star rating
+    // Filter HISTORY items by selected date
+    const historyForDate = useMemo(() => {
+        return projectHistory.filter(t => {
+            const ts = t.date || t.timestamp
+            if (!ts) return false
+            return getDateKey(ts) === selectedDateKey
+        }).sort((a, b) => new Date(b.date || b.timestamp).getTime() - new Date(a.date || a.timestamp).getTime())
+    }, [projectHistory, selectedDateKey])
+
+    // Filter TEMPLATES by star rating
     const filteredTemplates = useMemo(() => {
         let filtered = savedTemplates
         if (starFilter) {
@@ -108,7 +115,7 @@ export function HistorySidebar({ isOpen, onClose, onSelectProject, activeProject
 
             {activeTab === 'history' ? (
                 <>
-                    {/* Date Filter - Dynamic based on saved templates */}
+                    {/* Date Filter - Dynamic based on history */}
                     <div className="p-4 flex flex-col gap-3">
                         <div className="flex items-center gap-2 overflow-hidden">
                             <Calendar className="h-4 w-4 text-zinc-400 flex-shrink-0" />
@@ -120,8 +127,8 @@ export function HistorySidebar({ isOpen, onClose, onSelectProject, activeProject
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="max-h-64 overflow-auto">
-                                    {uniqueDates.length > 0 ? (
-                                        uniqueDates.map(dateKey => (
+                                    {historyDates.length > 0 ? (
+                                        historyDates.map(dateKey => (
                                             <DropdownMenuItem
                                                 key={dateKey}
                                                 onClick={() => setSelectedDateKey(dateKey)}
@@ -137,59 +144,48 @@ export function HistorySidebar({ isOpen, onClose, onSelectProject, activeProject
                             </DropdownMenu>
                         </div>
                         <div className="text-[10px] text-zinc-400">
-                            {templatesForDate.length} project{templatesForDate.length !== 1 ? 's' : ''} on this date
+                            {historyForDate.length} project{historyForDate.length !== 1 ? 's' : ''} on this date
                         </div>
                     </div>
 
-                    {/* Projects for Selected Date */}
+                    {/* Project History List */}
                     <div className="flex-1 overflow-y-auto project-list-scrollbar">
-                        {templatesForDate.length > 0 ? (
+                        {historyForDate.length > 0 ? (
                             <div className="flex flex-col">
-                                {templatesForDate.map((template) => {
-                                    const handleViewTemplate = () => {
-                                        const isFullHtml = template.code.trim().startsWith('<!DOCTYPE html>');
-                                        const isBroken = isFullHtml && template.code.includes('${escapedCode}');
-                                        const finalHtml = (isFullHtml && !isBroken)
-                                            ? template.code
-                                            : constructHtmlBoilerplate(template.code);
-                                        const blob = new Blob([finalHtml], { type: 'text/html;charset=utf-8' });
-                                        const url = URL.createObjectURL(blob);
-                                        window.open(url, '_blank');
-                                    };
-
-                                    return (
-                                        <button
-                                            key={template.id}
-                                            onClick={handleViewTemplate}
-                                            className="flex items-center gap-3 px-4 py-3 text-left transition-all border-b border-zinc-100/50 group text-zinc-600 hover:bg-zinc-50"
-                                        >
-                                            <div className="p-1.5 rounded-md transition-colors bg-zinc-100 group-hover:bg-zinc-200">
-                                                <Layout className="h-3 w-3 text-zinc-500" />
+                                {historyForDate.map((project) => (
+                                    <button
+                                        key={project.id}
+                                        onClick={() => onSelectProject(project)}
+                                        className={`flex items-center gap-3 px-4 py-3 text-left transition-all border-b border-zinc-100/50 group hover:bg-zinc-50 ${activeProjectId === project.id ? 'bg-zinc-50 border-l-2 border-l-blue-500' : ''}`}
+                                    >
+                                        <div className="p-1.5 rounded-md transition-colors bg-zinc-100 group-hover:bg-zinc-200">
+                                            <Layout className="h-3 w-3 text-zinc-500" />
+                                        </div>
+                                        <div className="flex flex-col min-w-0 flex-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-[13px] font-medium truncate text-zinc-900">{project.name}</span>
+                                                {/* Status Indicator */}
+                                                {project.status === 'generating' && <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" title="Generating" />}
+                                                {project.status === 'error' && <div className="h-1.5 w-1.5 rounded-full bg-red-500" title="Error" />}
+                                                {project.status === 'review' && <div className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Review" />}
+                                                {project.status === 'approved' && <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" title="Approved" />}
                                             </div>
-                                            <div className="flex flex-col min-w-0 flex-1">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className="text-[13px] font-medium truncate text-zinc-900">{template.name}</span>
-                                                    {template.rating > 0 && (
-                                                        <div className="flex items-center gap-0.5 text-yellow-500">
-                                                            <Star className="h-2.5 w-2.5 fill-current" />
-                                                            <span className="text-[10px] font-bold">{template.rating}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            <div className="flex items-center justify-between mt-0.5">
+                                                <span className="text-[10px] text-zinc-500 truncate max-w-[80px]">{project.industry}</span>
                                                 <span className="text-[10px] text-zinc-400">
-                                                    {new Date(template.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(project.date || project.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
-                                        </button>
-                                    );
-                                })}
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         ) : (
                             <div className="p-8 text-center flex flex-col items-center gap-2">
                                 <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center">
                                     <Search className="h-5 w-5 text-zinc-300" />
                                 </div>
-                                <p className="text-xs text-zinc-400">No projects created on this date</p>
+                                <p className="text-xs text-zinc-400">No projects found for this date</p>
                             </div>
                         )}
                     </div>

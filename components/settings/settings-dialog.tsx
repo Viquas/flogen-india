@@ -51,7 +51,7 @@ export function SettingsDialog() {
                     <Textarea
                         value={rules}
                         onChange={(e) => setRules(e.target.value)}
-                        placeholder="# Design Rules\n- Use a dark theme by default\n- Use Inter font\n- All buttons should have rounded-full class\n- Spacing should be generous (p-8 or more)"
+                        placeholder={"# Elite SaaS Rules\\n- Typography: Inter tight-tracking headlines\\n- Layout: BTO/Asymmetrical grids with gap-4\\n- UI Elements: rounded-full buttons, hover:-translate-y-1 shadows\\n- Colors: Soft zinc-50 backgrounds, vibrant primary blue\\n- Images: https://images.unsplash.com/photo-..."}
                         className="h-full font-mono text-sm resize-none bg-zinc-50 border-zinc-200"
                     />
                 </div>

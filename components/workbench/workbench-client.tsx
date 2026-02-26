@@ -12,6 +12,7 @@ import { format, parseISO } from 'date-fns'
 interface WorkbenchClientProps {
     project: {
         id: string
+        version: number
         business_data: {
             businessName: string
             description?: string

@@ -3,12 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, Settings } from "lucide-react"
+import { LayoutDashboard, Layers, Settings, Plus } from "lucide-react"
 
 const items = [
     {
         title: "Dashboard",
-        href: "/",
+        href: "/dashboard",
         icon: LayoutDashboard,
     },
     {
@@ -26,17 +26,15 @@ const items = [
 export function SidebarNav() {
     const pathname = usePathname()
 
-    // Logic to detect active state
     const isActive = (href: string) => {
-        if (href === "/") {
-            // Dashboard is active when on / or root domain
-            return pathname === "/" || (pathname.startsWith("/?") && !pathname.includes("date="))
+        if (href === "/dashboard") {
+            return pathname === "/dashboard" || pathname === "/"
         }
         return pathname.startsWith(href)
     }
 
     return (
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-1 flex-1">
             {items.map((item, index) => (
                 <Link
                     key={index}
@@ -57,6 +55,14 @@ export function SidebarNav() {
                     <span>{item.title}</span>
                 </Link>
             ))}
+            <Link
+                href="/editor"
+                className="mt-4 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold bg-[#1a1a2e] text-white hover:bg-[#252542] transition-all"
+                aria-label="Create new project"
+            >
+                <Plus className="h-4 w-4" />
+                Create New Project
+            </Link>
         </nav>
     )
 }

@@ -2,24 +2,28 @@
 
 import Link from "next/link"
 import { format } from "date-fns"
-import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2, RefreshCcw, Wrench } from "lucide-react"
+import { useState, useEffect } from "react"
+import { regenerateProject, fixWebsiteErrors } from "@/app/dashboard/actions"
+import { createClient } from "@/lib/supabase/client"
 
-// Define a local type until we generate full DB types
 interface Project {
     id: string
     business_data: any
-    status: string // simplified for compatibility
+    status: string
     created_at: string
     thumbnail_url?: string | null
+    generated_code?: string
+    generation_phase?: string | null
 }
 
-const statusMap: Record<string, { icon: any, color: string, label: string }> = {
-    queued: { icon: Clock, color: "text-yellow-500", label: "Queued" },
-    generating: { icon: Loader2, color: "text-blue-500 animate-spin", label: "Generating" },
-    review: { icon: AlertCircle, color: "text-purple-500", label: "Review" },
-    approved: { icon: CheckCircle, color: "text-green-500", label: "Approved" },
-    deployed: { icon: ExternalLink, color: "text-green-600", label: "Deployed" },
-    error: { icon: AlertCircle, color: "text-red-500", label: "Error" },
+const statusMap: Record<string, { icon: any, color: string, label: string, badgeColor: string }> = {
+    queued: { icon: Clock, color: "text-zinc-500", label: "Queued", badgeColor: "bg-zinc-100 text-zinc-600 border-zinc-200" },
+    generating: { icon: Loader2, color: "text-blue-600 animate-spin", label: "Generating", badgeColor: "bg-blue-50 text-blue-700 border-blue-200" },
+    review: { icon: AlertCircle, color: "text-amber-500", label: "Review", badgeColor: "bg-amber-50 text-amber-700 border-amber-200" },
+    approved: { icon: CheckCircle, color: "text-emerald-500", label: "Approved", badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    deployed: { icon: ExternalLink, color: "text-violet-600", label: "Deployed", badgeColor: "bg-violet-50 text-violet-700 border-violet-200" },
+    error: { icon: AlertCircle, color: "text-red-500", label: "Error", badgeColor: "bg-red-50 text-red-700 border-red-200" },
 }
 
 interface ProjectCardProps {
@@ -31,57 +35,141 @@ interface ProjectCardProps {
 export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps) {
     const statusConfig = statusMap[project.status] || statusMap.queued
     const Icon = statusConfig.icon
+    const [isLoading, setIsLoading] = useState(false)
+    const [livePhase, setLivePhase] = useState<string | null>(project.generation_phase || null)
+
+    useEffect(() => {
+        // Only subscribe if we are in generating state or queued state
+        if (project.status !== 'generating' && project.status !== 'queued') return;
+
+        const supabase = createClient();
+
+        const channel = supabase.channel(`project_${project.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'projects',
+                    filter: `id=eq.${project.id}`
+                },
+                (payload) => {
+                    if (payload.new && 'generation_phase' in payload.new) {
+                        setLivePhase(payload.new.generation_phase)
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [project.id, project.status]);
+
+    const handleAction = async (e: React.MouseEvent, action: 'retry' | 'fix') => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (isLoading) return
+
+        setIsLoading(true)
+        try {
+            if (action === 'retry') {
+                await regenerateProject(project.id)
+            } else if (action === 'fix') {
+                await fixWebsiteErrors(project.id)
+            }
+        } catch (error) {
+            console.error('Action failed:', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     return (
-        <div className={`group relative flex flex-col justify-between rounded-lg border p-6 hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+        <div className={`group relative flex flex-col justify-between rounded-xl border bg-white p-6 hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-zinc-200'}`}>
             {onSelect && (
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 z-10">
                     <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => onSelect(project.id, e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                     />
                 </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <span className={`flex items-center text-sm font-medium ${statusConfig.color}`}>
-                        <Icon className="mr-2 h-4 w-4" />
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.badgeColor}`}>
+                        <Icon className={`h-3.5 w-3.5 ${project.status === 'generating' ? 'animate-spin' : ''}`} />
                         {statusConfig.label}
                     </span>
-                    <span className="text-xs text-muted-foreground mr-6">
-                        {format(new Date(project.created_at), "MMM d, yyyy • h:mm a")}
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+                        {format(new Date(project.created_at), "MMM d")}
                     </span>
                 </div>
-                <h3 className="font-bold text-lg">
-                    {project.business_data?.business_name || project.business_data?.businessName || "Untitled Project"}
-                </h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                    {project.business_data?.description}
-                </p>
-                <div className="flex gap-2 mt-2">
-                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                        {project.business_data?.industry}
+
+                <div>
+                    <h3 className="font-bold text-lg text-zinc-900 leading-tight mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+                        {project.business_data?.business_name || project.business_data?.businessName || project.business_data?.brandIdentity?.core?.brandName || "Untitled Project"}
+                    </h3>
+                    <p className="text-sm text-zinc-500 line-clamp-2 h-10">
+                        {project.business_data?.description || "No description provided."}
+                    </p>
+                </div>
+
+                <div className="flex gap-2">
+                    <span className="inline-flex items-center rounded-md bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-600 border border-zinc-100">
+                        {project.business_data?.industry || "General"}
                     </span>
                 </div>
+
+                {project.status === 'generating' && livePhase && (
+                    <div className="mt-2 space-y-1.5 animate-in fade-in slide-in-from-top-1">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="font-medium text-blue-700">{livePhase}</span>
+                            <span className="text-zinc-400 capitalize">running job</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 w-full animate-[progress_2s_ease-in-out_infinite] origin-left rounded-full" />
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mt-4 flex items-center gap-2">
                 <Link
                     href={`/editor?id=${project.id}`}
-                    className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                    className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
                 >
-                    Open Workbench
+                    Open
                 </Link>
+
+                {project.status === 'error' && (
+                    <button
+                        onClick={(e) => handleAction(e, 'retry')}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 h-9 w-9 text-zinc-600"
+                        title="Retry Generation"
+                    >
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                    </button>
+                )}
+
+                {(project.status === 'review' || project.status === 'error') && (
+                    <button
+                        onClick={(e) => handleAction(e, 'fix')}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 h-9 w-9 text-zinc-600"
+                        title="Auto-Fix Errors"
+                    >
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wrench className="h-4 w-4" />}
+                    </button>
+                )}
             </div>
 
-            {/* Optional Thumbnail Container */}
             {project.thumbnail_url && (
-                <div className="mt-4 aspect-video w-full overflow-hidden rounded-md bg-muted">
-                    {/* <img src={project.thumbnail_url} alt="Preview" className="h-full w-full object-cover" /> */}
-                </div>
+                <div className="mt-4 aspect-video w-full overflow-hidden rounded-md bg-muted" />
             )}
         </div>
     )

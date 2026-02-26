@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, LayoutDashboard, Code2, Eye, Send, ChevronDown, Monitor, Tablet, Smartphone, AlertCircle, Settings2, FileText, MoreHorizontal, Pencil, Trash2, Check, X, PanelLeftClose, PanelLeftOpen, Star } from "lucide-react"
-import { LivePreview } from "@/components/workbench/live-preview"
+import { LivePreview, StreamLogEntry } from "@/components/workbench/live-preview"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SettingsDialog } from "@/components/settings/settings-dialog"
 import { useSearchParams } from "next/navigation"
-import { getProjectById } from "@/app/dashboard/actions"
+import { getProjectById, getRecentProjects, approveProject } from "@/app/dashboard/actions"
+import { createClient } from "@/lib/supabase/client"
+import { OutreachModal } from "@/components/dashboard/outreach-modal"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,6 +31,7 @@ import { ProjectHistoryItem } from "@/lib/mock-data"
 import Link from "next/link"
 import { saveTemplateLocally } from "@/lib/actions/save-template"
 import { constructHtmlBoilerplate } from "@/lib/utils/html-boilerplate"
+import { TemplateSaveSheet } from "@/components/editor/template-save-sheet"
 
 const testBusinessData = {
     businessName: "TechVentures Inc",
@@ -58,23 +61,72 @@ function EditorContent() {
     const projectId = searchParams.get('id')
     const [isJsonLoading, setIsJsonLoading] = useState(false)
     const [isRevisionLoading, setIsRevisionLoading] = useState(false)
-    const [jsonContext, setJsonContext] = useState(JSON.stringify(testBusinessData, null, 2))
+    const [rawJsonContext, setRawJsonContext] = useState(JSON.stringify(testBusinessData, null, 2))
+    const [structuredJsonContext, setStructuredJsonContext] = useState("")
     const [markdownContext, setMarkdownContext] = useState("")
     const [revisionPrompt, setRevisionPrompt] = useState("")
+    const [revisionStatus, setRevisionStatus] = useState<{ message: string; type: 'info' | 'warn' } | null>(null)
     const [generatedCode, setGeneratedCode] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview')
     const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
-    const [inputTab, setInputTab] = useState("json")
+    const [model, setModel] = useState<string>("default")
+    const [inputTab, setInputTab] = useState("rjson")
+
+    // Streaming state
+    const [isStreaming, setIsStreaming] = useState(false)
+    const [streamingLog, setStreamingLog] = useState<StreamLogEntry[]>([])
+    const [streamingPhase, setStreamingPhase] = useState<string>("")
+    const [tokenCount, setTokenCount] = useState(0)
+    const [elapsedTime, setElapsedTime] = useState(0)
+    const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Schema reference (read-only)
+    const schemaContent = `# RichBusinessData Schema Reference
+
+## Root Fields (Legacy Compat)
+- businessName: string (required)
+- description: string (required)
+- services: string[] (required)
+- contactInfo?: { email, phone, address, website }
+- industry?: string
+
+## $$manifest
+- version, generator, generatedAt, entityId
+
+## globalConfiguration
+- localization: { defaultLocale, supportedLocales, direction, currency }
+- technical: { pwa, analytics }
+
+## brandIdentity
+- core: { legalName, brandName, branchName, foundingDate, taxonomies }
+- voice: { personality, writingGuidelines }
+- designSystem: { colors: { semantic, contrastRatios }, typography: { headings, body } }
+
+## contentRepository
+- media: { heroVideo, logo: { vector, raster, favicon } }
+- navigation: { header, footer }
+- pages: Record<string, any>
+
+## operationalData
+- geo: { latitude, longitude, placeId, address }
+- contact: { phone, email, social }
+- schedules: { timezone, standard, exceptions }
+- accessibility
+
+## integrations
+- Record<string, any> (analytics IDs, booking URLs, etc.)`
     const [projectName, setProjectName] = useState("Untitled Project")
     const [isEditingName, setIsEditingName] = useState(false)
     const [tempProjectName, setTempProjectName] = useState("Untitled Project")
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-    const [activeProjectId, setActiveProjectId] = useState<string | null>("1") // Default to first mock project
+    const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
     const [savedTemplates, setSavedTemplates] = useState<any[]>([])
+    const [projectHistory, setProjectHistory] = useState<any[]>([])
     const [currentRating, setCurrentRating] = useState<number>(0)
     const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
+    const [isApproving, setIsApproving] = useState(false)
 
     // Initialize from localStorage
     useEffect(() => {
@@ -93,12 +145,88 @@ function EditorContent() {
         localStorage.setItem('webgen-saved-templates', JSON.stringify(savedTemplates))
     }, [savedTemplates])
 
-    // Initialize markdown on context mount
+    // Load project history on mount
     useEffect(() => {
-        if (!markdownContext && jsonContext) {
-            setMarkdownContext(jsonToMarkdown(jsonContext))
+        const fetchHistory = async () => {
+            const result = await getRecentProjects()
+            if (result.success && result.data) {
+                // Map DB projects to ProjectHistoryItem format
+                const mapped = result.data.map((p: any) => ({
+                    id: p.id,
+                    name: p.business_data?.businessName || "Untitled",
+                    industry: p.business_data?.industry || "Unknown",
+                    date: p.created_at,
+                    data: p.business_data,
+                    generated_code: p.generated_code || null,
+                    timestamp: p.created_at
+                }))
+                setProjectHistory(mapped)
+            }
         }
+        fetchHistory()
     }, [])
+
+    // Subscribe to real-time project updates if it's currently generating
+    useEffect(() => {
+        if (!activeProjectId) return;
+
+        const checkStatusLoop = async () => {
+            const supabase = createClient();
+
+            // Check initial status
+            const { data } = await supabase.from('projects').select('status, generation_phase, generated_code').eq('id', activeProjectId).single();
+            if (data?.status === 'generating' || data?.status === 'queued') {
+                setIsStreaming(true);
+                if (data.generation_phase) {
+                    setStreamingPhase(data.generation_phase);
+                    setStreamingLog(prev => [...prev, { type: 'phase', message: data.generation_phase!, timestamp: 0 }]);
+                }
+            }
+
+            const channel = supabase.channel(`editor_project_${activeProjectId}`)
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'projects', filter: `id=eq.${activeProjectId}` },
+                    async (payload) => {
+                        if (payload.new) {
+                            if (payload.new.generation_phase) {
+                                setStreamingPhase(payload.new.generation_phase);
+                                setStreamingLog(prev => [...prev, { type: 'phase', message: payload.new.generation_phase, timestamp: Date.now() }]);
+                            }
+                            if (payload.new.status === 'review' || payload.new.status === 'error') {
+                                // Supabase Realtime drops large columns out of the payload. Fetch it directly to ensure we have it.
+                                const { data: fresh } = await supabase.from('projects').select('generated_code').eq('id', activeProjectId).single();
+                                if (fresh?.generated_code) {
+                                    setGeneratedCode(fresh.generated_code);
+                                }
+                                setIsStreaming(false);
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        };
+
+        const cleanupPromise = checkStatusLoop();
+
+        return () => {
+            cleanupPromise.then(cleanup => cleanup && cleanup());
+        };
+    }, [activeProjectId]);
+
+    // Initialize markdown from default JSON context on mount
+    const isInitialized = useRef(false)
+    useEffect(() => {
+        if (isInitialized.current) return
+        isInitialized.current = true
+        if (rawJsonContext) {
+            setMarkdownContext(jsonToMarkdown(rawJsonContext))
+        }
+    }, [rawJsonContext])
 
     // Load project from ID if available
     useEffect(() => {
@@ -117,10 +245,22 @@ function EditorContent() {
                 const project = result.data
                 const businessData = project.business_data as any
                 setProjectName(businessData?.businessName || businessData?.business_name || "Untitled Project")
-                setJsonContext(JSON.stringify(businessData, null, 2))
-                setMarkdownContext(jsonToMarkdown(JSON.stringify(businessData, null, 2)))
+                const jsonStr = JSON.stringify(businessData, null, 2)
+
+                // If data has $$manifest or brandIdentity, it's enriched → put in SJSON
+                if (businessData?.$$manifest || businessData?.brandIdentity || businessData?.BrandIdentity) {
+                    setStructuredJsonContext(jsonStr)
+                    setRawJsonContext("{}") // Raw not available for loaded projects
+                    setInputTab("sjson")
+                } else {
+                    setRawJsonContext(jsonStr)
+                    setStructuredJsonContext("")
+                    setInputTab("rjson")
+                }
+                setMarkdownContext(jsonToMarkdown(jsonStr))
                 setGeneratedCode(project.generated_code || null)
                 setActiveProjectId(project.id)
+                // If the project is generating, the useEffect above will catch it and show the streaming UI.
             } else {
                 console.error('[Editor] Failed to load project:', result.error)
                 setError(result.error || "Failed to load project")
@@ -133,59 +273,166 @@ function EditorContent() {
     }
 
     const handleTabChange = (value: string) => {
-        if (value === "markdown" && inputTab === "json") {
-            // Syncing from JSON to Markdown
-            setMarkdownContext(jsonToMarkdown(jsonContext))
-        } else if (value === "json" && inputTab === "markdown") {
-            // Syncing from Markdown to JSON
-            setJsonContext(markdownToJson(markdownContext, jsonContext))
+        const activeJson = structuredJsonContext || rawJsonContext
+        if (value === "md") {
+            // Derive markdown from SJSON if available, else RJSON
+            setMarkdownContext(jsonToMarkdown(activeJson))
+        } else if (value === "sjson" && inputTab === "md") {
+            // Sync back from MD to SJSON
+            setStructuredJsonContext(markdownToJson(markdownContext, activeJson))
+        } else if (value === "rjson" && inputTab === "md") {
+            // Sync back from MD to RJSON
+            setRawJsonContext(markdownToJson(markdownContext, activeJson))
         }
         setInputTab(value)
     }
 
     const handleTestGeneration = async () => {
         setIsJsonLoading(true)
+        setIsStreaming(true)
         setError(null)
         setGeneratedCode(null)
+        setStreamingLog([])
+        setStreamingPhase("Preparing...")
+        setTokenCount(0)
+        setElapsedTime(0)
+
+        // Start elapsed timer
+        const startTime = Date.now()
+        elapsedTimerRef.current = setInterval(() => {
+            setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
+        }, 1000)
 
         try {
-            // Validate JSON if in JSON tab
+            // Validate JSON — prefer SJSON if available, else RJSON
             let parsedData = null
-            if (inputTab === "json") {
+            if (inputTab === "rjson" || inputTab === "sjson") {
+                const jsonSrc = inputTab === "sjson" ? structuredJsonContext : rawJsonContext
                 try {
-                    parsedData = JSON.parse(jsonContext)
+                    parsedData = JSON.parse(jsonSrc)
                 } catch (e) {
                     throw new Error("Invalid JSON in Project Context. Please fix it before generating.")
                 }
+            } else if (inputTab === "md") {
+                // Markdown mode — no JSON parsing needed
             }
 
-            // Get global rules from localStorage
             const rules = localStorage.getItem("web-factory-rules") || ""
 
-            const response = await fetch('/api/generate/test', {
+            const addLog = (type: StreamLogEntry['type'], message: string) => {
+                setStreamingLog(prev => [...prev, {
+                    type,
+                    message,
+                    timestamp: Date.now() - startTime
+                }])
+            }
+
+            addLog('phase', 'Starting generation pipeline')
+            addLog('info', `Model: ${model === 'default' ? 'Gemini 3.1 Pro (default)' : model}`)
+            addLog('info', `Mode: ${inputTab.toUpperCase()}`)
+
+            const response = await fetch('/api/generate/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...(parsedData || {}),
-                    markdownContext: inputTab === "markdown" ? markdownContext : undefined,
+                    markdownContext: inputTab === "md" ? markdownContext : undefined,
                     rules,
-                    mode: inputTab
+                    mode: (inputTab === "rjson" || inputTab === "sjson") ? "json" : inputTab,
+                    model: model !== "default" ? model : undefined
                 })
             })
 
-            const result = await response.json()
-            console.log('[Page] Generation result:', result.success, 'code length:', result.code?.length)
-
-            if (result.success) {
-                console.log('[Page] Setting generatedCode, first 200 chars:', result.code?.substring(0, 200))
-                setGeneratedCode(result.code)
-            } else {
-                setError(result.error || 'Generation failed')
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}))
+                throw new Error(errData.error || `HTTP ${response.status}`)
             }
+
+            const reader = response.body?.getReader()
+            if (!reader) throw new Error('No response stream')
+
+            const decoder = new TextDecoder()
+            let buffer = ''
+            let codeBuffer = ''
+            let lastCodeUpdate = 0
+            let chunkCount = 0
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                buffer += decoder.decode(value, { stream: true })
+
+                // Parse SSE events from buffer
+                const lines = buffer.split('\n')
+                buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+                let currentEvent = ''
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        currentEvent = line.slice(7)
+                    } else if (line.startsWith('data: ') && currentEvent) {
+                        try {
+                            const data = JSON.parse(line.slice(6))
+
+                            switch (currentEvent) {
+                                case 'phase':
+                                    setStreamingPhase(data.message)
+                                    addLog('phase', data.message)
+                                    break
+                                case 'delta':
+                                    codeBuffer += data.text
+                                    setTokenCount(data.tokenCount)
+                                    chunkCount++
+                                    // Batch code updates every 20 chunks for performance
+                                    const now = Date.now()
+                                    if (now - lastCodeUpdate > 100 || chunkCount % 20 === 0) {
+                                        setGeneratedCode(codeBuffer)
+                                        lastCodeUpdate = now
+                                    }
+                                    // Log milestones
+                                    if (data.tokenCount === 1 || chunkCount === 1) {
+                                        addLog('info', 'First tokens received')
+                                    }
+                                    if (chunkCount % 200 === 0) {
+                                        addLog('info', `${data.tokenCount.toLocaleString()} characters written...`)
+                                    }
+                                    break
+                                case 'done':
+                                    setGeneratedCode(data.code)
+                                    setStreamingPhase('Complete')
+                                    addLog('phase', `Generation complete — ${data.tokenCount?.toLocaleString()} chars total`)
+                                    if (data.projectId) {
+                                        addLog('info', `Saved to project ${data.projectId}`)
+                                    }
+                                    break
+                                case 'error':
+                                    throw new Error(data.message)
+                            }
+                        } catch (parseErr) {
+                            if (currentEvent === 'error') throw parseErr
+                            console.warn('[Stream] Parse error:', parseErr)
+                        }
+                        currentEvent = ''
+                    }
+                }
+            }
+
+            // Final flush
+            if (codeBuffer && codeBuffer !== generatedCode) {
+                setGeneratedCode(codeBuffer)
+            }
+
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Request failed')
+            setError(err instanceof Error ? err.message : 'Stream failed')
+            setStreamingPhase('')
         } finally {
             setIsJsonLoading(false)
+            setIsStreaming(false)
+            if (elapsedTimerRef.current) {
+                clearInterval(elapsedTimerRef.current)
+                elapsedTimerRef.current = null
+            }
         }
     }
 
@@ -194,9 +441,9 @@ function EditorContent() {
 
         setIsRevisionLoading(true)
         setError(null)
+        setRevisionStatus(null)
 
         try {
-            // Get global rules from localStorage
             const rules = localStorage.getItem("web-factory-rules") || ""
 
             const response = await fetch('/api/generate/revision', {
@@ -205,8 +452,9 @@ function EditorContent() {
                 body: JSON.stringify({
                     prompt: revisionPrompt,
                     currentCode: generatedCode,
-                    currentJson: jsonContext,
-                    rules
+                    currentJson: structuredJsonContext || rawJsonContext,
+                    rules,
+                    model: model !== "default" ? model : undefined
                 })
             })
 
@@ -215,12 +463,20 @@ function EditorContent() {
             if (result.success) {
                 if (result.updatedJson) {
                     const newJson = JSON.stringify(result.updatedJson, null, 2)
-                    setJsonContext(newJson)
-                    // Sync markdown if we are in markdown mode or to be safe
+                    setStructuredJsonContext(newJson)
                     setMarkdownContext(jsonToMarkdown(newJson))
                 }
                 setGeneratedCode(result.code)
-                setRevisionPrompt("") // Clear prompt on success
+                setRevisionPrompt("")
+
+                if (result.fallbackUsed) {
+                    setRevisionStatus({ message: "Full rewrite used", type: 'warn' })
+                } else if (result.patchCount) {
+                    setRevisionStatus({ message: `${result.patchCount} edit${result.patchCount !== 1 ? 's' : ''} applied`, type: 'info' })
+                }
+
+                // Auto-clear status after 4 seconds
+                setTimeout(() => setRevisionStatus(null), 4000)
             } else {
                 setError(result.error || 'Revision failed')
             }
@@ -243,24 +499,38 @@ function EditorContent() {
 
     const handleDeleteProject = () => {
         setGeneratedCode(null)
-        setJsonContext(JSON.stringify(testBusinessData, null, 2))
+        setRawJsonContext(JSON.stringify(testBusinessData, null, 2))
+        setStructuredJsonContext("")
         setMarkdownContext(jsonToMarkdown(JSON.stringify(testBusinessData, null, 2)))
         setProjectName("Untitled Project")
         setTempProjectName("Untitled Project")
         setRevisionPrompt("")
         setError(null)
         setIsDeleteDialogOpen(false)
+        setInputTab("rjson")
     }
 
     const handleSelectProject = (project: ProjectHistoryItem) => {
         setActiveProjectId(project.id)
         setProjectName(project.name)
         setTempProjectName(project.name)
-        setJsonContext(JSON.stringify(project.data, null, 2))
-        setMarkdownContext(jsonToMarkdown(JSON.stringify(project.data, null, 2)))
-        setGeneratedCode(null)
+        const jsonStr = JSON.stringify(project.data, null, 2)
+
+        // If data has $$manifest or brandIdentity, it's enriched → put in SJSON
+        if (project.data?.$$manifest || project.data?.brandIdentity || project.data?.BrandIdentity) {
+            setStructuredJsonContext(jsonStr)
+            setRawJsonContext("{}")
+            setInputTab("sjson")
+        } else {
+            setRawJsonContext(jsonStr)
+            setStructuredJsonContext("")
+            setInputTab("rjson")
+        }
+
+        setMarkdownContext(jsonToMarkdown(jsonStr))
+        setGeneratedCode(project.generated_code || null)
         setError(null)
-        setCurrentRating(0) // Reset rating for new project
+        setCurrentRating(0)
     }
 
     const handleApprove = () => {
@@ -268,13 +538,13 @@ function EditorContent() {
         setIsApproveDialogOpen(true)
     }
 
-    const confirmApprove = async () => {
+    const saveProjectLocally = async () => {
         if (!generatedCode) return
 
         // Parse business data from JSON context
         let businessData = null
         try {
-            businessData = JSON.parse(jsonContext)
+            businessData = JSON.parse(structuredJsonContext || rawJsonContext)
         } catch (e) {
             console.error("Failed to parse business data for saving:", e)
         }
@@ -296,14 +566,33 @@ function EditorContent() {
 
         if (saveResult.success) {
             setSavedTemplates(prev => [...prev, newTemplate])
-            setIsApproveDialogOpen(false)
         } else {
             setError(`Failed to save locally: ${saveResult.error}`)
         }
     }
 
+    const handleOutreachApprove = async () => {
+        if (!activeProjectId) return
+        setIsApproving(true)
+        try {
+            await approveProject(activeProjectId)
+            await saveProjectLocally()
+        } catch (e) {
+            console.error("Approval failed:", e)
+            setError("Failed to approve project")
+        } finally {
+            setIsApproving(false)
+        }
+    }
+
+    const [isTemplateSaveOpen, setIsTemplateSaveOpen] = useState(false)
+
     const handleRating = (ratingValue: number) => {
-        setCurrentRating(ratingValue === currentRating ? 0 : ratingValue)
+        const newRating = ratingValue === currentRating ? 0 : ratingValue
+        setCurrentRating(newRating)
+        if (newRating > 0 && generatedCode) {
+            setIsTemplateSaveOpen(true)
+        }
     }
 
     // Device Widths
@@ -378,7 +667,7 @@ function EditorContent() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Link href="/">
+                        <Link href="/dashboard">
                             <Button variant="ghost" size="sm" className="gap-2 text-zinc-600 hover:text-zinc-900">
                                 <LayoutDashboard className="h-4 w-4" />
                                 Dashboard
@@ -397,11 +686,12 @@ function EditorContent() {
                     onSelectProject={handleSelectProject}
                     activeProjectId={activeProjectId}
                     savedTemplates={savedTemplates}
+                    projectHistory={projectHistory}
                 />
 
                 {/* Left Panel - Full Height Context */}
                 <div className="w-80 border-r border-zinc-200 flex flex-col bg-white relative flex-shrink-0">
-                    <Tabs defaultValue="json" value={inputTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+                    <Tabs defaultValue="rjson" value={inputTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
                         <div className="px-4 py-2 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
                             <div className="flex items-center gap-3">
                                 <Button
@@ -412,18 +702,30 @@ function EditorContent() {
                                 >
                                     {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
                                 </Button>
-                                <TabsList className="bg-transparent border-none p-0 h-auto gap-4">
+                                <TabsList className="bg-transparent border-none p-0 h-auto gap-3">
                                     <TabsTrigger
-                                        value="json"
-                                        className="p-0 text-xs font-semibold uppercase tracking-wider text-zinc-500 data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                        value="rjson"
+                                        className="p-0 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                                     >
-                                        JSON
+                                        RJSON
                                     </TabsTrigger>
                                     <TabsTrigger
-                                        value="markdown"
-                                        className="p-0 text-xs font-semibold uppercase tracking-wider text-zinc-500 data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                        value="sjson"
+                                        className="p-0 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                                     >
-                                        Markdown
+                                        SJSON
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="md"
+                                        className="p-0 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                    >
+                                        MD
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="schema"
+                                        className="p-0 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                    >
+                                        Schema
                                     </TabsTrigger>
                                 </TabsList>
                             </div>
@@ -456,26 +758,42 @@ function EditorContent() {
                         )}
 
                         <div className="flex-1 overflow-hidden relative">
-                            <TabsContent value="json" className="absolute inset-0 m-0 p-0">
+                            <TabsContent value="rjson" className="absolute inset-0 m-0 p-0">
                                 <div className="h-full overflow-auto">
                                     <Textarea
-                                        value={jsonContext}
-                                        onChange={(e) => setJsonContext(e.target.value)}
+                                        value={rawJsonContext}
+                                        onChange={(e) => setRawJsonContext(e.target.value)}
                                         className="w-full min-h-full border-none focus-visible:ring-0 rounded-none resize-none p-4 bg-transparent font-mono text-[13px] text-zinc-600"
-                                        placeholder="Enter business JSON context..."
+                                        placeholder="Raw JSON from Google Places API..."
                                         style={{ height: 'auto', minHeight: '100%' }}
                                     />
                                 </div>
                             </TabsContent>
-                            <TabsContent value="markdown" className="absolute inset-0 m-0 p-0">
+                            <TabsContent value="sjson" className="absolute inset-0 m-0 p-0">
+                                <div className="h-full overflow-auto">
+                                    <Textarea
+                                        value={structuredJsonContext}
+                                        onChange={(e) => setStructuredJsonContext(e.target.value)}
+                                        className="w-full min-h-full border-none focus-visible:ring-0 rounded-none resize-none p-4 bg-transparent font-mono text-[13px] text-zinc-600"
+                                        placeholder="Structured/enriched JSON (auto-populated after enrichment)..."
+                                        style={{ height: 'auto', minHeight: '100%' }}
+                                    />
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="md" className="absolute inset-0 m-0 p-0">
                                 <div className="h-full overflow-auto">
                                     <Textarea
                                         value={markdownContext}
                                         onChange={(e) => setMarkdownContext(e.target.value)}
                                         className="w-full min-h-full border-none focus-visible:ring-0 rounded-none resize-none p-4 bg-transparent font-sans text-[13px] text-zinc-600"
-                                        placeholder="Enter business description in markdown..."
+                                        placeholder="Markdown description derived from JSON..."
                                         style={{ height: 'auto', minHeight: '100%' }}
                                     />
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="schema" className="absolute inset-0 m-0 p-0">
+                                <div className="h-full overflow-auto p-4">
+                                    <pre className="text-[12px] text-zinc-500 font-mono whitespace-pre-wrap leading-relaxed">{schemaContent}</pre>
                                 </div>
                             </TabsContent>
                         </div>
@@ -511,11 +829,38 @@ function EditorContent() {
                                     </Button>
                                 </div>
 
-                                <div className="flex items-center justify-end px-2">
-                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-none border border-transparent hover:border-zinc-200 transition-all cursor-pointer group/engine">
-                                        <span className="text-[10px] font-bold text-zinc-400 group-hover/engine:text-zinc-900 uppercase tracking-tighter">GPT-4o Mini</span>
-                                        <ChevronDown className="h-3 w-3 text-zinc-300" />
-                                    </div>
+                                <div className="flex items-center justify-between px-2">
+                                    {revisionStatus ? (
+                                        <span className={`text-[10px] font-medium transition-opacity duration-300 ${revisionStatus.type === 'warn' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                            {revisionStatus.message}
+                                        </span>
+                                    ) : <span />}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-none border border-transparent hover:border-zinc-200 transition-all cursor-pointer group/engine">
+                                                <span className="text-[10px] font-bold text-zinc-400 group-hover/engine:text-zinc-900 uppercase tracking-tighter">
+                                                    {model === 'default' ? 'Default' :
+                                                        model === 'gemini-3.1-pro-preview' ? 'Gemini 3.1' :
+                                                            model}
+                                                </span>
+                                                <ChevronDown className="h-3 w-3 text-zinc-300" />
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-32">
+                                            <DropdownMenuItem onClick={() => setModel("default")} className="text-xs font-medium">
+                                                Default
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setModel("gemini-3.1-pro-preview")} className="text-xs font-medium">
+                                                Gemini 3.1 Pro
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setModel("gpt-4o")} className="text-xs font-medium">
+                                                GPT-4o
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setModel("o3-mini")} className="text-xs font-medium">
+                                                o3-mini
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
                         </div>
@@ -597,23 +942,22 @@ function EditorContent() {
 
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2 pr-6 border-r border-zinc-200">
-                                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">Engine: GPT-4o</span>
+                                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em]">
+                                    Engine: {model === 'default' ? 'Default' : model}
+                                </span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Button
                                     onClick={handleApprove}
-                                    disabled={!generatedCode || currentRating === 0}
-                                    variant={currentRating > 0 ? "default" : "outline"}
+                                    disabled={!generatedCode}
                                     size="sm"
-                                    className={`h-8 text-[10px] uppercase tracking-wider gap-2 px-3 transition-all ${currentRating > 0
-                                        ? "bg-green-600 hover:bg-green-700 text-white font-bold border-none shadow-md shadow-green-100"
-                                        : "font-bold border-zinc-200 hover:bg-zinc-50 text-zinc-700"
-                                        }`}
+                                    className="h-8 text-[10px] uppercase tracking-wider gap-2 px-3 transition-all bg-green-600 hover:bg-green-700 text-white font-bold border-none shadow-md shadow-green-100"
                                 >
                                     <Check className="h-3 w-3" />
                                     Approve
                                 </Button>
-                                <div className="flex items-center gap-1">
+                                <div className="h-5 w-px bg-zinc-200" />
+                                <div className="flex items-center gap-1" title="Rate & save as template">
                                     {[1, 2, 3].map((star) => {
                                         const isFilled = currentRating >= star
                                         return (
@@ -621,6 +965,8 @@ function EditorContent() {
                                                 key={star}
                                                 onClick={() => handleRating(star)}
                                                 className={`transition-all hover:scale-110 active:scale-95 ${isFilled ? "text-yellow-400" : "text-zinc-200 hover:text-zinc-300"}`}
+                                                aria-label={`Rate ${star} star${star > 1 ? "s" : ""} and save as template`}
+                                                tabIndex={0}
                                             >
                                                 <Star className={`h-4 w-4 ${isFilled ? "fill-current" : ""}`} />
                                             </button>
@@ -638,13 +984,24 @@ function EditorContent() {
                                 className="h-full bg-white shadow-2xl transition-all duration-300 overflow-hidden relative"
                                 style={{ width: deviceWidths[deviceMode as keyof typeof deviceWidths] }}
                             >
-                                <LivePreview code={generatedCode} isLoading={isJsonLoading || isRevisionLoading} />
+                                <LivePreview
+                                    code={generatedCode}
+                                    isLoading={isJsonLoading || isRevisionLoading}
+                                    isStreaming={isStreaming}
+                                    streamingLog={streamingLog}
+                                    streamingPhase={streamingPhase}
+                                    tokenCount={tokenCount}
+                                    elapsedTime={elapsedTime}
+                                />
                             </div>
                         ) : (
                             <div className="w-full h-full overflow-auto bg-[#18181B] selection:bg-purple-500/30">
                                 {generatedCode ? (
-                                    <pre className="text-[13px] p-8 text-zinc-300 font-mono leading-relaxed">
+                                    <pre className="text-[13px] p-8 text-zinc-300 font-mono leading-relaxed whitespace-pre-wrap">
                                         {generatedCode}
+                                        {isStreaming && (
+                                            <span className="inline-block w-2 h-4 bg-green-400 animate-pulse ml-0.5" />
+                                        )}
                                     </pre>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-4">
@@ -681,25 +1038,43 @@ function EditorContent() {
                 </DialogContent>
             </Dialog>
 
-            {/* Approve Confirmation Dialog */}
-            <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Confirm Approval</DialogTitle>
-                        <DialogDescription>
-                            Are you sure to approve the project <span className="font-semibold text-zinc-900">"{projectName}"</span>? This will save the HTML file locally.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="ghost" onClick={() => setIsApproveDialogOpen(false)}>
-                            No
-                        </Button>
-                        <Button variant="default" className="bg-zinc-900 hover:bg-zinc-800" onClick={confirmApprove}>
-                            Yes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Outreach Modal */}
+            {activeProjectId && (
+                <OutreachModal
+                    open={isApproveDialogOpen}
+                    onOpenChange={setIsApproveDialogOpen}
+                    project={{
+                        id: activeProjectId,
+                        business_data: (() => {
+                            try {
+                                return JSON.parse(structuredJsonContext || rawJsonContext)
+                            } catch {
+                                return {}
+                            }
+                        })()
+                    }}
+                    onApprove={handleOutreachApprove}
+                />
+            )}
+
+            {/* Template Save Sheet */}
+            {generatedCode && (
+                <TemplateSaveSheet
+                    open={isTemplateSaveOpen}
+                    onOpenChange={setIsTemplateSaveOpen}
+                    rating={currentRating}
+                    projectName={projectName}
+                    generatedCode={generatedCode}
+                    businessData={(() => {
+                        try {
+                            return JSON.parse(structuredJsonContext || rawJsonContext)
+                        } catch {
+                            return {}
+                        }
+                    })()}
+                    sourceProjectId={activeProjectId}
+                />
+            )}
         </div >
     )
 }
