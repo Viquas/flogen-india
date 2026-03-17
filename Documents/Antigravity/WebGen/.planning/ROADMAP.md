@@ -30,11 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Background generation failures are captured and surfaced (not silently swallowed by fire-and-forget promises)
   4. The system prompt lives in its own file outside generator.ts, and generator.ts is decomposed into focused modules under 300 lines each
   5. No debug .txt files remain in the codebase, and .gitignore prevents their return
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Fix auto-fix return value, queue race condition, fire-and-forget errors, remove debug files (FIX-01, FIX-02, FIX-03, FIX-06)
+- [ ] 01-02-PLAN.md — Extract system prompt and decompose generator.ts into focused modules (FIX-04, FIX-05)
 
 ### Phase 2: Instrumentation
 **Goal**: Every AI generation produces structured cost, error, and prompt version data, and the operator can monitor queue health in real time
