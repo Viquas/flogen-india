@@ -9,12 +9,12 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Foundation Fixes
 
-- [ ] **FIX-01**: Auto-fix returns the latest fix attempt (not original broken code) when both attempts fail, and sets status to 'error'
-- [ ] **FIX-02**: Queue processing uses database-level uniqueness constraint to prevent duplicate job claims
-- [ ] **FIX-03**: Background generation tasks use proper error tracking instead of fire-and-forget Promise chains
+- [x] **FIX-01**: Auto-fix returns the latest fix attempt (not original broken code) when both attempts fail, and sets status to 'error'
+- [x] **FIX-02**: Queue processing uses database-level uniqueness constraint to prevent duplicate job claims
+- [x] **FIX-03**: Background generation tasks use proper error tracking instead of fire-and-forget Promise chains
 - [ ] **FIX-04**: System prompt extracted from generator.ts into a separate versioned file
 - [ ] **FIX-05**: Generator module decomposed into focused modules (prompts, validation, cost tracking, error classification)
-- [ ] **FIX-06**: Debug .txt files removed from codebase and added to .gitignore
+- [x] **FIX-06**: Debug .txt files removed from codebase and added to .gitignore
 
 ### Cost & Token Tracking
 
@@ -153,12 +153,12 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 1 | Pending |
-| FIX-02 | Phase 1 | Pending |
-| FIX-03 | Phase 1 | Pending |
+| FIX-01 | Phase 1 | Complete |
+| FIX-02 | Phase 1 | Complete |
+| FIX-03 | Phase 1 | Complete |
 | FIX-04 | Phase 1 | Pending |
 | FIX-05 | Phase 1 | Pending |
-| FIX-06 | Phase 1 | Pending |
+| FIX-06 | Phase 1 | Complete |
 | COST-01 | Phase 2 | Pending |
 | COST-02 | Phase 2 | Pending |
 | COST-03 | Phase 2 | Pending |

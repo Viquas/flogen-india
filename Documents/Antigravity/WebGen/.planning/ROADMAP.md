@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Fix auto-fix return value, queue race condition, fire-and-forget errors, remove debug files (FIX-01, FIX-02, FIX-03, FIX-06)
+- [x] 01-01-PLAN.md — Fix auto-fix return value, queue race condition, fire-and-forget errors, remove debug files (FIX-01, FIX-02, FIX-03, FIX-06)
 - [ ] 01-02-PLAN.md — Extract system prompt and decompose generator.ts into focused modules (FIX-04, FIX-05)
 
 ### Phase 2: Instrumentation
