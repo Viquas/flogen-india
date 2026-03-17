@@ -20,7 +20,7 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 - [x] **COST-01**: Every AI generation logs input tokens, output tokens, model used, and estimated cost to a persistent table
 - [x] **COST-02**: Cost estimation uses a configurable pricing table (not hardcoded) that can be updated when provider prices change
-- [ ] **COST-03**: Dashboard stats cards show running total spend for the current month
+- [x] **COST-03**: Dashboard stats cards show running total spend for the current month
 - [ ] **COST-04**: Cost records include all AI calls (generation, enrichment, auto-fix retries), not just primary generation
 
 ### Error Classification
@@ -34,7 +34,7 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 - [x] **PROMPT-01**: System prompt lives in a versioned, loadable format outside of generator.ts
 - [ ] **PROMPT-02**: Every generation records which prompt version was used
-- [ ] **PROMPT-03**: User can switch which prompt version to use for the next generation
+- [x] **PROMPT-03**: User can switch which prompt version to use for the next generation
 - [x] **PROMPT-04**: Prompt versions stored in database with creation date and change notes
 
 ### Queue Health UI
@@ -161,7 +161,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | FIX-06 | Phase 1 | Complete |
 | COST-01 | Phase 2 | Complete |
 | COST-02 | Phase 2 | Complete |
-| COST-03 | Phase 2 | Pending |
+| COST-03 | Phase 2 | Complete |
 | COST-04 | Phase 2 | Pending |
 | ERR-01 | Phase 2 | Complete |
 | ERR-02 | Phase 2 | Pending |
@@ -169,7 +169,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | ERR-04 | Phase 2 | Pending |
 | PROMPT-01 | Phase 2 | Complete |
 | PROMPT-02 | Phase 2 | Pending |
-| PROMPT-03 | Phase 2 | Pending |
+| PROMPT-03 | Phase 2 | Complete |
 | PROMPT-04 | Phase 2 | Complete |
 | QUEUE-01 | Phase 2 | Pending |
 | QUEUE-02 | Phase 2 | Pending |
