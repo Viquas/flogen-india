@@ -61,12 +61,12 @@ Plans:
   1. Every completed generation has a 0-100 quality score (based on render success and section completeness) stored on its project record, and projects are sortable by score in the dashboard
   2. When generating for a specific industry, the system automatically injects 1-2 sanitized, high-quality approved templates from that industry as few-shot context
   3. The analytics dashboard shows success/failure rates over time, generation timing with p50/p95 breakdown, cost summaries per model, and all metrics are filterable by AI model and industry
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Quality scoring module, DB schema, generator hook, dashboard sort/badge (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
+- [ ] 03-02-PLAN.md — Template seeder with sanitization, few-shot injection into generation prompts (TMPL-01, TMPL-02, TMPL-03, TMPL-04)
+- [ ] 03-03-PLAN.md — Analytics dashboard with recharts charts, timing/cost/success metrics, model/industry filters (ANAL-01, ANAL-02, ANAL-03, ANAL-04)
 
 ### Phase 4: Batch Autopilot
 **Goal**: The user can trigger one button and walk away while the system discovers businesses, generates websites, scores quality, auto-fixes failures, and surfaces only the projects that need human attention
