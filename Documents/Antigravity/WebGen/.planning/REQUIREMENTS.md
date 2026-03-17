@@ -67,7 +67,7 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Batch Autopilot
 
-- [ ] **AUTO-01**: One-button pipeline chains discover → enqueue → generate → validate → auto-fix → report
+- [ ] **AUTO-01**: One-button pipeline chains discover -> enqueue -> generate -> validate -> auto-fix -> report
 - [ ] **AUTO-02**: Failed projects surfaced with error context and classification after pipeline completes
 - [ ] **AUTO-03**: Real-time batch progress visible (X of Y complete, Z failed)
 - [ ] **AUTO-04**: Pipeline resumes from where it left off after interruption (idempotent resume)
@@ -153,63 +153,63 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 0 | Pending |
-| FIX-02 | Phase 0 | Pending |
-| FIX-03 | Phase 0 | Pending |
-| FIX-04 | Phase 0 | Pending |
-| FIX-05 | Phase 0 | Pending |
-| FIX-06 | Phase 0 | Pending |
-| COST-01 | Phase 1 | Pending |
-| COST-02 | Phase 1 | Pending |
-| COST-03 | Phase 1 | Pending |
-| COST-04 | Phase 1 | Pending |
-| ERR-01 | Phase 1 | Pending |
-| ERR-02 | Phase 1 | Pending |
-| ERR-03 | Phase 1 | Pending |
-| ERR-04 | Phase 1 | Pending |
-| PROMPT-01 | Phase 1 | Pending |
-| PROMPT-02 | Phase 1 | Pending |
-| PROMPT-03 | Phase 1 | Pending |
-| PROMPT-04 | Phase 1 | Pending |
-| QUEUE-01 | Phase 1 | Pending |
-| QUEUE-02 | Phase 1 | Pending |
-| QUEUE-03 | Phase 1 | Pending |
-| QUEUE-04 | Phase 1 | Pending |
-| QUAL-01 | Phase 2 | Pending |
-| QUAL-02 | Phase 2 | Pending |
-| QUAL-03 | Phase 2 | Pending |
-| QUAL-04 | Phase 2 | Pending |
-| TMPL-01 | Phase 2 | Pending |
-| TMPL-02 | Phase 2 | Pending |
-| TMPL-03 | Phase 2 | Pending |
-| TMPL-04 | Phase 2 | Pending |
-| ANAL-01 | Phase 2 | Pending |
-| ANAL-02 | Phase 2 | Pending |
-| ANAL-03 | Phase 2 | Pending |
-| ANAL-04 | Phase 2 | Pending |
-| AUTO-01 | Phase 3 | Pending |
-| AUTO-02 | Phase 3 | Pending |
-| AUTO-03 | Phase 3 | Pending |
-| AUTO-04 | Phase 3 | Pending |
-| KEY-01 | Phase 4 | Pending |
-| KEY-02 | Phase 4 | Pending |
-| KEY-03 | Phase 4 | Pending |
-| KEY-04 | Phase 4 | Pending |
-| DIFF-01 | Phase 4 | Pending |
-| DIFF-02 | Phase 4 | Pending |
-| DIFF-03 | Phase 4 | Pending |
-| EXP-01 | Phase 4 | Pending |
-| EXP-02 | Phase 4 | Pending |
-| EXP-03 | Phase 4 | Pending |
-| PRE-01 | Phase 4 | Pending |
-| PRE-02 | Phase 4 | Pending |
-| PRE-03 | Phase 4 | Pending |
+| FIX-01 | Phase 1 | Pending |
+| FIX-02 | Phase 1 | Pending |
+| FIX-03 | Phase 1 | Pending |
+| FIX-04 | Phase 1 | Pending |
+| FIX-05 | Phase 1 | Pending |
+| FIX-06 | Phase 1 | Pending |
+| COST-01 | Phase 2 | Pending |
+| COST-02 | Phase 2 | Pending |
+| COST-03 | Phase 2 | Pending |
+| COST-04 | Phase 2 | Pending |
+| ERR-01 | Phase 2 | Pending |
+| ERR-02 | Phase 2 | Pending |
+| ERR-03 | Phase 2 | Pending |
+| ERR-04 | Phase 2 | Pending |
+| PROMPT-01 | Phase 2 | Pending |
+| PROMPT-02 | Phase 2 | Pending |
+| PROMPT-03 | Phase 2 | Pending |
+| PROMPT-04 | Phase 2 | Pending |
+| QUEUE-01 | Phase 2 | Pending |
+| QUEUE-02 | Phase 2 | Pending |
+| QUEUE-03 | Phase 2 | Pending |
+| QUEUE-04 | Phase 2 | Pending |
+| QUAL-01 | Phase 3 | Pending |
+| QUAL-02 | Phase 3 | Pending |
+| QUAL-03 | Phase 3 | Pending |
+| QUAL-04 | Phase 3 | Pending |
+| TMPL-01 | Phase 3 | Pending |
+| TMPL-02 | Phase 3 | Pending |
+| TMPL-03 | Phase 3 | Pending |
+| TMPL-04 | Phase 3 | Pending |
+| ANAL-01 | Phase 3 | Pending |
+| ANAL-02 | Phase 3 | Pending |
+| ANAL-03 | Phase 3 | Pending |
+| ANAL-04 | Phase 3 | Pending |
+| AUTO-01 | Phase 4 | Pending |
+| AUTO-02 | Phase 4 | Pending |
+| AUTO-03 | Phase 4 | Pending |
+| AUTO-04 | Phase 4 | Pending |
+| KEY-01 | Phase 5 | Pending |
+| KEY-02 | Phase 5 | Pending |
+| KEY-03 | Phase 5 | Pending |
+| KEY-04 | Phase 5 | Pending |
+| DIFF-01 | Phase 5 | Pending |
+| DIFF-02 | Phase 5 | Pending |
+| DIFF-03 | Phase 5 | Pending |
+| EXP-01 | Phase 5 | Pending |
+| EXP-02 | Phase 5 | Pending |
+| EXP-03 | Phase 5 | Pending |
+| PRE-01 | Phase 5 | Pending |
+| PRE-02 | Phase 5 | Pending |
+| PRE-03 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 46 total
-- Mapped to phases: 46
-- Unmapped: 0 ✓
+- v1 requirements: 51 total
+- Mapped to phases: 51
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Last updated: 2026-03-18 after roadmap creation (phase numbers updated to 1-5)*
