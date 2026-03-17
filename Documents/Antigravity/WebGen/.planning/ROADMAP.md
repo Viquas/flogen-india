@@ -108,7 +108,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation Fixes | 2/2 | Complete    | 2026-03-17 |
-| 2. Instrumentation | 0/4 | Not started | - |
+| 2. Instrumentation | 1/4 | In Progress | - |
 | 3. Quality and Intelligence | 0/3 | Not started | - |
 | 4. Batch Autopilot | 0/2 | Not started | - |
 | 5. UX Acceleration | 0/4 | Not started | - |

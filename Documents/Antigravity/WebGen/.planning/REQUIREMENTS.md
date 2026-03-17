@@ -18,24 +18,24 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Cost & Token Tracking
 
-- [ ] **COST-01**: Every AI generation logs input tokens, output tokens, model used, and estimated cost to a persistent table
-- [ ] **COST-02**: Cost estimation uses a configurable pricing table (not hardcoded) that can be updated when provider prices change
+- [x] **COST-01**: Every AI generation logs input tokens, output tokens, model used, and estimated cost to a persistent table
+- [x] **COST-02**: Cost estimation uses a configurable pricing table (not hardcoded) that can be updated when provider prices change
 - [ ] **COST-03**: Dashboard stats cards show running total spend for the current month
 - [ ] **COST-04**: Cost records include all AI calls (generation, enrichment, auto-fix retries), not just primary generation
 
 ### Error Classification
 
-- [ ] **ERR-01**: Error taxonomy defined with categories: syntax error, render error, missing sections, style issues, data mapping failure, timeout
+- [x] **ERR-01**: Error taxonomy defined with categories: syntax error, render error, missing sections, style issues, data mapping failure, timeout
 - [ ] **ERR-02**: Errors automatically classified using Babel validation output and preview error signals
-- [ ] **ERR-03**: Each error category has a targeted fix prompt (not one generic fix-all prompt)
+- [x] **ERR-03**: Each error category has a targeted fix prompt (not one generic fix-all prompt)
 - [ ] **ERR-04**: Error classification stored on project record (error_type, error_details columns)
 
 ### Prompt Versioning
 
-- [ ] **PROMPT-01**: System prompt lives in a versioned, loadable format outside of generator.ts
+- [x] **PROMPT-01**: System prompt lives in a versioned, loadable format outside of generator.ts
 - [ ] **PROMPT-02**: Every generation records which prompt version was used
 - [ ] **PROMPT-03**: User can switch which prompt version to use for the next generation
-- [ ] **PROMPT-04**: Prompt versions stored in database with creation date and change notes
+- [x] **PROMPT-04**: Prompt versions stored in database with creation date and change notes
 
 ### Queue Health UI
 
@@ -159,18 +159,18 @@ Deferred to future release. Tracked but not in current roadmap.
 | FIX-04 | Phase 1 | Pending |
 | FIX-05 | Phase 1 | Pending |
 | FIX-06 | Phase 1 | Complete |
-| COST-01 | Phase 2 | Pending |
-| COST-02 | Phase 2 | Pending |
+| COST-01 | Phase 2 | Complete |
+| COST-02 | Phase 2 | Complete |
 | COST-03 | Phase 2 | Pending |
 | COST-04 | Phase 2 | Pending |
-| ERR-01 | Phase 2 | Pending |
+| ERR-01 | Phase 2 | Complete |
 | ERR-02 | Phase 2 | Pending |
-| ERR-03 | Phase 2 | Pending |
+| ERR-03 | Phase 2 | Complete |
 | ERR-04 | Phase 2 | Pending |
-| PROMPT-01 | Phase 2 | Pending |
+| PROMPT-01 | Phase 2 | Complete |
 | PROMPT-02 | Phase 2 | Pending |
 | PROMPT-03 | Phase 2 | Pending |
-| PROMPT-04 | Phase 2 | Pending |
+| PROMPT-04 | Phase 2 | Complete |
 | QUEUE-01 | Phase 2 | Pending |
 | QUEUE-02 | Phase 2 | Pending |
 | QUEUE-03 | Phase 2 | Pending |
