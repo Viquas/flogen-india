@@ -12,7 +12,7 @@ WebGen is a working bulk AI website generator that needs 12 improvements across 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation Fixes** - Fix known bugs, decompose generator monolith, clean up codebase
+- [x] **Phase 1: Foundation Fixes** - Fix known bugs, decompose generator monolith, clean up codebase (completed 2026-03-17)
 - [ ] **Phase 2: Instrumentation** - Add cost tracking, error classification, prompt versioning, and queue health visibility
 - [ ] **Phase 3: Quality and Intelligence** - Automated quality scoring, industry-aware template seeding, analytics dashboard
 - [ ] **Phase 4: Batch Autopilot** - End-to-end pipeline orchestration from discovery to failure surfacing
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation Fixes | 0/2 | Not started | - |
+| 1. Foundation Fixes | 2/2 | Complete   | 2026-03-17 |
 | 2. Instrumentation | 0/4 | Not started | - |
 | 3. Quality and Intelligence | 0/3 | Not started | - |
 | 4. Batch Autopilot | 0/2 | Not started | - |
