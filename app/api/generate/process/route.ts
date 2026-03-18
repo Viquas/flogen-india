@@ -40,7 +40,7 @@ export async function GET() {
                 .in('project_id', projectIds)
                 .in('status', ['pending', 'processing'])
 
-            const coveredIds = new Set((existingJobs || []).map((j: { project_id: string }) => j.project_id))
+            const coveredIds = new Set((existingJobs || []).map((j: { project_id: string | null }) => j.project_id).filter(Boolean))
             const orphanIds = projectIds.filter((id: string) => !coveredIds.has(id))
 
             if (orphanIds.length > 0) {
