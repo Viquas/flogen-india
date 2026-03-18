@@ -1,9 +1,12 @@
 "use client"
 
-import { useState, useTransition, useMemo, useEffect } from 'react'
+import { useState, useTransition, useMemo, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { ProjectCard } from './project-card'
 import { BatchActions } from './batch-actions'
-import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects } from '@/app/dashboard/actions'
+import { KeyboardHelpOverlay } from './keyboard-help-overlay'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
+import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects, approveProject, regenerateProject, fixWebsiteErrors } from '@/app/dashboard/actions'
 import { Search, Loader2, ArrowUpDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
@@ -48,6 +51,12 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
     const [resetResult, setResetResult] = useState<number | null>(null)
     const [kickResult, setKickResult] = useState<string | null>(null)
     const [sortBy, setSortBy] = useState<SortOption>('newest')
+
+    // Keyboard navigation state
+    const [focusedIndex, setFocusedIndex] = useState<number>(-1)
+    const [showHelp, setShowHelp] = useState(false)
+    const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+    const router = useRouter()
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('')
@@ -104,6 +113,79 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
 
         return result
     }, [sourceProjects, activeFilter, sortBy])
+
+    // Scroll focused card into view
+    useEffect(() => {
+        if (focusedIndex >= 0) {
+            const el = cardRefs.current.get(focusedIndex)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+    }, [focusedIndex])
+
+    // Reset focused index when filter/sort/search changes
+    useEffect(() => { setFocusedIndex(-1) }, [activeFilter, sortBy, searchQuery])
+
+    // Define keyboard shortcuts
+    const keyboardShortcuts = useMemo(() => {
+        const focusedProject = focusedIndex >= 0 ? filteredProjects[focusedIndex] : null
+
+        return [
+            {
+                key: 'j',
+                description: 'Move focus to next project',
+                handler: () => setFocusedIndex(prev => Math.min(prev + 1, filteredProjects.length - 1))
+            },
+            {
+                key: 'k',
+                description: 'Move focus to previous project',
+                handler: () => setFocusedIndex(prev => Math.max(prev - 1, 0))
+            },
+            {
+                key: 'a',
+                description: 'Approve focused project',
+                handler: () => {
+                    if (focusedProject && focusedProject.status === 'review') {
+                        approveProject(focusedProject.id)
+                    }
+                }
+            },
+            {
+                key: 'r',
+                description: 'Regenerate focused project',
+                handler: () => {
+                    if (focusedProject) {
+                        regenerateProject(focusedProject.id)
+                    }
+                }
+            },
+            {
+                key: 'f',
+                description: 'Auto-fix focused project',
+                handler: () => {
+                    if (focusedProject && (focusedProject.status === 'error' || focusedProject.status === 'review')) {
+                        fixWebsiteErrors(focusedProject.id)
+                    }
+                }
+            },
+            {
+                key: 'e',
+                description: 'Open focused project in editor',
+                handler: () => {
+                    if (focusedProject) {
+                        router.push(`/editor?id=${focusedProject.id}`)
+                    }
+                }
+            },
+            {
+                key: '?',
+                description: 'Show keyboard shortcuts help',
+                handler: () => setShowHelp(prev => !prev)
+            },
+        ]
+    }, [focusedIndex, filteredProjects, router])
+
+    // Register keyboard shortcuts (disabled when help overlay is open)
+    useKeyboardShortcuts(keyboardShortcuts, !showHelp)
 
     const handleSelect = (id: string, selected: boolean) => {
         setSelectedIds(prev => {
@@ -212,6 +294,9 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
                 </div>
 
                 <div className="flex items-center gap-3 pb-1">
+                    {/* Keyboard shortcut hint */}
+                    <span className="text-xs text-zinc-400 hidden lg:inline">Press ? for shortcuts</span>
+
                     {/* Sort Toggle */}
                     <div className="flex items-center">
                         <button
@@ -344,12 +429,17 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
 
             {filteredProjects.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredProjects.map((project) => (
+                    {filteredProjects.map((project, index) => (
                         <ProjectCard
                             key={project.id}
                             project={project}
                             isSelected={selectedIds.has(project.id)}
+                            isFocused={focusedIndex === index}
                             onSelect={handleSelect}
+                            cardRef={(el) => {
+                                if (el) cardRefs.current.set(index, el)
+                                else cardRefs.current.delete(index)
+                            }}
                         />
                     ))}
                 </div>
@@ -411,6 +501,12 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
                     </div>
                 </div>
             )}
+
+            <KeyboardHelpOverlay
+                isOpen={showHelp}
+                onClose={() => setShowHelp(false)}
+                shortcuts={keyboardShortcuts.map(s => ({ key: s.key, description: s.description }))}
+            />
         </div>
     )
 }

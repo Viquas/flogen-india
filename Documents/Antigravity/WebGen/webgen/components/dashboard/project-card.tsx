@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { format } from "date-fns"
 import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2, RefreshCcw, Wrench } from "lucide-react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { regenerateProject, fixWebsiteErrors } from "@/app/dashboard/actions"
 import { createClient } from "@/lib/supabase/client"
 
@@ -30,10 +30,12 @@ const statusMap: Record<string, { icon: any, color: string, label: string, badge
 interface ProjectCardProps {
     project: Project
     isSelected?: boolean
+    isFocused?: boolean
     onSelect?: (id: string, selected: boolean) => void
+    cardRef?: React.Ref<HTMLDivElement>
 }
 
-export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps) {
+export function ProjectCard({ project, isSelected, isFocused, onSelect, cardRef }: ProjectCardProps) {
     const statusConfig = statusMap[project.status] || statusMap.queued
     const Icon = statusConfig.icon
     const [isLoading, setIsLoading] = useState(false)
@@ -87,7 +89,17 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
     }
 
     return (
-        <div className={`group relative flex flex-col justify-between rounded-lg border bg-card p-5 shadow-sm transition-all duration-200 ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-border hover:border-zinc-300'}`}>
+        <div
+            ref={cardRef}
+            data-project-id={project.id}
+            className={`group relative flex flex-col justify-between rounded-lg border bg-card p-5 shadow-sm transition-all duration-200 ${
+                isSelected
+                    ? 'ring-2 ring-primary border-primary'
+                    : isFocused
+                        ? 'ring-2 ring-blue-500 border-blue-400'
+                        : 'border-border hover:border-zinc-300'
+            }`}
+        >
             {onSelect && (
                 <div className="absolute top-4 right-4 z-10">
                     <input
