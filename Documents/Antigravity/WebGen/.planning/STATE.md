@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Claim Flow
 status: in-progress
-last_updated: "2026-03-18T18:49:03Z"
+last_updated: "2026-03-18T18:50:19Z"
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 8 of 10 (Payment and Confirmation)
-Plan: 2 of 3 in current phase (08-02 complete)
+Plan: 3 of 3 in current phase (08-01, 08-02 complete, 08-03 remaining)
 Status: In Progress
-Last activity: 2026-03-18 -- completed 08-02 (Razorpay webhook handler and claim status polling endpoint)
+Last activity: 2026-03-19 -- completed 08-01 (Razorpay SDK singleton, GST pricing, createRazorpayOrder server action)
 
 Progress: [##############------] 67% (v2.0 Phase 8: 2/3 plans complete)
 
@@ -49,6 +49,7 @@ Progress: [##############------] 67% (v2.0 Phase 8: 2/3 plans complete)
 | 07 | 01 | 3min | 3 | 8 |
 | 07 | 02 | 5min | 2 | 2 |
 | 07 | 03 | 2min | 2 | 2 |
+| 08 | 01 | 3min | 2 | 4 |
 | 08 | 02 | 2min | 2 | 2 |
 
 ## Accumulated Context
@@ -87,6 +88,10 @@ Relevant to current work:
 - [07-03]: Page-level server/client boundary: page.tsx fetches data, ClaimPageClient manages interactive state
 - [08-02]: Timing-safe comparison for HMAC verification (crypto.timingSafeEqual) to prevent timing attacks
 - [08-02]: Three-layer idempotency: event ID dedup, status guard (order_created only), order ID lookup
+- [08-01]: GST (18%) applied to plan price only, not hosting fee
+- [08-01]: Idempotent order creation: reuse existing pending/order_created claim for same project_id
+- [08-01]: Server-only RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET (no NEXT_PUBLIC_ prefix for secret)
+- [08-01]: Pending claims without Razorpay order get updated with latest selections on retry
 - [08-02]: No auth on status endpoint -- UUID-based security matches existing claim page pattern
 
 ### Pending Todos
@@ -104,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18
-Stopped at: Completed 08-02-PLAN.md (Razorpay webhook handler and claim status polling endpoint)
+Last session: 2026-03-19
+Stopped at: Completed 08-01-PLAN.md (Razorpay SDK singleton, GST pricing, createRazorpayOrder server action)
 Resume file: None
