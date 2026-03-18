@@ -100,6 +100,10 @@ Recent decisions affecting current work:
 - [05-02]: Two-click selection pattern: first click=newer (blue), second click=older (orange)
 - [05-02]: Auto-select current + previous revision on load for immediate diff display
 - [05-02]: Removed content area padding in diff mode for full-width Monaco diff editor
+- [05-03]: Reuse constructHtmlBoilerplate as base (same as preview) to preserve React interactivity per pitfall P5
+- [05-03]: String replacement approach for metadata injection rather than DOM parsing (simpler, deterministic)
+- [05-03]: Remove parent postMessage calls in exported HTML for standalone mode
+- [05-03]: Client-side blob download pattern (fetch + createObjectURL) for browser-triggered file save
 
 ### Pending Todos
 
@@ -113,5 +117,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 05-04-PLAN.md (project data prefetch cache) -- Phase 5 COMPLETE (4/4 plans done). All phases complete.
+Stopped at: Completed 05-03-PLAN.md (static HTML export) -- Phase 5 COMPLETE (4/4 plans done). All phases complete.
 Resume file: None

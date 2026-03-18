@@ -87,9 +87,9 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Static Export
 
-- [ ] **EXP-01**: Generated React component exportable as self-contained static HTML with inlined Tailwind CSS
-- [ ] **EXP-02**: Exported HTML bundles fonts, icons, and images (no external dependencies)
-- [ ] **EXP-03**: One-click download button in editor exports as .html or .zip file
+- [x] **EXP-01**: Generated React component exportable as self-contained static HTML with inlined Tailwind CSS
+- [x] **EXP-02**: Exported HTML bundles fonts, icons, and images (no external dependencies)
+- [x] **EXP-03**: One-click download button in editor exports as .html or .zip file
 
 ### Preview Pre-Rendering
 
@@ -198,9 +198,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | DIFF-01 | Phase 5 | Complete |
 | DIFF-02 | Phase 5 | Complete |
 | DIFF-03 | Phase 5 | Complete |
-| EXP-01 | Phase 5 | Pending |
-| EXP-02 | Phase 5 | Pending |
-| EXP-03 | Phase 5 | Pending |
+| EXP-01 | Phase 5 | Complete |
+| EXP-02 | Phase 5 | Complete |
+| EXP-03 | Phase 5 | Complete |
 | PRE-01 | Phase 5 | Complete |
 | PRE-02 | Phase 5 | Complete |
 | PRE-03 | Phase 5 | Complete |
