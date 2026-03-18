@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET() {
+    // Debug routes are only available in development
+    if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Debug routes disabled in production' }, { status: 403 })
+    }
+
     const supabase = createAdminClient()
 
     // Querying the pg_catalog/information_schema to list tables

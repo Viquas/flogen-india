@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
-import { openai, createOpenAI } from '@ai-sdk/openai'
-import { google } from '@ai-sdk/google'
+import { getModel } from '@/lib/ai/model-config'
 
 const REFINEMENT_SYSTEM_PROMPT = `You are an expert React Developer refining an existing landing page component.
 
@@ -31,24 +30,6 @@ You must modify the code according to the user's request and return the COMPLETE
 - Maintain the existing design style unless explicitly asked to change it
 - Keep the layout responsive
 - Apply the user's requested changes precisely`
-
-const getRefineModel = () => {
-    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        return google('gemini-3.1-pro-preview')
-    }
-    if (process.env.OPENAI_API_KEY) {
-        return openai('gpt-4o')
-    }
-    if (process.env.OPENROUTER_API_KEY) {
-        const openrouter = createOpenAI({
-            name: 'openrouter',
-            apiKey: process.env.OPENROUTER_API_KEY,
-            baseURL: 'https://openrouter.ai/api/v1',
-        })
-        return openrouter('openai/gpt-4o')
-    }
-    return openai('gpt-4o')
-}
 
 export async function POST(req: NextRequest) {
     try {
@@ -96,7 +77,7 @@ export async function POST(req: NextRequest) {
 
         // Generate refined code
         const { text } = await generateText({
-            model: getRefineModel(),
+            model: getModel(),
             system: REFINEMENT_SYSTEM_PROMPT,
             prompt: userPrompt,
         })

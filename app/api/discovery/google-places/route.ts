@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generationQueue } from '@/lib/queue'
+import { GooglePlace, PlacesSearchResponse, BusinessDataFromPlace } from '@/types/google-places'
 
 export async function POST(req: NextRequest) {
     try {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
         const MIN_VALID = Math.min(maxResults, 10) // keep paginating until we hit at least this many
         const MAX_API_PAGES = 20 // increased cap — scan up to 400 raw results to find those without websites
 
-        let validPlaces: any[] = []
+        let validPlaces: GooglePlace[] = []
         let pageToken = ""
         let apiExhausted = false
         let totalFetched = 0
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
 
         // Persistent fetch+filter loop — keeps paginating until we have enough valid results
         while (validPlaces.length < maxResults && !apiExhausted && pagesFetched < MAX_API_PAGES) {
-            const data: any = { textQuery: query, pageSize: 20 }
+            const data: { textQuery: string; pageSize: number; pageToken?: string } = { textQuery: query, pageSize: 20 }
             if (pageToken) data.pageToken = pageToken
 
             const headers = {
@@ -60,10 +61,10 @@ export async function POST(req: NextRequest) {
             }
 
             const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(data) })
-            const result = await response.json()
+            const result: PlacesSearchResponse = await response.json()
             pagesFetched++
 
-            const pagePlaces: any[] = result.places || []
+            const pagePlaces: GooglePlace[] = result.places || []
             totalFetched += pagePlaces.length
 
             if (pagePlaces.length === 0 && !result.nextPageToken) {
@@ -72,31 +73,31 @@ export async function POST(req: NextRequest) {
             }
 
             // --- Dedup check ---
-            const allPageIds = pagePlaces.map((p: any) => p.id).filter(Boolean)
+            const allPageIds = pagePlaces.map((p: GooglePlace) => p.id).filter(Boolean)
             if (allPageIds.length > 0) {
                 const uncheckedIds = allPageIds.filter((id: string) => !alreadyGeneratedPlaceIds.has(id))
                 if (uncheckedIds.length > 0) {
                     const { data: existingProjects } = await supabase
                         .from('projects')
                         .select('business_data')
-                        .in('business_data->>placeId' as any, uncheckedIds)
+                        .in('business_data->>placeId' as string, uncheckedIds)
                     if (existingProjects) {
                         for (const project of existingProjects) {
-                            const bd = project.business_data as any
-                            if (bd?.placeId) alreadyGeneratedPlaceIds.add(bd.placeId)
+                            const bd = project.business_data as Record<string, unknown> | null
+                            if (bd?.placeId && typeof bd.placeId === 'string') alreadyGeneratedPlaceIds.add(bd.placeId)
                         }
                     }
                 }
             }
 
             // Remove already-generated places
-            let candidates = pagePlaces.filter((place: any) => !alreadyGeneratedPlaceIds.has(place.id))
+            let candidates = pagePlaces.filter((place: GooglePlace) => !alreadyGeneratedPlaceIds.has(place.id))
             skippedDuplicates += pagePlaces.length - candidates.length
 
             // --- Filter: STRICTLY skip businesses that already have a website ---
             if (skipWithWebsite) {
                 const before = candidates.length
-                candidates = candidates.filter((place: any) => !place.websiteUri)
+                candidates = candidates.filter((place: GooglePlace) => !place.websiteUri)
                 skippedWebsite += before - candidates.length
             }
 
@@ -171,11 +172,8 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Prepare Projects
-        const projectsToInsert = allPlaces.map((place: any) => ({
-            batch_id: batch.id,
-            status: 'queued' as const,
-            version: 1,
-            business_data: {
+        const projectsToInsert = allPlaces.map((place: GooglePlace) => {
+            const businessData: BusinessDataFromPlace = {
                 placeId: place.id || null,
                 businessName: place.displayName?.text || 'Unknown Business',
                 description: `A premier provider of ${industryTerm} located in ${place.formattedAddress || 'your area'}. Dedicated to excellence and customer satisfaction.`,
@@ -193,8 +191,14 @@ export async function POST(req: NextRequest) {
                 internationalPhoneNumber: place.internationalPhoneNumber || null,
                 nationalPhoneNumber: place.nationalPhoneNumber || null,
                 industry: industryTerm
-            } as any
-        }))
+            }
+            return {
+                batch_id: batch.id,
+                status: 'queued' as const,
+                version: 1,
+                business_data: businessData as unknown as Record<string, unknown>
+            }
+        })
 
         // 3. Insert Projects
         const { data: insertedProjects, error: projectsError } = await supabase
@@ -210,7 +214,7 @@ export async function POST(req: NextRequest) {
 
         // 4. Queue for Generation
         if (insertedProjects) {
-            const projectIds = insertedProjects.map((p: any) => p.id)
+            const projectIds = insertedProjects.map((p: { id: string }) => p.id)
             generationQueue.addBatch(projectIds, rules, templateId || undefined)
         }
 

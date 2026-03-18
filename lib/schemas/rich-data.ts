@@ -32,8 +32,12 @@ export const GlobalConfigurationSchema = z.object({
             }).optional()
         }).optional(),
         analytics: z.object({
-            providers: z.array(z.any()).optional(), // Loose schema for providers
-            eventMapping: z.record(z.string(), z.any()).optional()
+            providers: z.array(z.object({
+                name: z.string(),
+                id: z.string().optional(),
+                config: z.record(z.string(), z.unknown()).optional()
+            })).optional(),
+            eventMapping: z.record(z.string(), z.unknown()).optional()
         }).optional()
     }).optional()
 })
@@ -81,19 +85,33 @@ export const BrandIdentitySchema = z.object({
 
 export const ContentRepositorySchema = z.object({
     media: z.object({
-        heroVideo: z.any().optional(),
+        heroVideo: z.object({
+            url: z.string().optional(),
+            poster: z.string().optional(),
+            autoplay: z.boolean().optional(),
+            muted: z.boolean().optional()
+        }).optional(),
         logo: z.object({
             vector: z.string().optional(),
-            raster: z.any().optional(),
-            favicon: z.array(z.any()).optional()
+            raster: z.object({
+                src: z.string(),
+                width: z.number().optional(),
+                height: z.number().optional(),
+                alt: z.string().optional()
+            }).optional(),
+            favicon: z.array(z.object({
+                src: z.string(),
+                sizes: z.string().optional(),
+                type: z.string().optional()
+            })).optional()
         }).optional(),
         // Allow flexible media fields
     }).passthrough().optional(),
     navigation: z.object({
-        header: z.any().optional(),
-        footer: z.any().optional()
+        header: z.record(z.string(), z.unknown()).optional(),
+        footer: z.record(z.string(), z.unknown()).optional()
     }).optional(),
-    pages: z.record(z.string(), z.any()).optional()
+    pages: z.record(z.string(), z.unknown()).optional()
 })
 
 export const OperationalDataSchema = z.object({
@@ -114,18 +132,29 @@ export const OperationalDataSchema = z.object({
     }).optional(),
     schedules: z.object({
         timezone: z.string().optional(),
-        standard: z.array(z.any()).optional(),
-        exceptions: z.array(z.any()).optional()
+        standard: z.array(z.object({
+            day: z.string(),
+            open: z.string().optional(),
+            close: z.string().optional(),
+            closed: z.boolean().optional()
+        })).optional(),
+        exceptions: z.array(z.object({
+            date: z.string(),
+            reason: z.string().optional(),
+            open: z.string().optional(),
+            close: z.string().optional(),
+            closed: z.boolean().optional()
+        })).optional()
     }).optional(),
-    accessibility: z.any().optional()
+    accessibility: z.record(z.string(), z.unknown()).optional()
 })
 
-export const IntegrationsSchema = z.record(z.string(), z.any()).optional()
+export const IntegrationsSchema = z.record(z.string(), z.unknown()).optional()
 
 const SectionSchema = z.object({
     id: z.string(),
     component: z.string(),
-    props: z.record(z.string(), z.any())
+    props: z.record(z.string(), z.unknown())
 })
 
 // The main schema based on the user's JSON

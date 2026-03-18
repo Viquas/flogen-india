@@ -11,10 +11,13 @@ import { LivePreview } from './live-preview'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { Code2, Eye, Database, MessageSquare, RefreshCw, History } from 'lucide-react'
-import { useState } from 'react'
-import { Editor, DiffEditor } from '@monaco-editor/react'
+import { Code2, Eye, Database, MessageSquare, RefreshCw, History, Loader2 } from 'lucide-react'
+import { useState, Suspense, lazy } from 'react'
 import { RevisionHistory } from './revision-history'
+
+// Lazy-load Monaco editor (~500KB) — only loaded when user switches to code view
+const MonacoEditor = lazy(() => import('@monaco-editor/react').then(mod => ({ default: mod.Editor })))
+const MonacoDiffEditor = lazy(() => import('@monaco-editor/react').then(mod => ({ default: mod.DiffEditor })))
 
 interface SplitWorkbenchProps {
     project: {
@@ -152,34 +155,41 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                             ) : (
                                 <div className="h-full w-full">
                                     {project.generated_code ? (
-                                        diffCode ? (
-                                            <DiffEditor
-                                                height="100%"
-                                                language="typescript"
-                                                theme="vs-dark"
-                                                original={diffCode} // Old version
-                                                modified={project.generated_code} // Current version
-                                                options={{
-                                                    readOnly: true,
-                                                    minimap: { enabled: false },
-                                                    wordWrap: 'on',
-                                                    padding: { top: 16 }
-                                                }}
-                                            />
-                                        ) : (
-                                            <Editor
-                                                height="100%"
-                                                defaultLanguage="typescript"
-                                                theme="vs-dark"
-                                                value={project.generated_code}
-                                                options={{
-                                                    readOnly: true,
-                                                    minimap: { enabled: false },
-                                                    wordWrap: 'on',
-                                                    padding: { top: 16 }
-                                                }}
-                                            />
-                                        )
+                                        <Suspense fallback={
+                                            <div className="flex items-center justify-center h-full bg-zinc-900">
+                                                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+                                                <span className="ml-2 text-sm text-zinc-400">Loading editor...</span>
+                                            </div>
+                                        }>
+                                            {diffCode ? (
+                                                <MonacoDiffEditor
+                                                    height="100%"
+                                                    language="typescript"
+                                                    theme="vs-dark"
+                                                    original={diffCode}
+                                                    modified={project.generated_code}
+                                                    options={{
+                                                        readOnly: true,
+                                                        minimap: { enabled: false },
+                                                        wordWrap: 'on',
+                                                        padding: { top: 16 }
+                                                    }}
+                                                />
+                                            ) : (
+                                                <MonacoEditor
+                                                    height="100%"
+                                                    defaultLanguage="typescript"
+                                                    theme="vs-dark"
+                                                    value={project.generated_code}
+                                                    options={{
+                                                        readOnly: true,
+                                                        minimap: { enabled: false },
+                                                        wordWrap: 'on',
+                                                        padding: { top: 16 }
+                                                    }}
+                                                />
+                                            )}
+                                        </Suspense>
                                     ) : (
                                         <div className="p-4 text-center text-muted-foreground flex items-center justify-center h-full">
                                             No code generated yet

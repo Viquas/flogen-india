@@ -11,7 +11,7 @@ Your ONLY job is to make the EXACT changes the user requested — nothing more.
 
 ## TECHNICAL CONSTRAINTS:
 - The code is a single React component: \`export default function GeneratedPage() { ... }\`
-- Framework: React 18 + Tailwind CSS.
+- Framework: React 19 + Tailwind CSS.
 - Icons: import from \`lucide-react\`. Use JSX: \`<ArrowRight className="h-5 w-5" />\`.
 - Available UI components (no import needed): Button, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Badge, Input, Textarea, Label, Tabs, TabsList, TabsTrigger, TabsContent, Accordion, AccordionItem, AccordionTrigger, AccordionContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetTrigger, cn.
 - All hooks (useState, useEffect, useRef, useCallback, useMemo) must be at the top level of the component.

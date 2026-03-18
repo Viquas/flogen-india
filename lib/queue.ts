@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAndSaveWebsite } from '@/lib/ai/generator'
+import { logger } from '@/lib/logger'
 
 export interface QueueJob {
     id: string
@@ -30,7 +31,7 @@ class GenerationQueue {
 
         const { error: insertError } = await supabase.from('queue_jobs').insert(payload)
         if (insertError) {
-            console.error('[Queue] queue_jobs insert failed, falling back to direct generation:', insertError.message)
+            logger.queue.error('queue_jobs insert failed, falling back to direct generation', { error: insertError.message })
             // Fall back: bypass queue table and generate directly
             await supabase.from('projects').update({ status: 'generating', generated_code: null }).eq('id', projectId)
             generateAndSaveWebsite(projectId, undefined, rules, templateId).catch(console.error)
@@ -60,7 +61,7 @@ class GenerationQueue {
         const { error: insertError } = await supabase.from('queue_jobs').insert(jobs)
 
         if (insertError) {
-            console.error('[Queue] queue_jobs batch insert failed, falling back to direct generation:', insertError.message)
+            logger.queue.error('queue_jobs batch insert failed, falling back to direct generation', { error: insertError.message })
             // Fall back: mark each project as generating and kick off directly
             await supabase.from('projects').update({ status: 'generating', generated_code: null }).in('id', projectIds)
             for (const id of projectIds) {
@@ -84,7 +85,7 @@ class GenerationQueue {
             .eq('status', 'processing')
 
         if (stuckJobs && stuckJobs.length > 0) {
-            console.log(`[Queue] Recovering ${stuckJobs.length} stuck jobs...`)
+            logger.queue.info('Recovering stuck jobs', { count: stuckJobs.length })
             await supabase
                 .from('queue_jobs')
                 .update({ status: 'pending' })
@@ -103,7 +104,7 @@ class GenerationQueue {
         const hasPending = (pendingCount ?? 0) > 0
 
         if (hasStuck || hasPending) {
-            console.log(`[Queue] Booting processor — ${pendingCount ?? 0} pending, ${stuckJobs?.length ?? 0} recovered from stuck`)
+            logger.queue.info('Booting processor', { pendingCount: pendingCount ?? 0, recoveredFromStuck: stuckJobs?.length ?? 0 })
             this.process()
         }
 
@@ -123,7 +124,7 @@ class GenerationQueue {
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending')
             if ((count ?? 0) > 0) {
-                console.log(`[Queue] Watchdog: found ${count} pending jobs, booting processor`)
+                logger.queue.info('Watchdog: found pending jobs, booting processor', { count })
                 this.process()
             }
         }, 30_000)
@@ -143,7 +144,7 @@ class GenerationQueue {
                     .eq('status', 'processing')
 
                 if (countError) {
-                    console.error('[Queue] Failed to count processing jobs:', countError.message)
+                    logger.queue.error('Failed to count processing jobs', { error: countError.message })
                     break
                 }
 
@@ -163,7 +164,7 @@ class GenerationQueue {
                     .limit(1)
 
                 if (fetchError) {
-                    console.error('[Queue] Failed to fetch pending jobs:', fetchError.message)
+                    logger.queue.error('Failed to fetch pending jobs', { error: fetchError.message })
                     break
                 }
 
@@ -191,7 +192,7 @@ class GenerationQueue {
                     continue
                 }
 
-                console.log(`[Queue] Starting job ${job.id} for project ${job.project_id}`)
+                logger.queue.info('Starting job', { jobId: job.id, projectId: job.project_id })
                 // Process job asynchronously so the loop can immediately pick up the next one
                 this.executeJob(updatedJob as unknown as QueueJob).catch(console.error)
             }
@@ -217,7 +218,7 @@ class GenerationQueue {
 
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            console.error(`[Queue] Job ${job.id} failed for project ${job.project_id}:`, errorMessage)
+            logger.queue.error('Job failed', { jobId: job.id, projectId: job.project_id, error: errorMessage })
 
             await supabase.from('queue_jobs').update({
                 status: 'failed',

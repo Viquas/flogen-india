@@ -1,32 +1,8 @@
 import { generateText } from 'ai'
-import { openai, createOpenAI } from '@ai-sdk/openai'
-import { google } from '@ai-sdk/google'
 import { RichBusinessDataSchema, RichBusinessData } from '@/lib/schemas/rich-data'
+import { getModel } from './model-config'
 
-// Configure OpenRouter if key is present (reusing logic from generator.ts essentially)
-const openrouter = createOpenAI({
-    name: 'openrouter',
-    apiKey: process.env.OPENROUTER_API_KEY,
-    baseURL: 'https://openrouter.ai/api/v1',
-})
-
-const getModel = () => {
-    // Prefer Google Gemini for structured data tasks
-    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        return google('gemini-3.1-pro-preview')
-    }
-    // Fallback to OpenAI
-    if (process.env.OPENAI_API_KEY) {
-        return openai('gpt-4o')
-    }
-    // Fallback to OpenRouter
-    if (process.env.OPENROUTER_API_KEY) {
-        return openrouter('openai/gpt-4o')
-    }
-    return openai('gpt-4o')
-}
-
-export async function enrichBusinessData(googlePlace: any, rules?: string): Promise<RichBusinessData> {
+export async function enrichBusinessData(googlePlace: Record<string, unknown>, rules?: string): Promise<RichBusinessData> {
     const model = getModel()
 
     const rulesSection = rules
@@ -125,11 +101,11 @@ ${JSON.stringify(googlePlace, null, 2)}`
         const parsed = JSON.parse(cleanText) as RichBusinessData;
 
         // Ensure businessName is preserved at top level for dashboard display
-        if (!parsed.businessName && googlePlace?.businessName) {
-            (parsed as any).businessName = googlePlace.businessName;
+        if (!parsed.businessName && typeof googlePlace?.businessName === 'string') {
+            parsed.businessName = googlePlace.businessName;
         }
-        if (!parsed.businessName && (parsed as any).brandIdentity?.core?.brandName) {
-            (parsed as any).businessName = (parsed as any).brandIdentity.core.brandName;
+        if (!parsed.businessName && parsed.brandIdentity?.core?.brandName) {
+            parsed.businessName = parsed.brandIdentity.core.brandName;
         }
 
         return parsed;
