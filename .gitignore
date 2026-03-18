@@ -58,3 +58,4 @@ failed_code.txt
 processed_output.txt
 supabase-*-log.txt
 *.dump
+.claude/worktrees/
