@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Metadata } from 'next'
 import { ProgressSteps } from './components/progress-steps'
+import CustomizeClient from './customize-client'
 
 interface CustomizePageProps {
     params: Promise<{ slug: string }>
@@ -83,19 +84,14 @@ export default async function CustomizePage({ params }: CustomizePageProps) {
                 </p>
             </div>
 
-            {/* Placeholder for customization form (Plan 02) */}
-            <div
-                className="rounded-lg border-2 border-dashed p-8 text-center"
-                style={{ borderColor: '#E5E7EB' }}
-                data-claim-id={claim.id}
-                data-plan={claim.plan}
-                data-slug={slug}
-                data-prefill={JSON.stringify(prefill)}
-            >
-                <p className="text-sm" style={{ color: '#9CA3AF' }}>
-                    Customization form coming in Plan 02
-                </p>
-            </div>
+            {/* Customization form */}
+            <CustomizeClient
+                claimId={claim.id}
+                plan={claim.plan as 'standard' | 'pro'}
+                slug={slug}
+                prefill={prefill}
+                existingCustomization={customization ? { id: customization.id, status: customization.status } : null}
+            />
         </main>
     )
 }

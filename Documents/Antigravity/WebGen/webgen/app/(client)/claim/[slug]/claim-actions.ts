@@ -181,3 +181,134 @@ export async function createRazorpayOrder(input: {
         return { success: false, error: 'Payment setup failed. Please try again.' }
     }
 }
+
+// --- Customization Submission ---
+
+const customizationSchema = z.object({
+    claimId: z.string().uuid(),
+    logoUrl: z.string().min(1, 'Logo is required'),
+    primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).or(z.literal('')).optional().default(''),
+    secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).or(z.literal('')).optional().default(''),
+    phone: z.string().max(20).optional().default(''),
+    email: z.string().email().or(z.literal('')).optional().default(''),
+    address: z.string().max(500).optional().default(''),
+    whatsapp: z.string().max(20).optional().default(''),
+    photoUrls: z.array(z.string()).max(10).optional().default([]),
+    notes: z.string().max(1000).optional().default(''),
+    wantsBookingSystem: z.boolean().optional().default(false),
+    bookingPreferences: z.object({
+        serviceTypes: z.array(z.string()).max(10),
+        availableDays: z.array(z.string()),
+        hours: z.object({ start: z.string(), end: z.string() }),
+        bufferMinutes: z.number().min(0).max(120),
+    }).nullable().optional().default(null),
+})
+
+export async function submitCustomization(
+    input: z.infer<typeof customizationSchema>
+): Promise<{ success: true } | { success: false; error: string }> {
+    const parsed = customizationSchema.safeParse(input)
+
+    if (!parsed.success) {
+        const firstError = parsed.error.errors[0]?.message || 'Invalid input'
+        return { success: false, error: firstError }
+    }
+
+    const {
+        claimId,
+        logoUrl,
+        primaryColor,
+        secondaryColor,
+        phone,
+        email,
+        address,
+        whatsapp,
+        photoUrls,
+        notes,
+        wantsBookingSystem,
+        bookingPreferences,
+    } = parsed.data
+
+    try {
+        const supabase = createAdminClient()
+
+        // Verify claim is paid or customizing
+        const { data: claim } = await supabase
+            .from('claims')
+            .select('id, status')
+            .eq('id', claimId)
+            .in('status', ['paid', 'customizing'])
+            .maybeSingle()
+
+        if (!claim) {
+            return { success: false, error: 'Claim not found or not in a valid state.' }
+        }
+
+        // Build customization record
+        const customizationData = {
+            claim_id: claimId,
+            logo_url: logoUrl,
+            primary_color: primaryColor || null,
+            secondary_color: secondaryColor || null,
+            phone: phone || null,
+            email: email || null,
+            address: address || null,
+            photo_urls: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
+            notes: notes || null,
+            wants_booking_system: wantsBookingSystem,
+            booking_preferences: bookingPreferences ? JSON.stringify(bookingPreferences) : null,
+            status: 'pending' as const,
+        }
+
+        // Check for existing customization -- update if pending, otherwise insert
+        const { data: existing } = await supabase
+            .from('customizations')
+            .select('id, status')
+            .eq('claim_id', claimId)
+            .maybeSingle()
+
+        if (existing && existing.status === 'pending') {
+            // Update existing pending customization
+            const { error: updateError } = await supabase
+                .from('customizations')
+                .update(customizationData)
+                .eq('id', existing.id)
+
+            if (updateError) {
+                console.error('[ClaimActions] Failed to update customization:', updateError)
+                return { success: false, error: 'Failed to save customization. Please try again.' }
+            }
+        } else if (!existing) {
+            // Insert new customization
+            const { error: insertError } = await supabase
+                .from('customizations')
+                .insert(customizationData)
+
+            if (insertError) {
+                console.error('[ClaimActions] Failed to create customization:', insertError)
+                return { success: false, error: 'Failed to save customization. Please try again.' }
+            }
+        } else {
+            // Existing customization in non-pending state -- already submitted
+            return { success: false, error: 'Customization has already been submitted.' }
+        }
+
+        // Update claim status to 'customizing'
+        const { error: claimUpdateError } = await supabase
+            .from('claims')
+            .update({ status: 'customizing' })
+            .eq('id', claimId)
+
+        if (claimUpdateError) {
+            console.error('[ClaimActions] Failed to update claim status:', claimUpdateError)
+            // Non-fatal: customization was saved, status can be reconciled
+        }
+
+        console.log('[ClaimActions] Customization submitted for claim:', claimId)
+
+        return { success: true }
+    } catch (error) {
+        console.error('[ClaimActions] Customization submission failed:', error)
+        return { success: false, error: 'Something went wrong. Please try again.' }
+    }
+}
