@@ -165,3 +165,13 @@ ALTER TABLE queue_jobs ADD COLUMN IF NOT EXISTS model_id TEXT DEFAULT NULL;
 -- Seed initial prompt versions
 -- NOTE: Content should be copied from webgen/lib/ai/prompts/system.ts SYSTEM_PROMPT and prompts/revision.ts REVISION_SYSTEM_PROMPT
 -- For the SQL file, store a reference. The actual seeding will be done by prompt-manager.ts on first load via seedInitialPrompts().
+
+-- ============================================================
+-- PHASE 3: QUALITY AND INTELLIGENCE
+-- ============================================================
+
+-- Quality score column on projects
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS quality_score INTEGER DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_quality_score ON projects(quality_score) WHERE quality_score IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_status_created ON projects(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_generation_costs_model_created ON generation_costs(model, created_at);
