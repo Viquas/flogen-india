@@ -168,7 +168,7 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 - [x] **ANAL-01**: Track all funnel events (preview view, claim page view, CTA click, plan selected, payment initiated, payment completed, customization submitted)
 - [x] **ANAL-02**: `claim_events` table stores events with timestamp, IP, user agent, site_slug
-- [ ] **ANAL-03**: Admin dashboard shows conversion funnel visualization with drop-off rates
+- [x] **ANAL-03**: Admin dashboard shows conversion funnel visualization with drop-off rates
 
 ## Future Requirements
 
@@ -283,7 +283,7 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | UPSELL-04 | Phase 9 | Complete |
 | ANAL-01 | Phase 10 | Complete |
 | ANAL-02 | Phase 10 | Complete |
-| ANAL-03 | Phase 10 | Pending |
+| ANAL-03 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 51 total -- 51 complete
