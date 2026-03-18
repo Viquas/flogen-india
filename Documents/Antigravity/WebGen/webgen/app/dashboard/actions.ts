@@ -374,16 +374,16 @@ export async function getProjectRevisions(projectId: string) {
 
     const { data, error } = await supabase
         .from('project_revisions')
-        .select('*')
+        .select('id, project_id, version, generated_code, created_at, status')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
+        .order('version', { ascending: false })
 
     if (error) {
-        console.error('Failed to fetch project revisions:', error)
-        return { success: false, error: error.message }
+        console.error('Failed to fetch revisions:', error)
+        return { success: false as const, error: error.message, data: null }
     }
 
-    return { success: true, data }
+    return { success: true as const, data: data || [] }
 }
 
 export async function restoreProjectRevision(projectId: string, revisionId: string) {
