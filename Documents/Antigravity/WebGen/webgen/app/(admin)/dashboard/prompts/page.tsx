@@ -1,6 +1,8 @@
 import { getPromptVersions } from './actions'
 import { PromptVersionList } from './prompt-version-list'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PromptsPage() {
     const versionsByName = await getPromptVersions()
 
