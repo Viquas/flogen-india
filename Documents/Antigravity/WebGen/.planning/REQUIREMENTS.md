@@ -1,19 +1,19 @@
-# Requirements: WebGen
+# Requirements: Flogen
 
 **Defined:** 2026-03-18
-**Core Value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention.
+**Core Value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
 
-## v1 Requirements
+## v1.0 Requirements (Complete)
 
-Requirements for the 12 improvements milestone. Each maps to roadmap phases.
+<!-- All v1.0 requirements shipped 2026-03-18. See MILESTONES.md for details. -->
 
 ### Foundation Fixes
 
 - [x] **FIX-01**: Auto-fix returns the latest fix attempt (not original broken code) when both attempts fail, and sets status to 'error'
 - [x] **FIX-02**: Queue processing uses database-level uniqueness constraint to prevent duplicate job claims
 - [x] **FIX-03**: Background generation tasks use proper error tracking instead of fire-and-forget Promise chains
-- [ ] **FIX-04**: System prompt extracted from generator.ts into a separate versioned file
-- [ ] **FIX-05**: Generator module decomposed into focused modules (prompts, validation, cost tracking, error classification)
+- [x] **FIX-04**: System prompt extracted from generator.ts into a separate versioned file
+- [x] **FIX-05**: Generator module decomposed into focused modules (prompts, validation, cost tracking, error classification)
 - [x] **FIX-06**: Debug .txt files removed from codebase and added to .gitignore
 
 ### Cost & Token Tracking
@@ -21,28 +21,28 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 - [x] **COST-01**: Every AI generation logs input tokens, output tokens, model used, and estimated cost to a persistent table
 - [x] **COST-02**: Cost estimation uses a configurable pricing table (not hardcoded) that can be updated when provider prices change
 - [x] **COST-03**: Dashboard stats cards show running total spend for the current month
-- [ ] **COST-04**: Cost records include all AI calls (generation, enrichment, auto-fix retries), not just primary generation
+- [x] **COST-04**: Cost records include all AI calls (generation, enrichment, auto-fix retries), not just primary generation
 
 ### Error Classification
 
 - [x] **ERR-01**: Error taxonomy defined with categories: syntax error, render error, missing sections, style issues, data mapping failure, timeout
-- [ ] **ERR-02**: Errors automatically classified using Babel validation output and preview error signals
+- [x] **ERR-02**: Errors automatically classified using Babel validation output and preview error signals
 - [x] **ERR-03**: Each error category has a targeted fix prompt (not one generic fix-all prompt)
-- [ ] **ERR-04**: Error classification stored on project record (error_type, error_details columns)
+- [x] **ERR-04**: Error classification stored on project record (error_type, error_details columns)
 
 ### Prompt Versioning
 
 - [x] **PROMPT-01**: System prompt lives in a versioned, loadable format outside of generator.ts
-- [ ] **PROMPT-02**: Every generation records which prompt version was used
+- [x] **PROMPT-02**: Every generation records which prompt version was used
 - [x] **PROMPT-03**: User can switch which prompt version to use for the next generation
 - [x] **PROMPT-04**: Prompt versions stored in database with creation date and change notes
 
 ### Queue Health UI
 
-- [ ] **QUEUE-01**: Admin page shows count of queued, processing, completed, and failed jobs in real-time
-- [ ] **QUEUE-02**: Stuck jobs (processing > 10 min) are visually highlighted with warning indicator
-- [ ] **QUEUE-03**: One-click retry and cancel buttons for failed/stuck jobs
-- [ ] **QUEUE-04**: Job detail view shows error message, attempt count, and timestamps
+- [x] **QUEUE-01**: Admin page shows count of queued, processing, completed, and failed jobs in real-time
+- [x] **QUEUE-02**: Stuck jobs (processing > 10 min) are visually highlighted with warning indicator
+- [x] **QUEUE-03**: One-click retry and cancel buttons for failed/stuck jobs
+- [x] **QUEUE-04**: Job detail view shows error message, attempt count, and timestamps
 
 ### Quality Scoring
 
@@ -60,10 +60,10 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Analytics Dashboard
 
-- [x] **ANAL-01**: Dashboard page shows generation success/failure rate grouped by day/week
-- [x] **ANAL-02**: Average generation time displayed with p50/p95 latency breakdown
-- [x] **ANAL-03**: Metrics filterable by AI model and business industry
-- [x] **ANAL-04**: Cost summary showing total spend, cost per successful generation, cost per model
+- [x] **ANAL-v1-01**: Dashboard page shows generation success/failure rate grouped by day/week
+- [x] **ANAL-v1-02**: Average generation time displayed with p50/p95 latency breakdown
+- [x] **ANAL-v1-03**: Metrics filterable by AI model and business industry
+- [x] **ANAL-v1-04**: Cost summary showing total spend, cost per successful generation, cost per model
 
 ### Batch Autopilot
 
@@ -97,9 +97,98 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 - [x] **PRE-02**: Prefetch cache evicts old entries when user navigates past them
 - [x] **PRE-03**: Navigating to a prefetched project displays instantly from cache
 
-## v2 Requirements
+## v2.0 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Requirements for the client claim flow. Each maps to roadmap phases.
+
+### Infrastructure
+
+- [ ] **INFRA-01**: New Supabase tables: `claims` and `customizations` with proper foreign keys to existing `projects` table
+- [ ] **INFRA-02**: Supabase Storage buckets: `site-screenshots` and `claim-uploads` with appropriate access policies
+- [ ] **INFRA-03**: Route group restructuring: `(admin)/` for dashboard/editor, `(client)/` for claim flow pages
+- [ ] **INFRA-04**: Screenshot generation for site previews (generated during site creation, stored in Supabase Storage)
+- [ ] **INFRA-05**: Geo-detection utility using Vercel's `x-vercel-ip-country` header with USD fallback
+
+### CTA Injection
+
+- [ ] **CTA-01**: Every generated website displays a sticky bottom bar with "This website was made for {Business Name}" and a "Claim This Website" button linking to `/claim/{site_slug}`
+- [ ] **CTA-02**: CTA bar shows "X days left to claim" countdown based on server-side `expires_at` timestamp (5-day window)
+- [ ] **CTA-03**: CTA bar is style-isolated (inline styles, unique IDs) so it never conflicts with generated site styles
+- [ ] **CTA-04**: When a site's claim period has expired, the CTA bar shows "This offer has expired" with a "Request a new website" link
+
+### Claim Landing Page
+
+- [ ] **CLAIM-01**: Claim page at `/claim/{site_slug}` displays a full-width preview (screenshot) of the generated website with business name
+- [ ] **CLAIM-02**: Countdown timer shows days/hours/minutes/seconds until claim expiry, reading from server-provided `expires_at`
+- [ ] **CLAIM-03**: "What's Included" section displays 8 feature items in a responsive grid with icons
+- [ ] **CLAIM-04**: Pricing section shows Standard (₹4,999 / $499) and Pro (₹9,999 / $1,299) plans side-by-side with Pro highlighted as recommended
+- [ ] **CLAIM-05**: Geo-detection auto-selects INR or USD pricing on page load, with manual currency switch option
+- [ ] **CLAIM-06**: After plan selection, domain options appear: connect existing domain, buy new domain (with availability search), or use free subdomain
+- [ ] **CLAIM-07**: Trust section with "Trusted by X businesses" count, testimonials (hideable if empty), and FAQ accordion
+- [ ] **CLAIM-08**: Final CTA summarizes selections (plan + domain + price) and triggers Razorpay checkout
+- [ ] **CLAIM-09**: Page is server-side rendered, mobile-first, loads under 2.5s, with OG meta tags for WhatsApp/email sharing
+- [ ] **CLAIM-10**: Expired claims show "This offer has expired" with a "Request a new website" form (name + email + phone)
+
+### Payment
+
+- [ ] **PAY-01**: Razorpay order creation via server action with plan price + optional domain purchase price (amounts stored as integer paise)
+- [ ] **PAY-02**: Razorpay inline checkout modal opens on the claim page with business info prefilled
+- [ ] **PAY-03**: Razorpay webhook at `/api/webhooks/razorpay` verifies HMAC-SHA256 signature using raw request body (`request.text()`)
+- [ ] **PAY-04**: Webhook processing is idempotent (deduplication via `x-razorpay-event-id`, claim status guards)
+- [ ] **PAY-05**: On successful payment, claim record updates to `payment_status = 'completed'` and user redirects to customization form
+- [ ] **PAY-06**: Failed/cancelled payments redirect back to claim page with subtle error banner and allow re-attempt
+- [ ] **PAY-07**: Confirmation page polls for payment status (handles webhook-before-redirect race condition)
+
+### Customization Form
+
+- [ ] **CUST-01**: Customization form at `/claim/{site_slug}/customize` is only accessible after verified payment (server-side check)
+- [ ] **CUST-02**: Logo upload (required) via Supabase Storage with drag-and-drop, thumbnail preview, 5MB max, PNG/JPG/SVG
+- [ ] **CUST-03**: Brand color pickers (optional, default "keep current colors") with primary and secondary hex inputs
+- [ ] **CUST-04**: Contact info pre-filled from Google Maps data (phone, email, address, hours, WhatsApp) — editable
+- [ ] **CUST-05**: Text changes textarea (1000 char limit) for headline/content modification requests
+- [ ] **CUST-06**: Multi-photo upload (optional, max 10 photos, 5MB each) via Supabase Storage with thumbnails and remove button
+- [ ] **CUST-07**: Booking system setup section visible only for Pro plan (service types, available days/hours, buffer time)
+- [ ] **CUST-08**: On submit, creates customization record, updates site status to 'customizing', sends admin notification
+- [ ] **CUST-09**: Progress indicator shows Step 1 (Payment ✓) → Step 2 (Customize - current) → Step 3 (Go Live)
+
+### Upsell
+
+- [ ] **UPSELL-01**: After customization submission, strategy call upsell appears (free for Pro, ₹1,999/$49 for Standard)
+- [ ] **UPSELL-02**: Cal.com embed (iframe) for scheduling with available slots
+- [ ] **UPSELL-03**: "No thanks, continue to confirmation" skip link is clearly visible and easy to find
+- [ ] **UPSELL-04**: Standard plan call fee collected via Razorpay payment link before showing calendar
+
+### Confirmation
+
+- [ ] **CONF-01**: Confirmation page at `/claim/{site_slug}/confirmed` shows vertical timeline (payment ✓, customization ✓, updating, preview email, go live)
+- [ ] **CONF-02**: "What to do in the meantime" section with actionable next steps
+- [ ] **CONF-03**: Support contact section with WhatsApp link and email
+
+### Analytics
+
+- [ ] **ANAL-01**: Track all funnel events (preview view, claim page view, CTA click, plan selected, payment initiated, payment completed, customization submitted)
+- [ ] **ANAL-02**: `claim_events` table stores events with timestamp, IP, user agent, site_slug
+- [ ] **ANAL-03**: Admin dashboard shows conversion funnel visualization with drop-off rates
+
+## Future Requirements
+
+Deferred to future milestone. Tracked but not in current roadmap.
+
+### Email Notifications
+
+- **EMAIL-01**: Payment receipt email sent to client after successful payment
+- **EMAIL-02**: Confirmation email with timeline and next steps
+- **EMAIL-03**: Abandoned payment recovery email (sent 24h after incomplete checkout)
+
+### Domain Registration
+
+- **DOMAIN-01**: Automated domain registration via registrar API (GoDaddy/Namecheap)
+- **DOMAIN-02**: Automated DNS configuration for purchased domains
+
+### Automated Deployment
+
+- **DEPLOY-01**: One-click deploy of finalized sites to hosting
+- **DEPLOY-02**: SSL certificate provisioning for custom domains
 
 ### Autopilot Enhancements
 
@@ -111,105 +200,97 @@ Deferred to future release. Tracked but not in current roadmap.
 
 - **QUAL-05**: Visual regression scoring via headless browser screenshots
 - **QUAL-06**: Responsiveness check at 3 viewport widths
-- **QUAL-07**: Industry-specific scoring rubrics (restaurants need menus, dentists need CTAs)
-
-### Export Enhancements
-
-- **EXP-04**: Vercel/Netlify deploy integration via API
-- **EXP-05**: Multi-page export (about, services, contact as separate routes)
-- **EXP-06**: SEO metadata injection (meta tags, Open Graph, schema.org)
-
-### Analytics Enhancements
-
-- **ANAL-05**: Failure pattern heatmap (industry x model matrix)
-- **ANAL-06**: Prompt version comparison metrics
-- **ANAL-07**: CSV export of raw analytics data
-
-### Other Enhancements
-
-- **TMPL-05**: Negative few-shot examples for LLM contrast learning
-- **PROMPT-05**: A/B testing parallel generations with different prompt versions
-- **KEY-05**: Batch select with Shift+j/k for bulk operations
-- **DIFF-04**: AI-generated natural language change summaries
-- **PRE-04**: Background iframe pre-rendering (not just data prefetch)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Multi-user auth / RBAC | Single user, internal tool |
-| Public-facing API | No external consumers |
-| Rate limiting | Trusted local use only |
-| Mobile app | Desktop browser workflow |
-| Payment processing | Not a commercial product |
-| CMS integration (WordPress/Webflow export) | Value is in static simplicity |
-| Custom domain mapping | Way beyond scope, hosting is external |
-| Custom report builder for analytics | Fixed dashboard sufficient for single user |
-| Auto-optimization of prompts via LLM | Manual iteration safer and more predictable |
-| Real-time streaming analytics dashboard | Unnecessary; refresh on navigation sufficient |
-| Human calibration UI for quality scoring | Single user approves or regenerates, no feedback loop needed |
+| Stripe payments | Razorpay handles all markets (INR primary, USD secondary) |
+| Multi-user admin auth | Single operator, internal admin tool |
+| Client self-edit portal | Operator handles all customizations manually |
+| Real-time chat support | WhatsApp + email support is sufficient |
+| Automated domain registration | Manual DNS instructions for now, defer API integration |
+| Automated site deployment | Manual deployment after customization, defer automation |
+| Email sending (receipts, reminders) | No email service in stack yet, defer to future milestone |
+| CMS for client content management | Static sites, operator-managed |
+| Mobile admin app | Desktop browser workflow for admin |
 
 ## Traceability
 
+### v1.0 (Complete)
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 1 | Complete |
-| FIX-02 | Phase 1 | Complete |
-| FIX-03 | Phase 1 | Complete |
-| FIX-04 | Phase 1 | Pending |
-| FIX-05 | Phase 1 | Pending |
-| FIX-06 | Phase 1 | Complete |
-| COST-01 | Phase 2 | Complete |
-| COST-02 | Phase 2 | Complete |
-| COST-03 | Phase 2 | Complete |
-| COST-04 | Phase 2 | Pending |
-| ERR-01 | Phase 2 | Complete |
-| ERR-02 | Phase 2 | Pending |
-| ERR-03 | Phase 2 | Complete |
-| ERR-04 | Phase 2 | Pending |
-| PROMPT-01 | Phase 2 | Complete |
-| PROMPT-02 | Phase 2 | Pending |
-| PROMPT-03 | Phase 2 | Complete |
-| PROMPT-04 | Phase 2 | Complete |
-| QUEUE-01 | Phase 2 | Pending |
-| QUEUE-02 | Phase 2 | Pending |
-| QUEUE-03 | Phase 2 | Pending |
-| QUEUE-04 | Phase 2 | Pending |
-| QUAL-01 | Phase 3 | Complete |
-| QUAL-02 | Phase 3 | Complete |
-| QUAL-03 | Phase 3 | Complete |
-| QUAL-04 | Phase 3 | Complete |
-| TMPL-01 | Phase 3 | Complete |
-| TMPL-02 | Phase 3 | Complete |
-| TMPL-03 | Phase 3 | Complete |
-| TMPL-04 | Phase 3 | Complete |
-| ANAL-01 | Phase 3 | Complete |
-| ANAL-02 | Phase 3 | Complete |
-| ANAL-03 | Phase 3 | Complete |
-| ANAL-04 | Phase 3 | Complete |
-| AUTO-01 | Phase 4 | Complete |
-| AUTO-02 | Phase 4 | Complete |
-| AUTO-03 | Phase 4 | Complete |
-| AUTO-04 | Phase 4 | Complete |
-| KEY-01 | Phase 5 | Complete |
-| KEY-02 | Phase 5 | Complete |
-| KEY-03 | Phase 5 | Complete |
-| KEY-04 | Phase 5 | Complete |
-| DIFF-01 | Phase 5 | Complete |
-| DIFF-02 | Phase 5 | Complete |
-| DIFF-03 | Phase 5 | Complete |
-| EXP-01 | Phase 5 | Complete |
-| EXP-02 | Phase 5 | Complete |
-| EXP-03 | Phase 5 | Complete |
-| PRE-01 | Phase 5 | Complete |
-| PRE-02 | Phase 5 | Complete |
-| PRE-03 | Phase 5 | Complete |
+| FIX-01 through FIX-06 | Phase 1 | Complete |
+| COST-01 through COST-04 | Phase 2 | Complete |
+| ERR-01 through ERR-04 | Phase 2 | Complete |
+| PROMPT-01 through PROMPT-04 | Phase 2 | Complete |
+| QUEUE-01 through QUEUE-04 | Phase 2 | Complete |
+| QUAL-01 through QUAL-04 | Phase 3 | Complete |
+| TMPL-01 through TMPL-04 | Phase 3 | Complete |
+| ANAL-v1-01 through ANAL-v1-04 | Phase 3 | Complete |
+| AUTO-01 through AUTO-04 | Phase 4 | Complete |
+| KEY-01 through KEY-04 | Phase 5 | Complete |
+| DIFF-01 through DIFF-03 | Phase 5 | Complete |
+| EXP-01 through EXP-03 | Phase 5 | Complete |
+| PRE-01 through PRE-03 | Phase 5 | Complete |
+
+### v2.0 (Pending)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| INFRA-01 | TBD | Pending |
+| INFRA-02 | TBD | Pending |
+| INFRA-03 | TBD | Pending |
+| INFRA-04 | TBD | Pending |
+| INFRA-05 | TBD | Pending |
+| CTA-01 | TBD | Pending |
+| CTA-02 | TBD | Pending |
+| CTA-03 | TBD | Pending |
+| CTA-04 | TBD | Pending |
+| CLAIM-01 | TBD | Pending |
+| CLAIM-02 | TBD | Pending |
+| CLAIM-03 | TBD | Pending |
+| CLAIM-04 | TBD | Pending |
+| CLAIM-05 | TBD | Pending |
+| CLAIM-06 | TBD | Pending |
+| CLAIM-07 | TBD | Pending |
+| CLAIM-08 | TBD | Pending |
+| CLAIM-09 | TBD | Pending |
+| CLAIM-10 | TBD | Pending |
+| PAY-01 | TBD | Pending |
+| PAY-02 | TBD | Pending |
+| PAY-03 | TBD | Pending |
+| PAY-04 | TBD | Pending |
+| PAY-05 | TBD | Pending |
+| PAY-06 | TBD | Pending |
+| PAY-07 | TBD | Pending |
+| CUST-01 | TBD | Pending |
+| CUST-02 | TBD | Pending |
+| CUST-03 | TBD | Pending |
+| CUST-04 | TBD | Pending |
+| CUST-05 | TBD | Pending |
+| CUST-06 | TBD | Pending |
+| CUST-07 | TBD | Pending |
+| CUST-08 | TBD | Pending |
+| CUST-09 | TBD | Pending |
+| UPSELL-01 | TBD | Pending |
+| UPSELL-02 | TBD | Pending |
+| UPSELL-03 | TBD | Pending |
+| UPSELL-04 | TBD | Pending |
+| CONF-01 | TBD | Pending |
+| CONF-02 | TBD | Pending |
+| CONF-03 | TBD | Pending |
+| ANAL-01 | TBD | Pending |
+| ANAL-02 | TBD | Pending |
+| ANAL-03 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 51 total
-- Mapped to phases: 51
-- Unmapped: 0
+- v1.0 requirements: 51 total — 51 complete ✓
+- v2.0 requirements: 42 total
+- Mapped to phases: 0
+- Unmapped: 42 ⚠️
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after roadmap creation (phase numbers updated to 1-5)*
+*Last updated: 2026-03-18 after v2.0 milestone start*
