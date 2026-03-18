@@ -326,6 +326,50 @@ export type Database = {
                 }
                 Relationships: []
             }
+            batch_runs: {
+                Row: {
+                    id: string
+                    batch_id: string | null
+                    current_stage: 'pending' | 'discovering' | 'enqueueing' | 'generating' | 'fixing' | 'scoring' | 'completed' | 'failed'
+                    config: Json
+                    progress: Json
+                    error_message: string | null
+                    started_at: string
+                    completed_at: string | null
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    batch_id?: string | null
+                    current_stage?: 'pending' | 'discovering' | 'enqueueing' | 'generating' | 'fixing' | 'scoring' | 'completed' | 'failed'
+                    config: Json
+                    progress?: Json
+                    error_message?: string | null
+                    started_at?: string
+                    completed_at?: string | null
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    batch_id?: string | null
+                    current_stage?: 'pending' | 'discovering' | 'enqueueing' | 'generating' | 'fixing' | 'scoring' | 'completed' | 'failed'
+                    config?: Json
+                    progress?: Json
+                    error_message?: string | null
+                    started_at?: string
+                    completed_at?: string | null
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "batch_runs_batch_id_fkey"
+                        columns: ["batch_id"]
+                        isOneToOne: false
+                        referencedRelation: "batches"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             generation_costs: {
                 Row: {
                     id: string

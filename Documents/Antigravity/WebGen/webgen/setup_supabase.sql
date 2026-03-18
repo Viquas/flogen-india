@@ -175,3 +175,27 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS quality_score INTEGER DEFAULT NULL
 CREATE INDEX IF NOT EXISTS idx_projects_quality_score ON projects(quality_score) WHERE quality_score IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_projects_status_created ON projects(status, created_at);
 CREATE INDEX IF NOT EXISTS idx_generation_costs_model_created ON generation_costs(model, created_at);
+
+-- ============================================================
+-- PHASE 4: BATCH AUTOPILOT
+-- ============================================================
+
+-- 9. Batch Runs Table: DB-backed state machine for autopilot pipeline
+CREATE TABLE IF NOT EXISTS batch_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    batch_id UUID REFERENCES batches(id) ON DELETE SET NULL,
+    current_stage TEXT NOT NULL DEFAULT 'pending'
+        CHECK (current_stage IN ('pending', 'discovering', 'enqueueing', 'generating', 'fixing', 'scoring', 'completed', 'failed')),
+    config JSONB NOT NULL,
+    progress JSONB NOT NULL DEFAULT '{"total_projects":0,"generated":0,"fixed":0,"failed":0,"avg_quality_score":null}'::jsonb,
+    error_message TEXT DEFAULT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at TIMESTAMPTZ DEFAULT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_batch_runs_stage ON batch_runs(current_stage) WHERE current_stage NOT IN ('completed', 'failed');
+CREATE INDEX IF NOT EXISTS idx_batch_runs_batch ON batch_runs(batch_id);
+
+ALTER TABLE batch_runs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all access to batch_runs" ON batch_runs FOR ALL USING (true) WITH CHECK (true);
