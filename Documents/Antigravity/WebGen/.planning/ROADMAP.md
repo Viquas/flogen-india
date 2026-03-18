@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Instrumentation** - Add cost tracking, error classification, prompt versioning, and queue health visibility (completed 2026-03-17)
 - [x] **Phase 3: Quality and Intelligence** - Automated quality scoring, industry-aware template seeding, analytics dashboard (completed 2026-03-18)
 - [x] **Phase 4: Batch Autopilot** - End-to-end pipeline orchestration from discovery to failure surfacing (completed 2026-03-18)
-- [ ] **Phase 5: UX Acceleration** - Keyboard-driven review, diff view, static export, preview pre-rendering
+- [x] **Phase 5: UX Acceleration** - Keyboard-driven review, diff view, static export, preview pre-rendering (completed 2026-03-18)
 
 ## Phase Details
 
@@ -111,7 +111,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Instrumentation | 3/4 | Complete    | 2026-03-17 |
 | 3. Quality and Intelligence | 0/3 | Complete    | 2026-03-18 |
 | 4. Batch Autopilot | 0/2 | Complete    | 2026-03-18 |
-| 5. UX Acceleration | 1/4 | In Progress | - |
+| 5. UX Acceleration | 1/4 | Complete    | 2026-03-18 |
 
 ---
 *Roadmap created: 2026-03-18*
