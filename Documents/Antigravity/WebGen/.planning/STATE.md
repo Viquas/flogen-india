@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-18T00:16:57.769Z"
+status: in-progress
+last_updated: "2026-03-18T00:34:23Z"
 progress:
-  total_phases: 3
+  total_phases: 5
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention.
-**Current focus:** Phase 3: Quality and Intelligence
+**Current focus:** Phase 4: Batch Autopilot
 
 ## Current Position
 
-Phase: 3 of 5 (Quality and Intelligence)
-Plan: 3 of 3 in current phase (03-03 complete)
-Status: Phase Complete
-Last activity: 2026-03-18 -- Completed 03-02-PLAN.md (template seeding with sanitization, backfill)
+Phase: 4 of 5 (Batch Autopilot)
+Plan: 1 of 2 in current phase (04-01 complete)
+Status: In Progress
+Last activity: 2026-03-18 -- Completed 04-01-PLAN.md (autopilot backend state machine)
 
-Progress: [██████████░░] 71%
+Progress: [████████████░░] 82%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 4min
-- Total execution time: 0.65 hours
+- Total execution time: 0.73 hours
 
 **By Phase:**
 
@@ -43,9 +43,10 @@ Progress: [██████████░░] 71%
 | 01-foundation-fixes | 2 | 4min | 2min |
 | 02-instrumentation | 4 | 20min | 5min |
 | 03-quality-and-intelligence | 3 | 15min | 5min |
+| 04-batch-autopilot | 1 | 5min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (?), 02-04 (3min), 03-01 (4min), 03-02 (4min), 03-03 (4min)
+- Last 5 plans: 02-04 (3min), 03-01 (4min), 03-02 (4min), 03-03 (4min), 04-01 (5min)
 - Trend: Steady
 
 *Updated after each plan completion*
@@ -79,6 +80,10 @@ Recent decisions affecting current work:
 - [03-02]: Fixed column name from plan's 'code' to actual schema 'generated_code' for templates table
 - [03-02]: Dynamic import of template-seeder for clean module boundaries and graceful degradation
 - [03-02]: Fallback strategy: best-rated template regardless of industry when no industry match found
+- [04-01]: Separate discovery from enqueueing for crash recovery (two-stage approach)
+- [04-01]: Polling-based GENERATE wait with 5s interval, stuck-job reset at 5min, configurable timeout
+- [04-01]: FIX stage uses same Promise.allSettled concurrency=3 pattern as existing autoFixAllErrors
+- [04-01]: SCORING stage reads existing quality_score rather than re-scoring
 
 ### Pending Todos
 
@@ -92,5 +97,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 03-02-PLAN.md (template seeding backfill) -- Phase 3 fully complete (all 3 summaries present)
+Stopped at: Completed 04-01-PLAN.md (autopilot backend state machine) -- Phase 4 plan 1 of 2 complete
 Resume file: None
