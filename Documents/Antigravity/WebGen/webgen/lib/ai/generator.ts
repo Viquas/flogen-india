@@ -494,6 +494,19 @@ Return the COMPLETE updated React code.`
             return { success: false, error: updateResult.error }
         }
 
+        // --- 4. QUALITY SCORING (fire-and-forget, never blocks generation) ---
+        try {
+            const { scoreGeneratedCode } = await import('./quality-scorer')
+            const score = scoreGeneratedCode(validatedCode, data as Record<string, unknown>, !fixFailed)
+            await supabase
+                .from('projects')
+                .update({ quality_score: score.overall })
+                .eq('id', projectId)
+        } catch (scoreErr) {
+            console.error(`[QualityScorer] Scoring failed for ${projectId}:`, scoreErr)
+            // Never block generation for scoring failure
+        }
+
         return { success: true, code: validatedCode }
     } catch (error) {
         console.error('Generation failed:', error)

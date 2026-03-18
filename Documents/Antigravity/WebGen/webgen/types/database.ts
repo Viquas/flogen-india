@@ -46,6 +46,7 @@ export type Database = {
                     error_type: string | null
                     error_details: string | null
                     prompt_version_id: string | null
+                    quality_score: number | null
                     created_at: string
                     updated_at: string
                 }
@@ -61,6 +62,7 @@ export type Database = {
                     error_type?: string | null
                     error_details?: string | null
                     prompt_version_id?: string | null
+                    quality_score?: number | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -76,6 +78,7 @@ export type Database = {
                     error_type?: string | null
                     error_details?: string | null
                     prompt_version_id?: string | null
+                    quality_score?: number | null
                     created_at?: string
                     updated_at?: string
                 }
