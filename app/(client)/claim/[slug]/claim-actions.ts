@@ -210,7 +210,7 @@ export async function submitCustomization(
     const parsed = customizationSchema.safeParse(input)
 
     if (!parsed.success) {
-        const firstError = parsed.error.errors[0]?.message || 'Invalid input'
+        const firstError = parsed.error.issues?.[0]?.message || parsed.error.message || 'Invalid input'
         return { success: false, error: firstError }
     }
 
