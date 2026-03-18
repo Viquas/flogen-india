@@ -47,7 +47,7 @@ Progress: [████████████████] 100%
 | 05-ux-acceleration | 4 | 12min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (5min), 04-02 (4min), 05-01 (3min), 05-04 (3min)
+- Last 5 plans: 04-01 (5min), 04-02 (4min), 05-01 (3min), 05-02 (5min), 05-04 (3min)
 - Trend: Steady
 
 *Updated after each plan completion*
@@ -96,6 +96,10 @@ Recent decisions affecting current work:
 - [05-04]: requestIdleCallback with 2s timeout for non-blocking prefetch (per P12 pitfall)
 - [05-04]: localStorage for dashboard-to-editor project order coordination (no shared provider needed)
 - [05-04]: applyProjectData extracted as useCallback helper shared by cache-hit and fresh-load paths
+- [05-02]: Updated existing getProjectRevisions instead of adding duplicate (already existed from prior phase)
+- [05-02]: Two-click selection pattern: first click=newer (blue), second click=older (orange)
+- [05-02]: Auto-select current + previous revision on load for immediate diff display
+- [05-02]: Removed content area padding in diff mode for full-width Monaco diff editor
 
 ### Pending Todos
 

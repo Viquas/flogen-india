@@ -81,9 +81,9 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Diff View
 
-- [ ] **DIFF-01**: Side-by-side code diff view using Monaco diff editor for any two revisions
-- [ ] **DIFF-02**: Revision history list shows all revisions with timestamps, selectable for comparison
-- [ ] **DIFF-03**: Visual preview diff shows before/after rendered preview side-by-side in iframes
+- [x] **DIFF-01**: Side-by-side code diff view using Monaco diff editor for any two revisions
+- [x] **DIFF-02**: Revision history list shows all revisions with timestamps, selectable for comparison
+- [x] **DIFF-03**: Visual preview diff shows before/after rendered preview side-by-side in iframes
 
 ### Static Export
 
@@ -195,9 +195,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | KEY-02 | Phase 5 | Complete |
 | KEY-03 | Phase 5 | Complete |
 | KEY-04 | Phase 5 | Complete |
-| DIFF-01 | Phase 5 | Pending |
-| DIFF-02 | Phase 5 | Pending |
-| DIFF-03 | Phase 5 | Pending |
+| DIFF-01 | Phase 5 | Complete |
+| DIFF-02 | Phase 5 | Complete |
+| DIFF-03 | Phase 5 | Complete |
 | EXP-01 | Phase 5 | Pending |
 | EXP-02 | Phase 5 | Pending |
 | EXP-03 | Phase 5 | Pending |
