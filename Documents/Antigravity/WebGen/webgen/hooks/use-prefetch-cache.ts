@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useCallback } from "react"
-import { getProjectById } from "@/app/dashboard/actions"
+import { getProjectById } from "@/app/(admin)/dashboard/actions"
 
 /**
  * Cached project data structure.

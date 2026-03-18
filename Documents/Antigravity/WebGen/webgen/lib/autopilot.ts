@@ -15,7 +15,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { discoverBusinesses } from '@/lib/discovery'
 import { generationQueue } from '@/lib/queue'
-import { fixWebsiteErrors } from '@/app/dashboard/actions'
+import { fixWebsiteErrors } from '@/app/(admin)/dashboard/actions'
 import type {
   PipelineStage,
   BatchRun,
@@ -199,6 +199,18 @@ async function executeGenerateStage(run: BatchRun): Promise<void> {
   console.log(`[Autopilot] GENERATE: waiting for queue (timeout: ${timeoutMs / 1000}s)`)
 
   while (true) {
+    // Check if this run was externally cancelled (e.g. user pressed Stop All)
+    const { data: runCheck } = await supabase
+      .from('batch_runs')
+      .select('current_stage')
+      .eq('id', run.id)
+      .single()
+
+    if (runCheck?.current_stage === 'failed' || runCheck?.current_stage === 'completed') {
+      console.log(`[Autopilot] GENERATE: run ${run.id} was externally ${runCheck.current_stage}, aborting`)
+      return
+    }
+
     // Get project IDs for this batch
     const { data: batchProjects } = await supabase
       .from('projects')
@@ -460,6 +472,12 @@ export async function runAutopilotPipeline(runId: string): Promise<void> {
 
       if (!freshRow) {
         throw new Error('Batch run disappeared during execution')
+      }
+
+      // Abort if externally cancelled
+      if (freshRow.current_stage === 'failed' || freshRow.current_stage === 'completed') {
+        console.log(`[Autopilot] Pipeline ${runId} was externally ${freshRow.current_stage}, stopping`)
+        return
       }
 
       const run = parseBatchRun(freshRow)

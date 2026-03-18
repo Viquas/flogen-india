@@ -4,7 +4,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2, RefreshCcw, Wrench } from "lucide-react"
 import React, { useState, useEffect } from "react"
-import { regenerateProject, fixWebsiteErrors } from "@/app/dashboard/actions"
+import { regenerateProject, fixWebsiteErrors } from "@/app/(admin)/dashboard/actions"
 import { createClient } from "@/lib/supabase/client"
 
 interface Project {
@@ -115,8 +115,10 @@ export function ProjectCard({ project, isSelected, isFocused, onSelect, cardRef 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.badgeColor}`}>
-                            <Icon className={`h-3.5 w-3.5 ${project.status === 'generating' ? 'animate-spin' : ''}`} />
-                            {statusConfig.label}
+                            <Icon className={`h-3.5 w-3.5 ${project.status === 'generating' || project.status === 'queued' && livePhase ? 'animate-spin' : ''}`} />
+                            {(project.status === 'generating' || project.status === 'queued') && livePhase
+                                ? livePhase.replace(/\.\.\.$/, '').replace(/\.\.\.$/, '')
+                                : statusConfig.label}
                         </span>
                         {project.quality_score != null && (
                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums ${
@@ -146,7 +148,7 @@ export function ProjectCard({ project, isSelected, isFocused, onSelect, cardRef 
 
                 <div className="flex gap-2">
                     <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground border border-border">
-                        {project.business_data?.industry || "General"}
+                        {project.business_data?.industry || project.business_data?.brandIdentity?.vibe?.industry || "General"}
                     </span>
                 </div>
 

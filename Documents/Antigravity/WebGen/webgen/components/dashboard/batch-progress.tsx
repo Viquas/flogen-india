@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { CheckCircle2, XCircle, Clock, Zap } from "lucide-react"
+import { CheckCircle2, XCircle, Clock, Zap, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { getAutopilotProgress } from "@/app/dashboard/actions"
+import { Progress } from "@/components/ui/progress"
+import { getAutopilotProgress } from "@/app/(admin)/dashboard/actions"
 import { formatDistanceToNow } from "date-fns"
 
 interface BatchProgressProps {
@@ -20,23 +21,17 @@ const STAGES = [
     { key: "completed", label: "Done" },
 ] as const
 
-type StageKey = (typeof STAGES)[number]["key"]
-
 function getStageIndex(stage: string): number {
-    const idx = STAGES.findIndex((s) => s.key === stage)
-    return idx >= 0 ? idx : -1
+    return STAGES.findIndex((s) => s.key === stage)
 }
 
-function getStageDotClass(stageKey: string, currentStage: string, isFailed: boolean): string {
-    if (isFailed && stageKey === currentStage) {
-        return "bg-red-500"
-    }
+function getStageStatus(stageKey: string, currentStage: string, isFailed: boolean): "done" | "active" | "failed" | "pending" {
+    if (isFailed && stageKey === currentStage) return "failed"
     const currentIdx = getStageIndex(currentStage)
     const thisIdx = getStageIndex(stageKey)
-
-    if (thisIdx < currentIdx) return "bg-green-500"
-    if (thisIdx === currentIdx) return "bg-blue-500 animate-pulse"
-    return "bg-zinc-300"
+    if (thisIdx < currentIdx) return "done"
+    if (thisIdx === currentIdx) return "active"
+    return "pending"
 }
 
 export function BatchProgress({ runId, onComplete }: BatchProgressProps) {
@@ -81,7 +76,7 @@ export function BatchProgress({ runId, onComplete }: BatchProgressProps) {
     }, [runId, onComplete])
 
     useEffect(() => {
-        poll() // initial fetch
+        poll()
         intervalRef.current = setInterval(poll, 3000)
         return () => {
             if (intervalRef.current) {
@@ -93,66 +88,78 @@ export function BatchProgress({ runId, onComplete }: BatchProgressProps) {
     const totalProcessed = progress ? progress.generated + progress.error : 0
     const total = progress?.total ?? 0
     const progressPct = total > 0 ? Math.round((totalProcessed / total) * 100) : 0
-    const greenPct = total > 0 ? Math.round((progress!.generated / total) * 100) : 0
-    const redPct = total > 0 ? Math.round((progress!.error / total) * 100) : 0
 
     return (
-        <div className="rounded-lg border border-orange-200 bg-orange-50/30 p-4 space-y-4">
-            {/* Stage stepper */}
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-                {STAGES.map((s, i) => (
-                    <div key={s.key} className="flex items-center gap-1.5">
-                        <div className="flex flex-col items-center gap-1">
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 space-y-3">
+            {/* Stage stepper — horizontal pills */}
+            <div className="flex items-center gap-1">
+                {STAGES.map((s, i) => {
+                    const status = getStageStatus(s.key, stage, isFailed)
+                    return (
+                        <div key={s.key} className="flex items-center gap-1">
                             <div
-                                className={`h-3 w-3 rounded-full ${getStageDotClass(s.key, stage, isFailed)}`}
-                            />
-                            <span className="text-[10px] text-zinc-500 whitespace-nowrap">
+                                className={`
+                                    flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                                    ${status === "done" ? "bg-emerald-100 text-emerald-700" : ""}
+                                    ${status === "active" ? "bg-blue-100 text-blue-700" : ""}
+                                    ${status === "failed" ? "bg-red-100 text-red-700" : ""}
+                                    ${status === "pending" ? "bg-zinc-100 text-zinc-400" : ""}
+                                `}
+                            >
+                                {status === "done" && <CheckCircle2 className="h-2.5 w-2.5" />}
+                                {status === "active" && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
+                                {status === "failed" && <XCircle className="h-2.5 w-2.5" />}
                                 {s.label}
-                            </span>
+                            </div>
+                            {i < STAGES.length - 1 && (
+                                <div className={`w-3 h-px ${getStageIndex(s.key) < getStageIndex(stage) ? "bg-emerald-300" : "bg-zinc-200"}`} />
+                            )}
                         </div>
-                        {i < STAGES.length - 1 && (
-                            <div className="w-6 h-px bg-zinc-300 mt-[-12px]" />
-                        )}
-                    </div>
-                ))}
+                    )
+                })}
             </div>
 
-            {/* Progress counts */}
+            {/* Progress section */}
             {progress && (
                 <div className="space-y-2">
-                    <p className="text-sm text-zinc-700">
-                        <span className="font-medium">{progress.generated}</span> of{" "}
-                        <span className="font-medium">{total}</span> generated
-                        {progress.error > 0 && (
-                            <span className="text-red-600">
-                                , <span className="font-medium">{progress.error}</span> failed
-                            </span>
-                        )}
-                        {progress.generating > 0 && (
-                            <span className="text-blue-600">
-                                , <span className="font-medium">{progress.generating}</span> in progress
-                            </span>
-                        )}
-                    </p>
+                    {/* Counts + percentage */}
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs text-zinc-600">
+                            <span className="font-semibold text-zinc-900">{progress.generated}</span>
+                            <span className="text-zinc-400">/{total}</span>
+                            <span className="ml-1">generated</span>
+                            {progress.error > 0 && (
+                                <span className="text-red-500 ml-2">
+                                    {progress.error} failed
+                                </span>
+                            )}
+                            {progress.generating > 0 && (
+                                <span className="text-blue-500 ml-2">
+                                    {progress.generating} in progress
+                                </span>
+                            )}
+                        </p>
+                        <span className="text-xs font-mono text-zinc-400">{progressPct}%</span>
+                    </div>
 
                     {/* Progress bar */}
-                    <div className="h-2 w-full bg-zinc-200 rounded-full overflow-hidden flex">
-                        {greenPct > 0 && (
+                    <div className="h-1.5 w-full bg-zinc-200 rounded-full overflow-hidden flex">
+                        {progress.generated > 0 && (
                             <div
-                                className="bg-green-500 h-full transition-all duration-500"
-                                style={{ width: `${greenPct}%` }}
+                                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                                style={{ width: `${total > 0 ? (progress.generated / total) * 100 : 0}%` }}
                             />
                         )}
-                        {redPct > 0 && (
+                        {progress.error > 0 && (
                             <div
-                                className="bg-red-500 h-full transition-all duration-500"
-                                style={{ width: `${redPct}%` }}
+                                className="bg-red-400 h-full transition-all duration-500"
+                                style={{ width: `${total > 0 ? (progress.error / total) * 100 : 0}%` }}
                             />
                         )}
                     </div>
 
-                    {/* Stats row */}
-                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                    {/* Meta row */}
+                    <div className="flex items-center gap-3 text-[11px] text-zinc-400">
                         {startedAt && (
                             <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
@@ -160,40 +167,42 @@ export function BatchProgress({ runId, onComplete }: BatchProgressProps) {
                             </span>
                         )}
                         {progress.avgQuality != null && (
-                            <Badge variant="secondary" className="text-[10px] gap-1 bg-white">
+                            <span className="flex items-center gap-1">
                                 <Zap className="h-3 w-3 text-amber-500" />
-                                Avg Quality: {progress.avgQuality}
-                            </Badge>
+                                Quality: {progress.avgQuality}
+                            </span>
                         )}
-                        <span className="ml-auto text-zinc-400">{progressPct}%</span>
                     </div>
                 </div>
             )}
 
-            {/* Completion state */}
+            {/* Completion */}
             {isComplete && !isFailed && (
-                <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-md px-3 py-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span className="text-sm font-medium">Pipeline completed</span>
+                <div className="flex items-center gap-2 text-emerald-700 text-xs font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Pipeline completed
                 </div>
             )}
 
-            {/* Failed state */}
+            {/* Failed */}
             {isFailed && (
-                <div className="bg-red-50 border border-red-200 rounded-md px-3 py-2 space-y-1">
-                    <div className="flex items-center gap-2 text-red-700">
-                        <XCircle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Pipeline failed</span>
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-red-600 text-xs font-medium">
+                        <XCircle className="h-3.5 w-3.5" />
+                        Pipeline failed
                     </div>
                     {errorMessage && (
-                        <p className="text-xs text-red-600">{errorMessage}</p>
+                        <p className="text-[11px] text-red-500 pl-5">{errorMessage}</p>
                     )}
                 </div>
             )}
 
-            {/* Pending/no progress yet */}
+            {/* Pending */}
             {!progress && !isComplete && (
-                <p className="text-sm text-zinc-500 animate-pulse">Starting pipeline...</p>
+                <div className="flex items-center gap-2 text-xs text-zinc-400">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Starting pipeline...
+                </div>
             )}
         </div>
     )

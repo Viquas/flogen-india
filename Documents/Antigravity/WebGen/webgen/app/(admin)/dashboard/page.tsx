@@ -6,7 +6,7 @@ import { RealtimeProjectsListener } from '@/components/dashboard/realtime-listen
 import { Search } from 'lucide-react'
 import Link from 'next/link'
 import { DiscoverySearch } from '@/components/dashboard/discovery-search'
-import { getMonthActivityCounts, getCostStats } from '@/app/dashboard/actions'
+import { getMonthActivityCounts, getCostStats } from '@/app/(admin)/dashboard/actions'
 import { QuickDateChips } from '@/components/dashboard/quick-date-chips'
 
 interface DashboardPageProps {

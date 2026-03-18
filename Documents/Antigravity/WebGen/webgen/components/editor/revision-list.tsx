@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getProjectRevisions } from "@/app/dashboard/actions"
+import { getProjectRevisions } from "@/app/(admin)/dashboard/actions"
 import { format } from "date-fns"
 import { Loader2 } from "lucide-react"
 

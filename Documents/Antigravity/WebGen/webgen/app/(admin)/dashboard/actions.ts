@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { generateAndSaveWebsite, reviseWebsite, updateProjectWithCode, cleanTemplateCode } from '@/lib/ai/generator'
 import { enrichBusinessData } from '@/lib/ai/enricher'
+import { generationQueue } from '@/lib/queue'
 
 /**
  * Reset projects stuck in 'generating' status for longer than `minutesThreshold`.
@@ -34,37 +35,24 @@ export async function resetStuckProjects(minutesThreshold = 10) {
 export async function regenerateProject(projectId: string) {
     const supabase = createAdminClient()
 
-    const { error } = await supabase
+    // Clear any previous pending/processing queue_jobs so add() doesn't dedup
+    await supabase
+        .from('queue_jobs')
+        .update({ status: 'failed', updated_at: new Date().toISOString() })
+        .eq('project_id', projectId)
+        .in('status', ['pending', 'processing'])
+
+    // Reset project state (queue.add() will set it to 'queued')
+    await supabase
         .from('projects')
         .update({
-            status: 'generating' as const, // Set to generating immediately
             generated_code: null,
             updated_at: new Date().toISOString(),
         })
         .eq('id', projectId)
 
-    if (error) {
-        console.error('Failed to regenerate project:', error)
-        return { success: false, error: error.message }
-    }
-
-    // Trigger generation in background (fire and forget pattern for server action)
-    // In a real production serverless env, this might be terminated, but for "Next Dev" or VPS it's fine.
-    // For Vercel, we'd need Inngest or QStash.
-    generateAndSaveWebsite(projectId).then(() => {
-        console.log(`Regeneration completed for ${projectId}`)
-    }).catch(async (err) => {
-        console.error(`Regeneration failed for ${projectId}`, err)
-        const supabase = createAdminClient()
-        await supabase
-            .from('projects')
-            .update({
-                status: 'error',
-                generation_phase: `Generation failed: ${err instanceof Error ? err.message.substring(0, 200) : 'Unknown error'}`,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', projectId)
-    })
+    // Route through queue — handles concurrency, status transitions, error handling
+    await generationQueue.add(projectId)
 
     revalidatePath('/dashboard')
     return { success: true }
@@ -91,7 +79,7 @@ export async function fixWebsiteErrors(projectId: string, rules?: string) {
 
     await supabase
         .from('projects')
-        .update({ status: 'generating', generation_phase: 'Debugging with o3-mini...' })
+        .update({ status: 'generating' })
         .eq('id', projectId)
 
     try {
@@ -126,7 +114,7 @@ STRICT RULES:
             project.generated_code,
             currentData,
             rules,
-            'o3-mini'
+            'gemini-3-flash-preview'
         )
 
         await updateProjectWithCode(projectId, code)
@@ -135,14 +123,14 @@ STRICT RULES:
             await supabase.from('projects').update({ business_data: updatedJson }).eq('id', projectId)
         }
 
-        await supabase.from('projects').update({ generation_phase: null }).eq('id', projectId)
+        // generation_phase column removed
         revalidatePath('/dashboard')
         return { success: true }
     } catch (e) {
         console.error("[AutoFix] Fix failed for", projectId, e)
         await supabase
             .from('projects')
-            .update({ status: 'error', generation_phase: null })
+            .update({ status: 'error' })
             .eq('id', projectId)
         return { success: false, error: String(e) }
     }
@@ -237,37 +225,20 @@ export async function getErrorProjectCount(dateString?: string) {
 export async function regenerateProjects(projectIds: string[]) {
     const supabase = createAdminClient()
 
-    const { error } = await supabase
+    // Clear any previous pending/processing queue_jobs so addBatch doesn't dedup
+    await supabase
+        .from('queue_jobs')
+        .update({ status: 'failed', updated_at: new Date().toISOString() })
+        .in('project_id', projectIds)
+        .in('status', ['pending', 'processing'])
+
+    await supabase
         .from('projects')
-        .update({
-            status: 'generating' as const,
-            generated_code: null,
-            updated_at: new Date().toISOString(),
-        })
+        .update({ generated_code: null, updated_at: new Date().toISOString() })
         .in('id', projectIds)
 
-    if (error) {
-        console.error('Failed to regenerate projects:', error)
-        return { success: false, error: error.message }
-    }
-
-    // Trigger generation for each project in background
-    projectIds.forEach(id => {
-        generateAndSaveWebsite(id).then(() => {
-            console.log(`Batch regeneration completed for ${id}`)
-        }).catch(async (err) => {
-            console.error(`Batch regeneration failed for ${id}`, err)
-            const supabase = createAdminClient()
-            await supabase
-                .from('projects')
-                .update({
-                    status: 'error',
-                    generation_phase: `Generation failed: ${err instanceof Error ? err.message.substring(0, 200) : 'Unknown error'}`,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', id)
-        })
-    })
+    // Route through queue — handles concurrency, status transitions, error handling
+    await generationQueue.addBatch(projectIds)
 
     revalidatePath('/dashboard')
     return { success: true, count: projectIds.length }
@@ -551,14 +522,25 @@ export async function getMonthActivityCounts(
     const from = startOfMonth(monthDate).toISOString()
     const to = endOfMonth(monthDate).toISOString()
 
-    const { data, error } = await supabase
-        .from('projects')
-        .select('created_at')
-        .gte('created_at', from)
-        .lte('created_at', to)
+    let data: { created_at: string }[] | null = null
+    try {
+        const result = await supabase
+            .from('projects')
+            .select('created_at')
+            .gte('created_at', from)
+            .lte('created_at', to)
+        if (result.error) {
+            console.warn('[CalendarActivity] Supabase query failed:', result.error.message)
+            return {}
+        }
+        data = result.data
+    } catch (e) {
+        // Transient network errors (connection timeout, fetch failed) — return empty gracefully
+        console.warn('[CalendarActivity] Network error fetching month counts:', e instanceof Error ? e.message : e)
+        return {}
+    }
 
-    if (error || !data) {
-        console.error('[CalendarActivity] Failed to fetch month counts:', error?.message)
+    if (!data) {
         return {}
     }
 
@@ -623,6 +605,64 @@ export async function searchProjects(query: string) {
     }
 
     return { success: true, data }
+}
+
+/**
+ * Cancel all pending/processing queue jobs and stop active autopilot runs.
+ * Only counts current-week jobs; silently deletes all older records.
+ */
+export async function stopAllQueuedProcesses() {
+    const supabase = createAdminClient()
+    let cancelledJobs = 0
+    let stoppedRuns = 0
+
+    // Week boundary (Monday 00:00 UTC)
+    const now = new Date()
+    const day = now.getUTCDay()
+    const diff = day === 0 ? 6 : day - 1
+    const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff))
+    const weekStart = monday.toISOString()
+
+    // 1. Count active jobs before nuking (for the UI report)
+    const { count: activeCount } = await supabase
+        .from('queue_jobs')
+        .select('id', { count: 'exact' })
+        .in('status', ['pending', 'processing'])
+    cancelledJobs = activeCount || 0
+
+    // 2. Delete ALL queue_jobs — complete wipe, no lingering records
+    await supabase
+        .from('queue_jobs')
+        .delete()
+        .gte('id', '00000000-0000-0000-0000-000000000000')
+
+    // 3. Stop active autopilot runs
+    const { data: activeRuns } = await supabase
+        .from('batch_runs')
+        .select('id')
+        .not('current_stage', 'in', '("completed","failed")')
+
+    if (activeRuns && activeRuns.length > 0) {
+        await supabase
+            .from('batch_runs')
+            .update({
+                current_stage: 'failed',
+                error_message: 'Stopped by user',
+                completed_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            })
+            .in('id', activeRuns.map(r => r.id))
+        stoppedRuns = activeRuns.length
+    }
+
+    // 4. Reset queued/generating projects
+    await supabase
+        .from('projects')
+        .update({ status: 'error', updated_at: new Date().toISOString() })
+        .in('status', ['queued', 'generating'])
+
+    revalidatePath('/dashboard')
+    return { success: true, cancelledJobs, stoppedRuns }
 }
 
 // ---------------------------------------------------------------------------

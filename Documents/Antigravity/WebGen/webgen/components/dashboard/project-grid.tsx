@@ -6,7 +6,7 @@ import { ProjectCard } from './project-card'
 import { BatchActions } from './batch-actions'
 import { KeyboardHelpOverlay } from './keyboard-help-overlay'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
-import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects, approveProject, regenerateProject, fixWebsiteErrors } from '@/app/dashboard/actions'
+import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects, approveProject, regenerateProject, fixWebsiteErrors } from '@/app/(admin)/dashboard/actions'
 import { Search, Loader2, ArrowUpDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 

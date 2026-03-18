@@ -8,7 +8,7 @@ import { LivePreview, StreamLogEntry } from "@/components/workbench/live-preview
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SettingsDialog } from "@/components/settings/settings-dialog"
 import { useSearchParams } from "next/navigation"
-import { getProjectById, getRecentProjects, approveProject } from "@/app/dashboard/actions"
+import { getProjectById, getRecentProjects, approveProject } from "@/app/(admin)/dashboard/actions"
 import { createClient } from "@/lib/supabase/client"
 import { OutreachModal } from "@/components/dashboard/outreach-modal"
 import {
@@ -888,7 +888,7 @@ function EditorContent() {
                                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-none border border-transparent hover:border-zinc-200 transition-all cursor-pointer group/engine">
                                                 <span className="text-[10px] font-bold text-zinc-400 group-hover/engine:text-zinc-900 uppercase tracking-tighter">
                                                     {model === 'default' ? 'Default' :
-                                                        model === 'gemini-3.1-pro-preview' ? 'Gemini 3.1' :
+                                                        model === 'gemini-3-flash-preview' ? 'Flash 3.0' :
                                                             model}
                                                 </span>
                                                 <ChevronDown className="h-3 w-3 text-zinc-300" />
@@ -898,14 +898,11 @@ function EditorContent() {
                                             <DropdownMenuItem onClick={() => setModel("default")} className="text-xs font-medium">
                                                 Default
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setModel("gemini-3-flash-preview")} className="text-xs font-medium">
+                                                Gemini 3.0 Flash
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setModel("gemini-3.1-pro-preview")} className="text-xs font-medium">
                                                 Gemini 3.1 Pro
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setModel("gpt-4o")} className="text-xs font-medium">
-                                                GPT-4o
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setModel("o3-mini")} className="text-xs font-medium">
-                                                o3-mini
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
