@@ -64,7 +64,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Quality scoring module, DB schema, generator hook, dashboard sort/badge (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
+- [x] 03-01-PLAN.md — Quality scoring module, DB schema, generator hook, dashboard sort/badge (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
 - [ ] 03-02-PLAN.md — Template seeder with sanitization, few-shot injection into generation prompts (TMPL-01, TMPL-02, TMPL-03, TMPL-04)
 - [ ] 03-03-PLAN.md — Analytics dashboard with recharts charts, timing/cost/success metrics, model/industry filters (ANAL-01, ANAL-02, ANAL-03, ANAL-04)
 

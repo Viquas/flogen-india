@@ -46,10 +46,10 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Quality Scoring
 
-- [ ] **QUAL-01**: Generated code evaluated for render success (renders without errors in preview)
-- [ ] **QUAL-02**: Generated code evaluated for section completeness (hero, about, services, contact, footer)
-- [ ] **QUAL-03**: Sub-scores aggregated into a 0-100 quality score stored on the project record
-- [ ] **QUAL-04**: Projects sortable by quality score in dashboard to prioritize review
+- [x] **QUAL-01**: Generated code evaluated for render success (renders without errors in preview)
+- [x] **QUAL-02**: Generated code evaluated for section completeness (hero, about, services, contact, footer)
+- [x] **QUAL-03**: Sub-scores aggregated into a 0-100 quality score stored on the project record
+- [x] **QUAL-04**: Projects sortable by quality score in dashboard to prioritize review
 
 ### Few-Shot Template Seeding
 
@@ -175,10 +175,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | QUEUE-02 | Phase 2 | Pending |
 | QUEUE-03 | Phase 2 | Pending |
 | QUEUE-04 | Phase 2 | Pending |
-| QUAL-01 | Phase 3 | Pending |
-| QUAL-02 | Phase 3 | Pending |
-| QUAL-03 | Phase 3 | Pending |
-| QUAL-04 | Phase 3 | Pending |
+| QUAL-01 | Phase 3 | Complete |
+| QUAL-02 | Phase 3 | Complete |
+| QUAL-03 | Phase 3 | Complete |
+| QUAL-04 | Phase 3 | Complete |
 | TMPL-01 | Phase 3 | Pending |
 | TMPL-02 | Phase 3 | Pending |
 | TMPL-03 | Phase 3 | Pending |
