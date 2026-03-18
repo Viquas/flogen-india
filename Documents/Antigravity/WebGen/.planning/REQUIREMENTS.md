@@ -53,10 +53,10 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Few-Shot Template Seeding
 
-- [ ] **TMPL-01**: Templates tagged with industry/vertical metadata
-- [ ] **TMPL-02**: When generating for industry X, 1-2 approved examples from industry X are automatically injected as few-shot context
-- [ ] **TMPL-03**: Example selection picks highest-quality approved templates (by quality score or recency)
-- [ ] **TMPL-04**: Template content sanitized (business-specific data replaced with placeholders) before injection
+- [x] **TMPL-01**: Templates tagged with industry/vertical metadata
+- [x] **TMPL-02**: When generating for industry X, 1-2 approved examples from industry X are automatically injected as few-shot context
+- [x] **TMPL-03**: Example selection picks highest-quality approved templates (by quality score or recency)
+- [x] **TMPL-04**: Template content sanitized (business-specific data replaced with placeholders) before injection
 
 ### Analytics Dashboard
 
@@ -179,10 +179,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | QUAL-02 | Phase 3 | Complete |
 | QUAL-03 | Phase 3 | Complete |
 | QUAL-04 | Phase 3 | Complete |
-| TMPL-01 | Phase 3 | Pending |
-| TMPL-02 | Phase 3 | Pending |
-| TMPL-03 | Phase 3 | Pending |
-| TMPL-04 | Phase 3 | Pending |
+| TMPL-01 | Phase 3 | Complete |
+| TMPL-02 | Phase 3 | Complete |
+| TMPL-03 | Phase 3 | Complete |
+| TMPL-04 | Phase 3 | Complete |
 | ANAL-01 | Phase 3 | Complete |
 | ANAL-02 | Phase 3 | Complete |
 | ANAL-03 | Phase 3 | Complete |
