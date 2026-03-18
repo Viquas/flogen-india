@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { razorpay } from '@/lib/razorpay'
 import { calculateTotalPaise, calculateUpsellTotal, type Currency, type PlanType } from '@/lib/claim-pricing'
+import { trackClaimEvent } from '@/lib/claim-tracking'
 import { z } from 'zod'
 
 const expiredFormSchema = z.object({
@@ -235,7 +236,7 @@ export async function submitCustomization(
         // Verify claim is paid or customizing
         const { data: claim } = await supabase
             .from('claims')
-            .select('id, status')
+            .select('id, status, project_id, plan')
             .eq('id', claimId)
             .in('status', ['paid', 'customizing'])
             .maybeSingle()
@@ -305,6 +306,13 @@ export async function submitCustomization(
         }
 
         console.log('[ClaimActions] Customization submitted for claim:', claimId)
+
+        // Track customization submission -- fire-and-forget
+        trackClaimEvent({
+            siteSlug: claim.project_id,
+            eventType: 'customization_submitted',
+            metadata: { claimId, plan: claim.plan },
+        }).catch(() => {})
 
         return { success: true }
     } catch (error) {

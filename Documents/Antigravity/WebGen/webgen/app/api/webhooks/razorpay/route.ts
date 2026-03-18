@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { trackClaimEvent } from '@/lib/claim-tracking'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -130,6 +131,22 @@ async function handlePaymentCaptured(
         .eq('id', claim.id)
 
     console.log('[Webhook] Claim marked as paid:', claim.id)
+
+    // Track payment completion -- fire-and-forget
+    const projectId = payment.notes?.projectId || ''
+    if (projectId) {
+        trackClaimEvent({
+            siteSlug: projectId,
+            eventType: 'payment_completed',
+            metadata: {
+                claimId: claim.id,
+                plan: payment.notes?.plan || '',
+                amount: payment.amount,
+                currency: payment.currency,
+                method: payment.method,
+            },
+        }).catch(() => {})
+    }
 }
 
 async function handlePaymentFailed(

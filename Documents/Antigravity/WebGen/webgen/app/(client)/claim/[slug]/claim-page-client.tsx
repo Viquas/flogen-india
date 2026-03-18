@@ -42,8 +42,23 @@ export default function ClaimPageClient({
         }
     }, [searchParams])
 
+    // Fire-and-forget analytics helper
+    function trackEvent(eventType: string, meta?: Record<string, unknown>) {
+        fetch('/api/analytics/claim-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ siteSlug: projectId, eventType, metadata: meta }),
+        }).catch(() => {})
+    }
+
+    function handlePlanSelect(plan: PlanType) {
+        setSelectedPlan(plan)
+        trackEvent('plan_selected', { plan })
+    }
+
     const handleProceedToPayment = async () => {
         if (!selectedPlan || isProcessing) return
+        trackEvent('payment_initiated', { plan: selectedPlan, currency })
         setIsProcessing(true)
         setPaymentError(null)
 
@@ -105,7 +120,7 @@ export default function ClaimPageClient({
                 <PricingSection
                     initialCurrency={initialCurrency}
                     selectedPlan={selectedPlan}
-                    onPlanSelect={setSelectedPlan}
+                    onPlanSelect={handlePlanSelect}
                     onCurrencyChange={setCurrency}
                 />
             </section>

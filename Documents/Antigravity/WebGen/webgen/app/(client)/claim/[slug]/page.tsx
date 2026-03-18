@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { trackClaimEvent } from '@/lib/claim-tracking'
 import type { Metadata } from 'next'
 import { HeroSection } from './components/hero-section'
 import { FeaturesGrid } from './components/features-grid'
@@ -73,6 +74,16 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
 
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'
+
+    // Fire-and-forget: track claim page view
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || null
+    const userAgent = headersList.get('user-agent') || null
+    trackClaimEvent({
+        siteSlug: slug,
+        eventType: 'claim_page_view',
+        ip,
+        userAgent,
+    }).catch(() => {})
 
     // Check if already paid -- route based on status and customization state
     const { data: paidClaim } = await supabase
