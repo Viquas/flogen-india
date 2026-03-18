@@ -21,7 +21,7 @@ import {
     Trash2,
     X,
 } from "lucide-react"
-import { getTemplates, deleteTemplate } from "@/app/dashboard/actions"
+import { getTemplates, deleteTemplate } from "@/app/(admin)/dashboard/actions"
 import { constructHtmlBoilerplate } from "@/lib/utils/html-boilerplate"
 
 interface Template {
@@ -235,10 +235,13 @@ export function TemplateLibraryModal({
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filtered.map((template) => (
-                                <button
+                                <div
                                     key={template.id}
+                                    role="button"
+                                    tabIndex={0}
                                     onClick={() => handleSelect(template)}
-                                    className="group text-left rounded-xl border border-zinc-200 bg-white hover:border-purple-300 hover:shadow-md transition-all overflow-hidden"
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelect(template) }}
+                                    className="group text-left rounded-xl border border-zinc-200 bg-white hover:border-purple-300 hover:shadow-md transition-all overflow-hidden cursor-pointer"
                                 >
                                     {/* Mini Preview */}
                                     <div className="h-36 bg-zinc-100 overflow-hidden relative">
@@ -291,7 +294,7 @@ export function TemplateLibraryModal({
                                             </div>
                                         </div>
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     )}

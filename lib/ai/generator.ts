@@ -1,12 +1,14 @@
 import { generateText, streamText, Output } from 'ai'
-import { createClient } from '@/lib/supabase/server'
 import { BusinessData, BusinessDataSchema } from '@/lib/schemas/project'
 import { z } from 'zod'
 import { enrichBusinessData } from './enricher'
 import { getModel } from './model-config'
-import { SYSTEM_PROMPT } from './prompts/system'
-import { REVISION_SYSTEM_PROMPT } from './prompts/revision'
-import { logger } from '@/lib/logger'
+import { reviseWebsite } from './revision'
+import { validateAndAutoFix } from './validation'
+import { updateProjectWithCode } from './project-persistence'
+import { cleanTemplateCode } from './template-cleaning'
+import { recordCost, buildCostRecord, getModelId } from './cost-tracker'
+import { getActivePrompt } from './prompt-manager'
 
 // Generate website code based on business data (Supports Monolithic and Modular Sections)
 export async function generateWebsiteCode(
@@ -15,14 +17,17 @@ export async function generateWebsiteCode(
     markdownContext?: string,
     model?: string,
     onProgress?: (phase: string) => void
-): Promise<string> {
+): Promise<{ code: string; promptVersionId: string }> {
     const rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
     let richData = businessData as unknown as { sections?: Record<string, unknown>[], brandIdentity?: Record<string, unknown>, $$manifest?: Record<string, unknown>, businessName?: string };
+
+    // Load active prompt from DB (with cache/fallback)
+    const { content: systemPromptContent, versionId: promptVersionId } = await getActivePrompt('system')
 
     // --- OPTION B: MODULAR COMPONENT GENERATION (Stitching) ---
     // If the data has 'sections', generate them individually to save tokens
     if (richData && richData.sections && Array.isArray(richData.sections)) {
-        logger.ai.info('Modular SJSON detected, generating sections individually', { sectionCount: richData.sections.length });
+        console.log(`[Generator] Modular SJSON detected. Generating ${richData.sections.length} sections individually...`);
         const modelInstance = getModel(model);
 
         let componentsCodeMap: Record<string, string> = {};
@@ -52,11 +57,13 @@ ${rulesSection}
 5. Return ONLY RAW CODE. No markdown fences.`;
 
             try {
-                const { text } = await generateText({
+                const { text, usage } = await generateText({
                     model: modelInstance,
-                    system: SYSTEM_PROMPT.replace('export default function GeneratedPage', `export function ${section.component}`),
+                    system: systemPromptContent.replace('export default function GeneratedPage', `export function ${section.component}`),
                     prompt: sectionPrompt,
-                });
+                })
+                // Track cost for each section generation
+                await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId));
 
                 let code = text.trim();
                 if (code.startsWith('```')) {
@@ -68,10 +75,10 @@ ${rulesSection}
                 code = code.replace(/import React.*?;\n?/g, '');
 
                 componentsCodeMap[section.component as string] = code;
-                logger.ai.info('Generated section', { component: section.component });
+                console.log(`[Generator] Generated section: ${section.component}`);
                 completed++;
             } catch (e) {
-                logger.ai.error('Failed to generate section', { component: section.component, error: e instanceof Error ? e.message : String(e) });
+                console.error(`[Generator] Failed to generate section ${section.component}:`, e);
                 // Fallback comment if failure
                 componentsCodeMap[section.component as string] = `export function ${section.component}() { return <div className="p-8 text-center text-red-500">Failed to load ${section.component}</div>; }`;
                 completed++;
@@ -113,7 +120,7 @@ export default function GeneratedPage() {
     );
 }
 `;
-        return masterFile.trim();
+        return { code: masterFile.trim(), promptVersionId };
     }
 
 
@@ -128,18 +135,20 @@ export default function GeneratedPage() {
         const vibe = brand?.vibe;
 
         richPrompt = `
-🎯 **RICH BRAND CONTEXT (USE THIS — HIGHEST PRIORITY):**
+\u{1F3AF} **RICH BRAND CONTEXT (USE THIS \u2014 HIGHEST PRIORITY):**
 - **Brand Name:** ${brand?.core?.brandName}
 - **Personality:** ${JSON.stringify(brand?.voice?.personality)}
 - **Colors:** Primary: ${design?.colors?.semantic?.primary?.hex}, Accent: ${design?.colors?.semantic?.accent?.hex}, Background: ${design?.colors?.semantic?.background?.hex || '#ffffff'}, Muted: ${design?.colors?.semantic?.muted?.hex || '#f5f5f5'}
 - **Typography:** Headings: ${design?.typography?.headings?.family}, Body: ${design?.typography?.body?.family}
 - **Target Audience & Tone:** ${brand?.voice?.personality?.primary || 'Professional'}, ${brand?.voice?.personality?.secondary || 'Modern'}
 
-👉 **INSTRUCTION**: Strictly adhere to the Brand Identity defined above. Use the exact hex codes for colors via Tailwind arbitrary values (e.g. \`bg-[#8B0000]\`) or closest Tailwind color palette.
+\u{1F449} **INSTRUCTION**: Strictly adhere to the Brand Identity defined above. Use the exact hex codes for colors via Tailwind arbitrary values (e.g. \`bg-[#8B0000]\`) or closest Tailwind color palette.
 `
         if (vibe) {
             vibePrompt = `
-🎨 **INDUSTRY VIBE & MOOD (MUST INFORM EVERY DESIGN DECISION):**
+\u{1F3A8} **INDUSTRY VIBE & MOOD (MUST INFORM EVERY DESIGN DECISION):**
+- **Aesthetic Direction:** ${vibe.aestheticDirection || 'modern-tech'}
+- **Hero Variant:** ${vibe.heroVariant || 'full-bleed'}
 - **Vibe:** ${vibe.vibe || 'Modern'}
 - **Voice:** ${vibe.voice || 'Professional'}
 - **Industry:** ${vibe.industry || 'General Business'}
@@ -147,15 +156,27 @@ export default function GeneratedPage() {
 - **Visual Cues to USE:** ${(vibe.visualCues || []).join(', ')}
 - **Visual Cues to AVOID:** ${(vibe.avoidCues || []).join(', ')}
 
-👉 The website must FEEL like it belongs to the ${vibe.industry || 'business'} industry. A visitor should instantly recognize what kind of business this is from the design alone — before reading any text.
+\u{1F449} The website must FEEL like it belongs to the ${vibe.industry || 'business'} industry. A visitor should instantly recognize what kind of business this is from the design alone \u2014 before reading any text.
+\u{1F449} Use the "${vibe.aestheticDirection || 'modern-tech'}" aesthetic direction and "${vibe.heroVariant || 'full-bleed'}" hero variant as defined in the system prompt.
 `
         }
+
+        // Extract rich content if available
+        const content = (richData as any)?.contentRepository
+        const ops = (richData as any)?.operationalData
 
         contextPrompt = `
 Business Name: ${brand?.core?.brandName}
 Description: ${businessData?.description}
-Services: ${(businessData?.services || []).join(', ')}
-${businessData?.contactInfo ? `Contact Info: ${JSON.stringify(businessData.contactInfo)}` : ''}
+${content?.hero ? `Hero Headline: ${content.hero.headline}\nHero Subheadline: ${content.hero.subheadline}\nHero CTA Primary: ${content.hero.ctaPrimary}\nHero CTA Secondary: ${content.hero.ctaSecondary || ''}` : ''}
+${content?.about ? `About Heading: ${content.about.heading}\nAbout Content: ${content.about.content}` : ''}
+${content?.services ? `Services (USE THESE EXACT NAMES AND PRICES):\n${content.services.map((s: any) => `- ${s.name}: ${s.price || ''} — ${s.description || ''}`).join('\n')}` : `Services: ${(businessData?.services || []).join(', ')}`}
+${content?.testimonials ? `Testimonials (USE THESE EXACT NAMES AND QUOTES):\n${content.testimonials.map((t: any) => `- "${t.quote}" — ${t.author} (${t.rating}/5 stars)`).join('\n')}` : ''}
+${ops?.contact ? `Contact (USE EXACTLY — DO NOT INVENT):
+- Phone: ${ops.contact.phone || businessData?.contactInfo?.phone || ''}
+- Email: ${ops.contact.email || businessData?.contactInfo?.email || ''}
+- Address: ${ops.contact.address ? `${ops.contact.address.street || ''}, ${ops.contact.address.city || ''}, ${ops.contact.address.state || ''} ${ops.contact.address.postalCode || ''}, ${ops.contact.address.country || ''}` : businessData?.contactInfo?.address || ''}` : businessData?.contactInfo ? `Contact Info: ${JSON.stringify(businessData.contactInfo)}` : ''}
+${ops?.hours ? `Operating Hours (USE EXACTLY):\n${Object.entries(ops.hours).map(([day, time]) => `- ${day}: ${time}`).join('\n')}` : ''}
 `
     } else if (businessData) {
         contextPrompt = `
@@ -172,27 +193,43 @@ ${markdownContext}
 `
     }
 
+    // Template seeding: inject industry few-shot context
+    const industry = (richData as any)?.brandIdentity?.vibe?.industry || (richData as any)?.industry || null
+    let fewShotBlock = ''
+    if (industry) {
+        try {
+            const { getFewShotContext } = await import('./template-seeder')
+            const fewShot = await getFewShotContext(industry)
+            if (fewShot) fewShotBlock = '\n\n' + fewShot + '\n'
+        } catch (err) {
+            console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+        }
+    }
+
     const userPrompt = `Create a COMPLETE, production-ready landing page for:
 ${contextPrompt}
 
 ${richPrompt}
 ${vibePrompt}
-
-👉 **EXECUTION PLAN:**
+${fewShotBlock}
+\u{1F449} **EXECUTION PLAN:**
 1. FIRST: Study the industry context above. What do the best websites in this exact industry look and feel like? Channel that energy.
-2. Select colors, typography weight, and spacing that match the industry mood — NOT generic defaults.
-3. Write the React code implementing ALL 9 required sections (Nav, Hero, Features, About, Testimonials, FAQ, CTA Banner, Contact, Footer).
-4. Ensure the hero uses Option A (image hero with dark overlay) or Option B (gradient hero) — pick whichever fits the industry better.
+2. Select colors, typography weight, and spacing that match the industry mood \u2014 NOT generic defaults.
+3. Write the React code implementing all required sections (Nav, Hero, Features/Services, Contact, Footer) plus recommended sections for this industry. Use the EXACT business data provided — names, prices, phone, address, testimonials.
+4. Ensure the hero uses Option A (image hero with dark overlay) or Option B (gradient hero) \u2014 pick whichever fits the industry better.
 5. Include at least ONE interactive Dialog (e.g., "View Menu", "See Services", "Book Now") with realistic content.
 6. Verify: mobile menu works, star ratings use <Star />, FAQs toggle open/close, all images have real Unsplash src + onError fallback, CTA buttons have proper contrast.
 
 Generate the code now.`
 
-    const { text } = await generateText({
-        model: getModel(model),
-        system: SYSTEM_PROMPT + rulesSection,
+    const modelInstance = getModel(model)
+    const { text, usage } = await generateText({
+        model: modelInstance,
+        system: systemPromptContent + rulesSection,
         prompt: userPrompt,
     })
+    // Track cost for monolithic generation
+    await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
 
     let code = text.trim()
     if (code.startsWith('```')) {
@@ -200,17 +237,20 @@ Generate the code now.`
         code = code.replace(/\n?\`\`\`$/, '')
     }
 
-    return code
+    return { code, promptVersionId }
 }
 
-// Stream website code generation — returns a streamText result for progressive token delivery
-export function streamWebsiteCode(
+// Stream website code generation -- returns a streamText result for progressive token delivery
+export async function streamWebsiteCode(
     businessData: BusinessData | null,
     rules?: string,
     markdownContext?: string,
     model?: string
 ) {
     const rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
+
+    // Load active prompt from DB (with cache/fallback)
+    const { content: systemPromptContent, versionId: promptVersionId } = await getActivePrompt('system')
 
     let contextPrompt = ""
     let richPrompt = ""
@@ -224,19 +264,21 @@ export function streamWebsiteCode(
         const vibe = brand?.vibe;
 
         richPrompt = `
-🎯 **RICH BRAND CONTEXT (USE THIS — HIGHEST PRIORITY):**
+\u{1F3AF} **RICH BRAND CONTEXT (USE THIS \u2014 HIGHEST PRIORITY):**
 - **Brand Name:** ${brand?.core?.brandName}
 - **Personality:** ${JSON.stringify(brand?.voice?.personality)}
 - **Colors:** Primary: ${design?.colors?.semantic?.primary?.hex}, Accent: ${design?.colors?.semantic?.accent?.hex}, Background: ${design?.colors?.semantic?.background?.hex || '#ffffff'}, Muted: ${design?.colors?.semantic?.muted?.hex || '#f5f5f5'}
 - **Typography:** Headings: ${design?.typography?.headings?.family}, Body: ${design?.typography?.body?.family}
 - **Target Audience & Tone:** ${brand?.voice?.personality?.primary || 'Professional'}, ${brand?.voice?.personality?.secondary || 'Modern'}
 
-👉 **INSTRUCTION**: Strictly adhere to the Brand Identity defined above. Use the exact hex codes for colors via Tailwind arbitrary values (e.g. \`bg-[#8B0000]\`) or closest Tailwind color palette.
+\u{1F449} **INSTRUCTION**: Strictly adhere to the Brand Identity defined above. Use the exact hex codes for colors via Tailwind arbitrary values (e.g. \`bg-[#8B0000]\`) or closest Tailwind color palette.
 `
 
         if (vibe) {
             vibePrompt = `
-🎨 **INDUSTRY VIBE & MOOD (MUST INFORM EVERY DESIGN DECISION):**
+\u{1F3A8} **INDUSTRY VIBE & MOOD (MUST INFORM EVERY DESIGN DECISION):**
+- **Aesthetic Direction:** ${vibe.aestheticDirection || 'modern-tech'}
+- **Hero Variant:** ${vibe.heroVariant || 'full-bleed'}
 - **Vibe:** ${vibe.vibe || 'Modern'}
 - **Voice:** ${vibe.voice || 'Professional'}
 - **Industry:** ${vibe.industry || 'General Business'}
@@ -244,15 +286,27 @@ export function streamWebsiteCode(
 - **Visual Cues to USE:** ${(vibe.visualCues || []).join(', ')}
 - **Visual Cues to AVOID:** ${(vibe.avoidCues || []).join(', ')}
 
-👉 The website must FEEL like it belongs to the ${vibe.industry || 'business'} industry. A visitor should instantly recognize what kind of business this is from the design alone — before reading any text.
+\u{1F449} The website must FEEL like it belongs to the ${vibe.industry || 'business'} industry. A visitor should instantly recognize what kind of business this is from the design alone \u2014 before reading any text.
+\u{1F449} Use the "${vibe.aestheticDirection || 'modern-tech'}" aesthetic direction and "${vibe.heroVariant || 'full-bleed'}" hero variant as defined in the system prompt.
 `
         }
+
+        // Extract rich content if available
+        const content = rd?.contentRepository
+        const ops = rd?.operationalData
 
         contextPrompt = `
 Business Name: ${brand?.core?.brandName}
 Description: ${businessData.description}
-Services: ${(businessData.services || []).join(', ')}
-${businessData.contactInfo ? `Contact Info: ${JSON.stringify(businessData.contactInfo)}` : ''}
+${content?.hero ? `Hero Headline: ${content.hero.headline}\nHero Subheadline: ${content.hero.subheadline}\nHero CTA Primary: ${content.hero.ctaPrimary}\nHero CTA Secondary: ${content.hero.ctaSecondary || ''}` : ''}
+${content?.about ? `About Heading: ${content.about.heading}\nAbout Content: ${content.about.content}` : ''}
+${content?.services ? `Services (USE THESE EXACT NAMES AND PRICES):\n${content.services.map((s: any) => `- ${s.name}: ${s.price || ''} — ${s.description || ''}`).join('\n')}` : `Services: ${(businessData.services || []).join(', ')}`}
+${content?.testimonials ? `Testimonials (USE THESE EXACT NAMES AND QUOTES):\n${content.testimonials.map((t: any) => `- "${t.quote}" — ${t.author} (${t.rating}/5 stars)`).join('\n')}` : ''}
+${ops?.contact ? `Contact (USE EXACTLY — DO NOT INVENT):
+- Phone: ${ops.contact.phone || businessData.contactInfo?.phone || ''}
+- Email: ${ops.contact.email || businessData.contactInfo?.email || ''}
+- Address: ${ops.contact.address ? `${ops.contact.address.street || ''}, ${ops.contact.address.city || ''}, ${ops.contact.address.state || ''} ${ops.contact.address.postalCode || ''}, ${ops.contact.address.country || ''}` : businessData.contactInfo?.address || ''}` : businessData.contactInfo ? `Contact Info: ${JSON.stringify(businessData.contactInfo)}` : ''}
+${ops?.hours ? `Operating Hours (USE EXACTLY):\n${Object.entries(ops.hours).map(([day, time]) => `- ${day}: ${time}`).join('\n')}` : ''}
 `
     } else if (businessData) {
         contextPrompt = `
@@ -269,458 +323,86 @@ ${markdownContext}
 `
     }
 
+    // Template seeding: inject industry few-shot context
+    const streamIndustry = (businessData as any)?.brandIdentity?.vibe?.industry || (businessData as any)?.industry || null
+    let fewShotBlock = ''
+    if (streamIndustry) {
+        try {
+            const { getFewShotContext } = await import('./template-seeder')
+            const fewShot = await getFewShotContext(streamIndustry)
+            if (fewShot) fewShotBlock = '\n\n' + fewShot + '\n'
+        } catch (err) {
+            console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+        }
+    }
+
     const userPrompt = `Create a COMPLETE, production-ready landing page for:
 ${contextPrompt}
 
 ${richPrompt}
 ${vibePrompt}
-
-👉 **EXECUTION PLAN:**
+${fewShotBlock}
+\u{1F449} **EXECUTION PLAN:**
 1. FIRST: Study the industry context above. What do the best websites in this exact industry look and feel like? Channel that energy.
-2. Select colors, typography weight, and spacing that match the industry mood — NOT generic defaults.
-3. Write the React code implementing ALL 9 required sections (Nav, Hero, Features, About, Testimonials, FAQ, CTA Banner, Contact, Footer).
-4. Ensure the hero uses Option A (image hero with dark overlay) or Option B (gradient hero) — pick whichever fits the industry better.
+2. Select colors, typography weight, and spacing that match the industry mood \u2014 NOT generic defaults.
+3. Write the React code implementing all required sections (Nav, Hero, Features/Services, Contact, Footer) plus recommended sections for this industry. Use the EXACT business data provided — names, prices, phone, address, testimonials.
+4. Ensure the hero uses Option A (image hero with dark overlay) or Option B (gradient hero) \u2014 pick whichever fits the industry better.
 5. Include at least ONE interactive Dialog (e.g., "View Menu", "See Services", "Book Now") with realistic content.
 6. Verify: mobile menu works, star ratings use <Star />, FAQs toggle open/close, all images have real Unsplash src + onError fallback, CTA buttons have proper contrast.
 
 Generate the code now.`
 
-    // Return the streaming result — caller consumes the textStream
+    // Return the streaming result -- caller consumes the textStream
+    const modelInstance = getModel(model)
     return streamText({
-        model: getModel(model),
-        system: SYSTEM_PROMPT + rulesSection,
+        model: modelInstance,
+        system: systemPromptContent + rulesSection,
         prompt: userPrompt,
+        onFinish({ usage }) {
+            // Fire-and-forget cost tracking for streamed generation
+            recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
+        },
     })
 }
 
-// Efficient patch-based revision: returns search/replace diffs instead of full code
-export async function reviseWebsiteWithPatches(
-    prompt: string,
-    currentCode: string,
-    currentJson: any,
-    rules?: string,
-    model?: string
-): Promise<{ code: string; updatedJson?: any; patchCount: number; fallbackUsed: boolean; reasoning: string }> {
-    const rulesSection = rules ? `\n\nADDITIONAL RULES:\n${rules}` : '';
-
-    const patchSchema = z.object({
-        patches: z.array(z.object({
-            search: z.string().describe("Exact text from the current code to find and replace. Must match character-for-character including whitespace."),
-            replace: z.string().describe("The new text to replace the search string with."),
-        })).describe("Array of search/replace patches to apply to the code. Minimum 1 patch required."),
-        jsonUpdates: z.object({
-            hasChanges: z.boolean().describe("true ONLY if the user's request requires changing business data (name, services, contact info, etc). false for pure styling/layout changes."),
-            updatedJson: z.string().optional().describe("The COMPLETE updated JSON as a string. Only provide if hasChanges is true."),
-        }),
-        reasoning: z.string().describe("1-2 sentence explanation of what was changed and why."),
-    });
-
-    const revisionPrompt = `USER REQUEST: "${prompt}"
-
-CURRENT CODE:
-${currentCode}
-
-${currentJson ? `CURRENT BUSINESS DATA (JSON):
-${JSON.stringify(currentJson, null, 2)}` : ''}
-
-Analyze the user's request and return the minimal set of search/replace patches to fulfill it. Remember: the "search" field must EXACTLY match text in the current code.`;
-
-    let result;
-    try {
-        result = await generateText({
-            model: getModel(model),
-            system: REVISION_SYSTEM_PROMPT + rulesSection,
-            output: Output.object({ schema: patchSchema }),
-            prompt: revisionPrompt,
-        });
-    } catch (e) {
-        logger.ai.error('Patch generation failed, falling back to full rewrite', { error: e instanceof Error ? e.message : String(e) });
-        const fallback = await reviseWebsite(prompt, currentCode, currentJson, rules, model);
-        return { ...fallback, patchCount: 0, fallbackUsed: true, reasoning: "Patch generation failed; used full rewrite." };
-    }
-
-    const { output } = result;
-    if (!output || !output.patches || output.patches.length === 0) {
-        logger.ai.warn('No patches returned, falling back to full rewrite');
-        const fallback = await reviseWebsite(prompt, currentCode, currentJson, rules, model);
-        return { ...fallback, patchCount: 0, fallbackUsed: true, reasoning: "No patches returned; used full rewrite." };
-    }
-
-    // Apply patches sequentially
-    let patchedCode = currentCode;
-    let appliedCount = 0;
-    const failedPatches: string[] = [];
-
-    for (const patch of output.patches) {
-        const searchStr = patch.search;
-        const replaceStr = patch.replace;
-
-        if (patchedCode.includes(searchStr)) {
-            patchedCode = patchedCode.replace(searchStr, replaceStr);
-            appliedCount++;
-        } else {
-            // Try with normalized whitespace as a second attempt
-            const normalizedCode = patchedCode.replace(/\r\n/g, '\n');
-            const normalizedSearch = searchStr.replace(/\r\n/g, '\n');
-            if (normalizedCode.includes(normalizedSearch)) {
-                patchedCode = normalizedCode.replace(normalizedSearch, replaceStr);
-                appliedCount++;
-            } else {
-                failedPatches.push(searchStr.substring(0, 80) + '...');
-            }
-        }
-    }
-
-    // If more than half the patches failed, fall back to full rewrite
-    if (appliedCount === 0 || (failedPatches.length > appliedCount)) {
-        logger.ai.warn('Patches failed to match, falling back to full rewrite', { failedCount: failedPatches.length, totalPatches: output.patches.length });
-        const fallback = await reviseWebsite(prompt, currentCode, currentJson, rules, model);
-        return { ...fallback, patchCount: 0, fallbackUsed: true, reasoning: `${failedPatches.length} patches failed to match; used full rewrite.` };
-    }
-
-    if (failedPatches.length > 0) {
-        logger.ai.warn('Some patches failed, proceeding with partial application', { failedCount: failedPatches.length, appliedCount });
-    }
-
-    // Handle JSON updates
-    let updatedJson = currentJson;
-    if (output.jsonUpdates?.hasChanges && output.jsonUpdates.updatedJson) {
-        try {
-            updatedJson = JSON.parse(output.jsonUpdates.updatedJson);
-        } catch (e) {
-            logger.ai.warn('AI returned invalid JSON for jsonUpdates, keeping original', { error: e instanceof Error ? e.message : String(e) });
-        }
-    }
-
-    return {
-        code: patchedCode,
-        updatedJson,
-        patchCount: appliedCount,
-        fallbackUsed: false,
-        reasoning: output.reasoning || `Applied ${appliedCount} patch(es).`,
-    };
-}
-
-// Revise website based on prompt, current code, and current JSON (full rewrite — used as fallback)
-export async function reviseWebsite(
-    prompt: string,
-    currentCode: string | null,
-    currentJson: any,
-    rules?: string,
-    model?: string
-): Promise<{ code: string; updatedJson?: any }> {
-    // Ensure icon usage rules exist, fulfilling user request to "Add a text in rules.md" implicitly via prompt.
-    // If not in the db/rules, append explicitly to avoid AI hallucinating missing components.
-    let iconRules = "";
-    if (!rules || (!rules.includes("Phosphor") && !rules.includes("Feather"))) {
-        iconRules = `\n\n## ICONS\nYou MUST use Lucide React icons (\`lucide-react\`), Phosphor icons, or Feather icons.\nDo NOT attempt to use arbitrary symbols. Use valid standard components.`;
-    }
-
-    const rulesSection = (rules ? `\n\n## EXTRA GLOBAL RULES (FOLLOW THESE STRICTLY):\n${rules}` : '') + iconRules;
-
-    const revisionPrompt = `The user wants to revise their website based on this request: "${prompt}"
-
-## CONTEXT:
-1. CURRENT JSON DATA:
-${JSON.stringify(currentJson, null, 2)}
-
-2. CURRENT CODE:
-${currentCode || 'No code generated yet.'}
-
-## YOUR TASK:
-1. Revise the React code to reflect the user's request.
-2. If the user's request implies a change to the business data (e.g., "Change the company name to X" or "Add a new service: Y"), update the JSON data accordingly.
-3. Return the updated code AND the updated JSON object.
-
-## RULES:
-- Follow all SYSTEM_PROMPT rules for code generation.
-- Return ONLY the updated code strings and the updated JSON object.`
-
-    let result;
-    try {
-        result = await generateText({
-            model: getModel(model),
-            system: SYSTEM_PROMPT + rulesSection + "\n\nCRITICAL: Return a structured object with 'code' and 'updatedJson'.",
-            output: Output.object({
-                schema: z.object({
-                    code: z.string().describe("The full updated React component code for 'GeneratedPage'"),
-                    updatedJson: z.string().describe("The COMPLETE updated business data context as a JSON string. If no changes to data, return the original JSON as a string.")
-                }),
-            }),
-            prompt: revisionPrompt,
-        })
-    } catch (e) {
-        logger.ai.error('AI generation error in reviseWebsite', { error: e instanceof Error ? e.message : String(e) });
-        throw e;
-    }
-
-    const { output } = result;
-    if (!output) {
-        throw new Error('No structured output returned from revision model')
-    }
-
-    // Clean up code if AI included markdown blocks inside the JSON string (happens sometimes)
-    let code = output.code.trim()
-    if (code.startsWith('```')) {
-        code = code.replace(/^\`\`\`(?:tsx|typescript|jsx|javascript)?\n?/, '')
-        code = code.replace(/\n?\`\`\`$/, '')
-    }
-
-    // Safely parse the updated JSON string
-    let parsedJson = currentJson
-    try {
-        parsedJson = JSON.parse(output.updatedJson)
-    } catch (e) {
-        logger.ai.warn('AI returned invalid JSON string for updatedJson, falling back to currentJson', { error: e instanceof Error ? e.message : String(e) })
-    }
-
-    return {
-        code,
-        updatedJson: parsedJson
-    }
-}
-
-/**
- * Server-side validation of generated React code.
- * Uses the same preprocessCode pipeline as the preview iframe, then attempts
- * a Babel transform to catch syntax/JSX/TypeScript errors before the user sees them.
- * Returns null if valid, or an error message string if broken.
- */
-async function validateGeneratedCode(code: string): Promise<string | null> {
-    const { preprocessCode } = await import('@/lib/utils/html-boilerplate')
-    const processed = preprocessCode(code)
-
-    // 1. Basic heuristic checks
-    if (processed.length < 200) {
-        return 'Generated code appears truncated (too short)'
-    }
-
-    if (!processed.includes('GeneratedPage') && !processed.includes('function App')) {
-        return 'No GeneratedPage or App component found in generated code'
-    }
-
-    // 2. Check for severely unbalanced braces (indicates truncation or broken code)
-    let braceCount = 0
-    for (const ch of processed) {
-        if (ch === '{') braceCount++
-        if (ch === '}') braceCount--
-    }
-    if (Math.abs(braceCount) > 2) {
-        return `Unbalanced braces detected (off by ${braceCount}), code is likely truncated or malformed`
-    }
-
-    // 3. Runtime crash pattern detection — these pass Babel but crash in the browser
-    const runtimePatterns: [RegExp, string][] = [
-        [/class\s+\w+\s+extends\s+(Map|Set|Array|WeakMap|WeakSet)\b/, 'Class extends native built-in (Map/Set/Array) — causes "Constructor requires new" crash'],
-        [/\bvar\s+(Map|Set|Array|Image|Screen|Window|Document|Event|Location|Navigator)\s*=/, 'Variable shadows a browser global (Map/Set/Array/Image etc.) — causes runtime crash'],
-        [/\bconst\s+(Map|Set|Array|Image|Screen|Window|Document|Event|Location|Navigator)\s*=/, 'Const shadows a browser global — causes runtime crash'],
-        [/\blet\s+(Map|Set|Array|Image|Screen|Window|Document|Event|Location|Navigator)\s*=/, 'Let shadows a browser global — causes runtime crash'],
-        [/\bfunction\s+(Map|Set|Array|Image|Screen|Window|Document|Event|Location)\s*\(/, 'Function shadows a browser global — causes runtime crash'],
-        [/\bwindow\.open\s*\(/, 'window.open() is forbidden in sandboxed iframes'],
-        [/\blocalStorage\b/, 'localStorage is forbidden in sandboxed iframes'],
-        [/\bsessionStorage\b/, 'sessionStorage is forbidden in sandboxed iframes'],
-        [/\bfetch\s*\(/, 'fetch() calls are forbidden in generated previews'],
-        [/dangerouslySetInnerHTML/, 'dangerouslySetInnerHTML is forbidden'],
-    ]
-
-    for (const [pattern, message] of runtimePatterns) {
-        if (pattern.test(processed)) {
-            return `Runtime error pattern: ${message}`
-        }
-    }
-
-    // 4. Check for hooks called inside conditions/loops/callbacks
-    const hookInsideBlock = /(?:if\s*\([^)]*\)\s*\{[^}]*\b(?:useState|useEffect|useRef|useCallback|useMemo)\b|for\s*\([^)]*\)\s*\{[^}]*\b(?:useState|useEffect|useRef|useCallback|useMemo)\b)/
-    if (hookInsideBlock.test(processed)) {
-        return 'React hook called inside a conditional or loop — must be at top level of component'
-    }
-
-    // 5. Babel transform check — catches real syntax/JSX/TS errors
-    try {
-        const Babel = await import('@babel/standalone')
-        const transformFn = Babel.transform || (Babel as any).default?.transform
-        if (transformFn) {
-            transformFn(processed, {
-                presets: [
-                    ['env', { targets: { esmodules: true }, modules: false, bugfixes: true }],
-                    ['react', { runtime: 'classic' }],
-                    ['typescript', { isTSX: true, allExtensions: true }]
-                ],
-                filename: 'generated.tsx',
-                configFile: false,
-                babelrc: false
-            })
-        }
-    } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        if (msg.includes('SyntaxError') || msg.includes('Unexpected') || msg.includes('Unterminated')) {
-            return `Babel build error: ${msg}`
-        }
-        return `Build error: ${msg}`
-    }
-
-    return null // Valid
-}
-
-/**
- * Post-generation auto-fix: validates code and runs o3-mini if errors are found.
- * Returns the (possibly fixed) code and whether the fix failed.
- */
-async function validateAndAutoFix(
-    code: string,
-    businessData: any,
-    projectId: string,
-    supabase: any
-): Promise<{ code: string; fixFailed: boolean }> {
-    const validationError = await validateGeneratedCode(code)
-    if (!validationError) return { code, fixFailed: false }
-
-    logger.ai.info('Validation failed, running auto-fix', { projectId, validationError })
-    logger.ai.info('Running o3-mini auto-fix', { projectId })
-
-    await supabase
-        .from('projects')
-        .update({ generation_phase: 'Auto-fixing errors (o3-mini)...' })
-        .eq('id', projectId)
-
-    const fixPrompt = `FIX the following error in the generated React code.
-
-ERROR: ${validationError}
-
-CRITICAL FIX RULES:
-1. Fix the specific error described above.
-2. NEVER name a variable, function, or class: Map, Set, Array, Image, Screen, Window, Document, Event, Location, Navigator — these shadow browser globals and crash.
-3. NEVER extend native built-ins (class Foo extends Map/Set/Array).
-4. All React hooks (useState, useEffect, useRef, useCallback, useMemo) MUST be at the TOP LEVEL of the component — never inside if/for/callbacks.
-5. NEVER use window.open, localStorage, sessionStorage, fetch, or dangerouslySetInnerHTML.
-6. Ensure there is exactly one 'export default function GeneratedPage()' component.
-7. Preserve the design, colors, layout, and all content — only fix the code errors.
-8. Return the COMPLETE fixed code.`
-
-    // Attempt 1: o3-mini fix
-    try {
-        const { code: fixedCode } = await reviseWebsite(
-            fixPrompt,
-            code,
-            businessData,
-            undefined,
-            'o3-mini'
-        )
-
-        const fixValidation = await validateGeneratedCode(fixedCode)
-        if (!fixValidation) {
-            logger.ai.info('o3-mini fix succeeded', { projectId })
-            return { code: fixedCode, fixFailed: false }
-        }
-
-        logger.ai.warn('o3-mini fix attempt 1 still has errors', { projectId, validationError: fixValidation })
-
-        // Attempt 2: retry with the new error message
-        await supabase
-            .from('projects')
-            .update({ generation_phase: 'Auto-fix retry (attempt 2)...' })
-            .eq('id', projectId)
-
-        const { code: fixedCode2 } = await reviseWebsite(
-            `The previous fix attempt still has errors. FIX THIS ERROR:\n\nERROR: ${fixValidation}\n\n${fixPrompt}`,
-            fixedCode,
-            businessData,
-            undefined,
-            'o3-mini'
-        )
-
-        const fix2Validation = await validateGeneratedCode(fixedCode2)
-        if (!fix2Validation) {
-            logger.ai.info('o3-mini fix attempt 2 succeeded', { projectId })
-            return { code: fixedCode2, fixFailed: false }
-        }
-
-        // Both attempts failed — mark project as error so the user knows
-        logger.ai.error('Both fix attempts failed', { projectId, validationError: fix2Validation })
-        await supabase
-            .from('projects')
-            .update({
-                status: 'error',
-                generation_phase: `Auto-fix failed: ${fix2Validation.substring(0, 200)}`
-            })
-            .eq('id', projectId)
-
-        return { code: fixedCode2, fixFailed: true }
-    } catch (fixError) {
-        logger.ai.error('o3-mini fix call failed', { projectId, error: fixError instanceof Error ? fixError.message : String(fixError) })
-        await supabase
-            .from('projects')
-            .update({
-                status: 'error',
-                generation_phase: `Auto-fix error: ${fixError instanceof Error ? fixError.message.substring(0, 200) : 'Unknown error'}`
-            })
-            .eq('id', projectId)
-        return { code, fixFailed: true }
-    }
-}
-
-// Update project with generated code and create a revision snapshot
-export async function updateProjectWithCode(
-    projectId: string,
-    generatedCode: string
-): Promise<{ success: boolean; error?: string }> {
-    // try to save to disk first (backup)
-    try {
-        const { saveCodeToDisk } = await import('@/lib/file-utils')
-        await saveCodeToDisk(projectId, generatedCode)
-    } catch (e) {
-        logger.ai.warn('Failed to save to local disk', { error: e instanceof Error ? e.message : String(e) })
-    }
-
-    // Use admin client to bypass RLS for robust saving
-    const { createAdminClient } = await import('@/lib/supabase/admin')
-    const supabase = createAdminClient()
-
-    // 1. Fetch current project state
-    const { data: currentProject } = await supabase
-        .from('projects')
-        .select('business_data, generated_code, version')
-        .eq('id', projectId)
-        .single()
-
-    // 2. If it already has generated code, snapshot it as a revision
-    let newVersion = 1;
-    if (currentProject) {
-        newVersion = (currentProject.version || 1) + 1;
-
-        if (currentProject.generated_code) {
-            await supabase
-                .from('project_revisions')
-                .insert({
-                    project_id: projectId,
-                    business_data: currentProject.business_data,
-                    generated_code: currentProject.generated_code,
-                    version: currentProject.version || 1,
-                })
-        }
-    }
-
-    // 3. Update the main project row
-    const { error } = await supabase
-        .from('projects')
-        .update({
-            generated_code: generatedCode,
-            status: 'review' as const,
-            version: newVersion,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', projectId)
-
-    if (error) {
-        logger.ai.error('Failed to update project', { projectId, error: error.message })
-        return { success: false, error: error.message }
-    }
-
-    return { success: true }
-}
-
 // Full generation pipeline: generate and save
+// 5-minute hard timeout for the entire pipeline (enrichment + generation + validation + auto-fix)
+const PIPELINE_TIMEOUT_MS = 5 * 60 * 1000
+
 export async function generateAndSaveWebsite(
+    projectId: string,
+    businessData?: BusinessData,
+    rules?: string,
+    templateId?: string
+): Promise<{ success: boolean; code?: string; error?: string }> {
+    // Race the entire pipeline against a hard timeout
+    const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Pipeline timed out after 5 minutes')), PIPELINE_TIMEOUT_MS)
+    })
+
+    try {
+        return await Promise.race([
+            _generateAndSaveWebsiteInner(projectId, businessData, rules, templateId),
+            timeoutPromise,
+        ])
+    } catch (error) {
+        console.error(`Generation pipeline failed for ${projectId}:`, error)
+
+        const { createAdminClient } = await import('@/lib/supabase/admin')
+        const supabase = createAdminClient()
+        await supabase
+            .from('projects')
+            .update({ status: 'error' as const })
+            .eq('id', projectId)
+
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown generation error',
+        }
+    }
+}
+
+async function _generateAndSaveWebsiteInner(
     projectId: string,
     businessData?: BusinessData,
     rules?: string,
@@ -746,13 +428,13 @@ export async function generateAndSaveWebsite(
 
         await supabase
             .from('projects')
-            .update({ status: 'generating' as const, generation_phase: 'Initializing...' })
+            .update({ status: 'generating' as const })
             .eq('id', projectId)
 
         // --- TEMPLATE-BASED GENERATION (fast content-swap path) ---
         if (templateId) {
-            logger.ai.info('Template-based generation started', { projectId, templateId })
-            await supabase.from('projects').update({ generation_phase: 'Loading template...' }).eq('id', projectId)
+            console.log(`[Generator] Template-based generation for ${projectId} using template ${templateId}`)
+            // generation_phase column removed — status tracking via project status only
 
             const { data: template, error: tplError } = await supabase
                 .from('templates')
@@ -761,43 +443,94 @@ export async function generateAndSaveWebsite(
                 .single()
 
             if (tplError || !template?.generated_code) {
-                logger.ai.warn('Template not found, falling back to full generation', { templateId })
+                console.warn(`[Generator] Template ${templateId} not found, falling back to full generation`)
             } else {
-                await supabase.from('projects').update({ generation_phase: 'Swapping content with template...' }).eq('id', projectId)
+                /* generation_phase removed */
 
-                const contentSwapPrompt = `You are given a high-quality React landing page template and NEW business data. Your job is to REPLACE all content to match the new business while keeping the EXACT same layout, design, colors, component structure, and code architecture.
+                // Extract design tokens from template for emphasis
+                const templateCode = template.generated_code
+                const colorClasses = [...new Set((templateCode.match(/(?:bg|text|border|ring|shadow)-(?:\[#[0-9a-fA-F]+\]|zinc|slate|gray|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)[-/]?\d{0,3}/g) || []))]
+                const roundedClasses = [...new Set((templateCode.match(/rounded-\w+/g) || []))]
+                const isDarkTheme = (templateCode.match(/bg-(?:zinc|slate|gray|neutral|black)-[89]\d{2}/g) || []).length > 3
 
-REPLACE:
-- All business names, taglines, and descriptions
-- All service/feature names and descriptions
-- All testimonial names, quotes, and details
-- All contact info (phone, email, address)
-- All image URLs (use relevant Unsplash images for the new industry with onError fallbacks)
-- All FAQ questions and answers
-- Navigation labels if they reference the old business
-- Any industry-specific icons (swap to match new industry)
+                const templateSystemPrompt = `You are a CODE EDITOR, not a designer. You will receive an existing React component and new business data. Your job is to MODIFY THE EXISTING CODE — not rewrite it from scratch.
 
-PRESERVE EXACTLY:
-- The component structure and layout
-- All CSS/Tailwind classes and styling
-- All animations and interactive behavior
-- The color palette and typography
-- All React hooks and state management
-- The export default function GeneratedPage() wrapper
+## CRITICAL: MODIFY, DON'T REWRITE
+Start with the template code as your base. Make surgical edits to swap content. The output should be 80-90% identical code to the input template.
 
-Return the COMPLETE updated React code.`
+## WHAT TO CHANGE (ONLY these):
+- String literals: business name, tagline, descriptions, section headings
+- Service/product names, descriptions, and prices
+- Testimonial names, quotes, ratings
+- Contact info: phone, email, address, hours
+- Image \`src\` URLs (use Unsplash URLs relevant to the new industry, keep onError fallbacks)
+- Icon component names (swap to match new industry, keep lucide-react)
+- Navigation link labels
+- Array items in data arrays (services list, menu items, FAQ items)
+
+## WHAT TO KEEP IDENTICAL (DO NOT TOUCH):
+- ALL \`className\` strings — every single Tailwind class must stay exactly as-is
+- Component structure, JSX nesting, and element hierarchy
+- Color palette: ${colorClasses.slice(0, 20).join(', ')}
+- Border radius: ${roundedClasses.join(', ')}
+- Theme: ${isDarkTheme ? 'DARK theme — keep all dark backgrounds' : 'LIGHT theme — keep all light backgrounds'}
+- All CSS transitions, animations, hover/focus effects
+- Layout: grid columns, flex directions, spacing, padding, margin
+- React hooks (useState, useEffect) and state management logic
+- The \`export default function GeneratedPage()\` wrapper and structure
+
+## WHAT TO ADD (if business data has info the template lacks):
+- Add new sections BEFORE the footer component
+- COPY the className patterns from the nearest existing section
+- Use the EXACT same background colors, text colors, padding, and spacing
+- Example: if adding "Operating Hours" and the template has a contact section with \`bg-zinc-900 py-24\`, use those same classes
+
+## CONTRAST FIX (EXCEPTION TO "KEEP IDENTICAL" — YOU MUST FIX THESE):
+This is the ONE area where you MUST modify className strings if needed:
+- **Hero/banner sections with background images**: If text sits over an \`<img>\` or \`background-image\` without a semi-transparent overlay, ADD an overlay \`<div className="absolute inset-0 bg-black/60" />\` between the image and text content. Make the parent \`relative\` if not already.
+- **Nav bar over hero images**: Change any \`text-zinc-*\`, \`text-gray-*\`, or muted text colors to \`text-white\`. Nav must be readable.
+- **Subtitle/description text over images**: Must be \`text-white\` or \`text-white/80\`, NEVER \`text-zinc-400\` or \`text-gray-500\`.
+- **Body text on solid backgrounds**: minimum \`text-zinc-700\` on light bg, \`text-zinc-100\` on dark bg.
+- **Cards in dark themes**: If the page background is dark (\`bg-black\`, \`bg-zinc-900\`, \`bg-zinc-950\`, etc.), ALL cards MUST use dark backgrounds too (\`bg-zinc-800\` or \`bg-zinc-900\` with \`border-zinc-700\`). NEVER use \`bg-white\` cards on a dark page — it looks broken. Card text should be \`text-white\` or \`text-zinc-100\`, card descriptions \`text-zinc-300\` or \`text-zinc-400\`.
+- **Cards in light themes**: Cards use \`bg-white\` with \`border-zinc-200\` and dark text.
+- **Theme consistency**: Every element on the page must follow the same theme (dark or light). No mixing white cards on dark backgrounds or dark cards on light backgrounds.
+- If the template already has good contrast, don't change it.
+
+## CODE REQUIREMENTS:
+- Keep the single-file React component format
+- Keep \`export default function GeneratedPage()\`
+- All images need real Unsplash URLs with onError fallback
+- No placeholder "Lorem ipsum" text`
+
+                const templateUserPrompt = `## TEMPLATE CODE (your starting point — modify this, don't rewrite):
+${templateCode}
+
+## NEW BUSINESS DATA (swap into the template above):
+${JSON.stringify(data, null, 2)}
+
+${rules ? `## ADDITIONAL RULES:\n${rules}` : ''}
+
+Return the modified React code. Remember: modify the template code above, don't create new code from scratch. The className strings should be nearly identical to the template.`
 
                 try {
-                    const { code: swappedCode } = await reviseWebsite(
-                        contentSwapPrompt,
-                        template.generated_code,
-                        data,
-                        rules
-                    )
+                    const modelInstance = getModel()
+                    const { text: swappedCode, usage } = await generateText({
+                        model: modelInstance,
+                        system: templateSystemPrompt,
+                        prompt: templateUserPrompt,
+                    })
+                    await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'template-generation', null))
+
+                    // Clean markdown fences if present
+                    let cleanSwapped = swappedCode.trim()
+                    if (cleanSwapped.startsWith('```')) {
+                        cleanSwapped = cleanSwapped.replace(/^```(?:tsx|typescript|jsx|javascript)?\n?/, '')
+                        cleanSwapped = cleanSwapped.replace(/\n?```$/, '')
+                    }
 
                     // Validate the swapped code
-                    await supabase.from('projects').update({ generation_phase: 'Validating template output...' }).eq('id', projectId)
-                    const { code: validatedCode, fixFailed } = await validateAndAutoFix(swappedCode, data, projectId, supabase)
+                    /* generation_phase removed */
+                    const { code: validatedCode, fixFailed } = await validateAndAutoFix(cleanSwapped, data, projectId, supabase)
 
                     if (fixFailed) {
                         // Save latest attempt for inspection but preserve 'error' status
@@ -805,13 +538,13 @@ Return the COMPLETE updated React code.`
                             generated_code: validatedCode,
                             updated_at: new Date().toISOString(),
                         }).eq('id', projectId)
-                        await supabase.from('projects').update({ generation_phase: null }).eq('id', projectId)
+                        /* generation_phase removed */
                         return { success: false, error: 'Auto-fix failed after 2 attempts' }
                     }
 
-                    await supabase.from('projects').update({ generation_phase: 'Saving Revisions...' }).eq('id', projectId)
+                    /* generation_phase removed */
                     const updateResult = await updateProjectWithCode(projectId, validatedCode)
-                    await supabase.from('projects').update({ generation_phase: null }).eq('id', projectId)
+                    /* generation_phase removed */
 
                     if (!updateResult.success) {
                         return { success: false, error: updateResult.error }
@@ -819,7 +552,7 @@ Return the COMPLETE updated React code.`
 
                     return { success: true, code: validatedCode }
                 } catch (swapError) {
-                    logger.ai.error('Template content swap failed, falling back to full generation', { projectId, error: swapError instanceof Error ? swapError.message : String(swapError) })
+                    console.error(`[Generator] Template content swap failed for ${projectId}, falling back to full generation`, swapError)
                     // Fall through to full generation below
                 }
             }
@@ -831,8 +564,8 @@ Return the COMPLETE updated React code.`
         let activeRules = rules;
         const richData = data as Record<string, unknown>;
         if (!richData.$$manifest) {
-            logger.ai.info('Enriching data for project', { projectId });
-            await supabase.from('projects').update({ generation_phase: 'Researching & Enriching...' }).eq('id', projectId);
+            console.log(`Enriching data for project ${projectId}...`);
+            /* generation_phase removed */
             try {
                 let activeRulesStr = rules;
                 if (!activeRulesStr) {
@@ -849,31 +582,28 @@ Return the COMPLETE updated React code.`
                     .eq('id', projectId);
 
                 data = enriched as any;
-                logger.ai.info('Enrichment complete', { projectId });
+                console.log(`Enrichment complete for ${projectId}`);
             } catch (enrichError) {
-                logger.ai.error('Enrichment failed, proceeding with basic data', { projectId, error: enrichError instanceof Error ? enrichError.message : String(enrichError) });
+                console.error(`Enrichment failed for ${projectId}, proceeding with basic data.`, enrichError);
             }
         }
 
         // --- 2. GENERATION PHASE ---
-        await supabase.from('projects').update({ generation_phase: 'Writing React Code...' }).eq('id', projectId);
+        /* generation_phase removed */
 
-        const timeoutPromise = new Promise<string>((_, reject) => {
-            setTimeout(() => {
-                reject(new Error('Generation timed out after 300 seconds'))
-            }, 300000)
-        });
+        const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined);
 
-        const code = await Promise.race([
-            generateWebsiteCode(data, activeRules, undefined, undefined, (phase) => {
-                supabase.from('projects').update({ generation_phase: phase }).eq('id', projectId);
-            }),
-            timeoutPromise
-        ]);
+        const code = typeof genResult === 'string' ? genResult : (genResult as { code: string; promptVersionId: string }).code
+        const promptVersionId = typeof genResult === 'string' ? null : (genResult as { code: string; promptVersionId: string }).promptVersionId
+
+        // Save prompt_version_id to the project record (PROMPT-02)
+        if (promptVersionId) {
+            await supabase.from('projects').update({ prompt_version_id: promptVersionId }).eq('id', projectId)
+        }
 
         // --- 3. VALIDATION + AUTO-FIX PHASE ---
-        await supabase.from('projects').update({ generation_phase: 'Validating code...' }).eq('id', projectId);
-        const { code: validatedCode, fixFailed } = await validateAndAutoFix(code as string, data, projectId, supabase)
+        /* generation_phase removed */
+        const { code: validatedCode, fixFailed } = await validateAndAutoFix(code, data, projectId, supabase)
 
         if (fixFailed) {
             // Save latest attempt for inspection but preserve 'error' status
@@ -881,28 +611,41 @@ Return the COMPLETE updated React code.`
                 generated_code: validatedCode,
                 updated_at: new Date().toISOString(),
             }).eq('id', projectId)
-            await supabase.from('projects').update({ generation_phase: null }).eq('id', projectId)
+            /* generation_phase removed */
             return { success: false, error: 'Auto-fix failed after 2 attempts' }
         }
 
-        await supabase.from('projects').update({ generation_phase: 'Saving Revisions...' }).eq('id', projectId);
+        /* generation_phase removed */;
         const updateResult = await updateProjectWithCode(projectId, validatedCode)
 
-        await supabase.from('projects').update({ generation_phase: null }).eq('id', projectId);
+        /* generation_phase removed */;
 
         if (!updateResult.success) {
             return { success: false, error: updateResult.error }
         }
 
+        // --- 4. QUALITY SCORING (fire-and-forget, never blocks generation) ---
+        try {
+            const { scoreGeneratedCode } = await import('./quality-scorer')
+            const score = scoreGeneratedCode(validatedCode, data as Record<string, unknown>, !fixFailed)
+            await supabase
+                .from('projects')
+                .update({ quality_score: score.overall })
+                .eq('id', projectId)
+        } catch (scoreErr) {
+            console.error(`[QualityScorer] Scoring failed for ${projectId}:`, scoreErr)
+            // Never block generation for scoring failure
+        }
+
         return { success: true, code: validatedCode }
     } catch (error) {
-        logger.ai.error('Generation failed', { projectId, error: error instanceof Error ? error.message : String(error) })
+        console.error('Generation failed:', error)
 
         const { createAdminClient } = await import('@/lib/supabase/admin')
         const supabase = createAdminClient()
         await supabase
             .from('projects')
-            .update({ status: 'error' as const, generation_phase: null })
+            .update({ status: 'error' as const })
             .eq('id', projectId)
 
         return {
@@ -912,47 +655,11 @@ Return the COMPLETE updated React code.`
     }
 }
 
-/**
- * Specifically cleans and formats code pasted manually via the Code Drop feature.
- */
-export async function cleanTemplateCode(rawCode: string, industry: string): Promise<string> {
-    const aiInstance = getModel();
-
-    const prompt = `
-You are an expert React and Tailwind developer.
-Your task is to review and clean up this manually dropped React code snippet.
-Industry context: ${industry}
-
-STRICT RULES:
-1. Ensure the code is a valid React component.
-2. The main export MUST be exactly: \`export default function GeneratedPage()\`
-3. All React hooks (useState, useEffect, etc.) MUST be at the top-level of the component layout. Ensure there are no rules of hooks violations.
-4. All icons must be imported from 'lucide-react'. Fix any missing imports.
-5. Fix any missing closing tags or syntax errors.
-6. The code must exclusively use standard Tailwind classes.
-7. Return ONLY the raw code block itself in your response. No markdown wrappers, no explanations.
-
-Code to clean:
-\`\`\`tsx
-${rawCode}
-\`\`\`
-`.trim();
-
-    try {
-        const { text } = await generateText({
-            model: aiInstance,
-            prompt,
-        });
-
-        let cleanedCode = text.trim();
-        if (cleanedCode.startsWith('\`\`\`')) {
-            cleanedCode = cleanedCode.replace(/^\`\`\`(?:tsx|typescript|jsx|javascript)?\n?/, '');
-            cleanedCode = cleanedCode.replace(/\n?\`\`\`$/, '');
-        }
-
-        return cleanedCode.trim();
-    } catch (e) {
-        logger.ai.error('Error cleaning template code', { error: e instanceof Error ? e.message : String(e) });
-        throw new Error("Failed to analyze and clean template code");
-    }
-}
+// Re-exports for backward compatibility -- external consumers can keep importing from generator.ts
+export { SYSTEM_PROMPT } from './prompts/system'  // Keep for backward compat; internal usage now via prompt-manager
+export { REVISION_SYSTEM_PROMPT } from './prompts/revision'
+export { getModel } from './model-config'
+export { reviseWebsite, reviseWebsiteWithPatches } from './revision'
+export { validateGeneratedCode, validateAndAutoFix } from './validation'
+export { updateProjectWithCode } from './project-persistence'
+export { cleanTemplateCode } from './template-cleaning'

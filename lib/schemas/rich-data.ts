@@ -42,7 +42,19 @@ export const GlobalConfigurationSchema = z.object({
     }).optional()
 })
 
+const VibeSchema = z.object({
+    vibe: z.string(),
+    voice: z.string(),
+    industry: z.string(),
+    mood: z.string(),
+    visualCues: z.array(z.string()),
+    avoidCues: z.array(z.string()),
+    aestheticDirection: z.string().optional(),
+    heroVariant: z.string().optional(),
+})
+
 export const BrandIdentitySchema = z.object({
+    vibe: VibeSchema.optional(),
     core: z.object({
         legalName: z.string().optional(),
         brandName: z.string(),

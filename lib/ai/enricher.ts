@@ -1,8 +1,33 @@
 import { generateText } from 'ai'
+import { openai, createOpenAI } from '@ai-sdk/openai'
+import { google } from '@ai-sdk/google'
 import { RichBusinessDataSchema, RichBusinessData } from '@/lib/schemas/rich-data'
-import { getModel } from './model-config'
+import { recordCost, buildCostRecord, getModelId } from './cost-tracker'
 
-export async function enrichBusinessData(googlePlace: Record<string, unknown>, rules?: string): Promise<RichBusinessData> {
+// Configure OpenRouter if key is present (reusing logic from generator.ts essentially)
+const openrouter = createOpenAI({
+    name: 'openrouter',
+    apiKey: process.env.OPENROUTER_API_KEY,
+    baseURL: 'https://openrouter.ai/api/v1',
+})
+
+const getModel = () => {
+    // Prefer Google Gemini Flash for structured data tasks (cost-effective)
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+        return google('gemini-3-flash-preview')
+    }
+    // Fallback to OpenAI
+    if (process.env.OPENAI_API_KEY) {
+        return openai('gpt-4o')
+    }
+    // Fallback to OpenRouter
+    if (process.env.OPENROUTER_API_KEY) {
+        return openrouter('openai/gpt-4o')
+    }
+    return openai('gpt-4o')
+}
+
+export async function enrichBusinessData(googlePlace: any, rules?: string): Promise<RichBusinessData> {
     const model = getModel()
 
     const rulesSection = rules
@@ -45,8 +70,8 @@ Before generating ANY output, mentally research the business's industry. Conside
 1. Use all available data from Google Places (name, address, phone, rating, reviews, photos) to populate the schema.
 2. **Infer & Predict**:
     - **Brand Identity**: Use your industry research from Step 1 to select the PRECISE brand voice and design system. Do NOT use generic/safe choices — be opinionated about colors, typography, and personality.
-    - **Design System Colors**: Choose colors that match the industry's visual language. Include a "semantic" color object with: primary (brand color), accent (highlight/CTA), background (page surface), muted (subtle backgrounds), and foreground (text). Every color MUST have a hex value.
-    - **Typography**: Select font families appropriate to the industry mood. Serif for luxury/legal/dining, Sans-serif for tech/fitness/medical.
+    - **Design System Colors**: Choose colors that match the industry's visual language. Colors go inside \`designSystem.colors.semantic\` — each color is an object with a \`hex\` field (e.g. \`"primary": { "hex": "#8B0000" }\`). Required keys: primary (brand color), accent (highlight/CTA), background (page surface), muted (subtle backgrounds), foreground (text), surface (card/container bg), border (default border color). Colors must NOT be generic defaults — research the business name to infer a distinctive palette. If the business is called "Golden Lotus Spa", the primary should be gold-adjacent, not generic teal.
+    - **Typography**: For \`typography.headings.family\`, you MUST choose one of these exact values: 'Playfair Display' (luxury/dining/legal/real-estate/spa), 'Outfit' (fitness/casual/lifestyle/entertainment), 'Space Grotesk' (tech/startup/education), 'Inter' (medical/finance/professional). For \`typography.body.family\`, always use 'Inter'.
     - **Voice & Personality**: Define primary (e.g., "Serene"), secondary (e.g., "Nurturing"), and tone descriptors. These will guide the copywriting.
     - **Content**: Generate a plausible "Hero Headline", "Subhead", and "About" text that matches the brand voice.
     - **Services**: Infer likely services based on the category with realistic pricing/descriptions.
@@ -60,18 +85,78 @@ Before generating ANY output, mentally research the business's industry. Conside
     - **Manifest**: Set "generator" to "Gemini-Deep-Architect" and "version" to "3.0.0-alpha".
 5. **IMPORTANT — Preserve businessName**: Always include a top-level "businessName" field in the output JSON with the business name. This is required for display in the dashboard.
 
-## STEP 3 — INDUSTRY VIBE METADATA (INCLUDE IN OUTPUT):
-Add a top-level "brandIdentity.vibe" field with:
+## STEP 3 — BRAND IDENTITY STRUCTURE (MUST FOLLOW EXACTLY):
+The "brandIdentity" object MUST have this exact nested structure:
 \`\`\`json
 {
-  "vibe": "Legacy/Established",  // or "Modern/Innovative", "Warm/Inviting", "Bold/Energetic", "Serene/Calming", "Premium/Luxury"
-  "voice": "Elegant, Inviting, Authentic, Culinary-focused",
-  "industry": "Restaurant & Fine Dining",
-  "mood": "Warm intimacy — like walking into a candlelit room",
-  "visualCues": ["rich textures", "warm amber lighting", "serif headings", "generous spacing"],
-  "avoidCues": ["neon colors", "tech-y gradients", "stock corporate imagery"]
+  "brandIdentity": {
+    "vibe": {
+      "vibe": "Legacy/Established",
+      "voice": "Elegant, Inviting, Authentic, Culinary-focused",
+      "industry": "Restaurant & Fine Dining",
+      "mood": "Warm intimacy — like walking into a candlelit room",
+      "visualCues": ["rich textures", "warm amber lighting", "serif headings", "generous spacing"],
+      "avoidCues": ["neon colors", "tech-y gradients", "stock corporate imagery"],
+      "aestheticDirection": "warm-editorial",
+      "heroVariant": "split"
+    },
+    "core": {
+      "brandName": "The Business Name",
+      "legalName": "Legal Entity Name",
+      "foundingDate": "2020-01-01"
+    },
+    "voice": {
+      "personality": {
+        "primary": "Elegant",
+        "secondary": "Inviting"
+      },
+      "writingGuidelines": {
+        "forbiddenTerms": ["cheap", "discount"],
+        "preferredTerms": ["curated", "artisan"]
+      }
+    },
+    "designSystem": {
+      "colors": {
+        "semantic": {
+          "primary": { "hex": "#8B0000" },
+          "accent": { "hex": "#D4AF37" },
+          "background": { "hex": "#FFFBF0" },
+          "muted": { "hex": "#F5F0E8" },
+          "foreground": { "hex": "#1A1A1A" },
+          "surface": { "hex": "#FFFFFF" },
+          "border": { "hex": "#E5DDD0" }
+        }
+      },
+      "typography": {
+        "headings": { "family": "Playfair Display", "weights": [400, 700], "fallback": "serif" },
+        "body": { "family": "Inter", "weights": [400, 500, 600], "fallback": "sans-serif" }
+      }
+    }
+  }
 }
 \`\`\`
+CRITICAL: Colors MUST be inside "colors.semantic" as objects with a "hex" field (e.g. \`{ "hex": "#8B0000" }\`), NOT flat strings. Voice personality MUST be inside "voice.personality" as an object with "primary" and "secondary" keys. The "vibe" field MUST be an object, NOT a string.
+
+### aestheticDirection — MUST be one of these exact values:
+- **"warm-editorial"** — Restaurants, cafes, bakeries, wine bars, fine dining. Dark backgrounds, warm accents, serif headings, generous whitespace.
+- **"clean-luxe"** — Salons, spas, boutiques, real estate, luxury services. Light neutrals, thin borders, serif headings, muted palette with one rich accent.
+- **"bold-energy"** — Gyms, sports, auto repair, nightlife, adventure. Dark base, one electric accent color, tight headline tracking, confident large type.
+- **"modern-tech"** — SaaS, tech startups, education, digital agencies. White/light base, geometric sans-serif, subtle gradient accents, clean asymmetric layouts.
+- **"trustworthy-pro"** — Medical, dental, legal, finance, insurance. White background, refined cards with subtle shadows, navy/teal palette, clear hierarchy.
+- **"playful-fresh"** — Casual restaurants, pet services, kids education, entertainment. Soft colored backgrounds, rounded corners, friendly sans-serif, warm and approachable.
+
+### IMPORTANT — visualCues MUST follow these rules:
+- NEVER include "uppercase" or "bold uppercase typography" in visualCues — this creates template-looking websites
+- NEVER include "angular elements", "aggressive shapes", or "neon accents" — these look dated
+- PREFER refined cues: "tight headline tracking", "generous whitespace", "subtle shadows", "restrained color palette", "asymmetric layouts", "premium typography"
+- Keep visualCues focused on mood and texture, NOT specific CSS patterns
+
+### heroVariant — MUST be one of:
+- **"split"** — Two-column: text on left, full-height image on right. Best for warm-editorial, clean-luxe.
+- **"full-bleed"** — Full-width Unsplash image with dark overlay. Best for visual industries (food, beauty, fitness).
+- **"gradient-mesh"** — Multi-stop radial gradients with primary/accent colors. Best for modern-tech.
+- **"typographic"** — Dark solid background, oversized type IS the design. Best for bold-energy.
+- **"stacked"** — Colored background section with centered text, separate image strip below. Best for playful-fresh, trustworthy-pro.
 
 ## CRITICAL RULES:
 - The output JSON must be valid and conform to the schema.
@@ -86,11 +171,13 @@ ${JSON.stringify(googlePlace, null, 2)}`
 
     try {
         // Use text-based generation (Output.object is broken with current Zod version)
-        const { text } = await generateText({
+        const { text, usage } = await generateText({
             model,
             system: systemPrompt + "\n\nCRITICAL: Return ONLY the raw valid JSON object. Do not include markdown formatting, comments, or code fences.",
             prompt: userPrompt,
         })
+        // Track cost for enrichment call
+        await recordCost(buildCostRecord(usage, getModelId(model), 'enrichment', null))
 
         let cleanText = text.trim();
         // Remove markdown code blocks if present
@@ -101,11 +188,19 @@ ${JSON.stringify(googlePlace, null, 2)}`
         const parsed = JSON.parse(cleanText) as RichBusinessData;
 
         // Ensure businessName is preserved at top level for dashboard display
-        if (!parsed.businessName && typeof googlePlace?.businessName === 'string') {
-            parsed.businessName = googlePlace.businessName;
+        if (!parsed.businessName && googlePlace?.businessName) {
+            (parsed as any).businessName = googlePlace.businessName;
         }
-        if (!parsed.businessName && parsed.brandIdentity?.core?.brandName) {
-            parsed.businessName = parsed.brandIdentity.core.brandName;
+        if (!parsed.businessName && (parsed as any).brandIdentity?.core?.brandName) {
+            (parsed as any).businessName = (parsed as any).brandIdentity.core.brandName;
+        }
+
+        // Ensure industry is preserved at top level for dashboard display
+        if (!(parsed as any).industry && googlePlace?.industry) {
+            (parsed as any).industry = googlePlace.industry;
+        }
+        if (!(parsed as any).industry && (parsed as any).brandIdentity?.vibe?.industry) {
+            (parsed as any).industry = (parsed as any).brandIdentity.vibe.industry;
         }
 
         return parsed;

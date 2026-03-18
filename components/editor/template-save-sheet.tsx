@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Star, Loader2, Check, Layers, Monitor } from "lucide-react"
-import { saveTemplate } from "@/app/dashboard/actions"
+import { saveTemplate } from "@/app/(admin)/dashboard/actions"
 import { constructHtmlBoilerplate } from "@/lib/utils/html-boilerplate"
 
 interface TemplateSaveSheetProps {

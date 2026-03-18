@@ -19,7 +19,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { getMonthActivityCounts } from "@/app/dashboard/actions"
+import { getMonthActivityCounts } from "@/app/(admin)/dashboard/actions"
 
 // Mon=0 … Sun=6 column index (ISO week)
 const WEEK_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]

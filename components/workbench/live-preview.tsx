@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { Loader2, AlertCircle, Eye, Zap, Code2, Clock, Hash, LayoutGrid } from 'lucide-react'
+import { Loader2, AlertCircle, Eye, Zap, Code2, Clock, Hash, LayoutGrid, ExternalLink } from 'lucide-react'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
 
 export interface StreamLogEntry {
@@ -190,28 +190,49 @@ export function LivePreview({
   }
 
 
+  const handleOpenNewTab = () => {
+    if (!srcDoc) return
+    const newWindow = window.open('', '_blank')
+    if (newWindow) {
+      newWindow.document.write(srcDoc)
+      newWindow.document.close()
+    }
+  }
+
   return (
     <div className="flex flex-col h-full w-full bg-zinc-100 overflow-hidden">
       {/* Device Toolbar */}
-      <div className="flex items-center justify-center p-2 border-b bg-white gap-2 shrink-0">
+      <div className="flex items-center justify-between p-2 border-b bg-white shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('desktop')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'desktop' ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          >
+            Desktop
+          </button>
+          <button
+            onClick={() => setViewMode('mobile')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'mobile' ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          >
+            Mobile
+          </button>
+          <button
+            onClick={() => setViewMode('matrix')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'matrix' ? 'bg-purple-100 text-purple-700' : 'text-purple-600 hover:bg-purple-50'}`}
+          >
+            <LayoutGrid className="h-3 w-3" />
+            Matrix View
+          </button>
+        </div>
+
         <button
-          onClick={() => setViewMode('desktop')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'desktop' ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          onClick={handleOpenNewTab}
+          disabled={!srcDoc}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Open preview in new tab for fullscreen testing"
         >
-          Desktop
-        </button>
-        <button
-          onClick={() => setViewMode('mobile')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'mobile' ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100'}`}
-        >
-          Mobile
-        </button>
-        <button
-          onClick={() => setViewMode('matrix')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'matrix' ? 'bg-purple-100 text-purple-700' : 'text-purple-600 hover:bg-purple-50'}`}
-        >
-          <LayoutGrid className="h-3 w-3" />
-          Matrix View
+          <ExternalLink className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Open in New Tab</span>
         </button>
       </div>
 

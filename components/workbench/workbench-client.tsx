@@ -1,7 +1,7 @@
 "use client"
 
 import { SplitWorkbench } from '@/components/workbench/split-workbench'
-import { regenerateProject } from '@/app/dashboard/actions'
+import { regenerateProject } from '@/app/(admin)/dashboard/actions'
 import { useTransition } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'

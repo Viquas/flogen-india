@@ -6,8 +6,25 @@ export async function GET() {
     try {
         const supabase = createAdminClient()
 
-        // Rescue orphaned projects: status='queued' but no matching pending queue_job
-        // This happens when the queue_jobs INSERT failed silently on a previous run.
+        // 1. Reset stale processing jobs (stuck >2 min) back to pending
+        const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        const { data: staleJobs } = await supabase
+            .from('queue_jobs')
+            .select('id, project_id')
+            .eq('status', 'processing')
+            .lt('started_at', staleThreshold)
+
+        let resetCount = 0
+        if (staleJobs && staleJobs.length > 0) {
+            await supabase
+                .from('queue_jobs')
+                .update({ status: 'pending', updated_at: new Date().toISOString() })
+                .in('id', staleJobs.map(j => j.id))
+            resetCount = staleJobs.length
+            console.log(`[Queue] Reset ${resetCount} stale processing jobs back to pending`)
+        }
+
+        // 2. Rescue orphaned projects: status='queued' but no matching pending/processing queue_job
         const { data: queuedProjects } = await supabase
             .from('projects')
             .select('id')
@@ -17,7 +34,6 @@ export async function GET() {
         if (queuedProjects && queuedProjects.length > 0) {
             const projectIds = queuedProjects.map((p: { id: string }) => p.id)
 
-            // Check which of these already have a pending/processing queue_job
             const { data: existingJobs } = await supabase
                 .from('queue_jobs')
                 .select('project_id')
@@ -29,7 +45,6 @@ export async function GET() {
 
             if (orphanIds.length > 0) {
                 console.log(`[Queue] Rescuing ${orphanIds.length} orphaned queued projects...`)
-                // Insert missing queue_jobs for each orphan
                 const orphanJobs = orphanIds.map((id: string) => ({
                     project_id: id,
                     status: 'pending' as const,
@@ -38,7 +53,6 @@ export async function GET() {
                 const { error: rescueError } = await supabase.from('queue_jobs').insert(orphanJobs)
                 if (rescueError) {
                     console.error('[Queue] Rescue insert failed:', rescueError.message)
-                    // Fall back: generate directly for each orphan
                     const { generateAndSaveWebsite } = await import('@/lib/ai/generator')
                     await supabase.from('projects').update({ status: 'generating' }).in('id', orphanIds)
                     for (const id of orphanIds) {
@@ -52,14 +66,16 @@ export async function GET() {
         }
 
         const status = await generationQueue.getStatus()
-        console.log('[Queue] Manual kickstart triggered. Status:', status, `| Rescued: ${rescued}`)
+        const totalRecovered = rescued + resetCount
+        console.log('[Queue] Manual kickstart triggered. Status:', status, `| Rescued: ${rescued}, Reset: ${resetCount}`)
         generationQueue.process().catch(console.error)
 
         return NextResponse.json({
             success: true,
-            message: `Queue processor started — ${status.pending + rescued} pending, ${status.processing} processing${rescued > 0 ? ` (${rescued} orphans rescued)` : ''}`,
+            message: `Queue processor started — ${status.pending + totalRecovered} pending, ${status.processing} processing${resetCount > 0 ? ` (${resetCount} stale jobs reset)` : ''}${rescued > 0 ? ` (${rescued} orphans rescued)` : ''}`,
             status,
             rescued,
+            reset: resetCount,
         })
     } catch (error) {
         console.error('Queue kickstart error:', error)

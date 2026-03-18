@@ -1,9 +1,0 @@
-Testing Supabase connection...
-URL: https://njfbrfvelyvslarzdqdg.supabase.co
-Supabase query error:
-{
-  "code": "PGRST205",
-  "details": null,
-  "hint": null,
-  "message": "Could not find the table 'public.projects' in the schema cache"
-}

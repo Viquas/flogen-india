@@ -28,7 +28,7 @@ export const getModel = (modelId?: string) => {
 
     // Default: Google Gemini 3.1 Pro
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        return google('gemini-3.1-pro-preview')
+        return google('gemini-3-flash-preview')
     }
     // Fallback to OpenRouter
     if (process.env.OPENROUTER_API_KEY) {

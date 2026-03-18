@@ -1,5 +1,0 @@
-Testing Supabase connection (Table Discovery)...
-Batches check:
-Success, count: 0
-Projects check:
-Success, count: 0

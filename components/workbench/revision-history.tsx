@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Clock, Loader2, ArrowLeft, History } from 'lucide-react'
-import { getProjectRevisions, restoreProjectRevision } from '@/app/dashboard/actions'
+import { getProjectRevisions, restoreProjectRevision } from '@/app/(admin)/dashboard/actions'
 
 interface Revision {
     id: string

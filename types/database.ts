@@ -43,6 +43,13 @@ export type Database = {
                     version: number
                     thumbnail_url: string | null
                     generation_phase: string | null
+                    error_type: string | null
+                    error_details: string | null
+                    prompt_version_id: string | null
+                    quality_score: number | null
+                    slug: string | null
+                    claim_expires_at: string | null
+                    screenshot_url: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -55,6 +62,13 @@ export type Database = {
                     version?: number
                     thumbnail_url?: string | null
                     generation_phase?: string | null
+                    error_type?: string | null
+                    error_details?: string | null
+                    prompt_version_id?: string | null
+                    quality_score?: number | null
+                    slug?: string | null
+                    claim_expires_at?: string | null
+                    screenshot_url?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -67,6 +81,13 @@ export type Database = {
                     version?: number
                     thumbnail_url?: string | null
                     generation_phase?: string | null
+                    error_type?: string | null
+                    error_details?: string | null
+                    prompt_version_id?: string | null
+                    quality_score?: number | null
+                    slug?: string | null
+                    claim_expires_at?: string | null
+                    screenshot_url?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -189,6 +210,9 @@ export type Database = {
                     status: 'pending' | 'processing' | 'completed' | 'failed'
                     error_message: string | null
                     attempts: number
+                    started_at: string | null
+                    completed_at: string | null
+                    model_id: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -200,6 +224,9 @@ export type Database = {
                     status?: 'pending' | 'processing' | 'completed' | 'failed'
                     error_message?: string | null
                     attempts?: number
+                    started_at?: string | null
+                    completed_at?: string | null
+                    model_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -211,6 +238,9 @@ export type Database = {
                     status?: 'pending' | 'processing' | 'completed' | 'failed'
                     error_message?: string | null
                     attempts?: number
+                    started_at?: string | null
+                    completed_at?: string | null
+                    model_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -271,6 +301,282 @@ export type Database = {
                         columns: ["source_project_id"]
                         isOneToOne: false
                         referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            prompt_versions: {
+                Row: {
+                    id: string
+                    name: string
+                    version: number
+                    content: string
+                    is_active: boolean
+                    change_notes: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    version: number
+                    content: string
+                    is_active?: boolean
+                    change_notes?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    version?: number
+                    content?: string
+                    is_active?: boolean
+                    change_notes?: string | null
+                    created_at?: string
+                }
+                Relationships: []
+            }
+            batch_runs: {
+                Row: {
+                    id: string
+                    batch_id: string | null
+                    current_stage: 'pending' | 'discovering' | 'enqueueing' | 'generating' | 'fixing' | 'scoring' | 'completed' | 'failed'
+                    config: Json
+                    progress: Json
+                    error_message: string | null
+                    started_at: string
+                    completed_at: string | null
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    batch_id?: string | null
+                    current_stage?: 'pending' | 'discovering' | 'enqueueing' | 'generating' | 'fixing' | 'scoring' | 'completed' | 'failed'
+                    config: Json
+                    progress?: Json
+                    error_message?: string | null
+                    started_at?: string
+                    completed_at?: string | null
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    batch_id?: string | null
+                    current_stage?: 'pending' | 'discovering' | 'enqueueing' | 'generating' | 'fixing' | 'scoring' | 'completed' | 'failed'
+                    config?: Json
+                    progress?: Json
+                    error_message?: string | null
+                    started_at?: string
+                    completed_at?: string | null
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "batch_runs_batch_id_fkey"
+                        columns: ["batch_id"]
+                        isOneToOne: false
+                        referencedRelation: "batches"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            generation_costs: {
+                Row: {
+                    id: string
+                    project_id: string | null
+                    model: string
+                    call_type: string
+                    input_tokens: number
+                    output_tokens: number
+                    total_tokens: number
+                    estimated_cost_usd: number
+                    prompt_version_id: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    project_id?: string | null
+                    model: string
+                    call_type: string
+                    input_tokens?: number
+                    output_tokens?: number
+                    total_tokens?: number
+                    estimated_cost_usd?: number
+                    prompt_version_id?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    project_id?: string | null
+                    model?: string
+                    call_type?: string
+                    input_tokens?: number
+                    output_tokens?: number
+                    total_tokens?: number
+                    estimated_cost_usd?: number
+                    prompt_version_id?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "generation_costs_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "generation_costs_prompt_version_id_fkey"
+                        columns: ["prompt_version_id"]
+                        isOneToOne: false
+                        referencedRelation: "prompt_versions"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            claims: {
+                Row: {
+                    id: string
+                    project_id: string
+                    status: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
+                    plan: 'standard' | 'pro'
+                    amount_paise: number
+                    currency: string
+                    razorpay_order_id: string | null
+                    razorpay_payment_id: string | null
+                    razorpay_signature: string | null
+                    client_name: string | null
+                    client_email: string | null
+                    client_phone: string | null
+                    domain_option: 'subdomain' | 'existing' | 'new' | null
+                    domain_value: string | null
+                    expires_at: string
+                    paid_at: string | null
+                    webhook_event_id: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    project_id: string
+                    status?: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
+                    plan: 'standard' | 'pro'
+                    amount_paise: number
+                    currency?: string
+                    razorpay_order_id?: string | null
+                    razorpay_payment_id?: string | null
+                    razorpay_signature?: string | null
+                    client_name?: string | null
+                    client_email?: string | null
+                    client_phone?: string | null
+                    domain_option?: 'subdomain' | 'existing' | 'new' | null
+                    domain_value?: string | null
+                    expires_at: string
+                    paid_at?: string | null
+                    webhook_event_id?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    project_id?: string
+                    status?: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
+                    plan?: 'standard' | 'pro'
+                    amount_paise?: number
+                    currency?: string
+                    razorpay_order_id?: string | null
+                    razorpay_payment_id?: string | null
+                    razorpay_signature?: string | null
+                    client_name?: string | null
+                    client_email?: string | null
+                    client_phone?: string | null
+                    domain_option?: 'subdomain' | 'existing' | 'new' | null
+                    domain_value?: string | null
+                    expires_at?: string
+                    paid_at?: string | null
+                    webhook_event_id?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "claims_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            customizations: {
+                Row: {
+                    id: string
+                    claim_id: string
+                    logo_url: string | null
+                    primary_color: string | null
+                    secondary_color: string | null
+                    phone: string | null
+                    email: string | null
+                    address: string | null
+                    tagline: string | null
+                    about_text: string | null
+                    photo_urls: Json
+                    notes: string | null
+                    wants_booking_system: boolean
+                    booking_preferences: Json | null
+                    wants_strategy_call: boolean
+                    preferred_call_time: string | null
+                    status: 'pending' | 'in_review' | 'applied' | 'delivered'
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    claim_id: string
+                    logo_url?: string | null
+                    primary_color?: string | null
+                    secondary_color?: string | null
+                    phone?: string | null
+                    email?: string | null
+                    address?: string | null
+                    tagline?: string | null
+                    about_text?: string | null
+                    photo_urls?: Json
+                    notes?: string | null
+                    wants_booking_system?: boolean
+                    booking_preferences?: Json | null
+                    wants_strategy_call?: boolean
+                    preferred_call_time?: string | null
+                    status?: 'pending' | 'in_review' | 'applied' | 'delivered'
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    claim_id?: string
+                    logo_url?: string | null
+                    primary_color?: string | null
+                    secondary_color?: string | null
+                    phone?: string | null
+                    email?: string | null
+                    address?: string | null
+                    tagline?: string | null
+                    about_text?: string | null
+                    photo_urls?: Json
+                    notes?: string | null
+                    wants_booking_system?: boolean
+                    booking_preferences?: Json | null
+                    wants_strategy_call?: boolean
+                    preferred_call_time?: string | null
+                    status?: 'pending' | 'in_review' | 'applied' | 'delivered'
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "customizations_claim_id_fkey"
+                        columns: ["claim_id"]
+                        isOneToOne: false
+                        referencedRelation: "claims"
                         referencedColumns: ["id"]
                     }
                 ]

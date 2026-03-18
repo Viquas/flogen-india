@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { format } from "date-fns"
 import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2, RefreshCcw, Wrench } from "lucide-react"
-import { useState, useEffect } from "react"
-import { regenerateProject, fixWebsiteErrors } from "@/app/dashboard/actions"
+import React, { useState, useEffect } from "react"
+import { regenerateProject, fixWebsiteErrors } from "@/app/(admin)/dashboard/actions"
 import { createClient } from "@/lib/supabase/client"
 
 interface Project {
@@ -15,6 +15,7 @@ interface Project {
     thumbnail_url?: string | null
     generated_code?: string
     generation_phase?: string | null
+    quality_score?: number | null
 }
 
 const statusMap: Record<string, { icon: any, color: string, label: string, badgeColor: string }> = {
@@ -29,10 +30,12 @@ const statusMap: Record<string, { icon: any, color: string, label: string, badge
 interface ProjectCardProps {
     project: Project
     isSelected?: boolean
+    isFocused?: boolean
     onSelect?: (id: string, selected: boolean) => void
+    cardRef?: React.Ref<HTMLDivElement>
 }
 
-export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps) {
+export function ProjectCard({ project, isSelected, isFocused, onSelect, cardRef }: ProjectCardProps) {
     const statusConfig = statusMap[project.status] || statusMap.queued
     const Icon = statusConfig.icon
     const [isLoading, setIsLoading] = useState(false)
@@ -86,61 +89,86 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
     }
 
     return (
-        <div className={`group relative flex flex-col justify-between rounded-xl border bg-white p-6 hover:shadow-lg transition-all duration-200 ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-zinc-200'}`}>
+        <div
+            ref={cardRef}
+            data-project-id={project.id}
+            className={`group relative flex flex-col justify-between rounded-lg border bg-card p-5 shadow-sm transition-all duration-200 ${
+                isSelected
+                    ? 'ring-2 ring-primary border-primary'
+                    : isFocused
+                        ? 'ring-2 ring-blue-500 border-blue-400'
+                        : 'border-border hover:border-zinc-300'
+            }`}
+        >
             {onSelect && (
                 <div className="absolute top-4 right-4 z-10">
                     <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => onSelect(project.id, e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                     />
                 </div>
             )}
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.badgeColor}`}>
-                        <Icon className={`h-3.5 w-3.5 ${project.status === 'generating' ? 'animate-spin' : ''}`} />
-                        {statusConfig.label}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+                    <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.badgeColor}`}>
+                            <Icon className={`h-3.5 w-3.5 ${project.status === 'generating' || project.status === 'queued' && livePhase ? 'animate-spin' : ''}`} />
+                            {(project.status === 'generating' || project.status === 'queued') && livePhase
+                                ? livePhase.replace(/\.\.\.$/, '').replace(/\.\.\.$/, '')
+                                : statusConfig.label}
+                        </span>
+                        {project.quality_score != null && (
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums ${
+                                project.quality_score >= 80
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : project.quality_score >= 50
+                                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                        : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                                Q: {project.quality_score}
+                            </span>
+                        )}
+                    </div>
+                    <span className="text-[11px] font-medium text-muted-foreground">
                         {format(new Date(project.created_at), "MMM d")}
                     </span>
                 </div>
 
                 <div>
-                    <h3 className="font-bold text-lg text-zinc-900 leading-tight mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+                    <h3 className="font-semibold text-base text-foreground leading-tight mb-1 line-clamp-1 group-hover:text-primary transition-colors">
                         {project.business_data?.business_name || project.business_data?.businessName || project.business_data?.brandIdentity?.core?.brandName || "Untitled Project"}
                     </h3>
-                    <p className="text-sm text-zinc-500 line-clamp-2 h-10">
+                    <p className="text-sm text-muted-foreground line-clamp-2 h-10 leading-relaxed">
                         {project.business_data?.description || "No description provided."}
                     </p>
                 </div>
 
                 <div className="flex gap-2">
-                    <span className="inline-flex items-center rounded-md bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-600 border border-zinc-100">
-                        {project.business_data?.industry || "General"}
+                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground border border-border">
+                        {project.business_data?.industry || project.business_data?.brandIdentity?.vibe?.industry || "General"}
                     </span>
                 </div>
 
                 {project.status === 'generating' && livePhase && (
                     <div className="mt-2 space-y-1.5 animate-in fade-in slide-in-from-top-1">
                         <div className="flex justify-between items-center text-xs">
-                            <span className="font-medium text-blue-700">{livePhase}</span>
-                            <span className="text-zinc-400 capitalize">running job</span>
+                            <span className="font-medium text-primary">{livePhase}</span>
+                            <span className="text-muted-foreground capitalize">running job</span>
                         </div>
-                        <div className="h-1.5 w-full bg-blue-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 w-full animate-[progress_2s_ease-in-out_infinite] origin-left rounded-full" />
+                        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                            <div className="h-full bg-primary w-full animate-[progress_2s_ease-in-out_infinite] origin-left rounded-full" />
                         </div>
                     </div>
                 )}
             </div>
 
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-5 flex items-center gap-2">
                 <Link
                     href={`/editor?id=${project.id}`}
-                    className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                    className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-border bg-white text-foreground hover:bg-zinc-50 shadow-sm h-8 px-4 py-2"
                 >
                     Open
                 </Link>

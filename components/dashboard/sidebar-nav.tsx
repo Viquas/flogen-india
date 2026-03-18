@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, Settings, Plus } from "lucide-react"
+import { LayoutDashboard, Layers, Settings, Plus, BarChart3 } from "lucide-react"
 
 const items = [
     {
@@ -15,6 +15,11 @@ const items = [
         title: "Templates",
         href: "/dashboard/templates",
         icon: Layers,
+    },
+    {
+        title: "Analytics",
+        href: "/dashboard/analytics",
+        icon: BarChart3,
     },
     {
         title: "Config",
@@ -40,24 +45,19 @@ export function SidebarNav() {
                     key={index}
                     href={item.href}
                     className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         isActive(item.href)
-                            ? "bg-[#1a1a2e] text-white"
-                            : "text-gray-700 hover:bg-gray-100"
+                            ? "bg-zinc-200/50 text-foreground font-semibold"
+                            : "text-muted-foreground hover:bg-zinc-100/80 hover:text-foreground"
                     )}
                 >
-                    <span
-                        className={cn(
-                            "flex h-2 w-2 rounded-full",
-                            isActive(item.href) ? "bg-blue-500" : "bg-gray-300"
-                        )}
-                    />
+                    <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
                 </Link>
             ))}
             <Link
                 href="/editor"
-                className="mt-4 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold bg-[#1a1a2e] text-white hover:bg-[#252542] transition-all"
+                className="mt-6 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
                 aria-label="Create new project"
             >
                 <Plus className="h-4 w-4" />

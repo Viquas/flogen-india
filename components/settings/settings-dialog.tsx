@@ -51,7 +51,7 @@ export function SettingsDialog() {
                     <Textarea
                         value={rules}
                         onChange={(e) => setRules(e.target.value)}
-                        placeholder={"# Elite SaaS Rules\\n- Typography: Inter tight-tracking headlines\\n- Layout: BTO/Asymmetrical grids with gap-4\\n- UI Elements: rounded-full buttons, hover:-translate-y-1 shadows\\n- Colors: Soft zinc-50 backgrounds, vibrant primary blue\\n- Images: https://images.unsplash.com/photo-..."}
+                        placeholder={"# Elite SaaS Rules\\n- Typography: Inter tight-tracking headlines\\n- Layout: BTO/Asymmetrical grids with gap-4\\n- UI Elements: rounded-full buttons, hover:-translate-y-1 shadows\\n- Colors: Soft zinc-50 backgrounds, vibrant primary blue\\n- Images: https://images.pexels.com/photos/... "}
                         className="h-full font-mono text-sm resize-none bg-zinc-50 border-zinc-200"
                     />
                 </div>

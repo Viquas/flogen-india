@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { streamWebsiteCode } from '@/lib/ai/generator'
 import { BusinessDataSchema } from '@/lib/schemas/project'
+import { recordCost, buildCostRecord } from '@/lib/ai/cost-tracker'
 
 export const maxDuration = 300 // 5 minute timeout for streaming
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
                     // Phase 2: Generating
                     sendEvent('phase', { phase: 'generating', message: 'Model is writing code...' })
 
-                    const result = streamWebsiteCode(businessData, rules, markdownContext, model)
+                    const result = await streamWebsiteCode(businessData, rules, markdownContext, model)
                     let fullCode = ''
                     let charCount = 0
 
@@ -55,6 +56,16 @@ export async function POST(req: NextRequest) {
                         fullCode += chunk
                         charCount += chunk.length
                         sendEvent('delta', { text: chunk, tokenCount: charCount })
+                    }
+
+                    // Record cost from streaming result
+                    try {
+                        const usage = await result.usage
+                        if (usage) {
+                            recordCost(buildCostRecord(usage, model || 'default', 'stream-generation', null))
+                        }
+                    } catch (costErr) {
+                        console.error('[Stream] Cost recording error (non-fatal):', costErr)
                     }
 
                     // Clean up markdown fences if present

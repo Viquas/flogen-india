@@ -86,8 +86,29 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
   <script src="https://unpkg.com/lucide-react@0.469.0/dist/umd/lucide-react.js" crossorigin="anonymous"><\/script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+  
+  <!-- Premium Typography System -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'sans-serif'],
+            heading: ['"Outfit"', 'sans-serif'],
+            elegant: ['"Playfair Display"', 'serif'],
+            tech: ['"Space Grotesk"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  <\/script>
+  
   <style>
-    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #fff; }
+    body { margin: 0; font-family: "Inter", sans-serif; background: #fff; }
     #root { min-height: 100vh; }
     .error-container {
       padding: 20px;

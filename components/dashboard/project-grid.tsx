@@ -1,10 +1,13 @@
 "use client"
 
-import { useState, useTransition, useMemo, useEffect } from 'react'
+import { useState, useTransition, useMemo, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { ProjectCard } from './project-card'
 import { BatchActions } from './batch-actions'
-import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects } from '@/app/dashboard/actions'
-import { Search, Loader2 } from 'lucide-react'
+import { KeyboardHelpOverlay } from './keyboard-help-overlay'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
+import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects, approveProject, regenerateProject, fixWebsiteErrors } from '@/app/(admin)/dashboard/actions'
+import { Search, Loader2, ArrowUpDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 interface Project {
@@ -18,7 +21,10 @@ interface Project {
     status: string
     created_at: string
     updated_at: string
+    quality_score?: number | null
 }
+
+type SortOption = 'newest' | 'quality'
 
 interface ProjectGridProps {
     projects: Project[]
@@ -44,6 +50,13 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
     const [autoFixResult, setAutoFixResult] = useState<{ fixed: number; failed: number; total: number } | null>(null)
     const [resetResult, setResetResult] = useState<number | null>(null)
     const [kickResult, setKickResult] = useState<string | null>(null)
+    const [sortBy, setSortBy] = useState<SortOption>('newest')
+
+    // Keyboard navigation state
+    const [focusedIndex, setFocusedIndex] = useState<number>(-1)
+    const [showHelp, setShowHelp] = useState(false)
+    const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+    const router = useRouter()
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('')
@@ -86,9 +99,103 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
 
     const filteredProjects = useMemo(() => {
         const tab = filterTabs.find(t => t.key === activeFilter)
-        if (!tab || tab.key === 'all') return sourceProjects
-        return sourceProjects.filter(p => tab.statuses.includes(p.status))
-    }, [sourceProjects, activeFilter])
+        let result = (!tab || tab.key === 'all') ? [...sourceProjects] : sourceProjects.filter(p => tab.statuses.includes(p.status))
+
+        if (sortBy === 'quality') {
+            result = [...result].sort((a, b) => {
+                // Nulls last
+                const aScore = a.quality_score ?? -1
+                const bScore = b.quality_score ?? -1
+                return bScore - aScore
+            })
+        }
+        // 'newest' keeps the default created_at descending order from the server
+
+        return result
+    }, [sourceProjects, activeFilter, sortBy])
+
+    // Scroll focused card into view
+    useEffect(() => {
+        if (focusedIndex >= 0) {
+            const el = cardRefs.current.get(focusedIndex)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+    }, [focusedIndex])
+
+    // Reset focused index when filter/sort/search changes
+    useEffect(() => { setFocusedIndex(-1) }, [activeFilter, sortBy, searchQuery])
+
+    // Define keyboard shortcuts
+    const keyboardShortcuts = useMemo(() => {
+        const focusedProject = focusedIndex >= 0 ? filteredProjects[focusedIndex] : null
+
+        return [
+            {
+                key: 'j',
+                description: 'Move focus to next project',
+                handler: () => setFocusedIndex(prev => Math.min(prev + 1, filteredProjects.length - 1))
+            },
+            {
+                key: 'k',
+                description: 'Move focus to previous project',
+                handler: () => setFocusedIndex(prev => Math.max(prev - 1, 0))
+            },
+            {
+                key: 'a',
+                description: 'Approve focused project',
+                handler: () => {
+                    if (focusedProject && focusedProject.status === 'review') {
+                        approveProject(focusedProject.id)
+                    }
+                }
+            },
+            {
+                key: 'r',
+                description: 'Regenerate focused project',
+                handler: () => {
+                    if (focusedProject) {
+                        regenerateProject(focusedProject.id)
+                    }
+                }
+            },
+            {
+                key: 'f',
+                description: 'Auto-fix focused project',
+                handler: () => {
+                    if (focusedProject && (focusedProject.status === 'error' || focusedProject.status === 'review')) {
+                        fixWebsiteErrors(focusedProject.id)
+                    }
+                }
+            },
+            {
+                key: 'e',
+                description: 'Open focused project in editor',
+                handler: () => {
+                    if (focusedProject) {
+                        router.push(`/editor?id=${focusedProject.id}`)
+                    }
+                }
+            },
+            {
+                key: '?',
+                description: 'Show keyboard shortcuts help',
+                handler: () => setShowHelp(prev => !prev)
+            },
+        ]
+    }, [focusedIndex, filteredProjects, router])
+
+    // Register keyboard shortcuts (disabled when help overlay is open)
+    useKeyboardShortcuts(keyboardShortcuts, !showHelp)
+
+    // Store project order for editor prefetching
+    useEffect(() => {
+        const ids = filteredProjects.map(p => p.id)
+        try {
+            localStorage.setItem('webgen-project-order', JSON.stringify(ids))
+        } catch (e) {
+            // localStorage may be unavailable
+        }
+    }, [filteredProjects])
 
     const handleSelect = (id: string, selected: boolean) => {
         setSelectedIds(prev => {
@@ -197,6 +304,25 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
                 </div>
 
                 <div className="flex items-center gap-3 pb-1">
+                    {/* Keyboard shortcut hint */}
+                    <span className="text-xs text-zinc-400 hidden lg:inline">Press ? for shortcuts</span>
+
+                    {/* Sort Toggle */}
+                    <div className="flex items-center">
+                        <button
+                            onClick={() => setSortBy(prev => prev === 'newest' ? 'quality' : 'newest')}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                sortBy === 'quality'
+                                    ? 'bg-zinc-900 text-white border-zinc-900'
+                                    : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
+                            }`}
+                            title={sortBy === 'newest' ? 'Sort by quality score' : 'Sort by newest'}
+                        >
+                            <ArrowUpDown className="h-3 w-3" />
+                            {sortBy === 'newest' ? 'Newest' : 'Quality'}
+                        </button>
+                    </div>
+
                     {/* Search Bar */}
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2 h-4 w-4 text-zinc-400" />
@@ -313,12 +439,17 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
 
             {filteredProjects.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredProjects.map((project) => (
+                    {filteredProjects.map((project, index) => (
                         <ProjectCard
                             key={project.id}
                             project={project}
                             isSelected={selectedIds.has(project.id)}
+                            isFocused={focusedIndex === index}
                             onSelect={handleSelect}
+                            cardRef={(el) => {
+                                if (el) cardRefs.current.set(index, el)
+                                else cardRefs.current.delete(index)
+                            }}
                         />
                     ))}
                 </div>
@@ -380,6 +511,12 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
                     </div>
                 </div>
             )}
+
+            <KeyboardHelpOverlay
+                isOpen={showHelp}
+                onClose={() => setShowHelp(false)}
+                shortcuts={keyboardShortcuts.map(s => ({ key: s.key, description: s.description }))}
+            />
         </div>
     )
 }

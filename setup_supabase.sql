@@ -77,6 +77,15 @@ create table if not exists queue_jobs (
   updated_at timestamp with time zone default now()
 );
 
+-- Prevent duplicate processing/pending jobs for same project
+CREATE UNIQUE INDEX IF NOT EXISTS idx_queue_jobs_project_processing
+ON queue_jobs (project_id)
+WHERE status = 'processing';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_queue_jobs_project_pending
+ON queue_jobs (project_id)
+WHERE status = 'pending';
+
 alter table queue_jobs enable row level security;
 create policy "Allow all access to queue_jobs" on queue_jobs for all using (true) with check (true);
 
@@ -101,3 +110,92 @@ create policy "Allow all access to templates" on templates for all using (true) 
 
 -- Add template_id to queue_jobs for template-based generation
 alter table queue_jobs add column if not exists template_id uuid references templates(id) on delete set null;
+
+-- ============================================================
+-- PHASE 2: INSTRUMENTATION SCHEMA
+-- ============================================================
+
+-- 7. Prompt Versions Table: Versioned prompt management (must come before generation_costs FK)
+CREATE TABLE IF NOT EXISTS prompt_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,           -- 'system', 'revision', 'enrichment', 'refinement'
+    version INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT false,
+    change_notes TEXT DEFAULT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(name, version)
+);
+-- Only one active version per prompt name
+CREATE UNIQUE INDEX IF NOT EXISTS idx_prompt_versions_active ON prompt_versions(name) WHERE is_active = true;
+
+ALTER TABLE prompt_versions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all access to prompt_versions" ON prompt_versions FOR ALL USING (true) WITH CHECK (true);
+
+-- 8. Generation Costs Table: Per-call cost tracking
+CREATE TABLE IF NOT EXISTS generation_costs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
+    model TEXT NOT NULL,
+    call_type TEXT NOT NULL,      -- 'generation' | 'enrichment' | 'revision' | 'auto_fix' | 'refinement' | 'template_swap'
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    estimated_cost_usd NUMERIC(10, 6) NOT NULL DEFAULT 0,
+    prompt_version_id UUID REFERENCES prompt_versions(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_generation_costs_project ON generation_costs(project_id);
+CREATE INDEX IF NOT EXISTS idx_generation_costs_created ON generation_costs(created_at);
+CREATE INDEX IF NOT EXISTS idx_generation_costs_model ON generation_costs(model);
+
+ALTER TABLE generation_costs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all access to generation_costs" ON generation_costs FOR ALL USING (true) WITH CHECK (true);
+
+-- ERROR CLASSIFICATION columns on projects (Phase 2)
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS error_type TEXT DEFAULT NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS error_details TEXT DEFAULT NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS prompt_version_id UUID REFERENCES prompt_versions(id) ON DELETE SET NULL;
+
+-- QUEUE HEALTH columns on queue_jobs (Phase 2)
+ALTER TABLE queue_jobs ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE queue_jobs ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE queue_jobs ADD COLUMN IF NOT EXISTS model_id TEXT DEFAULT NULL;
+
+-- Seed initial prompt versions
+-- NOTE: Content should be copied from webgen/lib/ai/prompts/system.ts SYSTEM_PROMPT and prompts/revision.ts REVISION_SYSTEM_PROMPT
+-- For the SQL file, store a reference. The actual seeding will be done by prompt-manager.ts on first load via seedInitialPrompts().
+
+-- ============================================================
+-- PHASE 3: QUALITY AND INTELLIGENCE
+-- ============================================================
+
+-- Quality score column on projects
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS quality_score INTEGER DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_quality_score ON projects(quality_score) WHERE quality_score IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_status_created ON projects(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_generation_costs_model_created ON generation_costs(model, created_at);
+
+-- ============================================================
+-- PHASE 4: BATCH AUTOPILOT
+-- ============================================================
+
+-- 9. Batch Runs Table: DB-backed state machine for autopilot pipeline
+CREATE TABLE IF NOT EXISTS batch_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    batch_id UUID REFERENCES batches(id) ON DELETE SET NULL,
+    current_stage TEXT NOT NULL DEFAULT 'pending'
+        CHECK (current_stage IN ('pending', 'discovering', 'enqueueing', 'generating', 'fixing', 'scoring', 'completed', 'failed')),
+    config JSONB NOT NULL,
+    progress JSONB NOT NULL DEFAULT '{"total_projects":0,"generated":0,"fixed":0,"failed":0,"avg_quality_score":null}'::jsonb,
+    error_message TEXT DEFAULT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at TIMESTAMPTZ DEFAULT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_batch_runs_stage ON batch_runs(current_stage) WHERE current_stage NOT IN ('completed', 'failed');
+CREATE INDEX IF NOT EXISTS idx_batch_runs_batch ON batch_runs(batch_id);
+
+ALTER TABLE batch_runs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all access to batch_runs" ON batch_runs FOR ALL USING (true) WITH CHECK (true);

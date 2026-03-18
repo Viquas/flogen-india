@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
         console.log(`[API/Generate/Test] Data validated (${mode} mode), proceeding to AI generation`)
 
         // Generate code first (since this is the primary goal)
-        const code = await generateWebsiteCode(businessData, rules, markdownContext, model)
+        const genResult = await generateWebsiteCode(businessData, rules, markdownContext, model)
+        const code = genResult.code
         console.log('[API/Generate/Test] AI generation successful, length:', code.length)
 
         // Try database operations but don't fail the whole request if they fail

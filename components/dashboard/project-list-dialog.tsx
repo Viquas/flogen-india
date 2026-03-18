@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { getProjectsByDate } from "@/app/dashboard/actions"
+import { getProjectsByDate } from "@/app/(admin)/dashboard/actions"
 import { Loader2, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
 
