@@ -47,6 +47,9 @@ export type Database = {
                     error_details: string | null
                     prompt_version_id: string | null
                     quality_score: number | null
+                    slug: string | null
+                    claim_expires_at: string | null
+                    screenshot_url: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -63,6 +66,9 @@ export type Database = {
                     error_details?: string | null
                     prompt_version_id?: string | null
                     quality_score?: number | null
+                    slug?: string | null
+                    claim_expires_at?: string | null
+                    screenshot_url?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -79,6 +85,9 @@ export type Database = {
                     error_details?: string | null
                     prompt_version_id?: string | null
                     quality_score?: number | null
+                    slug?: string | null
+                    claim_expires_at?: string | null
+                    screenshot_url?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -420,6 +429,154 @@ export type Database = {
                         columns: ["prompt_version_id"]
                         isOneToOne: false
                         referencedRelation: "prompt_versions"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            claims: {
+                Row: {
+                    id: string
+                    project_id: string
+                    status: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
+                    plan: 'standard' | 'pro'
+                    amount_paise: number
+                    currency: string
+                    razorpay_order_id: string | null
+                    razorpay_payment_id: string | null
+                    razorpay_signature: string | null
+                    client_name: string | null
+                    client_email: string | null
+                    client_phone: string | null
+                    domain_option: 'subdomain' | 'existing' | 'new' | null
+                    domain_value: string | null
+                    expires_at: string
+                    paid_at: string | null
+                    webhook_event_id: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    project_id: string
+                    status?: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
+                    plan: 'standard' | 'pro'
+                    amount_paise: number
+                    currency?: string
+                    razorpay_order_id?: string | null
+                    razorpay_payment_id?: string | null
+                    razorpay_signature?: string | null
+                    client_name?: string | null
+                    client_email?: string | null
+                    client_phone?: string | null
+                    domain_option?: 'subdomain' | 'existing' | 'new' | null
+                    domain_value?: string | null
+                    expires_at: string
+                    paid_at?: string | null
+                    webhook_event_id?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    project_id?: string
+                    status?: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
+                    plan?: 'standard' | 'pro'
+                    amount_paise?: number
+                    currency?: string
+                    razorpay_order_id?: string | null
+                    razorpay_payment_id?: string | null
+                    razorpay_signature?: string | null
+                    client_name?: string | null
+                    client_email?: string | null
+                    client_phone?: string | null
+                    domain_option?: 'subdomain' | 'existing' | 'new' | null
+                    domain_value?: string | null
+                    expires_at?: string
+                    paid_at?: string | null
+                    webhook_event_id?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "claims_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            customizations: {
+                Row: {
+                    id: string
+                    claim_id: string
+                    logo_url: string | null
+                    primary_color: string | null
+                    secondary_color: string | null
+                    phone: string | null
+                    email: string | null
+                    address: string | null
+                    tagline: string | null
+                    about_text: string | null
+                    photo_urls: Json
+                    notes: string | null
+                    wants_booking_system: boolean
+                    booking_preferences: Json | null
+                    wants_strategy_call: boolean
+                    preferred_call_time: string | null
+                    status: 'pending' | 'in_review' | 'applied' | 'delivered'
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    claim_id: string
+                    logo_url?: string | null
+                    primary_color?: string | null
+                    secondary_color?: string | null
+                    phone?: string | null
+                    email?: string | null
+                    address?: string | null
+                    tagline?: string | null
+                    about_text?: string | null
+                    photo_urls?: Json
+                    notes?: string | null
+                    wants_booking_system?: boolean
+                    booking_preferences?: Json | null
+                    wants_strategy_call?: boolean
+                    preferred_call_time?: string | null
+                    status?: 'pending' | 'in_review' | 'applied' | 'delivered'
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    claim_id?: string
+                    logo_url?: string | null
+                    primary_color?: string | null
+                    secondary_color?: string | null
+                    phone?: string | null
+                    email?: string | null
+                    address?: string | null
+                    tagline?: string | null
+                    about_text?: string | null
+                    photo_urls?: Json
+                    notes?: string | null
+                    wants_booking_system?: boolean
+                    booking_preferences?: Json | null
+                    wants_strategy_call?: boolean
+                    preferred_call_time?: string | null
+                    status?: 'pending' | 'in_review' | 'applied' | 'delivered'
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "customizations_claim_id_fkey"
+                        columns: ["claim_id"]
+                        isOneToOne: false
+                        referencedRelation: "claims"
                         referencedColumns: ["id"]
                     }
                 ]
