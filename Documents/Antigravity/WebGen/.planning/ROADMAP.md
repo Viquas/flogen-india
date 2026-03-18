@@ -96,8 +96,8 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 07-01-PLAN.md -- Layout font setup, hosting pricing, server-rendered sections (hero, features, trust, FAQ), expired form with server action
-- [ ] 07-02-PLAN.md -- Interactive client components (countdown timer, pricing with currency toggle, domain selection, summary CTA)
+- [x] 07-01-PLAN.md -- Layout font setup, hosting pricing, server-rendered sections (hero, features, trust, FAQ), expired form with server action
+- [x] 07-02-PLAN.md -- Interactive client components (countdown timer, pricing with currency toggle, domain selection, summary CTA)
 - [ ] 07-03-PLAN.md -- Page assembly: client orchestrator, server page with generateMetadata and SSR data fetching
 
 ### Phase 8: Payment and Confirmation
@@ -161,7 +161,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 4. Batch Autopilot | v1.0 | 2/2 | Complete | 2026-03-18 |
 | 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
 | 6. Foundation and CTA Injection | v2.0 | 3/3 | Complete | 2026-03-18 |
-| 7. Claim Landing Page | v2.0 | 0/3 | In progress | - |
+| 7. Claim Landing Page | v2.0 | 2/3 | In progress | - |
 | 8. Payment and Confirmation | v2.0 | 0/? | Not started | - |
 | 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
 | 10. Claim Analytics | v2.0 | 0/? | Not started | - |

@@ -119,13 +119,13 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 ### Claim Landing Page
 
 - [x] **CLAIM-01**: Claim page at `/claim/{site_slug}` displays a full-width preview (screenshot) of the generated website with business name
-- [ ] **CLAIM-02**: Countdown timer shows days/hours/minutes/seconds until claim expiry, reading from server-provided `expires_at`
+- [x] **CLAIM-02**: Countdown timer shows days/hours/minutes/seconds until claim expiry, reading from server-provided `expires_at`
 - [x] **CLAIM-03**: "What's Included" section displays 8 feature items in a responsive grid with icons
-- [ ] **CLAIM-04**: Pricing section shows Standard (₹4,999 / $499) and Pro (₹9,999 / $1,299) plans side-by-side with Pro highlighted as recommended
-- [ ] **CLAIM-05**: Geo-detection auto-selects INR or USD pricing on page load, with manual currency switch option
-- [ ] **CLAIM-06**: After plan selection, domain options appear: connect existing domain, buy new domain (with availability search), or use free subdomain
+- [x] **CLAIM-04**: Pricing section shows Standard (₹4,999 / $499) and Pro (₹9,999 / $1,299) plans side-by-side with Pro highlighted as recommended
+- [x] **CLAIM-05**: Geo-detection auto-selects INR or USD pricing on page load, with manual currency switch option
+- [x] **CLAIM-06**: After plan selection, domain options appear: connect existing domain, buy new domain (with availability search), or use free subdomain
 - [x] **CLAIM-07**: Trust section with "Trusted by X businesses" count, testimonials (hideable if empty), and FAQ accordion
-- [ ] **CLAIM-08**: Final CTA summarizes selections (plan + domain + price) and triggers Razorpay checkout
+- [x] **CLAIM-08**: Final CTA summarizes selections (plan + domain + price) and triggers Razorpay checkout
 - [x] **CLAIM-09**: Page is server-side rendered, mobile-first, loads under 2.5s, with OG meta tags for WhatsApp/email sharing
 - [x] **CLAIM-10**: Expired claims show "This offer has expired" with a "Request a new website" form (name + email + phone)
 
@@ -249,13 +249,13 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CTA-03 | Phase 6 | Complete |
 | CTA-04 | Phase 6 | Complete |
 | CLAIM-01 | Phase 7 | Complete |
-| CLAIM-02 | Phase 7 | Pending |
+| CLAIM-02 | Phase 7 | Complete |
 | CLAIM-03 | Phase 7 | Complete |
-| CLAIM-04 | Phase 7 | Pending |
-| CLAIM-05 | Phase 7 | Pending |
-| CLAIM-06 | Phase 7 | Pending |
+| CLAIM-04 | Phase 7 | Complete |
+| CLAIM-05 | Phase 7 | Complete |
+| CLAIM-06 | Phase 7 | Complete |
 | CLAIM-07 | Phase 7 | Complete |
-| CLAIM-08 | Phase 7 | Pending |
+| CLAIM-08 | Phase 7 | Complete |
 | CLAIM-09 | Phase 7 | Complete |
 | CLAIM-10 | Phase 7 | Complete |
 | PAY-01 | Phase 8 | Pending |
