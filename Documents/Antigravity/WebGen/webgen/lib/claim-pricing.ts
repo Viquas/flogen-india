@@ -29,3 +29,40 @@ export function getPricing(plan: PlanType, currency: Currency) {
         plan,
     }
 }
+
+// --- GST and total amount computation (added for Phase 8 payment flow) ---
+
+export const GST_RATE = 0.18 // 18% GST for India
+
+/** Calculate GST amount in paise. Returns 0 for non-INR currencies. */
+export function calculateGST(planPaise: number, currency: Currency): number {
+    if (currency !== 'INR') return 0
+    return Math.round(planPaise * GST_RATE)
+}
+
+/** GST display strings for INR (e.g. '900', '1,800'). Returns null for USD. */
+export const GST_DISPLAY = {
+    standard: { INR: '900', USD: null },
+    pro:      { INR: '1,800', USD: null },
+} as const
+
+/**
+ * Calculate total order amount in paise/cents.
+ * INR: plan + hosting + GST(18% on plan)
+ * USD: plan + hosting
+ * This is the amount sent to Razorpay.
+ */
+export function calculateTotalPaise(plan: PlanType, currency: Currency): number {
+    const planAmount = PRICING[plan][currency]
+    const hostingAmount = HOSTING_PRICING[currency].amount
+    const gst = calculateGST(planAmount, currency)
+    return planAmount + hostingAmount + gst
+}
+
+/** Display-friendly total for summary. */
+export function getDisplayTotal(plan: PlanType, currency: Currency): string {
+    const total = calculateTotalPaise(plan, currency)
+    // Convert from paise/cents to display: divide by 100, format with commas
+    const amount = total / 100
+    return amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+}
