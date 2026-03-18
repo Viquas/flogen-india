@@ -142,11 +142,11 @@ Plans:
   1. Every step of the claim funnel (preview view, claim page view, CTA click, plan selected, payment initiated, payment completed, customization submitted) is tracked as an event in the `claim_events` table with timestamp, IP, user agent, and site_slug
   2. The admin dashboard shows a conversion funnel visualization with counts at each step and drop-off percentages between steps, filterable by date range
   3. The analytics data includes revenue totals by plan type and conversion rates from generated site to paid claim
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md -- claim_events table DDL, TypeScript types, tracking utility, API endpoint, instrument all claim flow pages
+- [ ] 10-02-PLAN.md -- Admin funnel dashboard page with Recharts funnel visualization, date filter, revenue totals
 
 ## Progress
 
@@ -164,8 +164,8 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 7. Claim Landing Page | v2.0 | 2/3 | In progress | - |
 | 8. Payment and Confirmation | v2.0 | 0/3 | Not started | - |
 | 9. Customization and Upsell | v2.0 | 0/3 | Not started | - |
-| 10. Claim Analytics | v2.0 | 0/? | Not started | - |
+| 10. Claim Analytics | v2.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-19 -- Phase 9 planned (3 plans)*
+*Last updated: 2026-03-19 -- Phase 10 planned (2 plans)*
