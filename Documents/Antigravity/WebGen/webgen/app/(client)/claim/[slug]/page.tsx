@@ -74,17 +74,32 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'
 
-    // Check if already paid -- redirect to confirmation
+    // Check if already paid -- route based on status and customization state
     const { data: paidClaim } = await supabase
         .from('claims')
-        .select('id, status')
+        .select('id, status, plan')
         .eq('project_id', project.id)
         .in('status', ['paid', 'customizing', 'completed'])
         .limit(1)
         .maybeSingle()
 
     if (paidClaim) {
-        redirect(`/claim/${slug}/confirmed`)
+        if (paidClaim.status === 'completed') {
+            redirect(`/claim/${slug}/confirmed`)
+        }
+        // Check if customization already submitted
+        const { data: customization } = await supabase
+            .from('customizations')
+            .select('id')
+            .eq('claim_id', paidClaim.id)
+            .maybeSingle()
+
+        if (customization) {
+            // Customization submitted -> go to confirmed
+            redirect(`/claim/${slug}/confirmed`)
+        }
+        // Paid but no customization -> go to customize
+        redirect(`/claim/${slug}/customize`)
     }
 
     // Check if claim has expired
