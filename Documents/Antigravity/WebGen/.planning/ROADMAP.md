@@ -93,12 +93,12 @@ Plans:
   3. After selecting a plan, domain options appear (connect existing domain, buy new domain with availability search, or free subdomain) and a final CTA summarizes selections with the total price
   4. The page includes trust elements (business count, testimonials section, FAQ accordion) and OG meta tags that produce a rich preview when shared via WhatsApp or email
   5. Expired claims show an "Offer expired" state with a "Request a new website" form collecting name, email, and phone -- not a dead page or 404
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
-- [ ] 07-03: TBD
+- [ ] 07-01-PLAN.md -- Layout font setup, hosting pricing, server-rendered sections (hero, features, trust, FAQ), expired form with server action
+- [ ] 07-02-PLAN.md -- Interactive client components (countdown timer, pricing with currency toggle, domain selection, summary CTA)
+- [ ] 07-03-PLAN.md -- Page assembly: client orchestrator, server page with generateMetadata and SSR data fetching
 
 ### Phase 8: Payment and Confirmation
 **Goal**: Prospects can pay via Razorpay directly from the claim page and arrive at a confirmation page with their order summary and delivery timeline -- the minimum viable revenue path is complete
@@ -160,12 +160,12 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 3. Quality and Intelligence | v1.0 | 3/3 | Complete | 2026-03-18 |
 | 4. Batch Autopilot | v1.0 | 2/2 | Complete | 2026-03-18 |
 | 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
-| 6. Foundation and CTA Injection | v2.0 | 1/3 | In progress | - |
-| 7. Claim Landing Page | v2.0 | 0/? | Not started | - |
+| 6. Foundation and CTA Injection | v2.0 | 3/3 | Complete | 2026-03-18 |
+| 7. Claim Landing Page | v2.0 | 0/3 | In progress | - |
 | 8. Payment and Confirmation | v2.0 | 0/? | Not started | - |
 | 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
 | 10. Claim Analytics | v2.0 | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-18 -- Phase 6 planned (3 plans)*
+*Last updated: 2026-03-18 -- Phase 7 planned (3 plans)*
