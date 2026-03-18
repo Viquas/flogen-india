@@ -93,9 +93,9 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Preview Pre-Rendering
 
-- [ ] **PRE-01**: Next 3-5 project records and generated code prefetched in background during review
-- [ ] **PRE-02**: Prefetch cache evicts old entries when user navigates past them
-- [ ] **PRE-03**: Navigating to a prefetched project displays instantly from cache
+- [x] **PRE-01**: Next 3-5 project records and generated code prefetched in background during review
+- [x] **PRE-02**: Prefetch cache evicts old entries when user navigates past them
+- [x] **PRE-03**: Navigating to a prefetched project displays instantly from cache
 
 ## v2 Requirements
 
@@ -201,9 +201,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | EXP-01 | Phase 5 | Pending |
 | EXP-02 | Phase 5 | Pending |
 | EXP-03 | Phase 5 | Pending |
-| PRE-01 | Phase 5 | Pending |
-| PRE-02 | Phase 5 | Pending |
-| PRE-03 | Phase 5 | Pending |
+| PRE-01 | Phase 5 | Complete |
+| PRE-02 | Phase 5 | Complete |
+| PRE-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 51 total
