@@ -141,7 +141,7 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 ### Customization Form
 
-- [ ] **CUST-01**: Customization form at `/claim/{site_slug}/customize` is only accessible after verified payment (server-side check)
+- [x] **CUST-01**: Customization form at `/claim/{site_slug}/customize` is only accessible after verified payment (server-side check)
 - [ ] **CUST-02**: Logo upload (required) via Supabase Storage with drag-and-drop, thumbnail preview, 5MB max, PNG/JPG/SVG
 - [ ] **CUST-03**: Brand color pickers (optional, default "keep current colors") with primary and secondary hex inputs
 - [ ] **CUST-04**: Contact info pre-filled from Google Maps data (phone, email, address, hours, WhatsApp) -- editable
@@ -149,7 +149,7 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 - [ ] **CUST-06**: Multi-photo upload (optional, max 10 photos, 5MB each) via Supabase Storage with thumbnails and remove button
 - [ ] **CUST-07**: Booking system setup section visible only for Pro plan (service types, available days/hours, buffer time)
 - [ ] **CUST-08**: On submit, creates customization record, updates site status to 'customizing', sends admin notification
-- [ ] **CUST-09**: Progress indicator shows Step 1 (Payment) -> Step 2 (Customize - current) -> Step 3 (Go Live)
+- [x] **CUST-09**: Progress indicator shows Step 1 (Payment) -> Step 2 (Customize - current) -> Step 3 (Go Live)
 
 ### Upsell
 
@@ -268,7 +268,7 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CONF-01 | Phase 8 | Complete |
 | CONF-02 | Phase 8 | Complete |
 | CONF-03 | Phase 8 | Complete |
-| CUST-01 | Phase 9 | Pending |
+| CUST-01 | Phase 9 | Complete |
 | CUST-02 | Phase 9 | Pending |
 | CUST-03 | Phase 9 | Pending |
 | CUST-04 | Phase 9 | Pending |
@@ -276,7 +276,7 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CUST-06 | Phase 9 | Pending |
 | CUST-07 | Phase 9 | Pending |
 | CUST-08 | Phase 9 | Pending |
-| CUST-09 | Phase 9 | Pending |
+| CUST-09 | Phase 9 | Complete |
 | UPSELL-01 | Phase 9 | Pending |
 | UPSELL-02 | Phase 9 | Pending |
 | UPSELL-03 | Phase 9 | Pending |

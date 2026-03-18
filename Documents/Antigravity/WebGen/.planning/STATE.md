@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Claim Flow
-status: unknown
-last_updated: "2026-03-18T19:02:15.974Z"
+status: in-progress
+last_updated: "2026-03-18T19:28:03Z"
 progress:
   total_phases: 10
   completed_phases: 8
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 27
+  completed_plans: 25
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 8 of 10 (Payment and Confirmation) -- COMPLETE
-Plan: 3 of 3 in current phase (all complete)
-Status: Phase 8 Complete
-Last activity: 2026-03-19 -- completed 08-03 (client payment flow, confirmation page with polling and timeline)
+Phase: 9 of 10 (Customization and Upsell) -- IN PROGRESS
+Plan: 1 of 3 in current phase (1 complete)
+Status: Executing Phase 9
+Last activity: 2026-03-19 -- completed 09-01 (upload API and customize page scaffold)
 
-Progress: [####################] 100% (v2.0 Phase 8: 3/3 plans complete)
+Progress: [#################---] 93% (v2.0 Phase 9: 1/3 plans complete)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [####################] 100% (v2.0 Phase 8: 3/3 plans complete)
 - Phases: 5/5 complete
 
 **v2.0:**
-- Total plans completed: 9
-- Phases: 3/5 complete
+- Total plans completed: 10
+- Phases: 3/5 complete (Phase 9 in progress)
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -52,6 +52,7 @@ Progress: [####################] 100% (v2.0 Phase 8: 3/3 plans complete)
 | 08 | 01 | 3min | 2 | 4 |
 | 08 | 02 | 2min | 2 | 2 |
 | 08 | 03 | 3min | 2 | 5 |
+| 09 | 01 | 2min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -97,6 +98,10 @@ Relevant to current work:
 - [08-03]: checkout.js via next/script lazyOnload -- defers loading until after page hydration
 - [08-03]: Polling uses setTimeout in useEffect (not setInterval) for clean cancellation on status change
 - [08-03]: Three-state polling UI: verifying -> confirmed -> timeout (graceful fallback)
+- [09-01]: Magic byte validation over MIME type checking for upload security
+- [09-01]: Server-proxy upload via admin client to bypass CORS entirely
+- [09-01]: Return storage path only (not full URL) from upload API for security
+- [09-01]: Three-way redirect routing: completed -> /confirmed, customized -> /confirmed, paid -> /customize
 
 ### Pending Todos
 
@@ -114,5 +119,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed 08-03-PLAN.md (client payment flow, confirmation page with polling and timeline) -- Phase 8 fully complete
+Stopped at: Completed 09-01-PLAN.md (upload API and customize page scaffold)
 Resume file: None
