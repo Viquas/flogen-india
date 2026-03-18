@@ -77,11 +77,11 @@ Plans:
   2. When the pipeline completes, failed projects are surfaced with their error classification and context -- nothing is silently swallowed
   3. During pipeline execution, the user sees real-time progress (X of Y complete, Z failed) updating live
   4. If the server restarts mid-pipeline, the pipeline resumes from where it left off without duplicating work or losing progress
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — DB-backed state machine orchestrator, batch_runs schema, extracted discovery module, server actions (AUTO-01, AUTO-02, AUTO-04)
+- [ ] 04-02-PLAN.md — AutopilotButton, BatchProgress, BatchReport UI components integrated into discovery panel (AUTO-01, AUTO-02, AUTO-03)
 
 ### Phase 5: UX Acceleration
 **Goal**: The review workflow is fast enough that the user spends seconds per project -- keyboard-driven navigation, instant diffs, one-click export, and pre-loaded previews
