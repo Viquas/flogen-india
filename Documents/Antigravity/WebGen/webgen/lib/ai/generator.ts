@@ -179,12 +179,25 @@ ${markdownContext}
 `
     }
 
+    // Template seeding: inject industry few-shot context
+    const industry = (richData as any)?.brandIdentity?.vibe?.industry || (richData as any)?.industry || null
+    let fewShotBlock = ''
+    if (industry) {
+        try {
+            const { getFewShotContext } = await import('./template-seeder')
+            const fewShot = await getFewShotContext(industry)
+            if (fewShot) fewShotBlock = '\n\n' + fewShot + '\n'
+        } catch (err) {
+            console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+        }
+    }
+
     const userPrompt = `Create a COMPLETE, production-ready landing page for:
 ${contextPrompt}
 
 ${richPrompt}
 ${vibePrompt}
-
+${fewShotBlock}
 \u{1F449} **EXECUTION PLAN:**
 1. FIRST: Study the industry context above. What do the best websites in this exact industry look and feel like? Channel that energy.
 2. Select colors, typography weight, and spacing that match the industry mood \u2014 NOT generic defaults.
@@ -282,12 +295,25 @@ ${markdownContext}
 `
     }
 
+    // Template seeding: inject industry few-shot context
+    const streamIndustry = (businessData as any)?.brandIdentity?.vibe?.industry || (businessData as any)?.industry || null
+    let fewShotBlock = ''
+    if (streamIndustry) {
+        try {
+            const { getFewShotContext } = await import('./template-seeder')
+            const fewShot = await getFewShotContext(streamIndustry)
+            if (fewShot) fewShotBlock = '\n\n' + fewShot + '\n'
+        } catch (err) {
+            console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+        }
+    }
+
     const userPrompt = `Create a COMPLETE, production-ready landing page for:
 ${contextPrompt}
 
 ${richPrompt}
 ${vibePrompt}
-
+${fewShotBlock}
 \u{1F449} **EXECUTION PLAN:**
 1. FIRST: Study the industry context above. What do the best websites in this exact industry look and feel like? Channel that energy.
 2. Select colors, typography weight, and spacing that match the industry mood \u2014 NOT generic defaults.
