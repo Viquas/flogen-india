@@ -76,12 +76,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Every newly generated website displays a sticky bottom CTA bar showing the business name and a "Claim This Website" button that links to `/claim/{site_slug}`, with a countdown showing days remaining until claim expiry
   4. The CTA bar never visually breaks or conflicts with the generated site's styles regardless of the site's CSS -- it is fully style-isolated with inline styles and unique IDs
   5. When a site's claim period has expired, the CTA bar displays "This offer has expired" with a "Request a new website" link instead of the claim button
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
-- [ ] 06-03: TBD
+- [ ] 06-01-PLAN.md -- Database schema, storage buckets, TypeScript types, geo-detection and pricing utilities
+- [ ] 06-02-PLAN.md -- Route group restructuring: (admin)/ and (client)/ with layout separation
+- [ ] 06-03-PLAN.md -- CTA bar injector and screenshot generator
 
 ### Phase 7: Claim Landing Page
 **Goal**: Prospects who click the CTA arrive at a high-converting, mobile-first claim page that presents the site preview, pricing plans, domain options, and trust elements -- everything needed to reach the "Pay" button
@@ -160,7 +160,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 3. Quality and Intelligence | v1.0 | 3/3 | Complete | 2026-03-18 |
 | 4. Batch Autopilot | v1.0 | 2/2 | Complete | 2026-03-18 |
 | 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
-| 6. Foundation and CTA Injection | v2.0 | 0/? | Not started | - |
+| 6. Foundation and CTA Injection | v2.0 | 0/3 | Planning complete | - |
 | 7. Claim Landing Page | v2.0 | 0/? | Not started | - |
 | 8. Payment and Confirmation | v2.0 | 0/? | Not started | - |
 | 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
@@ -168,4 +168,4 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-18 -- v2.0 phases added*
+*Last updated: 2026-03-18 -- Phase 6 planned (3 plans)*
