@@ -132,7 +132,7 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 ### Payment
 
 - [x] **PAY-01**: Razorpay order creation via server action with plan price + optional domain purchase price (amounts stored as integer paise)
-- [ ] **PAY-02**: Razorpay inline checkout modal opens on the claim page with business info prefilled
+- [x] **PAY-02**: Razorpay inline checkout modal opens on the claim page with business info prefilled
 - [x] **PAY-03**: Razorpay webhook at `/api/webhooks/razorpay` verifies HMAC-SHA256 signature using raw request body (`request.text()`)
 - [x] **PAY-04**: Webhook processing is idempotent (deduplication via `x-razorpay-event-id`, claim status guards)
 - [x] **PAY-05**: On successful payment, claim record updates to `payment_status = 'completed'` and user redirects to customization form
@@ -160,9 +160,9 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 ### Confirmation
 
-- [ ] **CONF-01**: Confirmation page at `/claim/{site_slug}/confirmed` shows vertical timeline (payment, customization, updating, preview email, go live)
-- [ ] **CONF-02**: "What to do in the meantime" section with actionable next steps
-- [ ] **CONF-03**: Support contact section with WhatsApp link and email
+- [x] **CONF-01**: Confirmation page at `/claim/{site_slug}/confirmed` shows vertical timeline (payment, customization, updating, preview email, go live)
+- [x] **CONF-02**: "What to do in the meantime" section with actionable next steps
+- [x] **CONF-03**: Support contact section with WhatsApp link and email
 
 ### Analytics
 
@@ -259,15 +259,15 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CLAIM-09 | Phase 7 | Complete |
 | CLAIM-10 | Phase 7 | Complete |
 | PAY-01 | Phase 8 | Complete |
-| PAY-02 | Phase 8 | Pending |
+| PAY-02 | Phase 8 | Complete |
 | PAY-03 | Phase 8 | Complete |
 | PAY-04 | Phase 8 | Complete |
 | PAY-05 | Phase 8 | Complete |
 | PAY-06 | Phase 8 | Complete |
 | PAY-07 | Phase 8 | Complete |
-| CONF-01 | Phase 8 | Pending |
-| CONF-02 | Phase 8 | Pending |
-| CONF-03 | Phase 8 | Pending |
+| CONF-01 | Phase 8 | Complete |
+| CONF-02 | Phase 8 | Complete |
+| CONF-03 | Phase 8 | Complete |
 | CUST-01 | Phase 9 | Pending |
 | CUST-02 | Phase 9 | Pending |
 | CUST-03 | Phase 9 | Pending |

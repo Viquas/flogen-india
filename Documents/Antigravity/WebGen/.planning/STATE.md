@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Claim Flow
 status: in-progress
-last_updated: "2026-03-18T18:50:19Z"
+last_updated: "2026-03-19T18:57:01Z"
 progress:
   total_phases: 10
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 24
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-**Current focus:** Phase 8 -- Payment and Confirmation
+**Current focus:** Phase 9 -- Upsell and Post-Payment
 
 ## Current Position
 
-Phase: 8 of 10 (Payment and Confirmation)
-Plan: 3 of 3 in current phase (08-01, 08-02 complete, 08-03 remaining)
-Status: In Progress
-Last activity: 2026-03-19 -- completed 08-01 (Razorpay SDK singleton, GST pricing, createRazorpayOrder server action)
+Phase: 8 of 10 (Payment and Confirmation) -- COMPLETE
+Plan: 3 of 3 in current phase (all complete)
+Status: Phase 8 Complete
+Last activity: 2026-03-19 -- completed 08-03 (client payment flow, confirmation page with polling and timeline)
 
-Progress: [##############------] 67% (v2.0 Phase 8: 2/3 plans complete)
+Progress: [####################] 100% (v2.0 Phase 8: 3/3 plans complete)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [##############------] 67% (v2.0 Phase 8: 2/3 plans complete)
 - Phases: 5/5 complete
 
 **v2.0:**
-- Total plans completed: 8
-- Phases: 2/5 complete
+- Total plans completed: 9
+- Phases: 3/5 complete
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -51,6 +51,7 @@ Progress: [##############------] 67% (v2.0 Phase 8: 2/3 plans complete)
 | 07 | 03 | 2min | 2 | 2 |
 | 08 | 01 | 3min | 2 | 4 |
 | 08 | 02 | 2min | 2 | 2 |
+| 08 | 03 | 3min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Relevant to current work:
 - [08-01]: Server-only RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET (no NEXT_PUBLIC_ prefix for secret)
 - [08-01]: Pending claims without Razorpay order get updated with latest selections on retry
 - [08-02]: No auth on status endpoint -- UUID-based security matches existing claim page pattern
+- [08-03]: checkout.js via next/script lazyOnload -- defers loading until after page hydration
+- [08-03]: Polling uses setTimeout in useEffect (not setInterval) for clean cancellation on status change
+- [08-03]: Three-state polling UI: verifying -> confirmed -> timeout (graceful fallback)
 
 ### Pending Todos
 
@@ -110,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed 08-01-PLAN.md (Razorpay SDK singleton, GST pricing, createRazorpayOrder server action)
+Stopped at: Completed 08-03-PLAN.md (client payment flow, confirmation page with polling and timeline) -- Phase 8 fully complete
 Resume file: None
