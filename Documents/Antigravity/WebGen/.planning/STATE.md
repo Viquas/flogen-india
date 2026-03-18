@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Claim Flow
-status: unknown
-last_updated: "2026-03-18T18:29:01.753Z"
+status: in-progress
+last_updated: "2026-03-18T18:49:03Z"
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 21
-  completed_plans: 21
+  total_plans: 24
+  completed_plans: 22
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-**Current focus:** Phase 7 complete -- Claim Landing Page
+**Current focus:** Phase 8 -- Payment and Confirmation
 
 ## Current Position
 
-Phase: 7 of 10 (Claim Landing Page) -- COMPLETE
-Plan: 3 of 3 in current phase (07-03 complete)
-Status: Phase Complete
-Last activity: 2026-03-18 -- completed 07-03 (claim page assembly: generateMetadata, SSR data fetching, client orchestrator)
+Phase: 8 of 10 (Payment and Confirmation)
+Plan: 2 of 3 in current phase (08-02 complete)
+Status: In Progress
+Last activity: 2026-03-18 -- completed 08-02 (Razorpay webhook handler and claim status polling endpoint)
 
-Progress: [####################] 100% (v2.0 Phase 7: 3/3 plans complete)
+Progress: [##############------] 67% (v2.0 Phase 8: 2/3 plans complete)
 
 ## Performance Metrics
 
@@ -38,7 +38,7 @@ Progress: [####################] 100% (v2.0 Phase 7: 3/3 plans complete)
 - Phases: 5/5 complete
 
 **v2.0:**
-- Total plans completed: 6
+- Total plans completed: 8
 - Phases: 2/5 complete
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -49,6 +49,7 @@ Progress: [####################] 100% (v2.0 Phase 7: 3/3 plans complete)
 | 07 | 01 | 3min | 3 | 8 |
 | 07 | 02 | 5min | 2 | 2 |
 | 07 | 03 | 2min | 2 | 2 |
+| 08 | 02 | 2min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Relevant to current work:
 - [07-03]: Named imports for all section components (matching actual exports, not default imports)
 - [07-03]: Inline geo-detection using headers() instead of getCurrencyFromRequest() (server component)
 - [07-03]: Page-level server/client boundary: page.tsx fetches data, ClaimPageClient manages interactive state
+- [08-02]: Timing-safe comparison for HMAC verification (crypto.timingSafeEqual) to prevent timing attacks
+- [08-02]: Three-layer idempotency: event ID dedup, status guard (order_created only), order ID lookup
+- [08-02]: No auth on status endpoint -- UUID-based security matches existing claim page pattern
 
 ### Pending Todos
 
@@ -101,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 07-03-PLAN.md (claim page assembly: generateMetadata, SSR, client orchestrator) -- Phase 7 complete
+Stopped at: Completed 08-02-PLAN.md (Razorpay webhook handler and claim status polling endpoint)
 Resume file: None

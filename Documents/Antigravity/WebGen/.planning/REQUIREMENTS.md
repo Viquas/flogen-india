@@ -133,11 +133,11 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 - [ ] **PAY-01**: Razorpay order creation via server action with plan price + optional domain purchase price (amounts stored as integer paise)
 - [ ] **PAY-02**: Razorpay inline checkout modal opens on the claim page with business info prefilled
-- [ ] **PAY-03**: Razorpay webhook at `/api/webhooks/razorpay` verifies HMAC-SHA256 signature using raw request body (`request.text()`)
-- [ ] **PAY-04**: Webhook processing is idempotent (deduplication via `x-razorpay-event-id`, claim status guards)
-- [ ] **PAY-05**: On successful payment, claim record updates to `payment_status = 'completed'` and user redirects to customization form
+- [x] **PAY-03**: Razorpay webhook at `/api/webhooks/razorpay` verifies HMAC-SHA256 signature using raw request body (`request.text()`)
+- [x] **PAY-04**: Webhook processing is idempotent (deduplication via `x-razorpay-event-id`, claim status guards)
+- [x] **PAY-05**: On successful payment, claim record updates to `payment_status = 'completed'` and user redirects to customization form
 - [ ] **PAY-06**: Failed/cancelled payments redirect back to claim page with subtle error banner and allow re-attempt
-- [ ] **PAY-07**: Confirmation page polls for payment status (handles webhook-before-redirect race condition)
+- [x] **PAY-07**: Confirmation page polls for payment status (handles webhook-before-redirect race condition)
 
 ### Customization Form
 
@@ -260,11 +260,11 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CLAIM-10 | Phase 7 | Complete |
 | PAY-01 | Phase 8 | Pending |
 | PAY-02 | Phase 8 | Pending |
-| PAY-03 | Phase 8 | Pending |
-| PAY-04 | Phase 8 | Pending |
-| PAY-05 | Phase 8 | Pending |
+| PAY-03 | Phase 8 | Complete |
+| PAY-04 | Phase 8 | Complete |
+| PAY-05 | Phase 8 | Complete |
 | PAY-06 | Phase 8 | Pending |
-| PAY-07 | Phase 8 | Pending |
+| PAY-07 | Phase 8 | Complete |
 | CONF-01 | Phase 8 | Pending |
 | CONF-02 | Phase 8 | Pending |
 | CONF-03 | Phase 8 | Pending |
