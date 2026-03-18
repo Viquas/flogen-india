@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Client Claim Flow
-status: ready_to_plan
+status: executing
 last_updated: "2026-03-18"
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 6 of 10 (Foundation and CTA Injection) -- first phase of v2.0
-Plan: 0 of ? in current phase (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-18 -- v2.0 roadmap created with 5 phases (6-10)
+Plan: 1 of 3 in current phase (06-01 complete)
+Status: Executing
+Last activity: 2026-03-18 -- completed 06-01 (data foundation)
 
-Progress: [##########..........] 50% (v1.0 complete, v2.0 starting)
+Progress: [###########.........] 55% (v2.0 Phase 6: 1/3 plans complete)
 
 ## Performance Metrics
 
@@ -38,8 +38,12 @@ Progress: [##########..........] 50% (v1.0 complete, v2.0 starting)
 - Phases: 5/5 complete
 
 **v2.0:**
-- Total plans completed: 0
+- Total plans completed: 1
 - Phases: 0/5 complete
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 06 | 01 | 2min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -55,6 +59,10 @@ Relevant to current work:
 - [v2.0]: Standard 4,999 INR / Pro 9,999 INR (USD: $499 / $1,299)
 - [v2.0]: Mobile-first client-facing pages
 - [v2.0]: Supabase Storage for file uploads
+- [06-01]: Integer paise/cents for all monetary amounts (no floats)
+- [06-01]: Default currency INR with x-vercel-ip-country header fallback
+- [06-01]: Separate pricing files: claim-pricing.ts for client plans, pricing.ts for AI costs
+- [06-01]: ON CONFLICT DO NOTHING for idempotent storage bucket creation
 
 ### Pending Todos
 
@@ -72,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: v2.0 roadmap created -- ready to plan Phase 6
+Stopped at: Completed 06-01-PLAN.md (data foundation)
 Resume file: None

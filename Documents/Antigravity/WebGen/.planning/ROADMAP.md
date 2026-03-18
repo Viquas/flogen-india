@@ -160,7 +160,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 3. Quality and Intelligence | v1.0 | 3/3 | Complete | 2026-03-18 |
 | 4. Batch Autopilot | v1.0 | 2/2 | Complete | 2026-03-18 |
 | 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
-| 6. Foundation and CTA Injection | v2.0 | 0/3 | Planning complete | - |
+| 6. Foundation and CTA Injection | v2.0 | 1/3 | In progress | - |
 | 7. Claim Landing Page | v2.0 | 0/? | Not started | - |
 | 8. Payment and Confirmation | v2.0 | 0/? | Not started | - |
 | 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
