@@ -8,7 +8,6 @@ export interface ModelPricing {
 export const MODEL_PRICING: Record<string, ModelPricing> = {
   // Google
   'gemini-3.1-pro-preview': { inputPer1kTokens: 0.00125, outputPer1kTokens: 0.005 },
-  'gemini-3-flash-preview':       { inputPer1kTokens: 0.0001,  outputPer1kTokens: 0.0004 },
   // OpenAI
   'gpt-4o':                 { inputPer1kTokens: 0.0025,  outputPer1kTokens: 0.01 },
   'gpt-4o-mini':            { inputPer1kTokens: 0.00015, outputPer1kTokens: 0.0006 },

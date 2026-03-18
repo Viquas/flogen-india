@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { razorpay } from '@/lib/razorpay'
-import { calculateTotalPaise, type Currency, type PlanType } from '@/lib/claim-pricing'
+import { calculateTotalPaise, calculateUpsellTotal, type Currency, type PlanType } from '@/lib/claim-pricing'
 import { z } from 'zod'
 
 const expiredFormSchema = z.object({
@@ -310,5 +310,96 @@ export async function submitCustomization(
     } catch (error) {
         console.error('[ClaimActions] Customization submission failed:', error)
         return { success: false, error: 'Something went wrong. Please try again.' }
+    }
+}
+
+// --- Upsell Order Creation ---
+
+const upsellOrderSchema = z.object({
+    claimId: z.string().uuid(),
+    currency: z.enum(['INR', 'USD']),
+})
+
+export async function createUpsellOrder(input: {
+    claimId: string
+    currency: Currency
+}): Promise<
+    | { success: true; orderId: string }
+    | { success: false; error: string }
+> {
+    const parsed = upsellOrderSchema.safeParse(input)
+
+    if (!parsed.success) {
+        return { success: false, error: 'Invalid input.' }
+    }
+
+    const { claimId, currency } = parsed.data
+
+    try {
+        const supabase = createAdminClient()
+
+        // Verify claim is in a valid paid state
+        const { data: claim } = await supabase
+            .from('claims')
+            .select('id, status')
+            .eq('id', claimId)
+            .in('status', ['paid', 'customizing'])
+            .maybeSingle()
+
+        if (!claim) {
+            return { success: false, error: 'Claim not found or not eligible for upsell.' }
+        }
+
+        const amount = calculateUpsellTotal(currency)
+
+        // Create Razorpay order for upsell
+        const order = await razorpay.orders.create({
+            amount,
+            currency,
+            receipt: `upsell-${claimId}`,
+            notes: {
+                claimId,
+                type: 'strategy_call',
+            },
+        })
+
+        console.log('[ClaimActions] Upsell order created:', order.id, 'for claim:', claimId)
+
+        return { success: true, orderId: order.id }
+    } catch (error) {
+        console.error('[ClaimActions] Upsell order creation failed:', error)
+        return { success: false, error: 'Payment setup failed. Please try again.' }
+    }
+}
+
+// --- Strategy Call Preference ---
+
+export async function updateStrategyCallPreference(
+    claimId: string,
+    wantsCall: boolean
+): Promise<{ success: boolean }> {
+    if (!claimId || typeof wantsCall !== 'boolean') {
+        return { success: false }
+    }
+
+    try {
+        const supabase = createAdminClient()
+
+        const { error } = await supabase
+            .from('customizations')
+            .update({ wants_strategy_call: wantsCall })
+            .eq('claim_id', claimId)
+
+        if (error) {
+            console.error('[ClaimActions] Failed to update strategy call preference:', error)
+            return { success: false }
+        }
+
+        console.log('[ClaimActions] Strategy call preference updated for claim:', claimId, '-> wants_call:', wantsCall)
+
+        return { success: true }
+    } catch (error) {
+        console.error('[ClaimActions] Strategy call preference update failed:', error)
+        return { success: false }
     }
 }
