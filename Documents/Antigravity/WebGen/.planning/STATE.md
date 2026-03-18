@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-18T00:44:22.879Z"
+status: in-progress
+last_updated: "2026-03-18T00:57:37Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 15
+  completed_plans: 12
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention.
-**Current focus:** Phase 4: Batch Autopilot
+**Current focus:** Phase 5: UX Acceleration
 
 ## Current Position
 
-Phase: 4 of 5 (Batch Autopilot) -- COMPLETE
-Plan: 2 of 2 in current phase (all complete)
-Status: In Progress (ready for Phase 5)
-Last activity: 2026-03-18 -- Completed 04-02-PLAN.md (autopilot UI components)
+Phase: 5 of 5 (UX Acceleration)
+Plan: 1 of 4 in current phase (05-01 complete)
+Status: In Progress
+Last activity: 2026-03-18 -- Completed 05-01-PLAN.md (keyboard shortcuts)
 
-Progress: [█████████████░] 92%
+Progress: [█████████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 4min
-- Total execution time: 0.80 hours
+- Total execution time: 0.85 hours
 
 **By Phase:**
 
@@ -44,9 +44,10 @@ Progress: [█████████████░] 92%
 | 02-instrumentation | 4 | 20min | 5min |
 | 03-quality-and-intelligence | 3 | 15min | 5min |
 | 04-batch-autopilot | 2 | 9min | 4.5min |
+| 05-ux-acceleration | 1 | 3min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (4min), 03-02 (4min), 03-03 (4min), 04-01 (5min), 04-02 (4min)
+- Last 5 plans: 03-03 (4min), 04-01 (5min), 04-02 (4min), 05-01 (3min)
 - Trend: Steady
 
 *Updated after each plan completion*
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [04-02]: BatchReport accepts runId and internally resolves batch_id from batch_runs table
 - [04-02]: Client-side Supabase for BatchReport reads (avoids extra server action)
 - [04-02]: Simple useState accordion for error groups (no radix dependency)
+- [05-01]: Focus guard checks tagName, contentEditable, and Monaco editor container for safe shortcut handling
+- [05-01]: Shortcuts disabled when help overlay is open to avoid Escape key conflicts
+- [05-01]: focusedIndex resets to -1 on filter/sort/search change to prevent stale focus
 
 ### Pending Todos
 
@@ -101,5 +105,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 04-02-PLAN.md (autopilot UI components) -- Phase 4 complete (2/2 plans done)
+Stopped at: Completed 05-01-PLAN.md (keyboard shortcuts) -- Phase 5 in progress (1/4 plans done)
 Resume file: None

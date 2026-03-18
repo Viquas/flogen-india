@@ -74,10 +74,10 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Keyboard Shortcuts
 
-- [ ] **KEY-01**: j/k keys navigate between projects in dashboard grid
-- [ ] **KEY-02**: a/r/f/e keys approve, regenerate, fix, and open editor for focused project
-- [ ] **KEY-03**: Visual focus indicator (highlighted border) shows currently selected project
-- [ ] **KEY-04**: ? key shows help overlay listing all available shortcuts
+- [x] **KEY-01**: j/k keys navigate between projects in dashboard grid
+- [x] **KEY-02**: a/r/f/e keys approve, regenerate, fix, and open editor for focused project
+- [x] **KEY-03**: Visual focus indicator (highlighted border) shows currently selected project
+- [x] **KEY-04**: ? key shows help overlay listing all available shortcuts
 
 ### Diff View
 
@@ -191,10 +191,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | AUTO-02 | Phase 4 | Complete |
 | AUTO-03 | Phase 4 | Complete |
 | AUTO-04 | Phase 4 | Complete |
-| KEY-01 | Phase 5 | Pending |
-| KEY-02 | Phase 5 | Pending |
-| KEY-03 | Phase 5 | Pending |
-| KEY-04 | Phase 5 | Pending |
+| KEY-01 | Phase 5 | Complete |
+| KEY-02 | Phase 5 | Complete |
+| KEY-03 | Phase 5 | Complete |
+| KEY-04 | Phase 5 | Complete |
 | DIFF-01 | Phase 5 | Pending |
 | DIFF-02 | Phase 5 | Pending |
 | DIFF-03 | Phase 5 | Pending |

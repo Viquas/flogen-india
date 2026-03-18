@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, LayoutDashboard, Code2, Eye, Send, ChevronDown, Monitor, Tablet, Smartphone, AlertCircle, Settings2, FileText, MoreHorizontal, Pencil, Trash2, Check, X, PanelLeftClose, PanelLeftOpen, Star } from "lucide-react"
+import { Loader2, LayoutDashboard, Code2, Eye, Send, ChevronDown, Monitor, Tablet, Smartphone, AlertCircle, Settings2, FileText, MoreHorizontal, Pencil, Trash2, Check, X, PanelLeftClose, PanelLeftOpen, Star, GitCompare } from "lucide-react"
 import { LivePreview, StreamLogEntry } from "@/components/workbench/live-preview"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SettingsDialog } from "@/components/settings/settings-dialog"
@@ -32,6 +32,8 @@ import Link from "next/link"
 import { saveTemplateLocally } from "@/lib/actions/save-template"
 import { constructHtmlBoilerplate } from "@/lib/utils/html-boilerplate"
 import { TemplateSaveSheet } from "@/components/editor/template-save-sheet"
+import { ExportButton } from "@/components/editor/export-button"
+import { DiffView } from "@/components/editor/diff-view"
 import { usePrefetchCache } from "@/hooks/use-prefetch-cache"
 
 const testBusinessData = {
@@ -69,7 +71,8 @@ function EditorContent() {
     const [revisionStatus, setRevisionStatus] = useState<{ message: string; type: 'info' | 'warn' } | null>(null)
     const [generatedCode, setGeneratedCode] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
-    const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview')
+    const [viewMode, setViewMode] = useState<'preview' | 'code' | 'diff'>('preview')
+    const [projectVersion, setProjectVersion] = useState<number>(1)
     const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
     const [model, setModel] = useState<string>("default")
     const [inputTab, setInputTab] = useState("rjson")
@@ -257,6 +260,7 @@ function EditorContent() {
         }
         setMarkdownContext(jsonToMarkdown(jsonStr))
         setGeneratedCode(project.generated_code || null)
+        setProjectVersion(project.version || 1)
         setActiveProjectId(project.id)
         setIsJsonLoading(false)
     }, [])
@@ -713,6 +717,10 @@ function EditorContent() {
                                 Dashboard
                             </Button>
                         </Link>
+                        <ExportButton
+                            projectId={activeProjectId || ''}
+                            disabled={!activeProjectId || !generatedCode}
+                        />
                         <SettingsDialog />
                     </div>
                 </div>
@@ -931,6 +939,15 @@ function EditorContent() {
                                     <Code2 className="h-3.5 w-3.5 mr-2" />
                                     Code
                                 </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setViewMode('diff')}
+                                    className={`h-8 text-xs px-4 rounded-lg transition-all ${viewMode === 'diff' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                >
+                                    <GitCompare className="h-3.5 w-3.5 mr-2" />
+                                    Diff
+                                </Button>
                             </div>
 
                             {viewMode === 'preview' && (
@@ -1018,7 +1035,7 @@ function EditorContent() {
                     </div>
 
                     {/* Preview Content */}
-                    <div className="flex-1 overflow-auto relative p-8 flex justify-center bg-[#F3F4F6]">
+                    <div className={`flex-1 overflow-auto relative ${viewMode === 'diff' ? '' : 'p-8'} flex justify-center bg-[#F3F4F6]`}>
                         {viewMode === 'preview' ? (
                             <div
                                 className="h-full bg-white shadow-2xl transition-all duration-300 overflow-hidden relative"
@@ -1034,6 +1051,20 @@ function EditorContent() {
                                     elapsedTime={elapsedTime}
                                 />
                             </div>
+                        ) : viewMode === 'diff' ? (
+                            activeProjectId ? (
+                                <div className="w-full h-full bg-white">
+                                    <DiffView
+                                        projectId={activeProjectId}
+                                        currentCode={generatedCode}
+                                        currentVersion={projectVersion}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-zinc-400 text-sm">
+                                    Load a project to view revision diffs
+                                </div>
+                            )
                         ) : (
                             <div className="w-full h-full overflow-auto bg-[#18181B] selection:bg-purple-500/30">
                                 {generatedCode ? (

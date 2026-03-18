@@ -95,7 +95,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 05-01: TBD
+- [x] 05-01-PLAN.md -- Vim-style keyboard shortcuts (j/k/a/r/f/e/?) with focus-guard hook and help overlay (KEY-01, KEY-02, KEY-03, KEY-04)
 - [ ] 05-02: TBD
 - [ ] 05-03: TBD
 - [ ] 05-04: TBD
@@ -111,7 +111,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Instrumentation | 3/4 | Complete    | 2026-03-17 |
 | 3. Quality and Intelligence | 0/3 | Complete    | 2026-03-18 |
 | 4. Batch Autopilot | 0/2 | Complete    | 2026-03-18 |
-| 5. UX Acceleration | 0/4 | Not started | - |
+| 5. UX Acceleration | 1/4 | In Progress | - |
 
 ---
 *Roadmap created: 2026-03-18*
