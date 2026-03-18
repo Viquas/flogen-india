@@ -627,7 +627,7 @@ Return the modified React code. Remember: modify the template code above, don't 
         // --- 4. QUALITY SCORING (fire-and-forget, never blocks generation) ---
         try {
             const { scoreGeneratedCode } = await import('./quality-scorer')
-            const score = scoreGeneratedCode(validatedCode, data as Record<string, unknown>, !fixFailed)
+            const score = scoreGeneratedCode(validatedCode, (data as Record<string, unknown>)?.businessName as string | undefined)
             await supabase
                 .from('projects')
                 .update({ quality_score: score.overall })

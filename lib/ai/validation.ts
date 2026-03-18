@@ -97,18 +97,18 @@ export async function validateAndAutoFix(
     if (!validationError) return { code, fixFailed: false }
 
     // Classify the error for targeted fixing and storage
-    const errorType = classifyError(validationError)
-    const targetedFixPrompt = getFixPromptForError(errorType, validationError)
+    const errorClassification = classifyError(validationError)
+    const targetedFixPrompt = getFixPromptForError(errorClassification.type)
 
-    console.log(`[AutoFix] Validation failed for ${projectId}: [${errorType}] ${validationError}`)
-    console.log(`[AutoFix] Running targeted auto-fix for ${errorType}...`)
+    console.log(`[AutoFix] Validation failed for ${projectId}: [${errorClassification.type}] ${validationError}`)
+    console.log(`[AutoFix] Running targeted auto-fix for ${errorClassification.type}...`)
 
     // Store error classification on project record
     await supabase
         .from('projects')
         .update({
-            // generation_phase: `Auto-fixing ${errorType} errors...`,
-            error_type: errorType,
+            // generation_phase: `Auto-fixing ${errorClassification.type} errors...`,
+            error_type: errorClassification.type,
             error_details: validationError.substring(0, 500)
         })
         .eq('id', projectId)
