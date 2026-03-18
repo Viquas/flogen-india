@@ -60,10 +60,10 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 ### Analytics Dashboard
 
-- [ ] **ANAL-01**: Dashboard page shows generation success/failure rate grouped by day/week
-- [ ] **ANAL-02**: Average generation time displayed with p50/p95 latency breakdown
-- [ ] **ANAL-03**: Metrics filterable by AI model and business industry
-- [ ] **ANAL-04**: Cost summary showing total spend, cost per successful generation, cost per model
+- [x] **ANAL-01**: Dashboard page shows generation success/failure rate grouped by day/week
+- [x] **ANAL-02**: Average generation time displayed with p50/p95 latency breakdown
+- [x] **ANAL-03**: Metrics filterable by AI model and business industry
+- [x] **ANAL-04**: Cost summary showing total spend, cost per successful generation, cost per model
 
 ### Batch Autopilot
 
@@ -183,10 +183,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | TMPL-02 | Phase 3 | Pending |
 | TMPL-03 | Phase 3 | Pending |
 | TMPL-04 | Phase 3 | Pending |
-| ANAL-01 | Phase 3 | Pending |
-| ANAL-02 | Phase 3 | Pending |
-| ANAL-03 | Phase 3 | Pending |
-| ANAL-04 | Phase 3 | Pending |
+| ANAL-01 | Phase 3 | Complete |
+| ANAL-02 | Phase 3 | Complete |
+| ANAL-03 | Phase 3 | Complete |
+| ANAL-04 | Phase 3 | Complete |
 | AUTO-01 | Phase 4 | Pending |
 | AUTO-02 | Phase 4 | Pending |
 | AUTO-03 | Phase 4 | Pending |
