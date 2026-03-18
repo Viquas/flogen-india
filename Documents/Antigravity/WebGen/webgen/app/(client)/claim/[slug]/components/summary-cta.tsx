@@ -6,6 +6,8 @@ import {
     DISPLAY_PRICING,
     CURRENCY_SYMBOL,
     HOSTING_PRICING,
+    GST_DISPLAY,
+    getDisplayTotal,
     type Currency,
     type PlanType,
 } from '@/lib/claim-pricing'
@@ -16,6 +18,8 @@ interface SummaryCTAProps {
     domainOption: DomainOption
     domainValue: string
     onProceedToPayment: () => void
+    isProcessing?: boolean
+    paymentError?: string | null
 }
 
 function getDomainLabel(option: DomainOption, value: string): string {
@@ -35,6 +39,8 @@ export function SummaryCTA({
     domainOption,
     domainValue,
     onProceedToPayment,
+    isProcessing = false,
+    paymentError = null,
 }: SummaryCTAProps) {
     if (!selectedPlan) {
         return null
@@ -68,30 +74,44 @@ export function SummaryCTA({
                     </span>
                 </div>
 
+                {/* GST line item -- INR only */}
+                {currency === 'INR' && GST_DISPLAY[selectedPlan].INR && (
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">GST (18%)</span>
+                        <span className="text-sm text-gray-500">
+                            {symbol}{GST_DISPLAY[selectedPlan].INR}
+                        </span>
+                    </div>
+                )}
+
                 <hr className="border-gray-100" />
 
-                {/* Total */}
+                {/* Total -- includes plan + hosting + GST(INR) */}
                 <div className="flex items-end justify-between">
                     <span className="text-sm font-semibold text-gray-600">Total</span>
                     <div className="text-right">
                         <span className="text-2xl font-bold text-[#0F172A]">
-                            {symbol}{planPrice}
-                        </span>
-                        <span className="text-sm text-gray-400 ml-1">
-                            + {symbol}{hostingDisplay}/mo
+                            {symbol}{getDisplayTotal(selectedPlan, currency)}
                         </span>
                     </div>
                 </div>
             </div>
 
+            {/* Payment error banner */}
+            {paymentError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    {paymentError}
+                </div>
+            )}
+
             {/* CTA button */}
-            {/* Phase 8: triggers Razorpay checkout */}
             <button
                 type="button"
                 onClick={onProceedToPayment}
-                className="w-full py-4 bg-[#2563EB] text-white font-bold text-lg rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/25"
+                disabled={isProcessing}
+                className="w-full py-4 bg-[#2563EB] text-white font-bold text-lg rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-                Proceed to Payment
+                {isProcessing ? 'Processing...' : 'Proceed to Payment'}
             </button>
 
             {/* Trust text */}

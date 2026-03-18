@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Metadata } from 'next'
 import { HeroSection } from './components/hero-section'
@@ -74,6 +74,19 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'
 
+    // Check if already paid -- redirect to confirmation
+    const { data: paidClaim } = await supabase
+        .from('claims')
+        .select('id, status')
+        .eq('project_id', project.id)
+        .in('status', ['paid', 'customizing', 'completed'])
+        .limit(1)
+        .maybeSingle()
+
+    if (paidClaim) {
+        redirect(`/claim/${slug}/confirmed`)
+    }
+
     // Check if claim has expired
     const isExpired = project.claim_expires_at
         ? new Date(project.claim_expires_at) < new Date()
@@ -103,9 +116,11 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
 
             {/* Interactive client sections: countdown, pricing, domain, CTA */}
             <ClaimPageClient
+                projectId={project.id}
                 initialCurrency={initialCurrency}
                 expiresAt={project.claim_expires_at || ''}
                 businessName={businessName}
+                slug={slug}
             />
 
             {/* Server-rendered static sections */}
