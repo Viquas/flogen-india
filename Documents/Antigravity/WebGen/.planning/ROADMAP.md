@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation Fixes** - Fix known bugs, decompose generator monolith, clean up codebase (completed 2026-03-17)
 - [x] **Phase 2: Instrumentation** - Add cost tracking, error classification, prompt versioning, and queue health visibility (completed 2026-03-17)
 - [x] **Phase 3: Quality and Intelligence** - Automated quality scoring, industry-aware template seeding, analytics dashboard (completed 2026-03-18)
-- [ ] **Phase 4: Batch Autopilot** - End-to-end pipeline orchestration from discovery to failure surfacing
+- [x] **Phase 4: Batch Autopilot** - End-to-end pipeline orchestration from discovery to failure surfacing (completed 2026-03-18)
 - [ ] **Phase 5: UX Acceleration** - Keyboard-driven review, diff view, static export, preview pre-rendering
 
 ## Phase Details
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation Fixes | 2/2 | Complete    | 2026-03-17 |
 | 2. Instrumentation | 3/4 | Complete    | 2026-03-17 |
 | 3. Quality and Intelligence | 0/3 | Complete    | 2026-03-18 |
-| 4. Batch Autopilot | 0/2 | Not started | - |
+| 4. Batch Autopilot | 0/2 | Complete    | 2026-03-18 |
 | 5. UX Acceleration | 0/4 | Not started | - |
 
 ---
