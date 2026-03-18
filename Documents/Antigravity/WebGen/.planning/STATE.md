@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-last_updated: "2026-03-18T00:34:23Z"
+last_updated: "2026-03-18T00:41:55Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -22,19 +22,19 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 4 of 5 (Batch Autopilot)
-Plan: 1 of 2 in current phase (04-01 complete)
-Status: In Progress
-Last activity: 2026-03-18 -- Completed 04-01-PLAN.md (autopilot backend state machine)
+Phase: 4 of 5 (Batch Autopilot) -- COMPLETE
+Plan: 2 of 2 in current phase (all complete)
+Status: In Progress (ready for Phase 5)
+Last activity: 2026-03-18 -- Completed 04-02-PLAN.md (autopilot UI components)
 
-Progress: [████████████░░] 82%
+Progress: [█████████████░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 4min
-- Total execution time: 0.73 hours
+- Total execution time: 0.80 hours
 
 **By Phase:**
 
@@ -43,10 +43,10 @@ Progress: [████████████░░] 82%
 | 01-foundation-fixes | 2 | 4min | 2min |
 | 02-instrumentation | 4 | 20min | 5min |
 | 03-quality-and-intelligence | 3 | 15min | 5min |
-| 04-batch-autopilot | 1 | 5min | 5min |
+| 04-batch-autopilot | 2 | 9min | 4.5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-04 (3min), 03-01 (4min), 03-02 (4min), 03-03 (4min), 04-01 (5min)
+- Last 5 plans: 03-01 (4min), 03-02 (4min), 03-03 (4min), 04-01 (5min), 04-02 (4min)
 - Trend: Steady
 
 *Updated after each plan completion*
@@ -84,6 +84,10 @@ Recent decisions affecting current work:
 - [04-01]: Polling-based GENERATE wait with 5s interval, stuck-job reset at 5min, configurable timeout
 - [04-01]: FIX stage uses same Promise.allSettled concurrency=3 pattern as existing autoFixAllErrors
 - [04-01]: SCORING stage reads existing quality_score rather than re-scoring
+- [04-02]: Lifted autopilot runId state to DiscoverySearch for clean sibling communication
+- [04-02]: BatchReport accepts runId and internally resolves batch_id from batch_runs table
+- [04-02]: Client-side Supabase for BatchReport reads (avoids extra server action)
+- [04-02]: Simple useState accordion for error groups (no radix dependency)
 
 ### Pending Todos
 
@@ -97,5 +101,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 04-01-PLAN.md (autopilot backend state machine) -- Phase 4 plan 1 of 2 complete
+Stopped at: Completed 04-02-PLAN.md (autopilot UI components) -- Phase 4 complete (2/2 plans done)
 Resume file: None

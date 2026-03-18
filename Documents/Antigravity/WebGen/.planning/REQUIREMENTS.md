@@ -69,7 +69,7 @@ Requirements for the 12 improvements milestone. Each maps to roadmap phases.
 
 - [x] **AUTO-01**: One-button pipeline chains discover -> enqueue -> generate -> validate -> auto-fix -> report
 - [x] **AUTO-02**: Failed projects surfaced with error context and classification after pipeline completes
-- [ ] **AUTO-03**: Real-time batch progress visible (X of Y complete, Z failed)
+- [x] **AUTO-03**: Real-time batch progress visible (X of Y complete, Z failed)
 - [x] **AUTO-04**: Pipeline resumes from where it left off after interruption (idempotent resume)
 
 ### Keyboard Shortcuts
@@ -189,7 +189,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | ANAL-04 | Phase 3 | Complete |
 | AUTO-01 | Phase 4 | Complete |
 | AUTO-02 | Phase 4 | Complete |
-| AUTO-03 | Phase 4 | Pending |
+| AUTO-03 | Phase 4 | Complete |
 | AUTO-04 | Phase 4 | Complete |
 | KEY-01 | Phase 5 | Pending |
 | KEY-02 | Phase 5 | Pending |
