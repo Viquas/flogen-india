@@ -153,10 +153,10 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 ### Upsell
 
-- [ ] **UPSELL-01**: After customization submission, strategy call upsell appears (free for Pro, 1,999 INR / $49 for Standard)
-- [ ] **UPSELL-02**: Cal.com embed (iframe) for scheduling with available slots
-- [ ] **UPSELL-03**: "No thanks, continue to confirmation" skip link is clearly visible and easy to find
-- [ ] **UPSELL-04**: Standard plan call fee collected via Razorpay payment link before showing calendar
+- [x] **UPSELL-01**: After customization submission, strategy call upsell appears (free for Pro, 1,999 INR / $49 for Standard)
+- [x] **UPSELL-02**: Cal.com embed (iframe) for scheduling with available slots
+- [x] **UPSELL-03**: "No thanks, continue to confirmation" skip link is clearly visible and easy to find
+- [x] **UPSELL-04**: Standard plan call fee collected via Razorpay payment link before showing calendar
 
 ### Confirmation
 
@@ -277,10 +277,10 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CUST-07 | Phase 9 | Complete |
 | CUST-08 | Phase 9 | Complete |
 | CUST-09 | Phase 9 | Complete |
-| UPSELL-01 | Phase 9 | Pending |
-| UPSELL-02 | Phase 9 | Pending |
-| UPSELL-03 | Phase 9 | Pending |
-| UPSELL-04 | Phase 9 | Pending |
+| UPSELL-01 | Phase 9 | Complete |
+| UPSELL-02 | Phase 9 | Complete |
+| UPSELL-03 | Phase 9 | Complete |
+| UPSELL-04 | Phase 9 | Complete |
 | ANAL-01 | Phase 10 | Pending |
 | ANAL-02 | Phase 10 | Pending |
 | ANAL-03 | Phase 10 | Pending |
