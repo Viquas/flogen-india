@@ -110,12 +110,12 @@ Plans:
   3. Failed or cancelled payments return the user to the claim page with a visible error message and the ability to retry payment without re-entering selections
   4. The confirmation page at `/claim/{site_slug}/confirmed` shows a vertical timeline (payment confirmed, customization pending, updating site, preview email, go live), support contact info with WhatsApp link, and actionable next steps
   5. The confirmation page polls for payment status on load, resolving the webhook-before-redirect race condition within 30 seconds
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md -- Razorpay SDK singleton, GST pricing update, createRazorpayOrder server action
+- [ ] 08-02-PLAN.md -- Razorpay webhook handler with HMAC verification, claim status polling endpoint
+- [ ] 08-03-PLAN.md -- Client-side checkout.js integration, summary CTA with GST line items, confirmation page with polling and timeline
 
 ### Phase 9: Customization and Upsell
 **Goal**: After paying, clients submit their customization details (logo, colors, contacts, photos, text changes) and optionally book a strategy call -- the operator has everything needed to deliver the final site
@@ -162,10 +162,10 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
 | 6. Foundation and CTA Injection | v2.0 | 3/3 | Complete | 2026-03-18 |
 | 7. Claim Landing Page | v2.0 | 2/3 | In progress | - |
-| 8. Payment and Confirmation | v2.0 | 0/? | Not started | - |
+| 8. Payment and Confirmation | v2.0 | 0/3 | Not started | - |
 | 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
 | 10. Claim Analytics | v2.0 | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-18 -- Phase 7 planned (3 plans)*
+*Last updated: 2026-03-19 -- Phase 8 planned (3 plans)*
