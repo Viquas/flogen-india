@@ -66,3 +66,26 @@ export function getDisplayTotal(plan: PlanType, currency: Currency): string {
     const amount = total / 100
     return amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })
 }
+
+// --- Upsell Pricing (Phase 9) ---
+
+export const UPSELL_PRICING = {
+    strategy_call: {
+        INR: 199900,   // 1,999 INR in paise
+        USD: 4900,     // $49 in cents
+    },
+} as const
+
+export const UPSELL_DISPLAY = {
+    strategy_call: {
+        INR: '1,999',
+        USD: '49',
+    },
+} as const
+
+/** Calculate upsell total with GST for INR. */
+export function calculateUpsellTotal(currency: Currency): number {
+    const base = UPSELL_PRICING.strategy_call[currency]
+    const gst = calculateGST(base, currency)
+    return base + gst
+}
