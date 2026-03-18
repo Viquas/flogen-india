@@ -187,6 +187,16 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
     // Register keyboard shortcuts (disabled when help overlay is open)
     useKeyboardShortcuts(keyboardShortcuts, !showHelp)
 
+    // Store project order for editor prefetching
+    useEffect(() => {
+        const ids = filteredProjects.map(p => p.id)
+        try {
+            localStorage.setItem('webgen-project-order', JSON.stringify(ids))
+        } catch (e) {
+            // localStorage may be unavailable
+        }
+    }, [filteredProjects])
+
     const handleSelect = (id: string, selected: boolean) => {
         setSelectedIds(prev => {
             const next = new Set(prev)
