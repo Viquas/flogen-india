@@ -1,8 +1,9 @@
-# Roadmap: WebGen
+# Roadmap: Flogen
 
-## Overview
+## Milestones
 
-WebGen is a working bulk AI website generator that needs 12 improvements across reliability, intelligence, automation, and UX. The roadmap progresses from stabilizing the foundation (fixing 3 known bugs, decomposing the monolithic generator), through instrumenting every generation with cost/error/prompt data, to building quality intelligence and analytics on that data, then orchestrating the full end-to-end autopilot pipeline, and finally accelerating the review workflow with keyboard shortcuts, diffs, export, and preview prefetching. Each phase produces outputs consumed by later phases -- the dependency chain is strict and validated by research.
+- [x] **v1.0 Internal Generation Engine** - Phases 1-5 (shipped 2026-03-18)
+- [ ] **v2.0 Client Claim Flow** - Phases 6-10 (in progress)
 
 ## Phases
 
@@ -12,107 +13,159 @@ WebGen is a working bulk AI website generator that needs 12 improvements across 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
+<details>
+<summary>v1.0 Internal Generation Engine (Phases 1-5) -- SHIPPED 2026-03-18</summary>
+
 - [x] **Phase 1: Foundation Fixes** - Fix known bugs, decompose generator monolith, clean up codebase (completed 2026-03-17)
 - [x] **Phase 2: Instrumentation** - Add cost tracking, error classification, prompt versioning, and queue health visibility (completed 2026-03-17)
 - [x] **Phase 3: Quality and Intelligence** - Automated quality scoring, industry-aware template seeding, analytics dashboard (completed 2026-03-18)
 - [x] **Phase 4: Batch Autopilot** - End-to-end pipeline orchestration from discovery to failure surfacing (completed 2026-03-18)
 - [x] **Phase 5: UX Acceleration** - Keyboard-driven review, diff view, static export, preview pre-rendering (completed 2026-03-18)
 
-## Phase Details
-
 ### Phase 1: Foundation Fixes
 **Goal**: The generation pipeline is reliable and the codebase is modular enough to safely extend
 **Depends on**: Nothing (first phase)
 **Requirements**: FIX-01, FIX-02, FIX-03, FIX-04, FIX-05, FIX-06
-**Success Criteria** (what must be TRUE):
-  1. When auto-fix fails both attempts, the project status is set to 'error' and the last fix attempt (not original broken code) is preserved for inspection
-  2. Two concurrent queue workers processing the same batch never claim the same job -- duplicate claims are prevented at the database level
-  3. Background generation failures are captured and surfaced (not silently swallowed by fire-and-forget promises)
-  4. The system prompt lives in its own file outside generator.ts, and generator.ts is decomposed into focused modules under 300 lines each
-  5. No debug .txt files remain in the codebase, and .gitignore prevents their return
-**Plans**: 2 plans
-
-Plans:
-- [x] 01-01-PLAN.md — Fix auto-fix return value, queue race condition, fire-and-forget errors, remove debug files (FIX-01, FIX-02, FIX-03, FIX-06)
-- [ ] 01-02-PLAN.md — Extract system prompt and decompose generator.ts into focused modules (FIX-04, FIX-05)
+**Plans**: 2/2 complete
 
 ### Phase 2: Instrumentation
 **Goal**: Every AI generation produces structured cost, error, and prompt version data, and the operator can monitor queue health in real time
 **Depends on**: Phase 1
 **Requirements**: COST-01, COST-02, COST-03, COST-04, ERR-01, ERR-02, ERR-03, ERR-04, PROMPT-01, PROMPT-02, PROMPT-03, PROMPT-04, QUEUE-01, QUEUE-02, QUEUE-03, QUEUE-04
-**Success Criteria** (what must be TRUE):
-  1. After any AI call (generation, enrichment, auto-fix), the user can query a cost record showing input tokens, output tokens, model, and estimated cost -- and the dashboard shows running monthly spend
-  2. When a generation fails, the error is automatically classified into a specific category (syntax, render, missing sections, style, data mapping, timeout) with a targeted fix prompt, and the classification is stored on the project record
-  3. The user can view all prompt versions, see which version was used for any generation, and switch the active prompt version before generating
-  4. The queue admin page shows real-time job counts by status, highlights stuck jobs (processing > 10 min), and provides one-click retry/cancel with full error details
-**Plans**: TBD
-
-Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
-- [ ] 02-04: TBD
+**Plans**: 3/4 complete
 
 ### Phase 3: Quality and Intelligence
 **Goal**: Generated websites are automatically scored for quality, generation leverages the best approved outputs as few-shot examples, and the user has visual analytics across all generations
 **Depends on**: Phase 2
-**Requirements**: QUAL-01, QUAL-02, QUAL-03, QUAL-04, TMPL-01, TMPL-02, TMPL-03, TMPL-04, ANAL-01, ANAL-02, ANAL-03, ANAL-04
-**Success Criteria** (what must be TRUE):
-  1. Every completed generation has a 0-100 quality score (based on render success and section completeness) stored on its project record, and projects are sortable by score in the dashboard
-  2. When generating for a specific industry, the system automatically injects 1-2 sanitized, high-quality approved templates from that industry as few-shot context
-  3. The analytics dashboard shows success/failure rates over time, generation timing with p50/p95 breakdown, cost summaries per model, and all metrics are filterable by AI model and industry
-**Plans**: 3 plans
-
-Plans:
-- [x] 03-01-PLAN.md — Quality scoring module, DB schema, generator hook, dashboard sort/badge (QUAL-01, QUAL-02, QUAL-03, QUAL-04)
-- [ ] 03-02-PLAN.md — Template seeder with sanitization, few-shot injection into generation prompts (TMPL-01, TMPL-02, TMPL-03, TMPL-04)
-- [ ] 03-03-PLAN.md — Analytics dashboard with recharts charts, timing/cost/success metrics, model/industry filters (ANAL-01, ANAL-02, ANAL-03, ANAL-04)
+**Requirements**: QUAL-01, QUAL-02, QUAL-03, QUAL-04, TMPL-01, TMPL-02, TMPL-03, TMPL-04, ANAL-v1-01, ANAL-v1-02, ANAL-v1-03, ANAL-v1-04
+**Plans**: 3/3 complete
 
 ### Phase 4: Batch Autopilot
-**Goal**: The user can trigger one button and walk away while the system discovers businesses, generates websites, scores quality, auto-fixes failures, and surfaces only the projects that need human attention
+**Goal**: The user can trigger one button and walk away while the system discovers, generates, scores, auto-fixes, and surfaces failures
 **Depends on**: Phase 3
 **Requirements**: AUTO-01, AUTO-02, AUTO-03, AUTO-04
-**Success Criteria** (what must be TRUE):
-  1. A single button triggers the full pipeline: discover -> enqueue -> generate -> validate -> auto-fix -> report, with no manual steps required between stages
-  2. When the pipeline completes, failed projects are surfaced with their error classification and context -- nothing is silently swallowed
-  3. During pipeline execution, the user sees real-time progress (X of Y complete, Z failed) updating live
-  4. If the server restarts mid-pipeline, the pipeline resumes from where it left off without duplicating work or losing progress
-**Plans**: 2 plans
-
-Plans:
-- [ ] 04-01-PLAN.md — DB-backed state machine orchestrator, batch_runs schema, extracted discovery module, server actions (AUTO-01, AUTO-02, AUTO-04)
-- [ ] 04-02-PLAN.md — AutopilotButton, BatchProgress, BatchReport UI components integrated into discovery panel (AUTO-01, AUTO-02, AUTO-03)
+**Plans**: 2/2 complete
 
 ### Phase 5: UX Acceleration
-**Goal**: The review workflow is fast enough that the user spends seconds per project -- keyboard-driven navigation, instant diffs, one-click export, and pre-loaded previews
-**Depends on**: Phase 1 (core features are independent of Phases 2-4)
+**Goal**: The review workflow is fast enough that the user spends seconds per project
+**Depends on**: Phase 1
 **Requirements**: KEY-01, KEY-02, KEY-03, KEY-04, DIFF-01, DIFF-02, DIFF-03, EXP-01, EXP-02, EXP-03, PRE-01, PRE-02, PRE-03
+**Plans**: 4/4 complete
+
+</details>
+
+### v2.0 Client Claim Flow
+
+**Milestone Goal:** Turn every generated website into a revenue opportunity with a 6-step client-facing claim flow: CTA injection, claim landing page, Razorpay payment, customization form, upsell, and confirmation with delivery timeline.
+
+- [ ] **Phase 6: Foundation and CTA Injection** - Database schema, storage buckets, route groups, CTA bar on generated sites, geo-detection, pricing utility
+- [ ] **Phase 7: Claim Landing Page** - Conversion-critical claim page with preview, pricing, domain options, trust elements, expired state
+- [ ] **Phase 8: Payment and Confirmation** - Razorpay checkout, webhook verification, payment status polling, confirmation page with timeline
+- [ ] **Phase 9: Customization and Upsell** - Post-payment customization form with file uploads, booking setup, strategy call upsell
+- [ ] **Phase 10: Claim Analytics** - Funnel event tracking, claim_events table instrumentation, admin conversion dashboard
+
+## Phase Details
+
+### Phase 6: Foundation and CTA Injection
+**Goal**: The infrastructure for the entire claim flow exists (tables, buckets, routes, utilities), and every generated website displays a working CTA bar that drives prospects to the claim page
+**Depends on**: Phase 5 (v1.0 complete)
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, CTA-01, CTA-02, CTA-03, CTA-04
 **Success Criteria** (what must be TRUE):
-  1. The user can navigate the dashboard with j/k keys, and approve/regenerate/fix/edit with a/r/f/e keys, with a visible focus indicator and a ? help overlay
-  2. Any two revisions can be compared side-by-side in both a Monaco code diff and a visual rendered preview diff, with a selectable revision history list
-  3. The user can click one button in the editor to download a self-contained static HTML file (or .zip) with inlined Tailwind CSS, fonts, and icons -- no external dependencies
-  4. Navigating to the next project during review loads instantly because the next 3-5 projects are prefetched in the background, with cache eviction as the user moves past them
+  1. The `claims` and `customizations` tables exist in Supabase with proper foreign keys to `projects`, and `site-screenshots` and `claim-uploads` Storage buckets are configured with appropriate access policies
+  2. The admin dashboard and editor continue to function identically under the `(admin)/` route group, and a `(client)/` route group exists with a separate mobile-first layout and no admin navigation chrome
+  3. Every newly generated website displays a sticky bottom CTA bar showing the business name and a "Claim This Website" button that links to `/claim/{site_slug}`, with a countdown showing days remaining until claim expiry
+  4. The CTA bar never visually breaks or conflicts with the generated site's styles regardless of the site's CSS -- it is fully style-isolated with inline styles and unique IDs
+  5. When a site's claim period has expired, the CTA bar displays "This offer has expired" with a "Request a new website" link instead of the claim button
 **Plans**: TBD
 
 Plans:
-- [x] 05-01-PLAN.md -- Vim-style keyboard shortcuts (j/k/a/r/f/e/?) with focus-guard hook and help overlay (KEY-01, KEY-02, KEY-03, KEY-04)
-- [ ] 05-02: TBD
-- [ ] 05-03: TBD
-- [ ] 05-04: TBD
+- [ ] 06-01: TBD
+- [ ] 06-02: TBD
+- [ ] 06-03: TBD
+
+### Phase 7: Claim Landing Page
+**Goal**: Prospects who click the CTA arrive at a high-converting, mobile-first claim page that presents the site preview, pricing plans, domain options, and trust elements -- everything needed to reach the "Pay" button
+**Depends on**: Phase 6
+**Requirements**: CLAIM-01, CLAIM-02, CLAIM-03, CLAIM-04, CLAIM-05, CLAIM-06, CLAIM-07, CLAIM-08, CLAIM-09, CLAIM-10
+**Success Criteria** (what must be TRUE):
+  1. Visiting `/claim/{site_slug}` on a mobile device shows a server-rendered page with the site screenshot hero, business name, countdown timer (days/hours/minutes/seconds), "What's Included" feature grid, and pricing cards -- all above the fold or within one scroll, loading under 2.5 seconds
+  2. The pricing section displays Standard and Pro plans side-by-side with correct INR or USD amounts based on the visitor's detected country, and the visitor can manually toggle between INR and USD
+  3. After selecting a plan, domain options appear (connect existing domain, buy new domain with availability search, or free subdomain) and a final CTA summarizes selections with the total price
+  4. The page includes trust elements (business count, testimonials section, FAQ accordion) and OG meta tags that produce a rich preview when shared via WhatsApp or email
+  5. Expired claims show an "Offer expired" state with a "Request a new website" form collecting name, email, and phone -- not a dead page or 404
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: TBD
+- [ ] 07-02: TBD
+- [ ] 07-03: TBD
+
+### Phase 8: Payment and Confirmation
+**Goal**: Prospects can pay via Razorpay directly from the claim page and arrive at a confirmation page with their order summary and delivery timeline -- the minimum viable revenue path is complete
+**Depends on**: Phase 7
+**Requirements**: PAY-01, PAY-02, PAY-03, PAY-04, PAY-05, PAY-06, PAY-07, CONF-01, CONF-02, CONF-03
+**Success Criteria** (what must be TRUE):
+  1. Clicking "Pay" on the claim page opens a Razorpay checkout modal with the correct plan price (in paise/cents), and after successful payment the user is redirected to the confirmation page -- even if the webhook arrives before or after the redirect
+  2. The Razorpay webhook at `/api/webhooks/razorpay` verifies the HMAC-SHA256 signature using the raw request body, processes payments idempotently (duplicate webhook deliveries do not corrupt state), and updates the claim record to `payment_status = 'completed'`
+  3. Failed or cancelled payments return the user to the claim page with a visible error message and the ability to retry payment without re-entering selections
+  4. The confirmation page at `/claim/{site_slug}/confirmed` shows a vertical timeline (payment confirmed, customization pending, updating site, preview email, go live), support contact info with WhatsApp link, and actionable next steps
+  5. The confirmation page polls for payment status on load, resolving the webhook-before-redirect race condition within 30 seconds
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: TBD
+- [ ] 08-02: TBD
+- [ ] 08-03: TBD
+
+### Phase 9: Customization and Upsell
+**Goal**: After paying, clients submit their customization details (logo, colors, contacts, photos, text changes) and optionally book a strategy call -- the operator has everything needed to deliver the final site
+**Depends on**: Phase 8
+**Requirements**: CUST-01, CUST-02, CUST-03, CUST-04, CUST-05, CUST-06, CUST-07, CUST-08, CUST-09, UPSELL-01, UPSELL-02, UPSELL-03, UPSELL-04
+**Success Criteria** (what must be TRUE):
+  1. The customization form at `/claim/{site_slug}/customize` is only accessible after verified payment (server-side check rejects unpaid visitors) and displays a progress indicator showing Payment (done) -> Customize (current) -> Go Live
+  2. The client can upload a logo (drag-and-drop, 5MB max, PNG/JPG, with thumbnail preview) and up to 10 photos (5MB each, with thumbnails and remove buttons) via Supabase Storage -- all uploads validated server-side for file type
+  3. Contact info fields are pre-filled from the business's Google Maps data (phone, email, address, hours, WhatsApp) and the client can edit them, set brand colors, and submit text change requests (1000 char limit)
+  4. Pro plan clients see a booking system setup section (service types, available days/hours, buffer time) that Standard plan clients do not see
+  5. After customization submission, a strategy call upsell appears with a Cal.com scheduling embed (free for Pro, paid for Standard), and a clearly visible "No thanks, continue" skip link that proceeds to confirmation
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD
+- [ ] 09-02: TBD
+- [ ] 09-03: TBD
+
+### Phase 10: Claim Analytics
+**Goal**: The operator can see exactly where prospects drop off in the claim funnel and which sites convert best, enabling data-driven optimization of the claim flow
+**Depends on**: Phase 8 (funnel must be live to produce data; can run in parallel with Phase 9)
+**Requirements**: ANAL-01, ANAL-02, ANAL-03
+**Success Criteria** (what must be TRUE):
+  1. Every step of the claim funnel (preview view, claim page view, CTA click, plan selected, payment initiated, payment completed, customization submitted) is tracked as an event in the `claim_events` table with timestamp, IP, user agent, and site_slug
+  2. The admin dashboard shows a conversion funnel visualization with counts at each step and drop-off percentages between steps, filterable by date range
+  3. The analytics data includes revenue totals by plan type and conversion rates from generated site to paid claim
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01: TBD
+- [ ] 10-02: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Foundation Fixes | 2/2 | Complete    | 2026-03-17 |
-| 2. Instrumentation | 3/4 | Complete    | 2026-03-17 |
-| 3. Quality and Intelligence | 0/3 | Complete    | 2026-03-18 |
-| 4. Batch Autopilot | 0/2 | Complete    | 2026-03-18 |
-| 5. UX Acceleration | 1/4 | Complete    | 2026-03-18 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Foundation Fixes | v1.0 | 2/2 | Complete | 2026-03-17 |
+| 2. Instrumentation | v1.0 | 3/4 | Complete | 2026-03-17 |
+| 3. Quality and Intelligence | v1.0 | 3/3 | Complete | 2026-03-18 |
+| 4. Batch Autopilot | v1.0 | 2/2 | Complete | 2026-03-18 |
+| 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
+| 6. Foundation and CTA Injection | v2.0 | 0/? | Not started | - |
+| 7. Claim Landing Page | v2.0 | 0/? | Not started | - |
+| 8. Payment and Confirmation | v2.0 | 0/? | Not started | - |
+| 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
+| 10. Claim Analytics | v2.0 | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-18*
+*Last updated: 2026-03-18 -- v2.0 phases added*

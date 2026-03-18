@@ -99,7 +99,7 @@
 
 ## v2.0 Requirements
 
-Requirements for the client claim flow. Each maps to roadmap phases.
+Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 ### Infrastructure
 
@@ -144,23 +144,23 @@ Requirements for the client claim flow. Each maps to roadmap phases.
 - [ ] **CUST-01**: Customization form at `/claim/{site_slug}/customize` is only accessible after verified payment (server-side check)
 - [ ] **CUST-02**: Logo upload (required) via Supabase Storage with drag-and-drop, thumbnail preview, 5MB max, PNG/JPG/SVG
 - [ ] **CUST-03**: Brand color pickers (optional, default "keep current colors") with primary and secondary hex inputs
-- [ ] **CUST-04**: Contact info pre-filled from Google Maps data (phone, email, address, hours, WhatsApp) — editable
+- [ ] **CUST-04**: Contact info pre-filled from Google Maps data (phone, email, address, hours, WhatsApp) -- editable
 - [ ] **CUST-05**: Text changes textarea (1000 char limit) for headline/content modification requests
 - [ ] **CUST-06**: Multi-photo upload (optional, max 10 photos, 5MB each) via Supabase Storage with thumbnails and remove button
 - [ ] **CUST-07**: Booking system setup section visible only for Pro plan (service types, available days/hours, buffer time)
 - [ ] **CUST-08**: On submit, creates customization record, updates site status to 'customizing', sends admin notification
-- [ ] **CUST-09**: Progress indicator shows Step 1 (Payment ✓) → Step 2 (Customize - current) → Step 3 (Go Live)
+- [ ] **CUST-09**: Progress indicator shows Step 1 (Payment) -> Step 2 (Customize - current) -> Step 3 (Go Live)
 
 ### Upsell
 
-- [ ] **UPSELL-01**: After customization submission, strategy call upsell appears (free for Pro, ₹1,999/$49 for Standard)
+- [ ] **UPSELL-01**: After customization submission, strategy call upsell appears (free for Pro, 1,999 INR / $49 for Standard)
 - [ ] **UPSELL-02**: Cal.com embed (iframe) for scheduling with available slots
 - [ ] **UPSELL-03**: "No thanks, continue to confirmation" skip link is clearly visible and easy to find
 - [ ] **UPSELL-04**: Standard plan call fee collected via Razorpay payment link before showing calendar
 
 ### Confirmation
 
-- [ ] **CONF-01**: Confirmation page at `/claim/{site_slug}/confirmed` shows vertical timeline (payment ✓, customization ✓, updating, preview email, go live)
+- [ ] **CONF-01**: Confirmation page at `/claim/{site_slug}/confirmed` shows vertical timeline (payment, customization, updating, preview email, go live)
 - [ ] **CONF-02**: "What to do in the meantime" section with actionable next steps
 - [ ] **CONF-03**: Support contact section with WhatsApp link and email
 
@@ -239,58 +239,58 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
-| INFRA-03 | TBD | Pending |
-| INFRA-04 | TBD | Pending |
-| INFRA-05 | TBD | Pending |
-| CTA-01 | TBD | Pending |
-| CTA-02 | TBD | Pending |
-| CTA-03 | TBD | Pending |
-| CTA-04 | TBD | Pending |
-| CLAIM-01 | TBD | Pending |
-| CLAIM-02 | TBD | Pending |
-| CLAIM-03 | TBD | Pending |
-| CLAIM-04 | TBD | Pending |
-| CLAIM-05 | TBD | Pending |
-| CLAIM-06 | TBD | Pending |
-| CLAIM-07 | TBD | Pending |
-| CLAIM-08 | TBD | Pending |
-| CLAIM-09 | TBD | Pending |
-| CLAIM-10 | TBD | Pending |
-| PAY-01 | TBD | Pending |
-| PAY-02 | TBD | Pending |
-| PAY-03 | TBD | Pending |
-| PAY-04 | TBD | Pending |
-| PAY-05 | TBD | Pending |
-| PAY-06 | TBD | Pending |
-| PAY-07 | TBD | Pending |
-| CUST-01 | TBD | Pending |
-| CUST-02 | TBD | Pending |
-| CUST-03 | TBD | Pending |
-| CUST-04 | TBD | Pending |
-| CUST-05 | TBD | Pending |
-| CUST-06 | TBD | Pending |
-| CUST-07 | TBD | Pending |
-| CUST-08 | TBD | Pending |
-| CUST-09 | TBD | Pending |
-| UPSELL-01 | TBD | Pending |
-| UPSELL-02 | TBD | Pending |
-| UPSELL-03 | TBD | Pending |
-| UPSELL-04 | TBD | Pending |
-| CONF-01 | TBD | Pending |
-| CONF-02 | TBD | Pending |
-| CONF-03 | TBD | Pending |
-| ANAL-01 | TBD | Pending |
-| ANAL-02 | TBD | Pending |
-| ANAL-03 | TBD | Pending |
+| INFRA-01 | Phase 6 | Pending |
+| INFRA-02 | Phase 6 | Pending |
+| INFRA-03 | Phase 6 | Pending |
+| INFRA-04 | Phase 6 | Pending |
+| INFRA-05 | Phase 6 | Pending |
+| CTA-01 | Phase 6 | Pending |
+| CTA-02 | Phase 6 | Pending |
+| CTA-03 | Phase 6 | Pending |
+| CTA-04 | Phase 6 | Pending |
+| CLAIM-01 | Phase 7 | Pending |
+| CLAIM-02 | Phase 7 | Pending |
+| CLAIM-03 | Phase 7 | Pending |
+| CLAIM-04 | Phase 7 | Pending |
+| CLAIM-05 | Phase 7 | Pending |
+| CLAIM-06 | Phase 7 | Pending |
+| CLAIM-07 | Phase 7 | Pending |
+| CLAIM-08 | Phase 7 | Pending |
+| CLAIM-09 | Phase 7 | Pending |
+| CLAIM-10 | Phase 7 | Pending |
+| PAY-01 | Phase 8 | Pending |
+| PAY-02 | Phase 8 | Pending |
+| PAY-03 | Phase 8 | Pending |
+| PAY-04 | Phase 8 | Pending |
+| PAY-05 | Phase 8 | Pending |
+| PAY-06 | Phase 8 | Pending |
+| PAY-07 | Phase 8 | Pending |
+| CONF-01 | Phase 8 | Pending |
+| CONF-02 | Phase 8 | Pending |
+| CONF-03 | Phase 8 | Pending |
+| CUST-01 | Phase 9 | Pending |
+| CUST-02 | Phase 9 | Pending |
+| CUST-03 | Phase 9 | Pending |
+| CUST-04 | Phase 9 | Pending |
+| CUST-05 | Phase 9 | Pending |
+| CUST-06 | Phase 9 | Pending |
+| CUST-07 | Phase 9 | Pending |
+| CUST-08 | Phase 9 | Pending |
+| CUST-09 | Phase 9 | Pending |
+| UPSELL-01 | Phase 9 | Pending |
+| UPSELL-02 | Phase 9 | Pending |
+| UPSELL-03 | Phase 9 | Pending |
+| UPSELL-04 | Phase 9 | Pending |
+| ANAL-01 | Phase 10 | Pending |
+| ANAL-02 | Phase 10 | Pending |
+| ANAL-03 | Phase 10 | Pending |
 
 **Coverage:**
-- v1.0 requirements: 51 total — 51 complete ✓
-- v2.0 requirements: 42 total
-- Mapped to phases: 0
-- Unmapped: 42 ⚠️
+- v1.0 requirements: 51 total -- 51 complete
+- v2.0 requirements: 45 total
+- Mapped to phases: 45/45
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after v2.0 milestone start*
+*Last updated: 2026-03-18 -- v2.0 phase mappings assigned*
