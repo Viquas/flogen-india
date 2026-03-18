@@ -12,10 +12,13 @@ const WebhookPayloadSchema = z.union([
 
 export const POST = withApiMiddleware(
     async (req, { body, requestId }) => {
-        // Validate API key for webhook routes
+        // Validate API key for webhook routes — reject if no key configured (fail-closed)
         const apiKey = req.headers.get('x-api-key')
         const expectedKey = process.env.WEBHOOK_API_KEY
-        if (expectedKey && apiKey !== expectedKey) {
+        if (!expectedKey) {
+            throw new UnauthorizedError('WEBHOOK_API_KEY not configured — webhook disabled')
+        }
+        if (apiKey !== expectedKey) {
             throw new UnauthorizedError('Invalid API key')
         }
 
