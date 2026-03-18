@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { retryJob, cancelJob } from './actions'
-import type { QueueStats, QueueJobDetail } from './actions'
+import type { QueueStats, QueueJobDetail } from './types'
 
 // --- Status Card ---
 

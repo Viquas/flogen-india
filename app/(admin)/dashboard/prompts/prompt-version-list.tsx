@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 import { setActivePromptVersion } from './actions'
-import type { PromptVersionRow } from './actions'
+import type { PromptVersionRow } from './types'
 
 const PROMPT_DISPLAY_NAMES: Record<string, string> = {
     system: 'System Prompt',
