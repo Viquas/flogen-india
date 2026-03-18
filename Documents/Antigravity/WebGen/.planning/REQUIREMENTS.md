@@ -106,15 +106,15 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 - [x] **INFRA-01**: New Supabase tables: `claims` and `customizations` with proper foreign keys to existing `projects` table
 - [x] **INFRA-02**: Supabase Storage buckets: `site-screenshots` and `claim-uploads` with appropriate access policies
 - [x] **INFRA-03**: Route group restructuring: `(admin)/` for dashboard/editor, `(client)/` for claim flow pages
-- [ ] **INFRA-04**: Screenshot generation for site previews (generated during site creation, stored in Supabase Storage)
+- [x] **INFRA-04**: Screenshot generation for site previews (generated during site creation, stored in Supabase Storage)
 - [x] **INFRA-05**: Geo-detection utility using Vercel's `x-vercel-ip-country` header with USD fallback
 
 ### CTA Injection
 
-- [ ] **CTA-01**: Every generated website displays a sticky bottom bar with "This website was made for {Business Name}" and a "Claim This Website" button linking to `/claim/{site_slug}`
-- [ ] **CTA-02**: CTA bar shows "X days left to claim" countdown based on server-side `expires_at` timestamp (5-day window)
-- [ ] **CTA-03**: CTA bar is style-isolated (inline styles, unique IDs) so it never conflicts with generated site styles
-- [ ] **CTA-04**: When a site's claim period has expired, the CTA bar shows "This offer has expired" with a "Request a new website" link
+- [x] **CTA-01**: Every generated website displays a sticky bottom bar with "This website was made for {Business Name}" and a "Claim This Website" button linking to `/claim/{site_slug}`
+- [x] **CTA-02**: CTA bar shows "X days left to claim" countdown based on server-side `expires_at` timestamp (5-day window)
+- [x] **CTA-03**: CTA bar is style-isolated (inline styles, unique IDs) so it never conflicts with generated site styles
+- [x] **CTA-04**: When a site's claim period has expired, the CTA bar shows "This offer has expired" with a "Request a new website" link
 
 ### Claim Landing Page
 
@@ -242,12 +242,12 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | INFRA-01 | Phase 6 | Complete |
 | INFRA-02 | Phase 6 | Complete |
 | INFRA-03 | Phase 6 | Complete |
-| INFRA-04 | Phase 6 | Pending |
+| INFRA-04 | Phase 6 | Complete |
 | INFRA-05 | Phase 6 | Complete |
-| CTA-01 | Phase 6 | Pending |
-| CTA-02 | Phase 6 | Pending |
-| CTA-03 | Phase 6 | Pending |
-| CTA-04 | Phase 6 | Pending |
+| CTA-01 | Phase 6 | Complete |
+| CTA-02 | Phase 6 | Complete |
+| CTA-03 | Phase 6 | Complete |
+| CTA-04 | Phase 6 | Complete |
 | CLAIM-01 | Phase 7 | Pending |
 | CLAIM-02 | Phase 7 | Pending |
 | CLAIM-03 | Phase 7 | Pending |
