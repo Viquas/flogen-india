@@ -1,204 +1,197 @@
 # Project Research Summary
 
-**Project:** WebGen -- 12 Improvements for Internal Bulk AI Website Generator
-**Domain:** AI-powered bulk website generation (Next.js 16 + Supabase + AI SDK v6)
+**Project:** Flogen / WebGen v2.0 — Client Claim Flow
+**Domain:** AI website generator with client conversion and payment pipeline
 **Researched:** 2026-03-18
 **Confidence:** HIGH
 
 ## Executive Summary
 
-WebGen is a single-user internal tool that bulk-generates business websites using AI (Gemini, OpenAI, OpenRouter) on a Next.js 16 + Supabase + shadcn/ui stack. The 12 planned improvements fall into four categories: pipeline automation (batch autopilot), quality infrastructure (scoring, error classification, prompt versioning, few-shot templates), observability (cost tracking, analytics dashboard, queue monitoring), and UX acceleration (keyboard shortcuts, diff view, export, preview pre-rendering). The existing codebase already provides the foundational infrastructure -- queue system, template table, revision history, HTML boilerplate -- so most features extend rather than replace. Only 2-4 new npm packages are needed (recharts, diff, optionally puppeteer and jszip), and all persistence stays within Supabase.
+Flogen v2.0 converts an existing internal AI website generation tool into a revenue-generating platform by adding a client-facing claim flow. The product pattern is a 6-step funnel: CTA injection on generated sites, claim landing page, Razorpay payment, post-payment customization form, strategy call upsell, and confirmation page. The entire flow builds on a validated and shipped v1.0 stack (Next.js 16, Supabase, AI SDK v6) and requires only 5 new npm packages. The most significant architectural change is not a new library but a structural one: introducing public mobile-first SSR pages alongside existing admin pages using Next.js route groups (`(admin)/` and `(client)/`), which enables different layouts, meta tags, and script loading without touching any existing URLs.
 
-The recommended approach is to build foundation-first: instrument the generator with cost tracking, error classification, and prompt versioning before attempting the batch autopilot. This is because the autopilot depends on accurate error handling, quality scoring, and cost visibility to make intelligent decisions. The single most important architectural decision is to modularize `generator.ts` (currently 1456 lines with a 1000+ line inline system prompt) by extracting concerns into dedicated modules (`cost-tracker.ts`, `error-classifier.ts`, `quality-scorer.ts`, `prompts.ts`, `template-seeder.ts`). Every downstream feature benefits from this decomposition.
+The recommended approach ships the minimum viable funnel in strict dependency order — CTA injection first (it modifies existing HTML boilerplate and establishes the entry point), then the claim landing page (the conversion hub), then Razorpay payment (the revenue gate), then the customization form and confirmation page. Strategy call upsell and funnel analytics are deferred optimization layers. All 4 research areas return HIGH confidence because primary sources (official Razorpay, Supabase, Next.js, and Vercel documentation) were used throughout, with the sole MEDIUM areas being puppeteer-core + chromium-min version coupling (requires install-time verification) and WHOIS domain availability (best-effort, rate-limited by TLD).
 
-The primary risks are: (1) building on top of 3 known bugs (auto-fix returns original broken code, queue race condition, fire-and-forget async) that will cascade into every new feature, (2) quality scoring that measures syntax instead of semantics, producing false confidence, and (3) batch automation that silently swallows failures. All three are mitigable with a focused Phase 0 that fixes existing bugs before feature work begins. The 12 features are achievable with the existing stack and minimal new dependencies, but ordering matters -- building the orchestration layer (autopilot) before its dependencies (scoring, classification) will produce an unreliable system.
+The non-negotiable implementation risks are payment-specific and must be built correctly on day one, not retrofitted: Razorpay webhook signature verification requires `await request.text()` before any JSON parsing — using `request.json()` causes 100% signature failure in production. All amounts must be stored as integer paise/cents from the start. The confirmation page must implement polling because webhooks and browser redirects race with no ordering guarantee. File upload security requires server-side magic byte validation (the existing `uploadProjectAsset()` has zero validation). These four constraints shape the implementation order of every payment and upload task.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack (Next.js 16, Supabase, AI SDK v6, shadcn/ui, Monaco Editor) handles 10 of 12 features with zero new dependencies. The stack research explicitly rejected heavy alternatives (BullMQ/Redis, Temporal, LangChain, Playwright, Tremor, Sentry/Helicone) in favor of extending existing patterns. This is the right call for a single-user internal tool.
+The existing stack (Next.js 16, Supabase, AI SDK v6, Zod, date-fns, Recharts) requires only 5 new packages. Infrastructure additions come from extending existing Supabase patterns (2 new Storage buckets, 3-4 new tables) and Next.js routing (route groups, public SSR pages). See `.planning/research/STACK.md` for full integration code patterns.
 
-**New dependencies (confirmed needed):**
-- `recharts` ^2.15: React charting for analytics dashboard -- standard choice, tree-shakeable, 450KB
-- `diff` ^7: Server-side diff computation for revision summaries -- 25KB, used alongside Monaco's built-in diff editor
+**Core technologies:**
+- `razorpay` ^2.9.6: Payment SDK — sole payment provider per project constraints; provides `validatePaymentVerification` and `validateWebhookSignature` as built-in utilities, eliminating the need to reimplement HMAC verification
+- Vercel `x-vercel-ip-country` header (via `@vercel/functions` or direct header access): Geo-detection for INR/USD pricing — free, zero-latency, no rate limits, available on all Vercel plans; external geo APIs add 50-200ms latency for zero benefit
+- `puppeteer-core` ^24.x + `@sparticuz/chromium-min` ^133.x: Screenshot generation — required because generated sites use CSS Grid, animations, and arbitrary Tailwind that Satori/@vercel/og cannot render; generate during batch processing, not on claim page load
+- `whoiser` ^1.18.0: Domain availability WHOIS lookup — zero-cost, zero-dependency; appropriate for low-volume informational display; upgrade path to paid API if rate limiting becomes an issue
+- Cal.com iframe or inline script embed (NOT `@calcom/embed-react`): Strategy call booking — the npm package has unresolved React 19 peer dependency conflicts confirmed in GitHub issues #20814, #20681, #20990
+- Supabase signed upload URLs + server-proxy pattern: Client file uploads — extends existing Supabase infrastructure; server generates signed URL, client uploads direct to avoid Next.js 1MB body limit; CORS risk is eliminated by routing through an API proxy route
 
-**New dependencies (recommended, optional):**
-- `puppeteer` ^24: Headless Chrome for quality scoring visual checks and screenshot capture -- heavy (300MB Chrome binary) but enables render-based quality validation
-- `jszip` ^3.10: ZIP archive creation for batch export -- 45KB, only needed if single-file HTML download is insufficient
+**New packages to install:**
+```
+npm install razorpay whoiser @vercel/functions
+npm install puppeteer-core @sparticuz/chromium-min
+```
 
-**Key stack decisions:**
-- Supabase remains the single data store (no Redis, no external caching)
-- State machine pattern for batch autopilot (no workflow engines)
-- Monaco Editor reused for all code display needs (diff view, prompt editing)
-- Server components for data-heavy pages (analytics, queue admin); client components for interactive pages (review workflow, editor)
+**New environment variables:** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`, `RAZORPAY_WEBHOOK_SECRET`, `NEXT_PUBLIC_DEV_COUNTRY` (dev fallback), `CHROMIUM_REMOTE_URL` (optional).
+
+**New Supabase Storage buckets:** `site-screenshots` (public, WebP previews for claim page hero) and `claim-uploads` (private, client-uploaded logos and photos).
+
+**New database tables:** `claims` (full lifecycle tracking), `customizations` (post-payment form data), `claim_events` (funnel analytics event log). No modifications to existing tables.
 
 ### Expected Features
 
-**Must have (table stakes -- required for each feature to be useful):**
-- Batch autopilot: full pipeline chain with failure escalation, progress tracking, and idempotent resume
-- Quality scoring: render success check, section completeness, aggregated 0-100 score
-- Cost tracking: per-generation token logging, cost estimation, persistent storage, visible running total
-- Error classification: error taxonomy, automatic classification, category-specific fix prompts
-- Prompt versioning: prompt extraction from generator.ts, version tagging per generation, version switching
-- Queue health: status display, stuck job detection, manual retry/cancel
-- Keyboard shortcuts: j/k navigation, a/r/f/e actions, visual focus indicator, ? help overlay
-- Diff view: side-by-side Monaco diff, revision history list, visual preview diff
-- Export: single-file HTML export, asset bundling, download button
-- Analytics: success/failure rate, generation timing, filterable by model/industry, cost summary
-- Template seeding: industry tagging, automatic few-shot injection, quality-based example selection
-- Pre-rendering: prefetch next N project data, cache management, instant preview switching
+The funnel has 8 feature areas. Research provides explicit table stakes, differentiators, and anti-features for each. See `.planning/research/FEATURES.md` for the full breakdown including complexity ratings and dependency maps.
 
-**Should have (differentiators -- build if time allows):**
-- Configurable autopilot pipeline stages (skip enrichment, add review gates)
-- Visual regression scoring via headless browser screenshots
-- Negative few-shot examples for better LLM contrast learning
-- Budget alerts for cost tracking
-- A/B testing for prompt versions
-- Batch select (Shift+j/k) for keyboard shortcuts
-- AI-generated change summaries alongside diffs
-- Failure pattern heatmaps in analytics
+**Must have — blocks revenue if missing:**
+- Sticky CTA bar injected into generated HTML with real countdown tied to `claim_expires_at` — funnel entry point; fake/resetting countdowns kill trust immediately
+- Claim landing page with SSR site preview (screenshot hero + lazy iframe), Standard/Pro pricing cards in INR/USD based on geo, trust elements (guarantee badge, Razorpay logo, social proof), business-specific content, mobile-first layout, and SEO/OG meta
+- Domain selection section within the claim page (free subdomain as default/fallback, existing domain input, "help me buy a domain" option) — removes a purchase barrier without requiring domain registration infrastructure
+- Razorpay Standard Checkout with server-side order creation, client-side checkout.js modal, webhook verification (`payment.captured`), client-side verification backup, idempotent order creation, and payment failure recovery
+- Post-payment multi-step customization form with logo upload, photo uploads (up to 10), pre-filled contact details from `business_data`, color palette selection, text change requests, and per-step persistence keyed by `claim_id`
+- Confirmation page with order summary, delivery timeline, contact info, and payment receipt reference
+
+**Should have — deferred but not v2+:**
+- Strategy call upsell (between customization form and confirmation): Cal.com/Calendly iframe, skip button must be equally prominent as book button, Pro plan frames it as included benefit
+- Funnel analytics: `claim_events` table + Recharts visualization in admin dashboard showing step-by-step conversion and drop-off rates; Recharts already installed from v1.0
 
 **Defer to v2+:**
-- Scheduled/cron-based autopilot runs
-- Vercel/Netlify deploy integration
-- Multi-page export
-- Custom domain mapping
-- Custom report builder for analytics
-- Auto-optimization of prompts via LLM
+- In-flow domain registration (explicitly out of scope per PROJECT.md)
+- Live preview with real-time changes applied
+- Automated email confirmation (requires separate email service)
+- Abandoned payment recovery email
+- A/B testing claim page variants
+- Video walkthrough of generated site
+
+**Anti-features to actively avoid:** Fake countdown that resets on refresh, blocking site preview behind email gate, custom payment form touching card data (PCI), multiple upsells post-payment, mandatory account creation for confirmation access, auto-playing media.
 
 ### Architecture Approach
 
-The 12 features integrate as modular extensions to the existing 4-layer architecture (Presentation, API Routes, Business Logic, Data Access). The key insight is that 4 features (#3 template seeding, #4 cost tracking, #7 error classification, #10 prompt versioning) all modify `generator.ts`, making its decomposition the critical prerequisite. Each feature becomes its own module with a clear interface, called by the generator rather than added to it.
+The v2.0 architecture extends the existing monolithic Next.js App Router structure with hard separation between admin and client-facing concerns using route groups, new API route namespaces, and new lib/ modules — all following established project patterns. The admin side retains its service-role Supabase access (no auth, single operator). Client-facing claim pages are fully public SSR routes; security comes from unguessable project UUIDs and Razorpay signature verification rather than session auth. See `.planning/research/ARCHITECTURE.md` for full schema DDL, data flow diagrams, and signed URL sequence.
 
-**Major components (new):**
-1. **Autopilot Orchestrator** (`lib/autopilot.ts`) -- state machine coordinating discover-enqueue-generate-fix-score pipeline; persists state to `batches.metadata` for crash recovery
-2. **Quality Scorer** (`lib/ai/quality-scorer.ts`) -- pure function evaluating generated code on render success, section count, structure; hooks into `updateProjectWithCode()`
-3. **Cost Tracker** (`lib/ai/cost-tracker.ts`) -- wrapper around AI SDK's `generateText`/`streamText` that captures usage metadata from every call site
-4. **Error Classifier** (`lib/ai/error-classifier.ts`) -- AST-based error categorization with separate routing table mapping categories to fix strategies
-5. **Prompt Manager** (`lib/ai/prompts.ts`) -- versioned prompt loading with in-memory cache, fallback to hardcoded prompt, version tagging per generation
-6. **Template Seeder** (`lib/ai/template-seeder.ts`) -- queries top-rated templates by industry, sanitizes and injects as few-shot context
-7. **Export Bundler** (`lib/export/bundler.ts`) -- extends existing `html-boilerplate.ts` to produce downloadable static HTML bundles
+**Major components:**
+1. `app/(admin)/dashboard/` and `app/(admin)/editor/` — existing pages moved into route group, unchanged; sidebar desktop layout
+2. `app/(client)/claim/[slug]/` — public SSR claim flow (landing, customize, confirmed) with mobile-first layout, no navigation chrome, SEO meta
+3. `app/api/claims/create-order/`, `app/api/claims/[claimId]/customize/`, `app/api/webhooks/razorpay/` — payment API routes, all using `createAdminClient()` (consistent with existing pattern)
+4. `app/api/uploads/signed-url/` — server-generated upload URL with claim status gate before issuing the URL
+5. `lib/cta-injector.ts` — injects sticky CTA bar into `constructHtmlBoilerplate()` output as pure HTML/CSS/vanilla JS at render time (not generation time); Option A recommended: inject before `</body>`, not into iframe
+6. `lib/razorpay.ts`, `lib/geo.ts`, `lib/claims.ts`, `lib/tracking.ts` — new business logic modules following the existing lib/ pattern
+7. Database: `claims` (1:many from `projects`) -> `customizations` (1:1 from `claims`), plus optional `claim_events`; small optional additions to `projects` table: `slug`, `claim_expires_at`, `screenshot_url`
 
-**Schema additions (all additive, no breaking changes):**
-- New tables: `generation_costs`, `prompt_versions`, `project_scores`, `batch_runs`
-- New columns: `projects.quality_score` (JSONB), `projects.prompt_version` (text), `projects.error_classification` (text), `queue_jobs.started_at/completed_at` (timestamptz), `queue_jobs.error_type` (text)
+**Data flow:** discovery -> enrichment -> generation -> `constructHtmlBoilerplate()` (with CTA bar injected) -> claim initiated by prospect clicking CTA -> claim page SSR -> Razorpay order created server-side -> checkout modal -> webhook confirms payment -> customization form -> operator delivers site.
 
 ### Critical Pitfalls
 
-1. **Batch automation silently swallows failures (P1)** -- The existing fire-and-forget pattern and auto-fix bug (returns original broken code) will produce batch reports that claim 100% success while 30% of outputs are broken. Fix: add terminal `batch_result` status per project, fix the auto-fix return bug, require explicit failure surfacing before batch completion.
+1. **Razorpay webhook raw body trap (P1)** — Call `await request.text()` first, then `JSON.parse()`. Never use `await request.json()`. Using the parsed body for HMAC verification fails 100% of the time in production due to key ordering and whitespace differences. Must be built correctly from day one; this is the largest single risk in the project.
 
-2. **Quality scoring measures the wrong things (P2)** -- Syntactic checks (has hero, has footer, code compiles) produce false confidence. Pages score 95/100 but look terrible. Fix: work backwards from actual rejection reasons, include headless browser render check, start with 3-5 high-signal dimensions, track score vs. manual approval rate correlation.
+2. **Paise conversion errors (P2)** — Build `lib/pricing.ts` with hardcoded integer paise/cents values (`standard: { inr_paise: 499900, usd_cents: 49900 }`) before any Razorpay order creation. Never compute from rupee values via float multiplication. Verify amount in the webhook matches expected plan price exactly.
 
-3. **Few-shot templates poison output quality (P3)** -- Approved code contains business-specific data that bleeds into new generations. Fix: sanitize templates by replacing content with placeholders before injection, limit to 1 example per generation, use excerpts (50-80 lines) not full page code.
+3. **Webhook vs. redirect race condition (P3)** — Confirmation page must poll claim status every 2 seconds for up to 30 seconds after redirect. Never depend solely on the browser redirect callback. Webhook and confirmation page are designed together in the same implementation step.
 
-4. **Error classification creates fix loops (P7)** -- Classifier detects error -> fix creates new error -> classifier detects new error -> infinite loop. Fix: implement loop detection (hash error type + code region, abort if same hash appears twice), track fix success rate per category, route low-success categories directly to manual review.
+4. **Razorpay key secret exposure (P4)** — Only `RAZORPAY_KEY_ID` uses `NEXT_PUBLIC_` prefix. The `RAZORPAY_KEY_SECRET` must never be client-accessible. Add runtime validation that throws in production if a test-mode key (`rzp_test_`) is detected.
 
-5. **Building features on a broken foundation (CC1)** -- All 12 features inherit 3 known bugs. Fix: dedicate Phase 0 to fixing auto-fix return bug, queue race condition, and fire-and-forget async chains. Budget 1-2 days. This prevents cascading issues across every feature.
+5. **File upload security (P6)** — Client-reported `file.type` is spoofable. Validate PNG/JPEG/WebP magic bytes server-side. Reject SVG entirely (embedded script attack vector). The existing `uploadProjectAsset()` has zero validation and must not be reused as-is for client-submitted files.
+
+6. **CTA bar CSS isolation (P8)** — Generated pages have their own z-index hierarchies, Tailwind classes, and `position: fixed` elements. Render the CTA as a sibling to an iframe containing the preview, or use inline styles only with `z-index: 2147483647`. Test against 20+ generated pages before shipping.
+
+7. **Signed URL expiry (P7)** — Supabase upload signed URLs expire in 2 hours (fixed, not configurable). Store the storage path in the database, not the URL. Generate fresh signed URLs at render time for operator review.
 
 ## Implications for Roadmap
 
-Based on combined research, the following phase structure is recommended. The ordering is driven by dependency chains (features that other features consume must come first) and risk mitigation (fix bugs before building on them).
+Research confirms a 4-phase delivery sequence based on strict feature dependencies. See the full dependency graph in `.planning/research/FEATURES.md`.
 
-### Phase 0: Foundation Fixes
-**Rationale:** All 4 research files independently flag the same 3 bugs as blocking. PITFALLS.md calls this out as cross-cutting concern CC1. ARCHITECTURE.md identifies the generator monolith as a risk area. This must come first.
-**Delivers:** Stable foundation for all 12 features; decomposed generator.ts
-**Addresses:** CC1 (features on broken foundation), CC3 (monolith grows)
-**Work:**
-- Fix auto-fix return-original-code bug in generator.ts
-- Fix queue race condition with DB uniqueness constraint
-- Replace fire-and-forget async with error tracking
-- Extract 1000+ line system prompt from generator.ts to separate file
-- Add database indexes for analytics queries: `(status, created_at)`, `(model, created_at)`, `(batch_id, status)`
-**Avoids:** P1, P7, P11, CC1, CC3
+### Phase 1: Foundation — Data Model and Route Architecture
+**Rationale:** All other phases reference the `claims` table and the `(client)/` route group. This work has no UI value but unblocks everything else. The CTA injector is included here because it is the funnel entry point and touches existing lib/ code.
+**Delivers:** `claims`, `customizations`, `claim_events` tables with indexes; `site-screenshots` and `claim-uploads` Storage buckets; `(admin)/` and `(client)/` route groups with separate layouts; `lib/cta-injector.ts` with CTA bar injected into generated HTML; `lib/geo.ts` for INR/USD currency detection; `lib/pricing.ts` with hardcoded paise/cents values; Razorpay SDK singleton in `lib/razorpay.ts`.
+**Avoids:** P8 (CTA isolation approach locked in here), P14 (route group prevents layout leakage between admin and client pages), P2 (pricing utility built before any order creation).
+**Research flag:** Standard patterns. No additional research needed.
 
-### Phase 1: Instrumentation Layer
-**Rationale:** Cost tracking (#4), error classification (#7), and prompt versioning (#10) are foundational data producers that every downstream feature consumes. STACK.md, FEATURES.md, and ARCHITECTURE.md all agree these are zero-dependency, small/medium complexity, and should come first. Queue health UI (#11) reads existing data and provides immediate operational visibility.
-**Delivers:** Per-generation cost records, classified errors, versioned prompts, queue admin panel
-**Addresses:** Features #4 (S complexity), #7 (M), #10 (M), #11 (S)
-**Uses:** AI SDK usage metadata, Babel AST parsing (@babel/standalone already in deps), Supabase tables
-**Avoids:** P4 (instrument at SDK level, not app level), P7 (decouple classification from fix strategies), P10 (tag every generation with prompt version), P11 (fix queue bugs first in Phase 0)
+### Phase 2: Claim Landing Page
+**Rationale:** Depends on Phase 1 (claims table, slug routing, CTA link target). The claim page is the conversion hub and the most complex individual page. It must be built and validated before payment is added to it.
+**Delivers:** `/claim/[slug]` fully SSR-rendered page with: site screenshot hero (WebP from `site-screenshots` bucket), lazy-loaded interactive iframe preview, Standard/Pro pricing cards with INR/USD geo-detection, domain selection UI, trust elements, FAQ accordion, mobile-first layout, SEO meta and OG image using `generateMetadata`.
+**Avoids:** P9 (countdown with UTC timestamp, re-synced every 60s), P10 (Vercel geo header with manual toggle and INR default), P13 (performance: screenshot hero not live iframe above the fold, SSR for initial paint, minimal client JS).
+**Research flag:** Standard SSR patterns. Note: verify puppeteer-core + @sparticuz/chromium-min version pairing at install time before screenshot generation is implemented.
 
-### Phase 2: Quality and Intelligence
-**Rationale:** Quality scoring (#2) and template seeding (#3) depend on Phase 1 outputs (prompt versioning for prompt-quality correlation, error classification for scoring). Analytics dashboard (#9) needs cost and quality data to display. These three compose Phase 1 modules into user-facing value.
-**Delivers:** Automated quality scores per generation, industry-aware few-shot prompting, visual analytics
-**Addresses:** Features #2 (L complexity), #3 (M), #9 (L)
-**Uses:** `recharts` for analytics charts, existing templates table for few-shot seeding
-**Avoids:** P2 (start with high-signal dimensions, not comprehensive scoring), P3 (sanitize templates, limit to 1 example, use excerpts), P9 (add indexes in Phase 0, use time-windowed queries)
+### Phase 3: Payment Flow and Confirmation
+**Rationale:** Depends on Phase 2 (the "Pay" button lives on the claim page). All three payment pitfalls (P1, P2, P3) are interdependent and must be implemented as a unit. Webhook handler and confirmation page are designed together to prevent the race condition.
+**Delivers:** Server-side order creation (`/api/claims/create-order`), Razorpay checkout.js modal integration with prefilled client details, webhook handler (`/api/webhooks/razorpay/`) with raw body signature verification and idempotent processing, client-side payment verification backup (`/api/claims/[claimId]/verify-payment/`), payment failure recovery UI, confirmation page with polling loop (2s interval, 30s max), order summary, and delivery timeline.
+**Avoids:** P1 (raw body webhook), P2 (paise via pricing utility already built in Phase 1), P3 (polling on confirmation page), P4 (key secret never in `NEXT_PUBLIC_`), P5 (idempotent order creation checking existing `razorpay_order_id`), P12 (runtime key mode validation on Razorpay SDK init).
+**Research flag:** All patterns are fully documented in STACK.md. Implementation discipline is the risk, not missing knowledge. Verify Razorpay live mode KYC status before starting this phase (operational dependency that can block go-live).
 
-### Phase 3: Orchestration
-**Rationale:** Batch autopilot (#1) is the highest-value feature but has the most dependencies (quality scoring for auto-approve/reject, error classification for targeted fixes, cost tracking for budget awareness). All research files agree it must come after its dependencies. This is the XL-complexity capstone feature.
-**Delivers:** One-button end-to-end pipeline: discover -> generate -> score -> auto-fix -> surface failures
-**Addresses:** Feature #1 (XL complexity)
-**Implements:** State machine orchestrator (lib/autopilot.ts) coordinating all Phase 1 and Phase 2 modules
-**Avoids:** P1 (terminal batch_result status per project, explicit failure surfacing, never mark batch complete until all projects resolved)
+### Phase 4: Post-Payment Customization and Upsell
+**Rationale:** Depends on Phase 3 (accessible only after payment confirmed). File upload architecture must be decided before building the form. Recommended: server-proxy upload route rather than direct signed URL uploads (eliminates CORS entirely per P11).
+**Delivers:** Multi-step customization form at `/claim/[slug]/customize/` with: logo upload, up to 10 photo uploads, pre-filled contact details from `business_data`, hex color palette picker with preset swatches, text change requests textarea (2000 char max), per-step persistence in `customizations` table. Strategy call upsell with Cal.com iframe prefilled with client name and email. Confirmation page enhancements (domain setup instructions, referral prompt).
+**Avoids:** P6 (MIME magic byte validation server-side, SVG rejected), P7 (store paths not URLs in `customizations` table), P11 (server-proxy upload route eliminates CORS entirely).
+**Research flag:** Standard multi-step form and file upload patterns. Cal.com iframe embed approach is confirmed. No additional research needed.
 
-### Phase 4: UX Acceleration
-**Rationale:** Keyboard shortcuts (#6), diff view (#8), export (#5), and preview pre-rendering (#12) are independent UI features that enhance the review workflow. They have no upstream dependencies and can be built in any order. Grouping them last keeps focus on infrastructure first, but individual items could be pulled earlier if needed.
-**Delivers:** Keyboard-driven review, revision comparison, static HTML export, instant preview navigation
-**Addresses:** Features #6 (S), #8 (M), #5 (M), #12 (M)
-**Uses:** `diff` package for server-side diffs, Monaco diff editor for visual comparison, `jszip` for export bundles, existing `html-boilerplate.ts` for export
-**Avoids:** P6 (focus-aware shortcuts, check activeElement before firing, test with Monaco), P8 (use Monaco diff editor, add AI change summary), P5 (export full client-rendered bundle, not server-rendered HTML), P12 (prefetch data only, not browser instances; start with 2 projects not 5)
+### Phase 5: Funnel Analytics
+**Rationale:** Deferred until the funnel is live and producing real data. Recharts and Supabase are already in the stack. The `claim_events` table is created in Phase 1 but only instrumented here.
+**Delivers:** Event logging on all client-facing claim pages (`/api/tracking/event/`), server-side event logging from webhook handler, admin dashboard section with funnel bar chart (step counts + drop-off %), revenue totals by plan, date range filter reusing existing dashboard UI patterns.
+**Avoids:** Premature analytics overhead before the funnel is validated with real data.
+**Research flag:** Standard patterns. Recharts funnel visualization is well-established.
 
 ### Phase Ordering Rationale
 
-- **Dependency chains drive order:** Phase 1 produces data (costs, error types, prompt versions) that Phase 2 consumes (quality scoring, analytics, template selection) which Phase 3 orchestrates (autopilot). Reversing this order produces features that lack the inputs they need.
-- **Bug fixes gate everything:** The 3 known bugs (auto-fix, queue race, fire-and-forget) affect at minimum 6 of 12 features. Fixing them in Phase 0 prevents cascading failures.
-- **Monolith decomposition is the bottleneck:** Features #3, #4, #7, and #10 all modify generator.ts. Extracting the system prompt and creating separate modules in Phase 0 prevents merge conflicts and enables parallel development in Phase 1.
-- **UX features are safe to reorder:** Phase 4 items have no downstream dependents. If keyboard shortcuts or export are urgently needed, they can be pulled into an earlier phase without disrupting the dependency chain.
-- **Analytics requires data to display:** The analytics dashboard is placed in Phase 2 (not Phase 4) because it provides critical feedback loops for quality scoring and cost optimization decisions that inform Phase 3 autopilot configuration.
+- Phases 1 through 3 form the minimum viable revenue funnel. A prospect can see a CTA on a generated site, visit the claim page, pay, and receive a confirmation. Revenue flows before Phase 4 begins.
+- Phase 4 transforms a completed payment into a deliverable — the operator has everything needed to customize and ship the site.
+- Phase 5 adds observability to optimize what is already working, not speculation about what might work.
+- Database migrations for all 3 new tables should be scripted in Phase 1 even if `claim_events` is not actively used until Phase 5 — prevents migration drift.
+- The confirmation page shell (with polling) is built in Phase 3; domain setup instructions and referral prompt enhancements are added in Phase 4.
 
 ### Research Flags
 
-**Phases likely needing deeper research during planning:**
-- **Phase 2 (Quality Scoring):** The scoring criteria need calibration against actual rejection reasons. Research recommends auditing 20-30 manually rejected projects to define dimensions. If Puppeteer-based visual scoring is pursued, serverless deployment constraints need investigation (@sparticuz/chromium for Vercel).
-- **Phase 3 (Batch Autopilot):** State machine design for crash recovery is non-trivial. The idempotent resume requirement (survive server restart mid-pipeline) needs careful schema design for the `batch_runs` table and state persistence.
+All 5 phases use well-documented patterns with HIGH confidence sources. No phase requires a `/gsd:research-phase` call.
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 0 (Foundation Fixes):** All fixes are well-documented in CONCERNS.md with specific line numbers. No research needed.
-- **Phase 1 (Instrumentation):** Cost tracking is straightforward AI SDK usage capture. Error classification uses existing Babel AST parsing. Prompt versioning is CRUD. Queue admin is UI over existing data.
-- **Phase 4 (UX Acceleration):** Keyboard shortcuts, Monaco diff editor, HTML export, and data prefetching are all well-established patterns with zero ambiguity.
+Phases with specific install-time verification needed:
+- **Phase 2:** Verify `puppeteer-core` + `@sparticuz/chromium-min` compatible version pairing by checking the @sparticuz/chromium-min releases before running `npm install`.
+
+Operational dependencies to verify before phases begin:
+- **Phase 3:** Confirm Razorpay live mode KYC approval. Configure live-mode webhook URLs in Razorpay Dashboard. Without live mode, the payment phase cannot go to production.
+- **Phase 4:** Confirm Cal.com (or Calendly) account with a configured event type URL for the strategy call upsell iframe.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Existing stack verified from package.json. New dependencies are mainstream, well-maintained packages. Explicit rejection rationale provided for every alternative considered. |
-| Features | HIGH | Feature research is grounded in actual codebase analysis (specific file references, line numbers). Table stakes vs. differentiators distinction is clear and well-reasoned. |
-| Architecture | HIGH | Architecture research maps to existing code structure with specific file paths and integration points. Schema migrations are all additive. Component boundary diagram is detailed and consistent with features research. |
-| Pitfalls | HIGH | Pitfalls are grounded in specific known bugs from CONCERNS.md. Warning signs are concrete and testable. Prevention strategies reference specific code locations. Cross-cutting concerns identified. |
+| Stack | HIGH | All 5 new packages verified via official GitHub repos and npm registry. Razorpay, Vercel geo headers, Supabase signed URLs, Next.js route handlers all confirmed via official docs. Cal.com React 19 incompatibility confirmed via 3 open GitHub issues. Only gap: puppeteer-core + @sparticuz/chromium-min version coupling requires install-time verification. |
+| Features | HIGH | 8-step claim flow is grounded in specific table columns, API methods, and implementation patterns — not generic SaaS research. MVP vs. defer split is explicit and justified against PROJECT.md constraints. Anti-features are documented with clear rationale. |
+| Architecture | HIGH | Route group approach, data flow, and component boundaries validated against Next.js App Router docs. Full schema DDL provided in ARCHITECTURE.md. 1:many and 1:1 table relationships are well-defined. |
+| Pitfalls | HIGH | All 6 critical pitfalls are verified against official documentation. P1 confirmed via Razorpay docs and multiple GitHub issues. P6 confirmed by reading existing `lib/supabase/storage.ts` (zero validation). P11 confirmed via multiple Supabase GitHub CORS issues. Prevention code is provided for each pitfall. |
 
-**Overall confidence:** HIGH -- All four research files are internally consistent, cross-reference each other, and are grounded in codebase analysis rather than speculation. The dependency ordering is agreed upon across all research dimensions.
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Quality scoring calibration data:** No existing record of why projects were manually rejected. Phase 2 planning should include an audit sprint of 20-30 rejected projects to establish scoring dimensions.
-- **Puppeteer in serverless:** If visual quality scoring is pursued, the 300MB Chrome binary is incompatible with standard Vercel deployment limits. Need to evaluate `puppeteer-core` + `@sparticuz/chromium` or defer visual scoring to local-only runs.
-- **AI provider pricing maintenance:** Cost tracking requires a manually-maintained pricing lookup table. No API exists for cross-provider pricing. This is an ongoing maintenance burden, not a one-time implementation task.
-- **Test infrastructure:** The codebase has zero tests. Research recommends adding tests for critical paths (quality scorer, error classifier, batch completion) but does not prescribe a test framework. This decision should be made in Phase 0 planning.
-- **Supabase connection limits:** Background pre-rendering and batch processing combined could exceed the ~50 concurrent connection limit. The resource budgeting strategy from P12 prevention needs concrete implementation during Phase 4 planning.
+- **Puppeteer + Chromium version pairing:** Verify the exact compatible pair at install time by checking the @sparticuz/chromium-min releases page. A version mismatch causes silent failures. Allocate time for this in Phase 2 planning.
+
+- **Upload architecture decision:** STACK.md recommends Supabase signed upload URLs; PITFALLS.md documents a confirmed CORS problem with direct signed URL uploads from browsers (P11). Recommendation is to use a server-proxy upload route (`/api/claims/upload/`) instead — client sends the file to Next.js API, server uploads to Supabase using the service role key. This eliminates CORS entirely. Lock this in at Phase 4 kickoff.
+
+- **Screenshot trigger point:** Screenshots must be generated during batch processing, not on claim page load. The exact trigger — post-generation hook in `updateProjectWithCode()`, or on-demand on first claim page visit with a cache — is an implementation decision to resolve in Phase 1 or Phase 2 planning.
+
+- **Razorpay live mode activation:** Razorpay requires KYC verification before live mode is enabled. This is an operational dependency outside code that can block Phase 3 from going to production. Initiate KYC verification early.
+
+- **Expired claim UX:** Research identified that expired claims should show an "Offer expired" state with a grace period option to request renewal, rather than a dead 404 page. The exact state machine transitions (`expired` -> `renewal_requested`) are not fully specified and need design decisions during Phase 2 or Phase 3 planning.
+
+- **Cal.com TypeScript declarations:** The `<cal-inline>` custom element used in JSX requires a TypeScript declaration file. This is a minor implementation detail but causes `TypeScript error TS2339` without it. Add a `components/claim/cal-inline.d.ts` file in Phase 4.
 
 ## Sources
 
-All research was conducted via direct codebase analysis of the following project files:
+### Primary (HIGH confidence)
+- Razorpay Node.js SDK v2.9.6 GitHub + official integration docs — payment order creation, HMAC signature verification, webhook validation, live/test mode separation
+- Vercel request headers reference + @vercel/functions API reference — `x-vercel-ip-country` geo header behavior and geolocation helper
+- Supabase Storage API reference — `createSignedUploadUrl`, `uploadToSignedUrl`, bucket fundamentals, RLS patterns
+- Next.js App Router official docs — Route Groups, route handlers, raw body access, hydration error patterns, `generateMetadata`
+- Vercel Puppeteer deployment guide and official template — @sparticuz/chromium-min serverless deployment pattern
+- Cal.com GitHub issues #20814, #20681, #20990 — React 19 peer dependency conflict confirmed unresolved
 
-### Primary (HIGH confidence -- direct code inspection)
-- `PROJECT.md` -- project scope, validated requirements, existing feature inventory
-- `CONCERNS.md` -- known bugs, tech debt, missing features, scaling limits
-- `package.json` -- verified dependency versions and existing stack
-- `lib/ai/generator.ts` -- 1456-line generator module, system prompt, validation logic
-- `lib/queue.ts` -- queue implementation, concurrency model, stuck job recovery
-- `lib/utils/html-boilerplate.ts` -- HTML preview/export boilerplate
-- `lib/supabase/` -- database access patterns, admin/server/client factory
-- `types/database.ts` -- auto-generated Supabase schema types
-- `app/dashboard/actions.ts` -- server actions, auto-fix pipeline
-- `app/editor/page.tsx` -- editor page, Monaco integration
+### Secondary (MEDIUM confidence)
+- @sparticuz/chromium-min blog post on Vercel cold-start performance — approach confirmed; exact version mapping requires install-time verification
+- whoiser npm registry and GitHub (LayeredStudio/whoiser) — WHOIS library functional; TLD rate limiting is environment-dependent
+- Multiple Next.js + Razorpay integration guides — cross-verified patterns for order creation, webhook handling, and checkout.js integration
 
-### Secondary (HIGH confidence -- official documentation patterns)
-- Next.js 16 App Router conventions (server/client components, server actions)
-- Vercel AI SDK v6 `streamText`/`generateText` usage and response metadata
-- Supabase JS v2 query patterns and realtime subscriptions
-- Monaco Editor diff API (built-in to existing @monaco-editor/react)
+### Tertiary (informational only, not load-bearing for implementation decisions)
+- Nielsen Norman Group on progressive disclosure — cited in FEATURES.md for customization form design rationale
+- Conversion rate statistics for countdown timers, video, and personalized CTAs — directional guidance for feature prioritization
 
 ---
 *Research completed: 2026-03-18*

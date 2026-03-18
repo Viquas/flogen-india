@@ -1,470 +1,695 @@
-# Stack Research: 12 Improvements for WebGen
+# Technology Stack: Client Claim Flow Additions (v2.0)
 
-**Research Date:** 2026-03-18
-**Scope:** New libraries, tools, and patterns needed for 12 improvements on top of existing Next.js 16 + Supabase + AI SDK v6 + shadcn/ui + Tailwind CSS 4 stack
-**Methodology:** Codebase analysis, architecture review, pattern matching against existing stack
-**Confidence Scale:** HIGH (proven pattern, low risk) | MEDIUM (strong fit, some integration unknowns) | LOW (viable but alternatives exist)
-
----
-
-## Existing Stack Summary (Do Not Re-Research)
-
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Framework | Next.js (App Router) | 16.1.6 |
-| Runtime | Node.js | 24.12.0 |
-| UI | React + shadcn/ui + Radix UI | 19.2.3 / 3.8.4 / 1.4.3 |
-| Styling | Tailwind CSS 4 + PostCSS | ^4 |
-| Database | Supabase (PostgreSQL) | supabase-js 2.95.3 |
-| AI | Vercel AI SDK + @ai-sdk/openai + @ai-sdk/google | 6.0.77 / 3.0.26 / 3.0.30 |
-| Editor | Monaco Editor | 4.7.0 |
-| Validation | Zod | 4.3.6 |
-| Icons | Lucide React | 0.563.0 |
+**Project:** Flogen (WebGen v2.0)
+**Researched:** 2026-03-18
+**Scope:** NEW additions only for the client claim flow milestone. Existing Next.js 16 + Supabase + AI SDK v6 stack is validated and not re-researched.
 
 ---
 
-## Feature-by-Feature Stack Recommendations
+## Existing Stack (Do NOT Re-add)
 
-### 1. Batch Autopilot Pipeline
+Already installed and working -- listed to prevent duplicate additions:
 
-**What it does:** End-to-end discover -> generate -> auto-fix -> surface only failures pipeline.
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `next` | 16.1.6 | App Router framework |
+| `react` / `react-dom` | 19.2.3 | UI framework |
+| `@supabase/supabase-js` | ^2.95.3 | Database + Storage client |
+| `@supabase/ssr` | ^0.8.0 | Server/browser Supabase clients |
+| `ai` | ^6.0.77 | AI SDK for generation |
+| `zod` | ^4.3.6 | Schema validation |
+| `date-fns` | ^4.1.0 | Date manipulation (reuse for countdown math) |
+| `lucide-react` | ^0.563.0 | Icons |
+| `radix-ui` | ^1.4.3 | UI primitives |
+| `recharts` | ^3.8.0 | Charts (already installed for analytics) |
 
-**New dependencies:** None required.
-
-**Pattern:** Extend the existing `GenerationQueue` class in `lib/queue.ts`. The current queue already supports `addBatch()`, concurrent processing (max 3), status tracking via `queue_jobs` table, and stuck-job recovery. The autopilot layer is an orchestration wrapper, not a new queue system.
-
-**Implementation approach:**
-- Add a `batches` metadata column or new `batch_runs` table to track end-to-end autopilot runs (start time, total count, success/fail/pending counts, current phase)
-- Create a `lib/ai/autopilot.ts` module that chains: discovery -> enrichment -> queue insertion -> monitors completion -> triggers auto-fix for failures -> surfaces final report
-- Use Supabase realtime subscriptions (already available via `@supabase/supabase-js`) instead of the current 2-second polling interval in the queue processor
-- State machine pattern for batch lifecycle: `discovering` -> `enriching` -> `generating` -> `fixing` -> `complete`
-
-**What NOT to use:**
-- BullMQ / Redis-backed queues -- overkill for a single-user tool. The existing Supabase-backed queue with in-memory processing is the right fit. Adding Redis introduces infrastructure complexity for no real concurrency benefit.
-- Temporal / Inngest -- workflow orchestration engines add deployment complexity. A simple state machine in TypeScript is sufficient for a single-user pipeline.
-
-**Confidence:** HIGH -- extends existing patterns, no new dependencies.
-
----
-
-### 2. Generation Quality Scoring
-
-**What it does:** Auto-evaluate generated websites for render correctness, section completeness, and responsiveness.
-
-**New dependencies:**
-
-| Package | Purpose | Rationale | Confidence |
-|---------|---------|-----------|------------|
-| `puppeteer` ^24 | Headless Chrome for screenshot capture and DOM inspection | Industry standard for programmatic browser interaction. Needed to render the generated React/Tailwind code in an actual browser and inspect the result. Already used by the existing `constructHtmlBoilerplate()` pattern -- the generated HTML is self-contained with CDN Tailwind + Babel + React, so Puppeteer can load it directly. | HIGH |
-
-**Pattern:** Score generated websites on multiple dimensions using a hybrid approach:
-
-1. **Structural scoring (no browser needed):** Parse the generated React code with `@babel/standalone` (already in deps at 7.29.1) to count sections, check for required elements (hero, CTA, footer, contact info), validate against business data fields.
-
-2. **Visual scoring (Puppeteer):** Load the `constructHtmlBoilerplate()` output in headless Chrome. Check for:
-   - Render success (no error container visible in `#root`)
-   - Viewport responsiveness (screenshot at 1440px, 768px, 375px -- check `#root` has content at each size)
-   - No blank white sections (check element visibility and heights)
-   - Screenshot capture for thumbnail generation (currently `thumbnail_url` exists in schema but is likely unused)
-
-3. **AI-based scoring (optional):** Use the existing AI SDK to have a model evaluate the screenshot against quality criteria. Use `generateText()` with a scoring prompt.
-
-**Store scores:** Add a `quality_score` JSONB column to the `projects` table, or create a `project_scores` table with dimension breakdowns.
-
-**What NOT to use:**
-- Playwright -- Puppeteer is simpler for this use case (no need for cross-browser testing). Playwright's multi-browser support is unnecessary for an internal scoring tool.
-- Lighthouse CI -- focused on performance metrics (LCP, CLS), not design quality. The scoring here is about content completeness and visual correctness, not web vitals.
-- `html-validate` / `pa11y` -- useful for accessibility auditing but not for "does this page look like a real business website" scoring.
-
-**Confidence:** HIGH for structural scoring (zero new deps), MEDIUM for Puppeteer-based visual scoring (adds ~300MB Chrome binary dependency, but well-proven pattern).
+**Key existing infrastructure to extend (not replace):**
+- `lib/supabase/admin.ts` -- service role client for server-side ops (will use for signed upload URLs, webhook processing)
+- `lib/supabase/server.ts` -- cookie-based SSR client (will use for claim page data loading)
+- `lib/supabase/client.ts` -- browser client (will use for realtime claim status)
+- `lib/supabase/storage.ts` -- upload helpers for `project-assets` bucket (will extend with claim-specific upload patterns)
+- `lib/export/static-export.ts` -- HTML boilerplate builder (will use for screenshot input)
 
 ---
 
-### 3. Industry-Aware Template Seeding (Few-Shot Examples)
+## New Dependencies
 
-**What it does:** Use best approved outputs as few-shot examples when generating new websites for the same industry.
+### 1. Razorpay Node.js SDK
 
-**New dependencies:** None required.
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `razorpay` | ^2.9.6 | Server-side order creation, payment verification, webhook validation | Official SDK with built-in `validatePaymentVerification` and `validateWebhookSignature` utilities. TypeScript support included. Sole payment provider per project constraints. |
 
-**Pattern:** The database already has a `templates` table with `industry_tag`, `rating`, `generated_code`, `business_data`, and `source_project_id` columns. This is already designed for exactly this feature.
+**Confidence:** HIGH -- verified via [official GitHub repo](https://github.com/razorpay/razorpay-node) (v2.9.6, released Feb 2025) and [npm registry](https://www.npmjs.com/package/razorpay).
 
-**Implementation approach:**
-- When generating a new website, query `templates` filtered by `industry_tag` matching the new business's industry, ordered by `rating` DESC, limit 1-2
-- Inject the template's `generated_code` as a few-shot example in the system prompt (the existing `SYSTEM_PROMPT` in `lib/ai/generator.ts` is a template literal that can be extended)
-- Token budget management: truncate template code to ~4000 tokens to stay within context limits. Use a simple character-based heuristic (1 token ~ 4 chars for code) rather than adding a tokenizer dependency.
-- Auto-promote: when a project is approved with high quality score, auto-insert into `templates` with the business's industry as `industry_tag`
+**Integration pattern:**
 
-**What NOT to use:**
-- Vector databases (Pinecone, Weaviate) -- the template lookup is a simple industry-tag match, not a semantic search. PostgreSQL `WHERE industry_tag = $1 ORDER BY rating DESC` is the right tool.
-- `tiktoken` / `gpt-tokenizer` -- for estimating prompt size, a character heuristic is good enough. Adding a tokenizer library for a single estimation is over-engineering.
+```typescript
+// lib/razorpay.ts -- singleton instance
+import Razorpay from 'razorpay'
 
-**Confidence:** HIGH -- all infrastructure already exists in the schema.
+export const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+})
+```
 
----
+**Key SDK methods used:**
 
-### 4. Cost and Token Tracking Across AI Providers
+| Method | Purpose | Input | Output |
+|--------|---------|-------|--------|
+| `razorpay.orders.create({ amount, currency, receipt, notes })` | Create Razorpay order before checkout | Amount in smallest currency unit (paise/cents), currency code, unique receipt ID | Order object with `id`, `amount`, `status` |
+| `validatePaymentVerification({ order_id, payment_id }, signature, secret)` | Verify client-side callback signature | Order ID + payment ID from callback, `razorpay_signature` from callback, API key secret | Boolean |
+| `validateWebhookSignature(rawBody, xRazorpaySignature, webhookSecret)` | Verify webhook POST authenticity | Raw request body string (NOT parsed JSON), `x-razorpay-signature` header, webhook secret from dashboard | Boolean |
 
-**What it does:** Track spend per generation across Gemini, OpenRouter, and OpenAI.
+**Import path for utilities:**
+```typescript
+import { validatePaymentVerification, validateWebhookSignature } from 'razorpay/dist/utils/razorpay-utils'
+```
 
-**New dependencies:** None required. The Vercel AI SDK v6 already exposes token usage in `generateText()` and `streamText()` responses.
+**Client-side checkout:** No npm package needed. Load `checkout.razorpay.com/v1/checkout.js` via Next.js `<Script>` component. The Razorpay modal opens on the client after receiving an order ID from the server.
 
-**Pattern:** The AI SDK's `streamText()` and `generateText()` return `usage` objects with `promptTokens`, `completionTokens`, and `totalTokens`. The work is capturing these and storing them.
+```typescript
+// In a 'use client' component:
+import Script from 'next/script'
 
-**Implementation approach:**
-- Create a `generation_costs` table in Supabase:
-  ```
-  id, project_id, model_id, provider, prompt_tokens, completion_tokens,
-  total_tokens, estimated_cost_usd, phase (generate|enrich|revise|fix), created_at
-  ```
-- Maintain a `lib/ai/pricing.ts` lookup table mapping model IDs to per-token costs (manually maintained -- pricing changes frequently and there's no reliable API for this across all providers)
-- Instrument `streamWebsiteCode()`, `generateAndSaveWebsite()`, `reviseWebsite()`, and `enrichBusinessData()` to capture `result.usage` and insert cost records
-- For `streamText()`, capture usage from the stream's `onFinish` callback or the resolved promise's `.usage` property
-- Dashboard widget: aggregate costs by day/model/provider using a Supabase query
+// Load once:
+<Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-**What NOT to use:**
-- LangSmith / Helicone / Portkey -- observability platforms that add external service dependencies. For a single-user tool, a local cost table is simpler and cheaper (these tools have per-trace pricing).
-- `openai` npm package's built-in cost tracking -- only works for OpenAI, not for Gemini or OpenRouter.
+// Trigger checkout:
+const options = {
+  key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+  amount: order.amount,
+  currency: order.currency,
+  order_id: order.id,
+  name: 'Flogen',
+  handler: async (response) => {
+    // response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature
+    await verifyPayment(response)
+  },
+  prefill: { name: businessName, email: clientEmail },
+}
+const rzp = new window.Razorpay(options)
+rzp.open()
+```
 
-**Confidence:** HIGH -- AI SDK already provides the data, just needs persistence.
+**Webhook route handler:** Next.js App Router route handlers provide raw body access via `await request.text()` -- no `bodyParser: false` config needed (that is a Pages Router pattern). This is critical because webhook signature verification requires the unparsed body string.
 
----
+```typescript
+// app/api/webhooks/razorpay/route.ts
+export async function POST(request: Request) {
+  const rawBody = await request.text()
+  const signature = request.headers.get('x-razorpay-signature')!
 
-### 5. Static HTML Export Pipeline
+  const isValid = validateWebhookSignature(rawBody, signature, process.env.RAZORPAY_WEBHOOK_SECRET!)
 
-**What it does:** Export approved websites as self-contained static HTML bundles.
+  if (!isValid) {
+    return new Response('Invalid signature', { status: 400 })
+  }
 
-**New dependencies:**
+  const payload = JSON.parse(rawBody)
+  // Handle payment.captured, payment.failed, etc.
+}
+```
 
-| Package | Purpose | Rationale | Confidence |
-|---------|---------|-----------|------------|
-| `jszip` ^3.10 | Create ZIP archives in Node.js | Lightweight (~45KB), well-maintained, zero-dependency ZIP library. Needed to bundle HTML + inlined assets into a downloadable archive. | HIGH |
+**Webhook idempotency:** Use `x-razorpay-event-id` header (unique per event) to deduplicate. Store processed event IDs in a `razorpay_events` column or table.
 
-**Pattern:** The existing `constructHtmlBoilerplate()` in `lib/utils/html-boilerplate.ts` already produces a fully self-contained HTML document with CDN-loaded Tailwind, React, Babel, and Lucide. This is 90% of the export pipeline.
-
-**Implementation approach:**
-- Create a `/api/export/[projectId]` route that:
-  1. Fetches project's `generated_code` from Supabase
-  2. Runs `constructHtmlBoilerplate()` to produce the full HTML
-  3. Optionally pre-renders with Puppeteer (if added for quality scoring) to produce a static HTML snapshot without React runtime dependency
-  4. Packages into a ZIP with `jszip` containing: `index.html`, `assets/` (any uploaded images from Supabase Storage), `README.txt` with business info
-- For a simpler v1: just serve the boilerplate HTML as a download (no ZIP needed -- single file)
-- Batch export: ZIP multiple projects into a single archive
-
-**What NOT to use:**
-- `archiver` -- more complex API than `jszip`, designed for streaming large archives. For small HTML bundles, `jszip` is simpler.
-- Next.js static export (`next export`) -- the generated websites are not Next.js apps. They're standalone React components rendered via Babel in the browser. The boilerplate approach is the right export path.
-- SSG frameworks (Astro, 11ty) -- unnecessary abstraction layer. The output is a single HTML file.
-
-**Confidence:** HIGH -- minimal new code, extends existing boilerplate system.
-
----
-
-### 6. Keyboard-Driven Review Workflow
-
-**What it does:** j/k navigate projects, a approve, r regenerate, f fix, e edit.
-
-**New dependencies:** None required.
-
-**Pattern:** Use React's `useEffect` with `keydown` event listeners. The existing editor page (`app/editor/page.tsx`) already has complex client-side state management. The review workflow is a new page or mode within the dashboard.
-
-**Implementation approach:**
-- Create a `app/review/page.tsx` dedicated review mode with:
-  - Full-screen preview of current project (reuse the iframe preview pattern from the editor)
-  - j/k navigation through a pre-fetched list of `review` status projects
-  - Single-key actions: `a` (approve -> update status), `r` (regenerate -> queue), `f` (auto-fix -> trigger fix), `e` (open in editor -> navigate)
-  - Status bar showing position (3/47), current business name, quality score
-- Prefetch next/previous project data for instant navigation
-- Use `React.useCallback` + `useEffect` for keyboard handlers to avoid stale closures
-- Show a keyboard shortcut overlay on `?` key
-
-**What NOT to use:**
-- `react-hotkeys-hook` -- adds a dependency for something that's ~20 lines of `useEffect` + `addEventListener`. The app has no complex hotkey conflicts to manage.
-- `cmdk` / `kbar` -- command palette libraries are overkill for a fixed set of 5-6 keyboard shortcuts.
-
-**Confidence:** HIGH -- pure React implementation, no dependencies.
+**Environment variables needed:**
+```
+RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_SECRET=...
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_...  # same key, exposed to client for checkout.js
+RAZORPAY_WEBHOOK_SECRET=...               # separate secret configured in Razorpay dashboard
+```
 
 ---
 
-### 7. Smart Error Classification
+### 2. Vercel Functions (Geo-detection for INR/USD Pricing)
 
-**What it does:** Categorize generation errors and apply targeted fix strategies.
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `@vercel/functions` | latest | `geolocation()` helper for INR/USD pricing | Zero-cost, zero-latency geo-detection using Vercel's built-in `x-vercel-ip-country` header. No external API calls, no rate limits, no API keys. Available on ALL Vercel plans (Hobby, Pro, Enterprise). |
 
-**New dependencies:** None required.
+**Confidence:** HIGH -- verified via [official Vercel docs for request headers](https://vercel.com/docs/headers/request-headers) and [@vercel/functions API reference](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package).
 
-**Pattern:** The current error handling sets project status to `'error'` and stores `error_message` in `queue_jobs`. The auto-fix pipeline (`reviseWebsite()`) uses a generic "fix this code" prompt. Smart classification adds structured error analysis before choosing a fix strategy.
+**Why NOT external APIs (country.is, ipapi.co, ip-api.com):** Vercel already injects `x-vercel-ip-country` as an ISO 3166-1 two-letter code on every request hitting any Vercel Function or Edge Middleware. Reading a header is free and instant -- adding an external API call adds 50-200ms latency, rate limits, and a runtime dependency for something already available.
 
-**Implementation approach:**
-- Create a `lib/ai/error-classifier.ts` module with regex-based and AST-based error classification:
-  - **Babel parse errors:** syntax issues in generated code (missing brackets, invalid JSX) -> re-generate from scratch with stricter prompt
-  - **Runtime errors:** `preview-error` postMessage from iframe (undefined components, hook violations) -> targeted fix prompt mentioning the specific error
-  - **Render errors:** blank page, error container visible in DOM -> check if imports are stripped correctly, if component name matches mount point
-  - **Content errors:** page renders but with placeholder/Lorem Ipsum content -> re-enrich business data and regenerate
-  - **Style errors:** page renders but with broken layout (no Tailwind classes applied) -> check for CDN load failures, re-generate with explicit Tailwind classes
-- Store classification as a `error_type` enum column on `queue_jobs` or `projects`
-- Map each error type to a fix strategy (re-generate, targeted fix prompt, re-enrich, etc.)
-- The existing `@babel/standalone` (already in deps) can be used server-side to attempt parsing generated code and catch syntax errors before even rendering
+**Vercel geolocation headers (all available on all plans):**
 
-**What NOT to use:**
-- Sentry / Bugsnag -- error monitoring services for production apps. This is internal tool error classification, not crash reporting.
-- AI-based error classification (sending errors to an LLM to classify) -- too slow and expensive for what regex + AST parsing can handle deterministically.
+| Header | Value | Example |
+|--------|-------|---------|
+| `x-vercel-ip-country` | ISO 3166-1 country code | `IN`, `US`, `GB` |
+| `x-vercel-ip-country-region` | ISO 3166-2 region | `MH` (Maharashtra), `NY` |
+| `x-vercel-ip-city` | City name | `Mumbai` |
+| `x-vercel-ip-timezone` | IANA timezone | `Asia/Kolkata` |
 
-**Confidence:** HIGH -- pure TypeScript logic, leverages existing `@babel/standalone` dependency.
+**`geolocation()` helper response shape:**
+```json
+{
+  "city": "Mumbai",
+  "country": "IN",
+  "flag": "...",
+  "countryRegion": "MH",
+  "region": "iad1",
+  "latitude": "19.0760",
+  "longitude": "72.8777",
+  "postalCode": "400001"
+}
+```
 
----
+**Integration pattern:**
 
-### 8. Code Diff View for Revisions
+```typescript
+// lib/geo.ts
+export function getCurrency(request: Request): 'INR' | 'USD' {
+  const country = request.headers.get('x-vercel-ip-country')
+  return country === 'IN' ? 'INR' : 'USD'
+}
 
-**What it does:** Before/after comparison when viewing project revisions.
+export function getPricing(currency: 'INR' | 'USD') {
+  return currency === 'INR'
+    ? { standard: 499900, pro: 999900, currency: 'INR' as const, symbol: '₹', displayStandard: '₹4,999', displayPro: '₹9,999' }
+    : { standard: 49900, pro: 129900, currency: 'USD' as const, symbol: '$', displayStandard: '$499', displayPro: '$1,299' }
+  // Amounts in smallest unit (paise for INR, cents for USD) -- Razorpay expects this
+}
+```
 
-**New dependencies:**
+**Usage in claim page (server component):**
+```typescript
+// app/(public)/claim/[id]/page.tsx
+import { headers } from 'next/headers'
+import { getCurrency, getPricing } from '@/lib/geo'
 
-| Package | Purpose | Rationale | Confidence |
-|---------|---------|-----------|------------|
-| `diff` ^7 | Compute text diffs between code versions | Lightweight (pure JS, ~25KB), battle-tested library used by `jest-diff`, `prettier`, and most diff tooling in the JS ecosystem. Produces structured diff output that can be rendered in any UI. | HIGH |
+export default async function ClaimPage({ params }: { params: Promise<{ id: string }> }) {
+  const headerList = await headers()
+  const currency = getCurrency(new Request('http://x', { headers: headerList }))
+  const pricing = getPricing(currency)
+  // Pass pricing to client components
+}
+```
 
-**Pattern:** The database already has a `project_revisions` table with `generated_code` and `version` columns, linked to projects via `project_id`. The diff computation needs to happen between consecutive revisions.
-
-**Implementation approach:**
-- Use Monaco Editor's built-in diff editor (`MonacoDiffEditor` from `@monaco-editor/react` which is already installed at 4.7.0). Monaco has a first-class diff view that supports inline and side-by-side comparison with syntax highlighting. This is the primary approach.
-- The `diff` npm package serves as a backup for computing diffs server-side (for generating summaries like "42 lines changed, 3 sections rewritten") or for rendering diffs outside the editor context (e.g., in the review workflow or dashboard cards).
-- Query: `SELECT generated_code, version FROM project_revisions WHERE project_id = $1 ORDER BY version DESC LIMIT 2` gives the two versions to compare.
-
-**What NOT to use:**
-- `react-diff-viewer` / `react-diff-viewer-continued` -- React component wrappers that duplicate Monaco's built-in diff capabilities. Since Monaco is already in the project, using its diff editor is zero additional bundle size.
-- `jsdiff` -- this IS the `diff` package (same npm package, different name in some docs). Just use `diff`.
-
-**Confidence:** HIGH -- Monaco's diff editor is already available through the existing `@monaco-editor/react` dependency.
-
----
-
-### 9. Generation Analytics Dashboard
-
-**What it does:** Visualize success rates by model/industry, timing data, and failure patterns.
-
-**New dependencies:**
-
-| Package | Purpose | Rationale | Confidence |
-|---------|---------|-----------|------------|
-| `recharts` ^2.15 | React charting library | Built on React and D3, composes naturally with the existing React 19 + Tailwind stack. Declarative API, responsive by default, supports bar/line/pie charts needed for analytics. Most popular React charting library with active maintenance. | HIGH |
-
-**Pattern:** Create an `app/analytics/page.tsx` server component that queries aggregated data from Supabase, renders charts with Recharts.
-
-**Implementation approach:**
-- Aggregate queries in a `lib/analytics.ts` module:
-  - Success rate by model: `SELECT model_id, COUNT(*) FILTER (WHERE status='review' OR status='approved') as success, COUNT(*) as total FROM generation_costs GROUP BY model_id`
-  - Success rate by industry: join projects + business_data JSONB extraction
-  - Generation timing: track `started_at` and `completed_at` in `queue_jobs` (add columns if missing)
-  - Failure patterns: aggregate `error_type` from smart error classification
-  - Cost trends: daily/weekly aggregation from `generation_costs` table
-- Charts needed: bar chart (success by model), line chart (generations over time, cost trend), pie chart (error type distribution), metric cards (total generated, approval rate, avg cost)
-- Reuse existing shadcn/ui `Card`, `Badge`, and layout components for consistent styling
-
-**What NOT to use:**
-- `chart.js` / `react-chartjs-2` -- imperative canvas-based API that doesn't compose well with React's declarative model. Recharts is more idiomatic for React.
-- `d3` directly -- too low-level for dashboard charts. Recharts wraps D3 with a React API.
-- `tremor` -- opinionated dashboard component library that conflicts with the existing shadcn/ui design system. Would introduce a second design language.
-- `nivo` -- powerful but larger bundle size and steeper learning curve than Recharts for the chart types needed here.
-
-**Confidence:** HIGH -- Recharts is the standard choice for React dashboards, well-tested with React 19.
+**Local development fallback:** Geolocation headers are empty locally. Use an environment variable for dev:
+```typescript
+const country = request.headers.get('x-vercel-ip-country') || process.env.NEXT_PUBLIC_DEV_COUNTRY || 'IN'
+```
 
 ---
 
-### 10. Prompt Versioning System
+### 3. Screenshot/Thumbnail Generation
 
-**What it does:** Extract system prompts into versioned records, tag each generation with the prompt version used.
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `puppeteer-core` | ^24.x | Headless Chrome for rendering generated sites into screenshot images | Generated sites are full React+Tailwind pages with grid layouts, animations, and complex CSS. Satori/@vercel/og only supports a flexbox subset and cannot render arbitrary HTML. A real browser is required. |
+| `@sparticuz/chromium-min` | ^133.x | Slim Chromium binary for Vercel serverless environments | Fits within Vercel's 250MB serverless function limit. The original `chrome-aws-lambda` is unmaintained; `@sparticuz/chromium-min` is the actively maintained replacement used in Vercel's official Puppeteer template. |
 
-**New dependencies:** None required.
+**Confidence:** MEDIUM -- verified approach via [Vercel's official Puppeteer deployment guide](https://vercel.com/kb/guide/deploying-puppeteer-with-nextjs-on-vercel) and [Puppeteer on Vercel template](https://vercel.com/templates/next.js/puppeteer-on-vercel). Version coupling between puppeteer-core and chromium-min needs verification at install time (check @sparticuz/chromium-min releases for compatible Puppeteer version).
 
-**Pattern:** The current system prompt is a massive template literal (`SYSTEM_PROMPT`) in `lib/ai/generator.ts`. Versioning means storing prompt content in the database and tracking which version was used for each generation.
+**Why NOT @vercel/og / Satori:** Satori converts JSX to SVG but only supports `display: flex` and a limited CSS subset. The generated websites use `display: grid`, complex Tailwind utilities, animations, and arbitrary CSS. Satori cannot render them. @vercel/og wraps Satori, so the same limitation applies.
 
-**Implementation approach:**
-- Create a `prompt_versions` table:
-  ```
-  id, name (e.g., 'system_prompt', 'enrichment_prompt', 'revision_prompt'),
-  version (integer, auto-increment per name), content (text),
-  is_active (boolean), metadata (JSONB -- notes, change description),
-  created_at
-  ```
-- Create a `lib/ai/prompts.ts` module that:
-  - Loads the active prompt version from Supabase on startup (cached in-memory with 5-min TTL)
-  - Falls back to the hardcoded `SYSTEM_PROMPT` if database is unavailable
-  - Exposes `getActivePrompt(name)` and `createPromptVersion(name, content)` functions
-- Add `prompt_version_id` column to `generation_costs` or `projects` to track which prompt version produced each output
-- Admin UI: a simple page listing prompt versions with a Monaco editor (already in deps) for editing and a "Set Active" button
-- Seeding: extract the current hardcoded prompts as version 1 in a migration
+**Why NOT an external screenshot API (urlbox, screenshotone, etc.):** Adds ongoing per-screenshot cost and an external dependency. puppeteer-core + @sparticuz/chromium-min is a one-time setup running within the existing Vercel deployment.
 
-**What NOT to use:**
-- Git-based versioning (storing prompts as files) -- the app already uses Supabase as its data store. Keeping prompts in the database allows runtime switching without redeployment.
-- LangChain prompt templates -- adds a large dependency tree for a feature that's just "store a string with a version number".
-- PromptLayer / PromptFoo -- external SaaS services that add cost and complexity for what's a simple CRUD operation.
+**When to generate:** During website generation (batch processing), NOT on claim page load. Store the result in Supabase Storage. This is critical -- screenshot generation takes 5-15 seconds and must not block client-facing page loads.
 
-**Confidence:** HIGH -- straightforward Supabase table + CRUD, no new dependencies.
+**Integration pattern:**
 
----
+```typescript
+// lib/screenshot.ts
+import chromium from '@sparticuz/chromium-min'
+import puppeteer from 'puppeteer-core'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-### 11. Queue Health Admin UI
+const REMOTE_CHROMIUM_URL = process.env.CHROMIUM_REMOTE_URL
+  || 'https://github.com/nicehash/chromium-bin/releases/download/v133.0.0/chromium-v133.0-pack.tar'
 
-**What it does:** Surface `resetStuckProjects` visually, show queue health metrics.
+export async function generateScreenshot(projectId: string, html: string): Promise<string> {
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(REMOTE_CHROMIUM_URL),
+    headless: chromium.headless,
+  })
 
-**New dependencies:** None required.
+  try {
+    const page = await browser.newPage()
+    await page.setViewport({ width: 1280, height: 800 })
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 })
+    const screenshot = await page.screenshot({ type: 'webp', quality: 80 })
 
-**Pattern:** The existing `GenerationQueue` class already has `getStatus()` (returns pending/processing/completed/failed counts) and `recoverStuckJobs()`. The admin UI wraps these in a visual interface.
+    // Upload to Supabase Storage
+    const supabase = createAdminClient()
+    const path = `${projectId}/preview.webp`
+    await supabase.storage.from('site-screenshots').upload(path, screenshot, {
+      contentType: 'image/webp',
+      upsert: true,
+    })
 
-**Implementation approach:**
-- Create an `app/admin/queue/page.tsx` page with:
-  - Real-time queue status cards: pending, processing, completed, failed counts (poll `getStatus()` every 5 seconds or use Supabase realtime subscription on `queue_jobs`)
-  - Job list table: show all `queue_jobs` with status, project name, attempts, error message, timestamps
-  - Actions: "Reset Stuck Jobs" button (calls `recoverStuckJobs()`), "Clear Completed" button (deletes completed jobs older than 24h), "Retry Failed" button (resets failed jobs to pending)
-  - Queue throughput: jobs completed per hour (from `queue_jobs` timestamps)
-- Reuse existing shadcn/ui components: `Card`, `Badge` (for status colors), `Button`, `Table` (from shadcn/ui -- may need to add via `npx shadcn add table`)
-- Server action for admin operations, exposed via `app/admin/queue/actions.ts`
+    const { data } = supabase.storage.from('site-screenshots').getPublicUrl(path)
+    return data.publicUrl
+  } finally {
+    await browser.close()
+  }
+}
+```
 
-**What NOT to use:**
-- Bull Board / Arena -- dashboard UIs for BullMQ/Redis queues. The app uses a custom Supabase-backed queue, not BullMQ.
-- Separate admin frameworks (AdminJS, React Admin) -- massive overkill for a single admin page in a single-user app.
+**next.config.ts addition needed:**
+```typescript
+const nextConfig: NextConfig = {
+  transpilePackages: ['react-resizable-panels'],
+  serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium-min'],
+}
+```
 
-**Confidence:** HIGH -- pure UI work using existing components and data sources.
-
----
-
-### 12. Parallel Preview Pre-Rendering
-
-**What it does:** Background-render the next 5 projects during review for instant loading.
-
-**New dependencies:**
-
-| Package | Already needed for | Additional use here | Confidence |
-|---------|-------------------|-------------------|------------|
-| `puppeteer` ^24 | Quality scoring (#2) | Capture preview screenshots/HTML snapshots of upcoming projects | MEDIUM |
-
-**Pattern:** During the review workflow (#6), when the user is reviewing project N, pre-render projects N+1 through N+5 in the background.
-
-**Implementation approach:**
-- **Approach A (Client-side prefetch -- recommended v1):** Use the existing `constructHtmlBoilerplate()` to build the HTML for next 5 projects. Prefetch their data from Supabase and pre-build the boilerplate HTML strings in a Web Worker or via `requestIdleCallback`. When the user navigates to the next project, the iframe `srcdoc` is already prepared. No Puppeteer needed.
-- **Approach B (Server-side screenshots -- v2):** Use the Puppeteer instance (shared with quality scoring) to capture screenshots of the next 5 projects. Store screenshots in Supabase Storage (`project-assets` bucket, which already exists). Display screenshots as instant previews while the full iframe loads.
-- Prefetch queue: maintain a `Set<string>` of project IDs being pre-rendered to avoid duplicate work.
-- Cache invalidation: if a project is regenerated while pre-rendered, invalidate its cached preview.
-
-**What NOT to use:**
-- `react-screenshot-test` -- testing library, not a rendering tool.
-- Server-side React rendering (SSR) of generated components -- the generated code uses browser globals (`window.LucideReact`, CDN Tailwind, Babel standalone). It's designed for browser rendering, not Node.js SSR.
-- `@vercel/og` -- designed for Open Graph image generation, not full-page screenshots.
-
-**Confidence:** HIGH for Approach A (zero dependencies), MEDIUM for Approach B (requires Puppeteer infrastructure).
+**Performance notes:**
+- Vercel serverless functions run ~4-8x slower than local dev machines
+- Budget 5-15 seconds per screenshot
+- Set `maxDuration: 30` on the screenshot API route segment config
+- Generate during batch processing, store result, serve from CDN
 
 ---
 
-## Consolidated New Dependencies
+### 4. Domain Availability Checking
 
-### Required (will definitely install)
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `whoiser` | ^1.18.0 | WHOIS lookup for domain availability display | Pure Node.js WHOIS client with zero dependencies. Queries WHOIS servers directly -- no API keys, no ongoing costs. Auto-discovers WHOIS servers per TLD. |
 
-| Package | Version | Size Impact | Used By Features | Rationale |
-|---------|---------|-------------|-----------------|-----------|
-| `recharts` | ^2.15 | ~450KB (tree-shakeable) | #9 Analytics Dashboard | Only React charting library needed. Composes with existing React + shadcn/ui stack. |
-| `diff` | ^7 | ~25KB | #8 Code Diff View | Server-side diff computation for revision summaries. Monaco handles visual diff in-editor. |
+**Confidence:** MEDIUM -- verified via [npm registry](https://www.npmjs.com/package/whoiser) and [GitHub](https://github.com/LayeredStudio/whoiser). WHOIS queries can be slow (2-5s) and may be rate-limited by individual WHOIS servers.
 
-### Recommended (strong value, optional)
+**Why NOT a paid API (WhoisXML, WhoisFreaks):** This is a domain suggestion feature on the claim page, not a domain registrar. Approximate availability (WHOIS lookup showing "no match" vs registered) is sufficient. Paid APIs are overkill for low-volume use (a few checks per claim). If WHOIS proves unreliable at scale, upgrade to a paid API later.
 
-| Package | Version | Size Impact | Used By Features | Rationale |
-|---------|---------|-------------|-----------------|-----------|
-| `puppeteer` | ^24 | ~2MB package + ~300MB Chrome download | #2 Quality Scoring, #12 Pre-Rendering (v2) | Headless Chrome for automated screenshot capture and render validation. Heavy dependency but enables powerful quality automation. |
-| `jszip` | ^3.10 | ~45KB | #5 HTML Export | Clean ZIP archive creation for batch exports. Not needed if single-file HTML download is sufficient. |
+**Integration pattern:**
 
-### Not Adding (and why)
+```typescript
+// lib/domain-check.ts
+import whoiser from 'whoiser'
 
-| Package | Why NOT |
-|---------|---------|
-| BullMQ + Redis | Existing Supabase-backed queue is sufficient for single-user concurrency. Adding Redis doubles infrastructure complexity. |
-| Playwright | Puppeteer is simpler for single-browser screenshot tasks. No cross-browser testing needed. |
-| Temporal / Inngest | Workflow orchestration is overkill. TypeScript state machine handles the autopilot pipeline. |
-| LangChain | Adds ~2MB dependency tree for prompt templating that's achievable with string literals + Supabase storage. |
-| react-hotkeys-hook | 20 lines of `useEffect` + `addEventListener` replaces the entire library for 6 keyboard shortcuts. |
-| Tremor | Conflicts with existing shadcn/ui design system. Would introduce inconsistent UI language. |
-| tiktoken / gpt-tokenizer | Character-based heuristic (1 token ~ 4 chars for code) is accurate enough for prompt size estimation. |
-| Sentry / Helicone | External observability services add cost and vendor lock-in. Internal console logging + Supabase tables suffice for a single-user tool. |
-| react-diff-viewer | Monaco Editor already has a built-in diff editor. Zero additional bundle cost. |
-| chart.js | Imperative canvas API. Recharts' declarative React API is more idiomatic. |
+export async function checkDomainAvailability(domain: string): Promise<{
+  available: boolean
+  registrar?: string
+  expiryDate?: string
+}> {
+  try {
+    const result = await whoiser(domain, { follow: 1, timeout: 5000 })
+    const firstResult = Object.values(result)[0] as Record<string, unknown>
 
----
+    const domainName = firstResult?.['Domain Name'] as string | undefined
+    if (!domainName) {
+      return { available: true }
+    }
 
-## Database Schema Additions
+    return {
+      available: false,
+      registrar: firstResult?.['Registrar'] as string,
+      expiryDate: firstResult?.['Registry Expiry Date'] as string,
+    }
+  } catch {
+    // WHOIS timeout or error -- assume unavailable to be safe
+    return { available: false }
+  }
+}
+```
 
-All 12 features require extending the existing Supabase schema. No new external database services needed.
-
-### New Tables
-
-| Table | Purpose | Features |
-|-------|---------|----------|
-| `generation_costs` | Track token usage and cost per AI call | #4 Cost Tracking, #9 Analytics |
-| `prompt_versions` | Store versioned system prompts | #10 Prompt Versioning |
-| `project_scores` | Quality score breakdowns per project | #2 Quality Scoring |
-| `batch_runs` | End-to-end autopilot run tracking | #1 Batch Autopilot |
-
-### Column Additions to Existing Tables
-
-| Table | Column | Type | Purpose |
-|-------|--------|------|---------|
-| `projects` | `quality_score` | `integer` | Quick-access overall quality score (0-100) |
-| `projects` | `prompt_version_id` | `uuid` FK | Links to prompt version used for generation |
-| `queue_jobs` | `error_type` | `text` | Classified error category from smart classification |
-| `queue_jobs` | `started_at` | `timestamptz` | When processing began (for timing analytics) |
-| `queue_jobs` | `completed_at` | `timestamptz` | When processing finished (for timing analytics) |
-| `queue_jobs` | `model_id` | `text` | Which AI model was used |
+**Important limitation:** WHOIS is best-effort. Some TLDs rate-limit aggressively. Do NOT use for automated bulk checking. Present results as "likely available" with a disclaimer. Per project scope, domain registration is manual (out of scope), so this is purely informational for the claim page domain options UI.
 
 ---
 
-## Patterns and Architecture Decisions
+### 5. Cal.com Embed (Strategy Call Booking)
 
-### State Machine for Batch Autopilot
-Use a simple enum-based state machine rather than a workflow engine. States: `discovering` -> `enriching` -> `generating` -> `fixing` -> `reviewing` -> `complete`. Transitions stored in `batch_runs` table. The existing `batches` table tracks the projects in a batch; `batch_runs` tracks the autopilot execution.
+| Technology | Approach | Purpose | Why |
+|------------|----------|---------|-----|
+| Cal.com inline script / iframe | HTML embed (NO npm package) | Strategy call booking on confirmation page | The `@calcom/embed-react` npm package has unresolved React 19 peer dependency conflicts. Use framework-agnostic embed approach instead. |
 
-### Instrument at the Generator Level
-All tracking (cost, timing, error classification, prompt versioning) should be instrumented inside `lib/ai/generator.ts` helper functions rather than at the API route level. This ensures tracking happens regardless of whether generation is triggered by the editor, queue, or autopilot.
+**Confidence:** HIGH -- verified React 19 incompatibility via [GitHub issue #20814](https://github.com/calcom/cal.com/issues/20814), [issue #20681](https://github.com/calcom/cal.com/issues/20681), and [issue #20990](https://github.com/calcom/cal.com/issues/20990).
 
-### Monaco for All Code Display
-Reuse Monaco Editor for all code viewing needs: diff view, prompt editing, export preview. It's already loaded on the client, so additional instances add minimal overhead.
+**Why NOT `@calcom/embed-react`:** The package pins peer dependencies to React 18.2. This project uses React 19.2.3. While `--force` or `--legacy-peer-deps` can bypass the install error, this is fragile and risks runtime breakage. Multiple open GitHub issues confirm React 19 support is not officially resolved.
 
-### Supabase as the Single Data Store
-Every new feature uses Supabase for persistence. No Redis, no external caching, no file-based databases. The existing admin/server/client factory pattern in `lib/supabase/` is extended for new tables.
+**Recommended approach -- inline script embed:**
 
-### Server Components for Analytics, Client Components for Review
-The analytics dashboard (#9) and queue admin (#11) should be server components (data-heavy, low interactivity). The review workflow (#6) must be a client component (keyboard events, real-time navigation, iframe management).
+```typescript
+// components/claim/strategy-call-booking.tsx
+'use client'
+
+import Script from 'next/script'
+
+export function StrategyCallBooking({ calLink }: { calLink: string }) {
+  return (
+    <>
+      <Script
+        src="https://app.cal.com/embed/embed.js"
+        strategy="lazyOnload"
+      />
+      <cal-inline
+        calLink={calLink}
+        style={{ width: '100%', height: '100%', overflow: 'scroll' }}
+      />
+    </>
+  )
+}
+```
+
+**Alternative: iframe embed for complete isolation:**
+```html
+<iframe
+  src={`https://cal.com/${username}/${eventType}?embed=true&layout=month_view&name=${encodeURIComponent(clientName)}&email=${encodeURIComponent(clientEmail)}`}
+  style={{ width: '100%', height: '600px', border: 'none' }}
+  loading="lazy"
+/>
+```
+
+The iframe approach provides complete CSS isolation, zero dependency conflicts, and supports prefilling client name/email via query parameters. For a confirmation page where the booking widget is a secondary action, iframe loading is acceptable.
+
+**Calendly alternative:** If Cal.com proves problematic at runtime, Calendly offers a similar inline embed with `<div class="calendly-inline-widget" data-url="...">` + script tag. Same pattern, no npm package needed.
 
 ---
 
-## Risk Assessment
+## Supabase Storage Configuration (Existing Client, New Buckets)
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Puppeteer adds ~300MB Chrome binary to deployment | High disk usage in CI/Vercel | Use `puppeteer-core` + `@sparticuz/chromium` for serverless environments. Or defer quality scoring to a separate microservice / local-only feature. |
-| Recharts bundle size (~450KB) | Increased client JS | Only loaded on `/analytics` route. Next.js code-splitting handles this automatically. |
-| Schema migrations on live Supabase | Risk of downtime | All additions are additive (new tables, new nullable columns). No destructive migrations. Use `ALTER TABLE ADD COLUMN IF NOT EXISTS` pattern. |
-| Prompt versioning cache staleness | Wrong prompt used for generation | 5-minute TTL with manual "refresh cache" button in admin UI. Fallback to hardcoded prompt if DB is unreachable. |
-| Concurrent Puppeteer instances | Memory pressure | Pool Puppeteer browser instances (max 1 shared browser, multiple pages). Reuse across quality scoring and pre-rendering. |
+No new npm packages needed -- `@supabase/supabase-js` already includes the full Storage API. The existing `lib/supabase/storage.ts` handles uploads to the `project-assets` bucket using browser-client direct upload. New buckets and patterns needed for the claim flow:
+
+### New Buckets
+
+| Bucket | Visibility | Purpose | Allowed MIME Types | Max File Size |
+|--------|-----------|---------|-------------------|---------------|
+| `site-screenshots` | **Public** | Generated site preview thumbnails for claim page hero | `image/webp`, `image/png` | 2MB |
+| `claim-uploads` | **Private** | Client-uploaded logos, photos during post-payment customization | `image/png`, `image/jpeg`, `image/webp`, `image/svg+xml` | 5MB |
+
+**Why `site-screenshots` is public:** These are displayed on the claim landing page to unauthenticated prospects. Public bucket = CDN-served, no signed URL needed for reads. Fast loading on mobile.
+
+**Why `claim-uploads` is private:** Client uploads should not be publicly accessible via URL guessing. Use signed download URLs (2-hour expiry) for the admin operator to review. Signed upload URLs for clients to submit files.
+
+### Signed Upload URL Pattern (for client file uploads)
+
+The existing `storage.ts` uses browser-client direct upload with anon key. For the claim flow, clients are **unauthenticated** (no Supabase JWT), so use server-generated signed upload URLs:
+
+```typescript
+// Server action: generate signed upload URL for client
+// app/api/upload/signed-url/route.ts
+import { createAdminClient } from '@/lib/supabase/admin'
+
+export async function POST(request: Request) {
+  const { claimId, filename, contentType } = await request.json()
+
+  // Validate claim exists and is in 'paid' status
+  const supabase = createAdminClient()
+  const { data: claim } = await supabase.from('claims').select('status').eq('id', claimId).single()
+  if (!claim || claim.status !== 'paid') {
+    return Response.json({ error: 'Unauthorized' }, { status: 403 })
+  }
+
+  // Generate signed upload URL (valid 2 hours)
+  const path = `${claimId}/${Date.now()}-${filename}`
+  const { data, error } = await supabase.storage
+    .from('claim-uploads')
+    .createSignedUploadUrl(path)
+
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  return Response.json({ signedUrl: data.signedUrl, token: data.token, path })
+}
+```
+
+```typescript
+// Client-side: upload file using signed URL
+// No Supabase auth needed -- the signed URL IS the authorization
+const { data: uploadData, error: uploadError } = await supabase.storage
+  .from('claim-uploads')
+  .uploadToSignedUrl(path, token, file, {
+    contentType: file.type,
+    cacheControl: '3600',
+  })
+```
+
+**Key Supabase Storage API methods:**
+
+| Method | Purpose | Auth Required |
+|--------|---------|--------------|
+| `createSignedUploadUrl(path)` | Generate upload URL valid 2 hours | Service role (server-side) |
+| `uploadToSignedUrl(path, token, file, options)` | Upload using signed URL + token | None (token IS auth) |
+| `createSignedUrl(path, expiresIn)` | Generate download URL for private files | Service role |
+| `getPublicUrl(path)` | Get permanent public URL | None (public buckets only) |
+
+**RLS policies needed for `claim-uploads`:**
+- INSERT via signed URL: Supabase handles this via the signed URL mechanism (bypasses RLS)
+- SELECT: No anonymous access. Admin reads via service role client (bypasses RLS)
+- DELETE: Admin only via service role
 
 ---
 
-## Implementation Priority (by dependency order)
+## Countdown Timer Implementation
 
-1. **Cost/Token Tracking** (#4) -- foundational, instruments the generator. No new dependencies.
-2. **Smart Error Classification** (#7) -- foundational, improves auto-fix. No new dependencies.
-3. **Prompt Versioning** (#10) -- foundational, extracts hardcoded prompts. No new dependencies.
-4. **Batch Autopilot** (#1) -- orchestration layer that benefits from #4, #7. No new dependencies.
-5. **Industry-Aware Templates** (#3) -- leverages existing schema. No new dependencies.
-6. **Code Diff View** (#8) -- uses existing Monaco. Add `diff` package.
-7. **Queue Health Admin** (#11) -- pure UI. No new dependencies.
-8. **Keyboard Review Workflow** (#6) -- pure UI + keyboard handling. No new dependencies.
-9. **Analytics Dashboard** (#9) -- needs data from #4, #7. Add `recharts`.
-10. **Static HTML Export** (#5) -- extends existing boilerplate. Add `jszip`.
-11. **Quality Scoring** (#2) -- add `puppeteer`. Most complex infrastructure.
-12. **Parallel Pre-Rendering** (#12) -- depends on #6 (review workflow) and optionally #2 (Puppeteer).
+**No new dependencies needed.** Use existing `date-fns` (^4.1.0) for date calculations and standard React patterns.
+
+**Confidence:** HIGH -- well-understood React pattern.
+
+**The hydration mismatch problem:** Countdown timers are the classic SSR hydration trap. The server renders time T, the client hydrates at T+N seconds, values differ, React throws a hydration mismatch error.
+
+**Solution -- deferred client-only rendering with static server fallback:**
+
+```typescript
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns'
+
+interface TimeLeft {
+  days: number
+  hours: number
+  minutes: number
+  seconds: number
+  expired: boolean
+}
+
+export function ClaimCountdown({ expiresAt }: { expiresAt: string }) {
+  const [mounted, setMounted] = useState(false)
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false })
+
+  const calculateTimeLeft = useCallback(() => {
+    const expiry = new Date(expiresAt)
+    const now = new Date()
+    const totalSeconds = differenceInSeconds(expiry, now)
+
+    if (totalSeconds <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true }
+    }
+
+    return {
+      days: differenceInDays(expiry, now),
+      hours: differenceInHours(expiry, now) % 24,
+      minutes: differenceInMinutes(expiry, now) % 60,
+      seconds: totalSeconds % 60,
+      expired: false,
+    }
+  }, [expiresAt])
+
+  useEffect(() => {
+    setMounted(true)
+    setTimeLeft(calculateTimeLeft())
+    const interval = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000)
+    return () => clearInterval(interval)
+  }, [calculateTimeLeft])
+
+  // Server render: show static fallback (no time values to avoid hydration mismatch)
+  if (!mounted) {
+    return <span suppressHydrationWarning>Limited time offer</span>
+  }
+
+  if (timeLeft.expired) {
+    return <span>Offer expired</span>
+  }
+
+  return (
+    <div className="flex gap-2 font-mono">
+      <span>{timeLeft.days}d</span>
+      <span>{timeLeft.hours}h</span>
+      <span>{timeLeft.minutes}m</span>
+      <span>{timeLeft.seconds}s</span>
+    </div>
+  )
+}
+```
+
+**Key pattern:** Server renders a static fallback text, client takes over with live countdown after mount. `suppressHydrationWarning` on the fallback element prevents React warnings during the brief mismatch window. The server can compute "X days left" from database timestamps for the fallback text without risking mismatch on seconds.
 
 ---
 
-## Version Verification Notes
+## Next.js Patterns for Public Client-Facing Pages
 
-Versions listed are based on the installed `package.json` in the project (verified) and standard semver ranges for new packages. The `^` prefix allows minor version updates. For `puppeteer`, `recharts`, `diff`, and `jszip`, the recommended versions are the latest stable major releases as of early 2026. Pin exact versions after installation with `npm install --save-exact` if stability is a concern.
+**No new dependencies needed.** Use Next.js App Router route groups to separate public and admin concerns.
+
+**Confidence:** HIGH -- standard Next.js App Router pattern per [Next.js Route Groups docs](https://nextjs.org/docs/app/building-your-application/routing/route-groups).
+
+### Current Structure (admin-only)
+
+```
+app/
+  page.tsx          # redirects to /dashboard
+  dashboard/        # admin dashboard
+  editor/           # admin editor
+  api/              # API routes
+  layout.tsx        # root layout (Geist fonts, globals.css)
+```
+
+### Recommended v2.0 Structure
+
+```
+app/
+  (admin)/
+    dashboard/          # existing admin dashboard (move, unchanged)
+    editor/             # existing admin editor (move, unchanged)
+    page.tsx            # existing redirect to /dashboard (move)
+    layout.tsx          # admin layout -- desktop-optimized, no SEO meta
+  (public)/
+    claim/[id]/
+      page.tsx          # claim landing page (SSR, mobile-first)
+      pay/page.tsx      # payment page
+      customize/page.tsx # post-payment customization form
+      confirm/page.tsx  # confirmation + strategy call upsell
+    s/[slug]/
+      page.tsx          # generated site preview (public, SSR)
+    layout.tsx          # public layout -- mobile-first viewport, SEO meta, og:image
+  api/
+    claim/              # claim creation/management API routes
+    webhooks/
+      razorpay/route.ts # Razorpay webhook handler
+    screenshot/route.ts # screenshot generation
+    upload/
+      signed-url/route.ts # signed upload URL generation
+    geo/route.ts        # geo-detection API (fallback for non-Vercel)
+    domain-check/route.ts # domain availability check
+  layout.tsx            # root layout (shared: Geist fonts, globals.css, <html>)
+```
+
+**Key insight:** Route groups `(admin)` and `(public)` do NOT affect URL paths. `/dashboard` still maps to `app/(admin)/dashboard/page.tsx`. `/claim/abc123` maps to `app/(public)/claim/[id]/page.tsx`. The parentheses are purely for organizational separation and allow different layouts.
+
+**Public layout differences from admin:**
+- Mobile-first viewport meta (admin is desktop-optimized)
+- SEO meta tags per page (og:title, og:description, og:image from business data)
+- No admin navigation/sidebar
+- Optimized for WhatsApp/email click-through (fast first paint)
+- Razorpay checkout.js `<Script>` loaded in public layout (not admin)
+
+**Public pages are SSR** (not client-rendered) because:
+1. Prospects arrive from WhatsApp/email on phones -- first paint speed is critical
+2. SEO meta for social sharing (og:image with site screenshot, og:title with business name)
+3. Geo-detection needs server-side header access for pricing display
+4. Razorpay order creation is server-side (amount, currency)
+
+**No authentication separation needed.** Admin routes have no auth (single operator per project constraints). The route groups are purely for layout and concern separation.
+
+---
+
+## Alternatives Considered
+
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Payment SDK | `razorpay` npm | Manual `crypto.createHmac` | SDK provides `validatePaymentVerification` and `validateWebhookSignature` with proper error handling -- no reason to reimplement cryptographic verification |
+| Geo-detection | Vercel `x-vercel-ip-country` header | country.is API / ipapi.co / ip-api.com | External API adds 50-200ms latency and rate limits for something Vercel provides for free at the edge, on all plans |
+| Geo-detection | Vercel headers | `@vercel/functions` geolocation() helper | The helper just reads the same headers. Direct header access is simpler and avoids a dependency if only country is needed. Install `@vercel/functions` only if other helpers (waitUntil, geolocation city/region) are needed. |
+| Screenshots | `puppeteer-core` + `@sparticuz/chromium-min` | `@vercel/og` / Satori | Satori renders JSX to SVG with flex-only CSS. Cannot render full React+Tailwind pages with grid, animations, arbitrary CSS |
+| Screenshots | `puppeteer-core` + `@sparticuz/chromium-min` | External API (urlbox, screenshotone) | Adds ongoing per-screenshot cost and external dependency |
+| Cal.com booking | Inline script / iframe embed | `@calcom/embed-react` npm package | React 19 peer dependency conflict (package pins React 18.2). Multiple open GitHub issues. `--force` install is fragile. |
+| Cal.com booking | Cal.com | Calendly | Either works with iframe/script embed. Cal.com is open-source with better API. Calendly is viable fallback. |
+| Domain check | `whoiser` (free, local WHOIS) | WhoisXML API / WhoisFreaks API (paid) | Paid API is overkill for low-volume informational checks. Upgrade if WHOIS proves unreliable. |
+| Countdown | `date-fns` + native React `useEffect` | `react-countdown` npm | 15 lines of code vs adding a dependency. date-fns is already installed. |
+| File uploads | Supabase Storage signed URLs | Vercel Blob (`@vercel/blob`) | Already using Supabase for everything else. Adding a second storage provider increases complexity for no benefit. |
+| File uploads | Supabase Storage signed URLs | Upload through API route proxy | Signed URLs let client upload directly to Supabase, bypassing Next.js API route body size limits (default 1MB) and reducing server load. |
+
+---
+
+## Consolidated Installation
+
+```bash
+# Production dependencies (3 packages)
+npm install razorpay whoiser @vercel/functions
+
+# Screenshot generation (2 packages)
+npm install puppeteer-core @sparticuz/chromium-min
+```
+
+**Total new packages: 5**
+
+| Package | Approx Size | Used For |
+|---------|-------------|----------|
+| `razorpay` | ~150KB | Payment order creation, signature verification |
+| `@vercel/functions` | ~20KB | Geolocation helper (optional -- can read headers directly) |
+| `whoiser` | ~30KB | Domain availability WHOIS lookup |
+| `puppeteer-core` | ~2MB (no browser) | Screenshot generation (browser API) |
+| `@sparticuz/chromium-min` | ~50KB (downloads ~50MB binary at runtime) | Chromium binary for serverless |
+
+**Note on `@vercel/functions`:** If the only geo feature needed is country detection for INR/USD pricing, you can skip this package entirely and read `x-vercel-ip-country` header directly. The package is useful if you also need city, region, latitude/longitude, or other helpers like `waitUntil`.
+
+---
+
+## Environment Variables (New)
+
+```bash
+# === Razorpay ===
+RAZORPAY_KEY_ID=rzp_live_...           # API Key ID from Razorpay Dashboard
+RAZORPAY_KEY_SECRET=...                 # API Key Secret (never expose to client)
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_...  # Same key ID, exposed for checkout.js
+RAZORPAY_WEBHOOK_SECRET=...             # Webhook secret from Razorpay Dashboard > Webhooks
+
+# === Geo Detection (dev only) ===
+NEXT_PUBLIC_DEV_COUNTRY=IN              # Fallback when Vercel headers unavailable locally
+
+# === Screenshot (optional, for remote Chromium binary) ===
+CHROMIUM_REMOTE_URL=https://github.com/nicehash/chromium-bin/releases/download/v133.0.0/chromium-v133.0-pack.tar
+```
+
+---
+
+## Database Schema Additions (New Tables)
+
+Extending the existing Supabase schema. No new database services needed.
+
+| Table | Key Columns | Purpose |
+|-------|------------|---------|
+| `claims` | `id`, `project_id`, `status` (pending/paid/customizing/complete/expired), `plan` (standard/pro), `currency`, `amount`, `razorpay_order_id`, `razorpay_payment_id`, `client_email`, `client_name`, `client_phone`, `expires_at`, `paid_at`, `created_at` | Track claim lifecycle from CTA click to completion |
+| `customizations` | `id`, `claim_id`, `logo_url`, `brand_colors` (JSONB), `contact_info` (JSONB), `photo_urls` (JSONB array), `text_changes` (JSONB), `domain_choice` (JSONB), `strategy_call_booked`, `submitted_at` | Store post-payment customization form data |
+
+**No modifications to existing tables.** Claims reference projects via `project_id` foreign key. The `projects` table remains unchanged.
+
+---
+
+## Sources
+
+### Razorpay
+- [Razorpay Node.js SDK v2.9.6 -- GitHub](https://github.com/razorpay/razorpay-node) -- HIGH confidence
+- [Payment Verification Documentation](https://github.com/razorpay/razorpay-node/blob/master/documents/paymentVerfication.md) -- HIGH confidence
+- [Webhook Validation Docs](https://razorpay.com/docs/webhooks/validate-test/) -- HIGH confidence
+- [Next.js App Router Integration Guide](https://www.akkhil.dev/blogs/razorpay-integration-with-nextjs) -- MEDIUM confidence
+- [Razorpay Integration Steps](https://razorpay.com/docs/payments/server-integration/nodejs/integration-steps/) -- HIGH confidence
+
+### Vercel Geolocation
+- [Vercel Request Headers Reference](https://vercel.com/docs/headers/request-headers) -- HIGH confidence (official)
+- [@vercel/functions API Reference](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package) -- HIGH confidence (official)
+- [Vercel Geo IP Headers Guide](https://vercel.com/kb/guide/geo-ip-headers-geolocation-vercel-functions) -- HIGH confidence (official)
+
+### Supabase Storage
+- [createSignedUploadUrl API](https://supabase.com/docs/reference/javascript/storage-from-createsigneduploadurl) -- HIGH confidence
+- [uploadToSignedUrl API](https://supabase.com/docs/reference/javascript/storage-from-uploadtosignedurl) -- HIGH confidence
+- [Storage Buckets Fundamentals](https://supabase.com/docs/guides/storage/buckets/fundamentals) -- HIGH confidence
+
+### Screenshots
+- [Deploying Puppeteer on Vercel](https://vercel.com/kb/guide/deploying-puppeteer-with-nextjs-on-vercel) -- HIGH confidence (official Vercel guide)
+- [Puppeteer on Vercel Template](https://vercel.com/templates/next.js/puppeteer-on-vercel) -- HIGH confidence (official)
+- [@sparticuz/chromium-min Approach](https://dev.to/andreas_a/headless-chrome-on-vercel-build-a-screenshot-api-that-survives-cold-starts-ce8) -- MEDIUM confidence
+
+### Cal.com
+- [Cal.com Embed Documentation](https://cal.com/docs/core-features/embed/install-with-react) -- HIGH confidence
+- [React 19 Peer Dependency Issue #20814](https://github.com/calcom/cal.com/issues/20814) -- HIGH confidence
+- [React 19 Support Request #20681](https://github.com/calcom/cal.com/issues/20681) -- HIGH confidence
+- [Peer Dependency Conflict #20990](https://github.com/calcom/cal.com/issues/20990) -- HIGH confidence
+
+### Domain Checking
+- [whoiser npm registry](https://www.npmjs.com/package/whoiser) -- MEDIUM confidence
+- [whoiser GitHub](https://github.com/LayeredStudio/whoiser) -- MEDIUM confidence
+
+### Next.js Patterns
+- [Next.js Route Groups](https://nextjs.org/docs/app/building-your-application/routing/route-groups) -- HIGH confidence
+- [Next.js Route Handler (raw body for webhooks)](https://nextjs.org/docs/app/api-reference/file-conventions/route) -- HIGH confidence
+- [Next.js SSR Hydration Errors](https://nextjs.org/docs/messages/react-hydration-error) -- HIGH confidence
 
 ---
 
 *Research completed: 2026-03-18*
+*Supersedes previous v1.0 STACK.md (12 improvements research)*

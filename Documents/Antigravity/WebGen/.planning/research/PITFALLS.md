@@ -1,423 +1,727 @@
-# Pitfalls Research
+# Domain Pitfalls: v2.0 Client Claim Flow
 
-**Research Date:** 2026-03-18
-**Domain:** Internal AI website generator (Next.js 16 + Supabase + AI SDK v6)
-**Scope:** 12 planned improvements to existing bulk generation pipeline
-
----
-
-## P1: Batch Automation Swallowing Failures Silently
-
-**Feature:** End-to-end batch autopilot (discover, generate, auto-fix, surface failures)
-**Phase:** Batch automation
-
-**The Mistake:**
-Building batch automation on top of the existing fire-and-forget pattern in `app/dashboard/actions.ts`. The current `generateAndSaveWebsite().then().catch(console.error)` pattern means a batch of 50 projects could silently lose 15 failures with no aggregated report. Projects that auto-fix returns original broken code for (the known bug at line 1166 of `generator.ts`) get marked as "generated" -- batch automation will stamp them as done when they are broken.
-
-**Warning Signs:**
-- Batch completion reports "50/50 done" but manual review finds broken sites
-- No difference in batch outcome between a run with 0 errors and one with 20 errors
-- `queue_jobs` table has completed jobs whose linked projects have `status: 'error'`
-- Auto-fix returns the original broken code and batch marks it as success
-
-**Prevention Strategy:**
-- Add a terminal `batch_result` status per project that is distinct from generation status: `success | fixed | failed | needs_review`
-- Never mark a batch as complete until every project has a terminal status
-- Build the batch status aggregator BEFORE building the autopilot -- you need the reporting layer first
-- Fix the auto-fix bug (return `fixedCode2` instead of original, set `status: 'error'`) as a prerequisite, not an afterthought
-- Require an explicit "surface failures" step that blocks batch completion
-
-**Relevant Existing Issues:**
-- Auto-fix returns original broken code if both attempts fail (CONCERNS.md: Known Bugs)
-- Fire-and-forget async with no error tracking (CONCERNS.md: Tech Debt)
-- Race condition in queue processing (CONCERNS.md: Known Bugs)
+**Domain:** Adding payment processing, file uploads, client-facing pages, and conversion flows to an existing internal admin tool
+**Stack:** Next.js 16 App Router + Supabase + Razorpay
+**Researched:** 2026-03-18
+**Scope:** Pitfalls specific to converting an internal-only generation tool into a revenue-generating platform with public client pages
 
 ---
 
-## P2: Quality Scoring That Measures the Wrong Things
+## Critical Pitfalls
 
-**Feature:** Generation quality scoring (auto-evaluate renders, sections, responsiveness)
-**Phase:** Quality scoring
-
-**The Mistake:**
-Building a scoring system that checks syntactic properties (has a hero section, has a footer, code compiles) instead of semantic quality (does the hero match the business, is the CTA relevant, does the color scheme fit the industry). Syntactic checks are easy to implement but produce false confidence -- a page that scores 95/100 because it has all the right sections can still look terrible or be completely wrong for the business.
-
-A second common mistake: scoring generated code without actually rendering it. The Babel validation in `generator.ts` already misses errors that only manifest at render time (CONCERNS.md: "Babel Transform Silently Drops Invalid Code"). A scoring system that evaluates code without rendering it in a headless browser will repeat this exact gap.
-
-**Warning Signs:**
-- High-scoring projects still get rejected during manual review
-- Score distribution is clustered (everything scores 80-95) with no discrimination
-- Scores don't correlate with approval rates -- you approve low-scoring ones and reject high-scoring ones
-- Visual rendering bugs (overlapping text, missing images, broken layout) in projects that passed all checks
-
-**Prevention Strategy:**
-- Define scoring criteria by working backwards from actual rejection reasons: audit 20-30 manually rejected projects, categorize why they were rejected, build scores for those specific criteria
-- Include a headless browser render check (Playwright screenshot + viewport assertions) as a required scoring dimension -- do not rely solely on code analysis
-- Build calibration into the system: track score vs. manual approval rate, adjust weights when they diverge
-- Start with 3-5 high-signal dimensions, not 20 granular ones. Suggested starting set: (1) renders without JS errors, (2) has visible business name, (3) no overlapping/clipped content at 3 breakpoints, (4) all sections have real content not lorem ipsum, (5) color contrast passes WCAG AA
-- Store scores as structured data (not a single number) so you can analyze which dimensions matter
-
-**Relevant Existing Issues:**
-- Babel transform silently drops invalid code (CONCERNS.md: Known Bugs)
-- No observability/analytics (CONCERNS.md: Missing Critical Features)
+Mistakes that cause lost revenue, security breaches, or require architectural rewrites.
 
 ---
 
-## P3: Few-Shot Templates That Poison Output Quality
+### P1: Razorpay Webhook Signature Verification Fails on Parsed Body
 
-**Feature:** Industry-aware template seeding (use best approved outputs as few-shot examples)
-**Phase:** Template/prompt improvements
+**What goes wrong:** Razorpay sends a webhook with an `x-razorpay-signature` header computed as HMAC-SHA256 over the raw request body. Next.js App Router automatically parses the body when you call `await req.json()`. If you compute the signature over `JSON.stringify(parsedBody)`, the stringified output may differ from the original raw body (key ordering, whitespace, Unicode escaping), causing signature verification to fail 100% of the time in production while appearing to work in tests where the body happens to round-trip cleanly.
 
-**The Mistake:**
-Using approved projects as few-shot examples without cleaning them first. Approved code contains business-specific data (addresses, phone numbers, brand colors, specific copy) that bleeds into new generations. A dental clinic template used as a few-shot for a restaurant will produce a restaurant page that mentions "Dr. Smith's office hours" in the footer because the LLM pattern-matched the template structure including its content.
+**Why it happens:** Razorpay's documentation says "ensure that the webhook body passed as an argument is the raw webhook request body. Do not parse or cast the webhook request body." But Next.js App Router does not expose `req.rawBody` -- you must explicitly call `await req.text()` before any JSON parsing. Developers who follow typical Next.js patterns (`await req.json()`) will never get a valid signature match.
 
-Second mistake: stuffing too many examples into the system prompt. The existing system prompt in `generator.ts` is already 1000+ lines. Adding 2-3 full React component examples (each 200-400 lines) will push the prompt past effective context utilization, and the model will start ignoring instructions in favor of copying example patterns.
+**Consequences:** Every Razorpay webhook is rejected as invalid. Payment confirmations never arrive server-side. Claims appear unpaid in the database even though money was charged. Customers are charged but never receive their website.
 
-**Warning Signs:**
-- Generated pages contain text/data from template businesses instead of the target business
-- All outputs for an industry look identical in structure (diversity collapses)
-- Token costs spike significantly after enabling few-shot (3-4x increase per generation)
-- Quality doesn't improve or gets worse despite adding examples
+**Warning signs:**
+- All webhook signature validations fail in production
+- `x-razorpay-signature` header is present but verification always returns false
+- Payments succeed in Razorpay dashboard but claim status stays "pending"
+- Test mode webhooks with simple payloads work but real payloads fail
 
-**Prevention Strategy:**
-- Sanitize templates before using as few-shot: replace all business-specific content with descriptive placeholders (`{{business_name}}`, `{{hero_tagline}}`, `{{address}}`). This is a data pipeline step, not optional cleanup
-- Limit to 1 example per generation (not 2-3). One well-chosen example provides most of the structural benefit; additional examples have sharply diminishing returns and increasing bleed risk
-- Use template excerpts (just the component structure, 50-80 lines) not full page code. Strip out data-binding logic, keep only the JSX structure
-- Version templates alongside prompts (see P10) -- when you change the system prompt, old templates may produce worse results with the new prompt
-- Measure output diversity: if >80% of outputs for an industry share identical section ordering, your templates are over-constraining
+**Prevention:**
+```typescript
+// CORRECT: Get raw body FIRST, then parse
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text()
+  const signature = req.headers.get('x-razorpay-signature')
 
-**Relevant Existing Issues:**
-- Generator module is monolithic, 1456 lines with 1000+ line system prompt (CONCERNS.md: Performance Bottlenecks)
-- Template save/load system exists but no sanitization (PROJECT.md: Validated Requirements)
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!)
+    .update(rawBody)
+    .digest('hex')
 
----
+  if (signature !== expectedSignature) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
 
-## P4: Cost Tracking That Misses the Real Spend
+  const payload = JSON.parse(rawBody) // Parse AFTER verification
+  // ... handle webhook
+}
+```
 
-**Feature:** Cost and token tracking per generation across all providers
-**Phase:** Cost tracking
+**Detection:** Add a logging-only mode first that logs both computed and received signatures without rejecting. Compare them. If they never match, it is a raw body issue.
 
-**The Mistake:**
-Tracking only the main generation call and missing the hidden costs. The current pipeline has at least 4 AI call sites: (1) main generation via `streamWebsiteCode`, (2) enrichment via `enricher.ts`, (3) auto-fix via `reviseWebsite` with o3-mini (up to 2 attempts), and (4) chat refinement via `/api/chat/refine`. Tracking only the generation call will undercount actual cost by 40-60% because enrichment and auto-fix are where the expensive retry loops live.
+**Phase/Step:** Must be implemented in the very first Razorpay integration step. Non-negotiable foundation.
 
-Second mistake: using hardcoded price tables that go stale. OpenAI, Google, and OpenRouter all change pricing without notice. A cost tracker that says "$0.02 per generation" based on cached pricing from launch month will be wrong within weeks.
-
-**Warning Signs:**
-- Tracked costs don't match provider billing dashboards
-- Auto-fix-heavy batches show the same cost as clean batches
-- Cost per project varies wildly but your tracker shows uniform costs
-- Total tracked spend is 50% of actual invoice amount
-
-**Prevention Strategy:**
-- Instrument at the AI SDK level, not the application level. Wrap the `ai` SDK's `streamText` and `generateText` calls with a cost-tracking middleware that captures `usage.promptTokens` and `usage.completionTokens` from every call, not just generation calls
-- Map every AI call to a `project_id` and a `call_type` enum (`generation | enrichment | auto_fix_1 | auto_fix_2 | refinement`). This is critical for understanding where money actually goes
-- Store token counts, not dollar amounts, as the primary data. Compute dollar amounts at query time using a pricing config that can be updated. This way when pricing changes you don't need to recompute historical data -- just update the lookup table
-- Include the model used per call (the fallback chain means the same project might use Gemini for generation and o3-mini for auto-fix)
-- Add a cost column to the existing `projects` table for quick dashboard access, but store detailed per-call breakdowns in a new `generation_costs` table
-
-**Relevant Existing Issues:**
-- No observability beyond console.log (PROJECT.md: Context)
-- Multiple AI providers with fallback chain (ARCHITECTURE.md: Generator Module)
-- Fire-and-forget pattern means enrichment/auto-fix costs are invisible (CONCERNS.md: Tech Debt)
+**Confidence:** HIGH -- verified from Razorpay docs, multiple GitHub issues on razorpay-node (#434, #29), and analogous Stripe issues in Next.js (#60002).
 
 ---
 
-## P5: Static Export Breaking React Interactivity
+### P2: INR Paise Conversion Creates 100x Pricing Errors
 
-**Feature:** One-click deploy/export pipeline (static HTML bundle or hosting push)
-**Phase:** Export pipeline
+**What goes wrong:** Razorpay requires amounts in the smallest currency subunit (paise for INR, cents for USD). A Standard plan at Rs.4,999 must be sent as `499900` (not `4999`). Forgetting to multiply by 100 charges the customer Rs.49.99 instead of Rs.4,999. Multiplying twice charges Rs.4,99,900. Floating-point arithmetic on the conversion (`4999 * 100 = 499900` is safe, but `49.99 * 100 = 4998.999...` is not) produces off-by-one paise amounts that Razorpay may reject.
 
-**The Mistake:**
-Running `ReactDOMServer.renderToString()` on generated components and shipping the static HTML. The generated pages are React/Tailwind SPAs with interactive elements (navigation toggles, scroll animations, form handlers, modals). Static rendering strips all event handlers and state management, producing a page that looks correct but is completely non-interactive -- buttons don't click, menus don't open, forms don't submit.
+**Why it happens:** The pricing display shows "Rs.4,999" to the user but the API needs `499900`. There are at least 3 places where this conversion could happen (frontend display, order creation API, webhook amount verification), and inconsistency between them causes either wrong charges or failed verification.
 
-The current `html-boilerplate.ts` already wraps components in a client-side React rendering shell with CDN dependencies (React, ReactDOM, Babel standalone). An export pipeline that tries to "simplify" this by pre-rendering will break the output.
+**Consequences:** Customers charged 100x less than intended (revenue loss) or 100x more (chargebacks, legal issues). Or amounts in webhook don't match expected amounts, causing claim verification to fail.
 
-**Warning Signs:**
-- Exported pages look correct in screenshots but nothing is clickable
-- Mobile navigation hamburger menus don't open
-- Contact forms are visible but non-functional
-- Smooth scroll links jump instead of animating
+**Warning signs:**
+- Razorpay returns "invalid amount" errors (minimum is 100 paise = Rs.1)
+- Payment amounts in Razorpay dashboard don't match expected pricing
+- Webhook amount verification fails intermittently
+- USD amounts work fine but INR amounts are wrong (or vice versa)
 
-**Prevention Strategy:**
-- Export the full client-rendered bundle, not server-rendered HTML. The export should be the same `html-boilerplate.ts` output that works in the preview iframe -- it already self-contains React, ReactDOM, and Babel via CDN
-- For a true static export: use a headless browser (Playwright) to render the page, wait for hydration, then serialize the fully-hydrated DOM with inline event handlers compiled. This is complex and should be a later optimization, not the initial approach
-- Initial export target should be a single self-contained `.html` file with the same CDN dependencies the preview uses. Test that the exported file works when opened as `file://` (not just `http://`) -- CDN dependencies require network access
-- Add an export validation step: open exported file in Playwright, click 3 interactive elements, assert they respond
-- Consider offering two export modes: "interactive" (full React bundle) and "static" (pre-rendered, no JS, for print/screenshot use cases)
+**Prevention:**
+- Store all prices in paise/cents as integers in a single pricing config. Never store as rupees with decimal conversion.
+- Create a dedicated pricing utility:
+  ```typescript
+  // lib/pricing.ts
+  export const PLANS = {
+    standard: { inr_paise: 499900, usd_cents: 49900 },
+    pro:      { inr_paise: 999900, usd_cents: 129900 },
+  } as const
 
-**Relevant Existing Issues:**
-- HTML preview escaping issues (CONCERNS.md: Known Bugs)
-- Preview iframe error handling is fragile (CONCERNS.md: Fragile Areas)
-- Babel standalone loaded in-browser for every preview (CONCERNS.md: Performance Bottlenecks)
+  export function displayPrice(paise: number, currency: 'INR' | 'USD'): string {
+    return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
+      style: 'currency', currency
+    }).format(paise / 100)
+  }
+  ```
+- Verify the amount in the webhook matches the expected plan price exactly. Do not trust the amount from the client side.
+- Use integer arithmetic only. Never `parseFloat(price) * 100` -- use `Math.round()` as a safety net if floats are unavoidable.
 
----
+**Phase/Step:** Pricing utility must be built before any Razorpay order creation code. Should be step 1 of the payment phase.
 
-## P6: Keyboard Shortcuts That Conflict and Trap Focus
-
-**Feature:** Keyboard-driven review workflow (j/k navigate, a approve, r regenerate, f fix, e edit)
-**Phase:** Keyboard shortcuts
-
-**The Mistake:**
-Adding global keyboard listeners that fire when the user is typing in the Monaco editor, search inputs, or chat refinement textarea. Pressing `e` to type "excellent work" in the refinement chat will instead trigger the "edit" shortcut. Pressing `j` or `k` while editing code will navigate away from the current project, losing unsaved changes.
-
-Second mistake: not handling the editor page's complex focus hierarchy. The editor has Monaco (which has its own extensive keyboard shortcuts), a live preview iframe (which captures focus), a chat panel, and navigation. A single `document.addEventListener('keydown')` approach will create conflicts with all of these.
-
-**Warning Signs:**
-- Users report shortcuts firing when typing in text fields
-- Monaco editor's Ctrl+S, Ctrl+Z, etc. stop working after adding global shortcuts
-- Pressing shortcut keys while preview iframe is focused does nothing (events don't bubble out of iframes)
-- Unsaved code changes are lost when navigation shortcuts fire unexpectedly
-
-**Prevention Strategy:**
-- Implement a focus-aware shortcut system: shortcuts only fire when no text input, textarea, or contenteditable element has focus. Check `document.activeElement` tag name before executing
-- Use a dedicated keyboard shortcut library (e.g., `tinykeys` or `hotkeys-js`) that handles focus scoping, rather than raw `addEventListener`
-- Scope shortcuts to specific UI contexts: navigation shortcuts (j/k) only work on the dashboard/review list, not in the editor. Edit shortcuts only work when a project card is focused
-- Add a visible shortcut indicator (small overlay or bottom bar showing available shortcuts for the current context) so the user knows what's active
-- Require modifier keys for destructive actions: `a` to approve is fine for non-destructive review, but `r` to regenerate should require `Shift+R` or a confirmation
-- Test with Monaco editor open: verify that all Monaco shortcuts still work, that shortcut keys don't fire while typing in editor
-
-**Relevant Existing Issues:**
-- Editor page is the most complex component at ~56KB (PROJECT.md: Context)
-- No error boundary on EditorPage client component (CONCERNS.md: Incomplete Error Boundaries)
+**Confidence:** HIGH -- Razorpay docs explicitly state "amount should be passed in integer paise" and the razorpay-android-sample-app has a filed bug about this exact issue.
 
 ---
 
-## P7: Error Classification That Creates Fix Loops
+### P3: Webhook Arrives Before Client Redirect Completes (Race Condition)
 
-**Feature:** Smart error classification with targeted fix strategies
-**Phase:** Error classification
+**What goes wrong:** The user completes payment on Razorpay's checkout page. Two things happen simultaneously: (1) Razorpay sends a webhook to the server, and (2) the user's browser redirects back to the claim confirmation page. The webhook can arrive and update the database to "paid" before the redirect, or the redirect can arrive first while the database still says "pending." If the confirmation page queries the claim status on load and finds "pending," it shows an error even though payment succeeded.
 
-**The Mistake:**
-Building a classifier that detects error types but routes them all through the same fix path. The current auto-fix sends all errors to o3-mini with a generic "fix this code" prompt. A classification system that distinguishes between "missing import," "syntax error," and "runtime render error" but then sends all three to the same LLM prompt has added complexity without adding value.
+**Why it happens:** Razorpay's webhook delivery is asynchronous and can arrive within milliseconds of payment completion. The browser redirect depends on network latency, mobile connection quality (prospects arrive via WhatsApp on phones), and whether the user closes the browser before the redirect completes. There is no ordering guarantee.
 
-Worse: classification that triggers automatic fix attempts can create loops. Error is classified as "missing import" -> fix adds import -> import causes "duplicate identifier" error -> classified as "syntax error" -> fix removes the import -> back to "missing import." The existing auto-fix already allows 2 attempts; adding classification without loop detection will make this worse.
+**Consequences:** Customer pays but sees an error page. They contact support (or worse, try to pay again, risking double charge). Customer who closes the browser mid-redirect never sees confirmation and assumes payment failed.
 
-**Warning Signs:**
-- Same project oscillates between two error states across fix attempts
-- Fix success rate doesn't improve after adding classification (still around the same %)
-- Classification says "syntax error" but the actual problem is that the generated component references a nonexistent API
-- Token costs for auto-fix increase but fix rates stay flat
+**Warning signs:**
+- Intermittent "payment not found" errors on the confirmation page
+- Claims stuck in "pending" even though Razorpay dashboard shows payment captured
+- Higher support tickets from mobile users (slower redirects)
+- Customer emails asking "I paid but nothing happened"
 
-**Prevention Strategy:**
-- Build classification and fix strategies as separate, decoupled systems. Classification labels the error; a separate routing table maps labels to fix strategies. This lets you add new strategies without changing the classifier
-- Define fix strategies with concrete, different prompts: "missing import" gets a prompt that only adds imports, "layout broken" gets a prompt that restructures JSX, "syntax error" gets a code-only prompt without design context. If two strategies have the same prompt, merge them
-- Implement loop detection: hash the error type + affected code region. If the same hash appears twice in a fix chain, abort and surface for manual review. Do not attempt a third fix
-- Track fix success rate per error category. If a category has <20% fix success, flag it as "not auto-fixable" and route directly to manual review
-- Fix the existing auto-fix return-original-code bug (CONCERNS.md) BEFORE layering classification on top. Classification on a broken fix pipeline adds noise
+**Prevention:**
+- **Never depend solely on the redirect handler.** The redirect handler (`handler.response` in Razorpay Checkout) is a convenience, not a confirmation. Use it only for UI routing.
+- **Use polling on the confirmation page.** After redirect, poll the claim status every 2 seconds for up to 30 seconds. The webhook usually arrives within 5 seconds.
+  ```typescript
+  // On confirmation page
+  const pollClaimStatus = async (claimId: string) => {
+    for (let i = 0; i < 15; i++) {
+      const claim = await fetchClaimStatus(claimId)
+      if (claim.payment_status === 'paid') return claim
+      await new Promise(r => setTimeout(r, 2000))
+    }
+    return { status: 'pending_verification', message: 'Payment received, confirming...' }
+  }
+  ```
+- **Implement both paths:** (1) Webhook updates DB -> redirect finds "paid" -> show confirmation. (2) Redirect finds "pending" -> show "verifying payment..." with polling -> webhook arrives -> show confirmation.
+- **Handle the "user closed browser" case:** Webhook still processes. Claim is marked paid. If user returns later, they see confirmation. Send a confirmation email/WhatsApp as the primary confirmation channel, not the browser redirect.
+- **Idempotent webhook handler:** Razorpay retries webhooks with exponential backoff over 24 hours. The webhook handler must be idempotent -- processing the same `payment.captured` event twice must not create duplicate claims or double-update status.
 
-**Relevant Existing Issues:**
-- Auto-fix returns original broken code if both attempts fail (CONCERNS.md: Known Bugs)
-- Auto-fix recursion logic untested (CONCERNS.md: Test Coverage Gaps)
-- Babel transform silently drops invalid code (CONCERNS.md: Known Bugs)
+**Phase/Step:** Confirmation page and webhook handler must be designed together, not as separate steps.
 
----
-
-## P8: Code Diff That Doesn't Handle LLM-Generated Code Well
-
-**Feature:** Diff view for revisions (before/after comparison)
-**Phase:** Diff view
-
-**The Mistake:**
-Using a standard line-by-line diff algorithm (Myers, patience) on LLM-generated code. LLMs frequently rewrite entire components when asked to make small changes -- the revision system's `reviseWebsite()` function can return completely restructured code even for "change the button color" requests. A line diff of two versions that are semantically similar but structurally different will show 90% of lines as changed, making the diff useless for review.
-
-The existing patch system in `generator.ts` (lines 814-920) already has problems with patch application ordering. A diff view built on the same assumptions will inherit these problems.
-
-**Warning Signs:**
-- Every diff shows massive changes even for trivial revisions
-- Reviewer can't identify what actually changed between versions
-- Diff view is slower than just reading the new version directly
-- Structural changes (moving a section up/down) show as full delete + insert instead of a move
-
-**Prevention Strategy:**
-- Use a semantic-aware diff library, not just text diff. Libraries like `diff-match-patch` with cleanup passes, or AST-based diffing (parse both versions, diff the AST), will produce more meaningful diffs for generated code
-- For initial implementation: use Monaco's built-in diff editor (`MonacoDiffEditor`). It already handles the rendering and the codebase already uses Monaco. This gives you a functional diff view with minimal new dependencies
-- Add a "summary" panel alongside the diff that uses a cheap LLM call to describe what changed in 2-3 bullet points. For LLM-generated code, a natural language summary of changes is often more useful than a code diff
-- Store the revision prompt (what the user asked to change) alongside the diff. Displaying "User asked: change button color to blue" next to a 200-line diff immediately tells the reviewer what to look for
-- Don't try to build 3-way merge or conflict resolution -- this is a single-user tool with linear revision history. Keep it simple: side-by-side view of version N and version N-1
-
-**Relevant Existing Issues:**
-- Code patch application is fragile, patches applied sequentially (CONCERNS.md: Fragile Areas)
-- Revision system exists in `project_revisions` table but has no UI (CONCERNS.md: Missing Critical Features)
+**Confidence:** HIGH -- Razorpay's own documentation explicitly warns about this and recommends webhooks as the primary confirmation mechanism.
 
 ---
 
-## P9: Analytics Dashboard That Queries Production Tables in Real-Time
+### P4: Exposing Razorpay Key Secret on the Client Side
 
-**Feature:** Generation analytics dashboard (success rate by model/industry, timing, failure patterns)
-**Phase:** Analytics
+**What goes wrong:** Razorpay integration requires two keys: `key_id` (public, safe for client) and `key_secret` (private, server-only). Developers accidentally put both in `NEXT_PUBLIC_` environment variables, exposing the secret in the browser bundle. With the key_secret, anyone can create orders, issue refunds, or access the Razorpay API as the merchant.
 
-**The Mistake:**
-Running aggregate analytics queries directly against the `projects` and `queue_jobs` tables during page load. Queries like `SELECT model, COUNT(*) GROUP BY model WHERE status = 'error'` scanning all projects will slow down as the table grows. With hundreds of generations per day, the projects table will reach 10K+ rows within weeks. Aggregate queries on a table that's also being written to by the queue processor will create lock contention.
+**Why it happens:** The existing codebase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as the pattern for client-accessible keys. A developer following this pattern might create `NEXT_PUBLIC_RAZORPAY_KEY_SECRET`, which Next.js bundles into client JavaScript.
 
-**Warning Signs:**
-- Analytics dashboard takes 3-5+ seconds to load
-- Dashboard generation list becomes slower after analytics feature ships
-- Supabase dashboard shows increasing query latency on `projects` table
-- Queue processing slows down during dashboard page loads
+**Consequences:** Complete compromise of the Razorpay account. Attacker can create fraudulent orders, issue unauthorized refunds, access customer payment data. Razorpay will suspend the account if the key is found in public code.
 
-**Prevention Strategy:**
-- Create a separate `generation_stats` materialized view or summary table that aggregates metrics periodically (every 5 minutes or on-demand), not on every page load
-- For the initial implementation: use Supabase's built-in `.count()` queries with appropriate filters and indexes, but limit the time window (show last 7 days by default, not all-time)
-- Add database indexes on the columns you'll filter by: `(status, created_at)`, `(model, created_at)`, `(batch_id, status)`. Without these, every analytics query is a full table scan
-- Separate read path from write path: analytics queries should use a read replica or at minimum a different connection pool than the queue processor. Supabase supports this on paid tiers
-- Pre-compute expensive aggregates: success rate by model, average generation time, failure rate by industry. Store in a `daily_stats` table updated by a cron job or post-generation hook, not computed at query time
-- Start with 3-4 key metrics (success rate, avg time, cost per generation, failure rate), not a comprehensive analytics suite. You can always add more dimensions later
+**Warning signs:**
+- `RAZORPAY_KEY_SECRET` appears in browser network tab or JavaScript bundles
+- Environment variable starts with `NEXT_PUBLIC_RAZORPAY_` and contains the secret
+- Razorpay dashboard shows orders/refunds not initiated by the operator
 
-**Relevant Existing Issues:**
-- No observability/analytics currently exists (CONCERNS.md: Missing Critical Features)
-- Queue polls every 2s, adding query load (CONCERNS.md: Performance Bottlenecks)
-- Database connection limits on Supabase free tier (~50 concurrent) (CONCERNS.md: Scaling Limits)
+**Prevention:**
+- Only `RAZORPAY_KEY_ID` may use the `NEXT_PUBLIC_` prefix. The `RAZORPAY_KEY_SECRET` must NEVER have `NEXT_PUBLIC_` prefix.
+- Create orders exclusively via server-side API route (`/api/claims/create-order`). The client sends plan selection to the server; the server creates the Razorpay order using the secret and returns only the `order_id` to the client.
+- Add a build-time check or linting rule that flags any `NEXT_PUBLIC_` variable containing "SECRET" or "PRIVATE".
+- Review `.env.example` to ensure the key_secret variable does NOT have the `NEXT_PUBLIC_` prefix.
+
+**Phase/Step:** Environment variable setup must happen at the start of Razorpay integration. Include in setup checklist.
+
+**Confidence:** HIGH -- standard security practice, but the existing codebase's `NEXT_PUBLIC_` pattern makes this a likely copy-paste mistake.
 
 ---
 
-## P10: Prompt Versioning Without Rollback Capability
+### P5: Double Charges from Missing Idempotency on Order Creation
 
-**Feature:** Prompt versioning (extract system prompt, version it, tag generations)
-**Phase:** Prompt versioning
+**What goes wrong:** User clicks "Pay Now," network is slow, they click again. Two Razorpay orders are created. Both open checkout. User completes one payment, the other order lingers. Or worse: user pays both orders, getting charged twice for the same claim.
 
-**The Mistake:**
-Versioning prompts by saving them to a database table but not linking each generation to the exact prompt version used. When generation quality drops, you need to answer "which prompt version caused this?" If generations aren't tagged with their prompt version, you can't correlate quality changes to prompt changes. You end up doing manual archaeology: "I think I changed the prompt on Tuesday, and quality dropped on Wednesday..."
+**Why it happens:** The order creation endpoint (`/api/claims/create-order`) has no idempotency protection. Each request creates a new Razorpay order. Mobile users on flaky connections (WhatsApp link -> mobile browser) are especially prone to duplicate submissions.
 
-Second mistake: extracting the 1000+ line system prompt from `generator.ts` into a database-editable field without a review/diff workflow. A typo in a database-stored prompt can break all generations with no version control, no diff, and no easy rollback.
+**Consequences:** Double charges leading to customer complaints, manual refund work, and trust damage with early customers.
 
-**Warning Signs:**
-- Quality drops but you can't identify which prompt change caused it
-- Two projects generated minutes apart produce wildly different quality because a prompt was edited between them
-- Rolling back to a previous prompt version requires manually copying text from a database backup
-- No way to A/B test two prompt versions on the same business data
+**Warning signs:**
+- Multiple Razorpay orders exist for the same claim
+- Razorpay dashboard shows two captured payments for the same business
+- Customer reports "I was charged twice"
+- Database has two `claims` rows for the same project
 
-**Prevention Strategy:**
-- Store prompts in code (files), not database. Version them with git. A file like `lib/ai/prompts/system-v3.ts` that exports a string is debuggable, diffable, and rollback-able with `git revert`
-- Tag every generation record with the prompt version ID (a hash or semver string). Add a `prompt_version` column to the `projects` table
-- Build the version-to-quality correlation query early: "show me success rate grouped by prompt_version." This is the primary value of versioning -- without this query, versioning is just bookkeeping
-- Implement a "canary" deployment pattern for prompts: new prompt version runs on 10% of generations for one batch, compare quality scores (P2) against the current version, then promote or rollback
-- Keep the prompt extraction refactor separate from the versioning feature. Extract first (move from inline string in `generator.ts` to a separate file), stabilize, then add versioning. Don't try to do both simultaneously
+**Prevention:**
+- **Idempotency key on order creation.** Use the claim ID as the idempotency key. Before creating a Razorpay order, check if one already exists for this claim. If it does and it is still pending, return the existing order ID.
+  ```typescript
+  // In /api/claims/create-order
+  const existingClaim = await supabase
+    .from('claims')
+    .select('razorpay_order_id')
+    .eq('project_id', projectId)
+    .eq('status', 'pending')
+    .single()
 
-**Relevant Existing Issues:**
-- Generator module is monolithic with 1000+ line system prompt inline (CONCERNS.md: Performance Bottlenecks)
-- No test suite to catch prompt regressions (PROJECT.md: Context)
+  if (existingClaim.data?.razorpay_order_id) {
+    // Return existing order, don't create new one
+    return NextResponse.json({ orderId: existingClaim.data.razorpay_order_id })
+  }
+  ```
+- **Disable the pay button after click.** Show a spinner. Re-enable only on error.
+- **Database constraint:** Add a unique constraint on `(project_id, status)` where status is `'pending'` or `'paid'`. Prevents duplicate active claims at the database level.
+- **Webhook handler checks for existing payment.** If `payment.captured` arrives for an order that is already marked paid, ignore it (idempotent).
 
----
+**Phase/Step:** Build into the order creation API route from day one. Not a "nice to have."
 
-## P11: Queue Monitoring UI That Masks the Real Problem
-
-**Feature:** Queue health and stuck job admin UI
-**Phase:** Queue monitoring
-
-**The Mistake:**
-Building a UI that shows queue status and provides "retry" and "cancel" buttons without fixing the underlying queue reliability issues. The current queue has: (1) a race condition where multiple processors can claim the same job, (2) polling every 2 seconds even when idle, and (3) no mechanism to detect jobs stuck in `processing` state other than a 10-minute timeout in `resetStuckProjects()`. A monitoring UI on top of this will show you the problems in real-time but not prevent them.
-
-Second mistake: building the monitoring UI as a dashboard page that requires the user to navigate to it. Queue problems happen during batch processing when the user is away. By the time they check the monitoring UI, jobs have been stuck for hours.
-
-**Warning Signs:**
-- User relies on the monitoring UI to manually restart stuck jobs multiple times per day
-- The "retry" button is the most-clicked element in the admin UI
-- Queue shows jobs in `processing` state for longer than the expected generation time (60-90s)
-- Same project appears in queue multiple times due to the race condition
-
-**Prevention Strategy:**
-- Fix queue reliability bugs BEFORE building the monitoring UI. Specifically: add database-level uniqueness constraint on `(project_id, status='processing')`, replace 2-second polling with exponential backoff (2s -> 4s -> 8s -> 30s when idle), add a heartbeat column so stuck detection is precise (no heartbeat update in 60s = stuck, not "10 minutes in generating state")
-- Add proactive alerting, not just passive monitoring. If a job has been in `processing` for >3 minutes, auto-surface a notification in the dashboard without requiring navigation to a separate admin page
-- Implement the monitoring as an overlay/panel on the existing dashboard, not a separate page. During batch processing, the user should see queue health in their peripheral vision, not behind a navigation click
-- Add automatic recovery: stuck jobs should auto-retry once before requiring manual intervention. The monitoring UI should only show jobs that failed automatic recovery
-- Log queue events to a `queue_events` table (job_started, job_completed, job_failed, job_stuck, job_retried) for post-mortem analysis. The monitoring UI queries this table, not the live `queue_jobs` table
-
-**Relevant Existing Issues:**
-- Race condition in queue processing (CONCERNS.md: Known Bugs)
-- Queue processing busy loop polls every 2s (CONCERNS.md: Performance Bottlenecks)
-- Queue recovery after server crash untested (CONCERNS.md: Test Coverage Gaps)
-- No manual intervention UI for stuck jobs (CONCERNS.md: Missing Critical Features)
+**Confidence:** HIGH -- idempotency for payment APIs is industry-standard best practice.
 
 ---
 
-## P12: Background Rendering That Starves the Active Workflow
+### P6: File Upload Type Validation Bypass via MIME Spoofing
 
-**Feature:** Parallel preview pre-rendering (background render next 5 projects during review)
-**Phase:** Background rendering
+**What goes wrong:** The customization form accepts logo and photo uploads. Client-side validation checks `file.type` (MIME type from the browser), which is trivially spoofable. An attacker renames `malware.exe` to `malware.png`, and the browser reports `image/png`. The file is uploaded to Supabase Storage and stored alongside legitimate assets.
 
-**The Mistake:**
-Launching 5 background rendering processes that compete for the same resources as the active generation queue. The queue processor already uses 3 concurrent slots. Adding 5 background preview renders means 8 concurrent processes hitting AI APIs, Supabase connections, and browser memory simultaneously. On Vercel with serverless functions and a 50-connection Supabase pool, this will cause connection exhaustion and timeout failures for the active generation that the user is actually waiting on.
+**Why it happens:** The existing `uploadProjectAsset()` in `lib/supabase/storage.ts` does zero validation -- it accepts any `File` object and uploads it with whatever extension it has. Client-side MIME checking is easy to bypass.
 
-Second mistake: pre-rendering into heavy headless browser instances (Playwright/Puppeteer) without lifecycle management. Each headless browser tab uses 100-300MB of memory. Five concurrent tabs is 500MB-1.5GB of memory just for previews, on top of the Next.js process and generation.
+**Consequences:** Malicious files stored in the bucket. If the bucket is public, direct link to the file is accessible. Potential for stored XSS if SVG files are allowed (SVG can contain JavaScript). Storage quota consumed by large malicious uploads.
 
-**Warning Signs:**
-- Active generation becomes slower or times out after enabling background rendering
-- Supabase connection errors (`too many connections`) appear in logs
-- Browser tabs crash or become unresponsive during review workflow
-- Serverless function memory limits (1GB default on Vercel) are hit, causing cold starts
+**Warning signs:**
+- Files in storage bucket with unexpected extensions or sizes
+- SVG files that contain `<script>` tags
+- Files with double extensions (e.g., `logo.png.exe`)
+- Storage quota exhausted unexpectedly
 
-**Prevention Strategy:**
-- Background rendering must yield to active work. Implement a priority system: active generation and active preview get full resources; background rendering only runs when active slots are available. Never let background rendering use more than 1 concurrent slot
-- Don't use headless browsers for pre-rendering. The preview iframe already renders client-side using the same `html-boilerplate.ts` approach. Pre-rendering should mean "pre-fetch project data and pre-generate the HTML boilerplate string" -- not "launch a browser and render." The actual rendering happens in the user's browser when they navigate
-- Implement a lightweight pre-fetch: load next 5 projects' `generated_code` from the database into an in-memory LRU cache. When user navigates to the next project, the data is already available. This costs ~5 database queries, not 5 browser instances
-- Add a resource budget: if system memory > 70% or active queue jobs > 2, disable background rendering entirely. Resume when resources free up
-- Start with pre-fetching 2 projects (prev + next), not 5. Measure actual navigation patterns first -- if users review linearly, pre-fetching +1 is sufficient. Pre-fetching 5 is premature optimization
+**Prevention:**
+- **Server-side validation on the upload API route.** Do not rely on the client.
+  ```typescript
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
-**Relevant Existing Issues:**
-- Queue processing concurrency fixed at 3 (CONCERNS.md: Scaling Limits)
-- Database connection limit ~50 concurrent (CONCERNS.md: Scaling Limits)
-- Babel transform memory issues with large components (CONCERNS.md: Scaling Limits)
-- Stream generation timeout of 5 minutes (CONCERNS.md: Scaling Limits)
+  // Validate file magic bytes, not just Content-Type header
+  const buffer = await file.arrayBuffer()
+  const header = new Uint8Array(buffer.slice(0, 4))
+  const isPNG = header[0] === 0x89 && header[1] === 0x50 // PNG magic bytes
+  const isJPEG = header[0] === 0xFF && header[1] === 0xD8 // JPEG magic bytes
+  ```
+- **Reject SVG uploads entirely.** SVG is an attack vector (embedded scripts, external resource loading). Convert SVGs to PNG server-side if SVG logos are needed.
+- **Enforce file size limits both client-side and server-side.** 5MB for logos, 10MB for photos. Supabase Storage has a configurable max file size per bucket.
+- **Use a private bucket with signed upload URLs.** Generate a short-lived signed URL server-side, return it to the client, client uploads directly. This keeps the service role key server-side while enabling direct uploads.
+- **Sanitize filenames.** The existing code uses `file.name.split('.').pop()` for extension -- this is vulnerable to path traversal. Use a whitelist of allowed extensions and generate the filename server-side.
 
----
+**Phase/Step:** Build upload validation before the customization form. The existing `uploadProjectAsset()` needs a security wrapper before it handles client-submitted files.
 
-## Cross-Cutting Pitfalls
-
-### CC1: Adding Features Without Fixing the Foundation
-
-**The Mistake:**
-Layering 12 new features on top of known bugs (auto-fix returns broken code, race conditions, fire-and-forget async). Every new feature inherits these bugs. Batch automation inherits the auto-fix bug. Quality scoring inherits the Babel validation gap. Cost tracking inherits the fire-and-forget pattern. The new features will be blamed for unreliability that originates in the existing foundation.
-
-**Prevention Strategy:**
-- Phase 0 (pre-work): Fix the 3 critical bugs before starting any feature work:
-  1. Auto-fix returns original code -> return latest attempt + set status to 'error'
-  2. Race condition in queue -> add DB uniqueness constraint
-  3. Fire-and-forget async -> add error tracking to all `.then().catch()` chains
-- Budget 1-2 days for these fixes. They are small, well-documented in CONCERNS.md, and prevent cascading issues across all 12 features
-
-### CC2: No Test Coverage for New Features
-
-**The Mistake:**
-Adding 12 features to a codebase with zero tests, then wondering why regressions appear constantly. Each feature touches shared infrastructure (generator, queue, database). Without tests, changing the queue for monitoring (P11) can break batch automation (P1), and you won't know until manual testing catches it.
-
-**Prevention Strategy:**
-- Add integration tests for the specific code paths each feature touches BEFORE modifying them. Not a full test suite -- just the critical paths
-- Minimum test coverage for new features: (1) batch completion correctly aggregates statuses, (2) quality scoring produces consistent scores for the same input, (3) cost tracking captures tokens from all AI call sites, (4) keyboard shortcuts don't fire in text inputs
-- Use the existing `scripts/` directory pattern: lightweight test scripts that can run locally. Don't block on setting up Jest/Vitest if it takes more than 30 minutes
-
-### CC3: Monolith Gets Bigger Before It Gets Smaller
-
-**The Mistake:**
-Adding quality scoring, error classification, cost tracking, and prompt versioning logic to the existing 1456-line `generator.ts`. Each feature adds 100-200 lines. Without refactoring first, the file becomes 2000+ lines and even harder to modify safely.
-
-**Prevention Strategy:**
-- Extract the system prompt to a separate file (`lib/ai/prompts/`) as the first step of prompt versioning (P10). This immediately reduces `generator.ts` by 1000+ lines
-- Each new feature gets its own module: `lib/ai/quality-scorer.ts`, `lib/ai/error-classifier.ts`, `lib/ai/cost-tracker.ts`. These modules are called from the generator, not added to it
-- Define clear interfaces between generator and new modules. The generator should emit events (generation_started, generation_completed, generation_failed) that other modules subscribe to, rather than having inline calls
+**Confidence:** HIGH -- the existing upload code has zero validation (confirmed by reading `lib/supabase/storage.ts`).
 
 ---
 
-## Phase Mapping Summary
+## Moderate Pitfalls
 
-| Pitfall | Prerequisites (Fix First) | Feature Phase |
-|---------|---------------------------|---------------|
-| P1: Batch silent failures | Fix auto-fix bug, fix fire-and-forget | Batch automation |
-| P2: Wrong quality metrics | None, but render-based scoring needs Playwright | Quality scoring |
-| P3: Template data bleed | Extract system prompt from generator.ts | Template/prompt |
-| P4: Missed cost tracking | Instrument all AI call sites | Cost tracking |
-| P5: Static export breaks React | Test html-boilerplate.ts export path | Export pipeline |
-| P6: Shortcut focus conflicts | None, but test with Monaco | Keyboard shortcuts |
-| P7: Error fix loops | Fix auto-fix return-original bug | Error classification |
-| P8: Useless LLM diffs | None (use Monaco diff editor) | Diff view |
-| P9: Slow analytics queries | Add DB indexes on projects table | Analytics |
-| P10: Prompt versioning without correlation | Extract prompt from generator.ts | Prompt versioning |
-| P11: Monitoring without fixing queue | Fix race condition, fix polling | Queue monitoring |
-| P12: Background rendering resource starvation | None, but enforce resource budgets | Background rendering |
-| CC1: Features on broken foundation | Fix 3 critical bugs (Phase 0) | All phases |
-| CC2: No test coverage | Add minimal integration tests | All phases |
-| CC3: Monolith grows | Extract prompt, modularize generator.ts | All phases |
+Mistakes that cause degraded experience, operational burden, or conversion loss.
+
+---
+
+### P7: Supabase Storage Signed URL Expiry Breaks Client Experience
+
+**What goes wrong:** The claim flow generates signed URLs for uploaded files (logos, photos). Signed URLs have a default expiry (Supabase upload signed URLs expire after 2 hours). If the operator doesn't process the claim within the expiry window, the uploaded files become inaccessible. The operator clicks on the customization submission and sees broken image links.
+
+**Why it happens:** Signed URLs are time-limited by design. The upload signed URL expires in 2 hours (fixed, not configurable per Supabase docs). Download signed URLs have configurable expiry but developers often set them too short. The claim processing workflow might have hours or days between upload and operator review.
+
+**Consequences:** Uploaded logos and photos become inaccessible after expiry. Operator can't see what the client uploaded. Client has to re-upload, creating friction in an already-paid flow.
+
+**Warning signs:**
+- Broken image thumbnails in the operator's claim review interface
+- 400/403 errors when fetching uploaded assets after some time
+- Client uploads succeed but files appear missing later
+- Issue appears only for claims processed after a delay
+
+**Prevention:**
+- **Use a public bucket for client-uploaded assets** (logos, photos). These are not sensitive -- they are going on a public website. Eliminate signed URLs entirely for serving.
+- If privacy is required: **copy files from upload location to a permanent location** after upload confirmation. The upload uses a signed URL; the permanent storage uses a public bucket or long-lived signed URLs.
+- **Store the storage path, not the signed URL, in the database.** Generate fresh signed URLs at render time if needed. Never persist signed URLs.
+- **Set download signed URL expiry to match the use case.** For operator review: 7 days minimum. For client-facing confirmation page: 24 hours (they should have downloaded by then).
+- **Bucket design:**
+  - `client-uploads` (private bucket) -- temporary landing zone for new uploads via signed upload URLs
+  - `project-assets` (public bucket, already exists) -- permanent storage for processed assets
+
+**Phase/Step:** Bucket architecture decision must happen before the customization form is built.
+
+**Confidence:** HIGH -- Supabase docs confirm upload signed URLs are fixed at 2 hours, and the existing `project-assets` bucket already uses public URLs.
+
+---
+
+### P8: CTA Bar CSS Conflicts with AI-Generated Website Styles
+
+**What goes wrong:** The sticky "Claim This Website" CTA bar is injected into AI-generated HTML pages. These pages have their own Tailwind CSS, custom styles, z-index values, and layout assumptions. The CTA bar's styles conflict with the generated page's styles: the bar appears behind a hero image (z-index war), the bar's Tailwind classes are overridden by the page's global styles, or the bar pushes content down and breaks the page layout.
+
+**Why it happens:** Each generated page is a unique CSS environment. The CTA bar must work across hundreds of different generated layouts, color schemes, and z-index hierarchies. Generated pages may use `z-index: 9999` on hero sections, `position: fixed` on navigation, or `overflow: hidden` on the body -- all of which interfere with a sticky CTA bar.
+
+**Consequences:** CTA bar invisible (behind other elements), CTA bar visible but page content hidden behind it (lost content = lost conversion), CTA bar breaks mobile layout (scroll issues, tap target overlaps), ugly visual clash with the generated page's design.
+
+**Warning signs:**
+- CTA bar not visible on some generated pages
+- Content hidden behind the CTA bar at the bottom of pages
+- CTA bar overlaps with the page's own fixed navigation
+- Mobile users can't scroll to page footer
+- CTA bar text unreadable against certain page color schemes
+
+**Prevention:**
+- **Inject the CTA bar outside the generated page's DOM scope.** Do not inject into the generated HTML. Instead, wrap the page in an iframe and render the CTA bar as a sibling:
+  ```html
+  <div id="claim-wrapper">
+    <div id="cta-bar" style="position:fixed; bottom:0; z-index:2147483647;">
+      <!-- CTA content -->
+    </div>
+    <iframe src="/preview/{projectId}" style="width:100%; height:calc(100vh - 60px);">
+    </iframe>
+  </div>
+  ```
+  This completely isolates the CTA bar from the generated page's CSS. The iframe creates a separate stacking context.
+- **If iframe is not feasible:** Use Shadow DOM for the CTA bar to encapsulate its styles. Or inject the CTA with inline styles only (no classes), using `!important` and `z-index: 2147483647` (max 32-bit integer).
+- **Add bottom padding to the page body** equal to the CTA bar height so content is never hidden behind it.
+- **Test on 20+ generated pages** before shipping. Visual regression across different generated layouts is the only way to catch conflicts.
+- **Use a contrasting, semi-transparent background** for the CTA bar that works against any page color. Dark overlay with white text is safest.
+
+**Phase/Step:** CTA injection approach (iframe wrapper vs. inline injection) is an architectural decision for the first step of the claim flow phase.
+
+**Confidence:** MEDIUM -- the specific approach depends on how generated pages are served (static file vs. rendered route), but the z-index/CSS isolation problem is well-documented.
+
+---
+
+### P9: Countdown Timer Shows Different Expiry Times to Same User
+
+**What goes wrong:** The "5 days left to claim" countdown is computed on the server (using UTC) and displayed on the client (using local timezone). A claim created at 11 PM UTC on March 18th expires March 23rd UTC. A user in IST (UTC+5:30) sees the creation as March 19th local time and expects expiry on March 24th. The countdown shows "4 days" when the user expects "5 days." On the last day, the offer expires at 11 PM UTC (4:30 AM IST next day), so the user sees "Expired" when they check in the evening.
+
+Additionally: JavaScript's `setInterval` for countdown ticks drifts over time. After the page is open for hours (common if left in a browser tab), the countdown can be off by minutes. If the user's device clock is wrong, the countdown is wrong.
+
+**Why it happens:** Mixing server UTC timestamps with client-side Date() which uses local timezone. JavaScript timers are unreliable because the main thread can be blocked.
+
+**Consequences:** Users see inconsistent urgency messaging. "Expired" shown prematurely or late. Trust damage if the countdown says "2 hours left" but the offer is already expired when they try to pay.
+
+**Warning signs:**
+- Users in different timezones report different expiry times for the same claim
+- Countdown shows negative numbers or "expired" when the claim is still valid
+- Countdown timer drifts by minutes after being open for hours
+- QA reports "countdown shows 4 days but was created today"
+
+**Prevention:**
+- **Store expiry as a UTC ISO timestamp in the database.** `claim_expires_at: '2026-03-23T23:00:00Z'`. Never store as "5 days from creation."
+- **Compute countdown on the server** and send the target timestamp to the client. The client computes the difference between `now` and the target timestamp using `Date.now()` -- this avoids timezone interpretation.
+  ```typescript
+  // Server: send absolute expiry timestamp
+  const expiresAt = claim.expires_at // UTC ISO string from DB
+
+  // Client: compute remaining time
+  const remaining = new Date(expiresAt).getTime() - Date.now()
+  const days = Math.floor(remaining / (1000 * 60 * 60 * 24))
+  ```
+- **Re-sync the countdown periodically.** Every 60 seconds, re-compute from the target timestamp instead of decrementing a counter. This prevents drift.
+- **Handle expired state gracefully.** If `remaining < 0`, show "Offer expired" with an option to request a new offer (grace period), not just a dead page.
+- **Display timezone-aware dates.** When showing a specific date ("Offer expires March 23rd"), use `toLocaleDateString()` so it matches the user's local date.
+
+**Phase/Step:** Decide on UTC-only approach and build the countdown component before the claim landing page.
+
+**Confidence:** HIGH -- timezone issues in countdown timers are extensively documented across JavaScript libraries.
+
+---
+
+### P10: Geo-Detection Caches Stale Location for VPN Users
+
+**What goes wrong:** The geo-detection API call (for INR vs USD pricing) runs once on page load and caches the result. User is on a VPN routing through the US, sees USD pricing ($499). They disconnect the VPN, reload -- the cached result still shows USD. Or: the geo-detection API has a rate limit, hits it during a traffic spike, and all subsequent users see the fallback currency.
+
+**Why it happens:** IP geolocation APIs have inherent inaccuracy: VPN users (common in India -- 30%+ VPN usage), mobile carrier IPs (CGNAT), and corporate proxies all return wrong locations. Caching amplifies errors because a wrong detection is served repeatedly.
+
+**Consequences:** Indian customers see USD pricing and don't convert (pricing mismatch). US customers see INR pricing and get confused. Revenue loss from showing wrong pricing to the wrong audience.
+
+**Warning signs:**
+- Indian users reporting USD pricing
+- Conversion rate significantly different between currencies
+- Geo-detection API returning same country for all users after rate limit
+- Users manually requesting currency switch (indicates wrong detection)
+
+**Prevention:**
+- **Always show both pricing options.** Display INR pricing prominently with a small "International pricing in USD" toggle. Don't hide the alternative.
+- **Use Vercel's `x-vercel-ip-country` header** (available on Vercel deployments) as the primary signal -- it is free, has no rate limit, and does not require an external API call. Fall back to an IP API only if the header is missing.
+  ```typescript
+  // In server component or API route
+  const country = req.headers.get('x-vercel-ip-country') || 'IN' // default to INR
+  const currency = country === 'IN' ? 'INR' : 'USD'
+  ```
+- **Cache per-session, not globally.** Store the detected currency in a cookie so it persists across page loads for the same user but doesn't affect other users.
+- **Allow manual override.** A currency toggle that persists via cookie. If geo-detection is wrong, the user can fix it themselves.
+- **Default to INR.** The primary market is India. If detection fails, default to the primary market. A wrong default to INR is less harmful than a wrong default to USD (INR customers convert; USD customers who should see INR will toggle).
+
+**Phase/Step:** Implement in the claim landing page. Use Vercel headers first; defer external geo-API to later if needed.
+
+**Confidence:** MEDIUM -- Vercel's `x-vercel-ip-country` header behavior confirmed in Vercel docs. VPN prevalence in India is estimated, not precisely measured.
+
+---
+
+### P11: Supabase Storage CORS Blocks Direct Client Uploads
+
+**What goes wrong:** The claim flow customization form allows clients to upload logos and photos directly to Supabase Storage using signed upload URLs. The browser makes a PUT request to the Supabase Storage URL, but the preflight (OPTIONS) request is blocked by CORS because the Storage bucket's CORS policy doesn't include the app's domain. The upload fails silently or with an opaque "Failed to fetch" error.
+
+**Why it happens:** Supabase Storage CORS configuration is separate from the Supabase API CORS settings. Multiple GitHub issues (#29421, #221, #1662) document this exact problem. The Supabase JS client handles CORS for its own API calls, but signed URL uploads bypass the client and make direct HTTP requests to the storage endpoint.
+
+**Consequences:** File uploads fail from the browser. No error details visible to the user (CORS errors are opaque). Client can't complete the customization form. Operator receives incomplete claims.
+
+**Warning signs:**
+- Upload spinner spins forever, then shows generic error
+- Browser console shows "Access to fetch at ... from origin ... has been blocked by CORS policy"
+- Uploads work from Postman/curl but fail from the browser
+- Uploads work on localhost but fail on the deployed domain
+
+**Prevention:**
+- **Route uploads through an API route instead of direct-to-storage.** Client sends the file to `/api/claims/upload`, the server uploads to Supabase using the service role key (bypasses CORS entirely).
+  ```typescript
+  // /api/claims/upload/route.ts
+  export async function POST(req: NextRequest) {
+    const formData = await req.formData()
+    const file = formData.get('file') as File
+    // Validate, then upload server-side using admin client
+    const { data, error } = await supabase.storage
+      .from('client-uploads')
+      .upload(path, file, { cacheControl: '3600' })
+  }
+  ```
+- **If direct upload is needed:** Configure CORS on the Supabase Storage bucket via the Supabase dashboard (Settings > Storage > CORS). Add the production domain AND localhost for development.
+- **Test CORS on the deployed domain**, not just localhost. CORS issues only manifest when the origin differs from the storage host.
+- **Provide clear error messages.** If the upload fails, show "Upload failed. Please try a smaller file or different format" rather than a generic error. Log the actual error for debugging.
+
+**Phase/Step:** Decide upload architecture (server-proxy vs. direct) before building the customization form. Server-proxy is simpler and avoids CORS entirely.
+
+**Confidence:** HIGH -- multiple Supabase GitHub issues confirm this exact CORS problem with signed URL uploads.
+
+---
+
+### P12: Test Mode Razorpay Keys Deployed to Production
+
+**What goes wrong:** During development, Razorpay test mode keys (`rzp_test_...`) are used. When deploying to production, the developer forgets to switch to live mode keys (`rzp_live_...`). All payments in production use the test gateway -- no real money is collected. Or the reverse: live keys are used in development, and test payments charge real cards.
+
+**Why it happens:** Razorpay generates completely separate key pairs for test and live modes. They look similar (`rzp_test_XXXX` vs `rzp_live_XXXX`). The switch requires updating both `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` plus the webhook secret, and re-registering webhook URLs in the Razorpay dashboard for the live mode.
+
+**Consequences:** Production collects no revenue (test mode). Or development testing charges real customers (live mode in dev). Webhook URLs registered for test mode don't fire in live mode and vice versa.
+
+**Warning signs:**
+- Payments "succeed" in production but no money appears in Razorpay account
+- Razorpay dashboard (live mode) shows zero transactions
+- Test mode dashboard shows production transactions
+- Webhook events not arriving after switching modes
+
+**Prevention:**
+- **Environment-based key selection with runtime validation:**
+  ```typescript
+  const isProduction = process.env.NODE_ENV === 'production'
+  const keyId = process.env.RAZORPAY_KEY_ID!
+
+  // Sanity check: test keys should not be in production
+  if (isProduction && keyId.startsWith('rzp_test_')) {
+    throw new Error('CRITICAL: Test mode Razorpay keys detected in production!')
+  }
+  if (!isProduction && keyId.startsWith('rzp_live_')) {
+    console.warn('WARNING: Live mode Razorpay keys detected in development!')
+  }
+  ```
+- **Separate Vercel environment variables.** Use Vercel's environment-specific variables: set test keys for "Preview" and "Development," live keys for "Production" only.
+- **Webhook URL registration checklist.** Both test and live modes have separate webhook configurations in the Razorpay dashboard. Create a deployment checklist that includes verifying webhook URLs for the correct mode.
+- **Add the key prefix to the health check.** Create an admin-only endpoint or dashboard indicator that shows "Razorpay: LIVE MODE" or "Razorpay: TEST MODE" visibly.
+
+**Phase/Step:** Add validation at Razorpay SDK initialization. Include in deployment checklist.
+
+**Confidence:** HIGH -- Razorpay documentation explicitly states test and live modes have separate keys and webhook configurations.
+
+---
+
+### P13: Claim Landing Page Loads Too Slowly on Mobile (Kills Conversions)
+
+**What goes wrong:** The claim landing page includes a live website preview (heavy iframe), pricing tables, trust elements, and domain options. On a mid-range Indian phone over 4G, the page takes 5-8 seconds to load. 53% of mobile visitors abandon pages that take longer than 3 seconds. The conversion page is the highest-value page in the entire product, and every 100ms of latency costs conversions.
+
+**Why it happens:** The generated website preview is the heaviest element -- it loads React, ReactDOM, and Babel via CDN inside an iframe. The existing HTML boilerplate (html-boilerplate.ts) loads 3 CDN scripts synchronously. The claim page also needs to fetch claim data, pricing, and trust elements from the database.
+
+**Consequences:** Mobile conversion rate drops significantly. Every second of additional load time compounds the loss. The entire revenue model depends on this page converting.
+
+**Warning signs:**
+- Google PageSpeed Insights scores below 50 on mobile
+- High bounce rate on the claim landing page (>60%)
+- Significant drop-off between page view and payment initiation
+- Users on WhatsApp links reporting "page won't load"
+
+**Prevention:**
+- **Use a static screenshot for the preview, not a live iframe.** Generate a screenshot during site creation (or on first claim page visit) and serve as an optimized WebP image. Lazy-load the interactive preview below the fold or behind a "See live preview" button.
+- **Server-side render the claim page.** Use Next.js server components for all above-the-fold content (pricing, CTA, trust badges). No client JavaScript needed for the initial view.
+- **Optimize images aggressively:** WebP format, max 100KB for hero screenshot, lazy-load everything below the fold. Use Next.js `<Image>` component with appropriate `sizes` and `priority`.
+- **Minimize JavaScript.** The claim page needs minimal interactivity (plan selection, pay button). Do not load Monaco Editor, dashboards, or admin components. Keep the page under 100KB of JS.
+- **Set aggressive caching.** Static assets (trust badges, plan icons) should have long cache headers. The claim data itself can have a short cache (revalidate on webhook).
+- **Preload critical resources.** Use `<link rel="preload">` for the hero screenshot and the Razorpay checkout script.
+
+**Phase/Step:** Performance budget should be established before the claim page is built. Target: LCP < 2.5s on 4G.
+
+**Confidence:** HIGH -- page load impact on conversion is extensively studied (Google, Unbounce benchmarks).
+
+---
+
+### P14: Mixing Public Client Routes with Admin Routes Breaks Either Protection or Layout
+
+**What goes wrong:** The existing app has admin-only pages (`/dashboard`, `/editor`) with no authentication (single trusted operator). Adding public client pages (`/claim/[id]`, `/confirm/[id]`) creates a routing problem: the admin pages must NOT be accessible to the public, and the client pages must NOT require authentication. Applying middleware-based route protection to `/dashboard/*` breaks the existing no-auth workflow if implemented incorrectly. Sharing the root layout means client pages inherit admin styling (sidebar, header) or admin pages inherit client styling (minimal, marketing-focused).
+
+**Why it happens:** The existing app was built as an internal tool with zero authentication. Adding public-facing pages requires drawing a boundary that didn't exist before. Next.js App Router's layout inheritance means child routes inherit parent layouts unless explicitly separated.
+
+**Consequences:** Admin dashboard accessible to anyone who guesses the URL (security). Client pages showing admin navigation (confusing UX). Layout conflicts causing hydration errors when different layouts share state. SEO metadata from admin pages leaking into search engines.
+
+**Warning signs:**
+- Client can navigate to `/dashboard` from the claim page
+- Claim page shows admin sidebar or navigation
+- Search engines index `/dashboard` or `/editor` pages
+- Different `<html>` or `<body>` attributes needed for admin vs. client cause hydration mismatches
+
+**Prevention:**
+- **Use Next.js Route Groups to separate concerns:**
+  ```
+  app/
+    (admin)/
+      layout.tsx       -- admin layout with sidebar, navigation
+      dashboard/
+        page.tsx
+      editor/
+        page.tsx
+    (client)/
+      layout.tsx       -- minimal client layout, mobile-first
+      claim/
+        [id]/page.tsx
+      confirm/
+        [id]/page.tsx
+    layout.tsx           -- root layout (shared HTML, fonts, global CSS only)
+  ```
+- **Add middleware for admin protection.** Even basic protection (check for a session cookie or a simple bearer token) prevents casual access:
+  ```typescript
+  // middleware.ts
+  export function middleware(req: NextRequest) {
+    if (req.nextUrl.pathname.startsWith('/dashboard') ||
+        req.nextUrl.pathname.startsWith('/editor')) {
+      const token = req.cookies.get('admin_token')
+      if (!token) {
+        return NextResponse.redirect(new URL('/claim/unauthorized', req.url))
+      }
+    }
+  }
+  ```
+- **Add `noindex` to admin pages.** Even with middleware, add `<meta name="robots" content="noindex, nofollow">` to the admin layout.
+- **SEO metadata only on client pages.** The `(client)` layout should have OG tags, structured data, and a sitemap. The `(admin)` layout should suppress all SEO.
+- **Different layout needs:** Client pages need mobile-first, fast-loading, minimal JS. Admin pages need Monaco editor, complex components, desktop-optimized. Route groups ensure they don't share layout components.
+
+**Phase/Step:** Route group restructuring should happen as the first architectural step of v2.0, before any claim pages are built. This is a one-time refactor.
+
+**Confidence:** HIGH -- Next.js route groups are the documented solution for this exact problem.
+
+---
+
+## Minor Pitfalls
+
+Issues that cause developer confusion, minor bugs, or suboptimal behavior.
+
+---
+
+### P15: OG Image Generation Fails or Shows Stale Preview
+
+**What goes wrong:** The claim page's Open Graph image (shared via WhatsApp/email) shows a broken image, a generic placeholder, or a stale version of the website. Since prospects arrive via shared links, the OG image is their first impression of the product.
+
+**Prevention:**
+- Generate OG screenshots during site creation or approval, not on-demand during claim page load.
+- Store OG images as static assets in Supabase Storage (public bucket).
+- Use Next.js `generateMetadata()` with the stored image URL.
+- Set appropriate cache headers -- OG images rarely change after generation.
+- Test with the WhatsApp link previewer and Facebook Sharing Debugger. They have their own caching behavior.
+
+**Phase/Step:** OG image generation should be part of the site generation pipeline or a post-approval hook.
+
+---
+
+### P16: Concurrent File Uploads Exhaust Supabase Connection Pool
+
+**What goes wrong:** The customization form allows uploading logo, 3-5 photos, and possibly a favicon simultaneously. Each upload uses a separate Supabase connection. With `Promise.all()` on 5+ uploads, plus the claim page polling for status, the connection pool (50 connections on Supabase free tier) gets stressed if multiple clients are uploading simultaneously.
+
+**Prevention:**
+- **Sequential uploads with progress indicator.** Upload one file at a time with a progress bar showing "2 of 5 uploaded." This uses 1 connection at a time.
+- **Limit concurrent uploads to 2.** Use a semaphore pattern if parallel upload speed is needed.
+- **Use server-side upload route** that reuses a single admin Supabase client (connection pooling).
+- **Compress images client-side** before upload to reduce transfer time and storage usage. Use canvas API to resize to max 2000px width.
+
+**Phase/Step:** Upload queue/sequencing should be built into the customization form component.
+
+---
+
+### P17: Razorpay Checkout Script Loaded Globally Instead of On-Demand
+
+**What goes wrong:** The Razorpay checkout.js script (~90KB) is loaded in the root layout via a `<script>` tag, adding to the bundle size of every page including admin pages that never use payments.
+
+**Prevention:**
+- Load the Razorpay script dynamically only on pages that need it (claim page, before opening checkout):
+  ```typescript
+  const loadRazorpay = () => new Promise((resolve) => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = resolve
+    document.body.appendChild(script)
+  })
+  ```
+- Preload the script on the claim page using `<link rel="preload">` for faster checkout opening.
+
+---
+
+### P18: Expired Claim Handling Shows Dead End Instead of Re-engagement
+
+**What goes wrong:** After the 5-day countdown expires, the claim page shows "Offer expired" with no next step. The prospect who was interested but delayed has no way to re-engage. A dead page is a wasted lead.
+
+**Prevention:**
+- Show "Offer expired" with a "Request new offer" button that creates a new claim with a fresh countdown.
+- Implement a grace period (additional 48 hours) where the claim is technically expired but still payable at the original price.
+- Track expired claims separately for follow-up outreach by the operator.
+- Never delete expired claims -- keep the data for conversion analytics.
+
+**Phase/Step:** Expired state handling should be designed alongside the countdown timer, not as an afterthought.
+
+---
+
+### P19: Webhook Endpoint Unprotected Against Replay Attacks
+
+**What goes wrong:** An attacker captures a valid Razorpay webhook payload (including its valid signature) and replays it hours later to trigger duplicate claim processing, or to reactivate an expired claim.
+
+**Prevention:**
+- **Check the `x-razorpay-event-id` header.** Razorpay includes a unique event ID with each webhook. Store processed event IDs in the database. Reject duplicates.
+- **Verify timestamp freshness.** Reject webhooks where the event timestamp is more than 5 minutes old (accounts for network delay while preventing replay of old events).
+- **Idempotent processing.** Even if a replayed webhook passes validation, the handler should be a no-op if the claim is already in a terminal state (paid, expired, cancelled).
+
+---
+
+### P20: Mobile Layout Breaks When Razorpay Checkout Opens
+
+**What goes wrong:** Razorpay's checkout opens as a modal/popup overlay. On mobile browsers (especially in-app browsers from WhatsApp), the popup may fail to open, open behind the current page, or cause viewport issues when it closes (page zoomed in, scroll position lost).
+
+**Prevention:**
+- Use Razorpay's `redirect` option instead of popup mode for mobile:
+  ```typescript
+  const options = {
+    // ... other options
+    handler: function(response) { /* popup mode success */ },
+    // OR for redirect mode:
+    callback_url: `${process.env.NEXT_PUBLIC_URL}/confirm/${claimId}`,
+  }
+  ```
+- Detect mobile/in-app browsers and force redirect mode.
+- Test in WhatsApp's in-app browser specifically (this is the primary traffic source).
+- Save claim state before opening checkout so the user can resume if the browser closes.
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Severity | Mitigation |
+|-------------|---------------|----------|------------|
+| Route restructuring | P14: Layout conflicts between admin and client pages | Critical | Implement route groups before any claim pages |
+| CTA injection | P8: CSS conflicts with generated sites | Moderate | Use iframe isolation or Shadow DOM for CTA bar |
+| Razorpay integration | P1: Raw body parsing breaks signature verification | Critical | Use `req.text()` not `req.json()` for webhook route |
+| Razorpay integration | P2: Paise conversion errors | Critical | Store all prices in paise, single source of truth |
+| Razorpay integration | P3: Webhook/redirect race condition | Critical | Poll on confirmation page, don't rely on redirect alone |
+| Razorpay integration | P4: Key secret exposed client-side | Critical | Never use `NEXT_PUBLIC_` prefix for secret key |
+| Razorpay integration | P5: Double charges | Critical | Idempotency key on order creation, DB constraint |
+| Razorpay integration | P12: Test keys in production | Moderate | Runtime key prefix validation |
+| Payment flow | P20: Mobile checkout popup fails | Moderate | Use redirect mode for mobile browsers |
+| File uploads | P6: MIME spoofing bypass | Critical | Server-side magic byte validation |
+| File uploads | P11: CORS blocks direct uploads | Moderate | Route through server API, skip direct upload |
+| File uploads | P16: Connection pool exhaustion | Minor | Sequential upload with progress indicator |
+| Supabase Storage | P7: Signed URL expiry | Moderate | Public bucket for assets, store paths not URLs |
+| Geo-detection | P10: VPN/cache stale detection | Moderate | Vercel header first, manual currency toggle, default INR |
+| Countdown timer | P9: Timezone mismatch | Moderate | UTC timestamps, client-side relative computation |
+| Claim landing page | P13: Slow mobile loading | Moderate | Screenshot preview, SSR, minimal JS, LCP < 2.5s |
+| Claim landing page | P15: Broken OG images | Minor | Pre-generate during site creation, static storage |
+| Expired claims | P18: Dead-end expired page | Minor | Re-engagement flow with grace period |
+| Webhook security | P19: Replay attacks | Minor | Event ID deduplication, timestamp check |
+
+---
+
+## Cross-Cutting Concerns for v2.0
+
+### CC1: Internal Tool Mindset Applied to Client-Facing Pages
+
+**The mistake:** Building client pages with the same patterns as admin pages -- no caching, no performance budget, no error states, no mobile testing, no SEO. The admin dashboard is used by one person on a desktop with fast internet. The claim pages are used by strangers on phones over 4G via WhatsApp links.
+
+**Prevention:** Establish fundamentally different quality bars: client pages must have <3s load time on 4G, work on 320px viewports, have proper error states, and include SEO metadata. Admin pages have none of these requirements.
+
+### CC2: No Automated Webhook Testing Infrastructure
+
+**The mistake:** Manually testing webhooks by making real Razorpay payments. This is slow, doesn't cover edge cases (partial captures, refunds, disputes), and requires toggling test/live mode.
+
+**Prevention:**
+- Use Razorpay's webhook test functionality in the dashboard to send test webhook events.
+- Build a local webhook testing script that sends signed payloads to the webhook endpoint.
+- Create test fixtures for each webhook event type (`payment.captured`, `payment.failed`, `order.paid`).
+
+### CC3: No Staging Environment for Payment Testing
+
+**The mistake:** Testing payments in production because there is no staging environment, leading to real charges during testing.
+
+**Prevention:** Use Razorpay test mode keys on the Vercel preview deployment (separate environment variables per Vercel environment). Test mode accepts card number `4111 1111 1111 1111` for testing without real charges.
+
+---
+
+## Sources
+
+### Razorpay Integration
+- [Razorpay Webhook Best Practices](https://razorpay.com/docs/webhooks/best-practices/) -- Official webhook documentation
+- [Razorpay Webhook Validation](https://razorpay.com/docs/webhooks/validate-test/) -- Signature verification process
+- [Razorpay Webhook FAQs](https://razorpay.com/docs/webhooks/faqs/) -- Retry behavior, event IDs
+- [Razorpay Orders API](https://razorpay.com/docs/api/orders/create/) -- Amount in paise requirement
+- [Razorpay Test and Live Modes](https://razorpay.com/docs/payments/dashboard/test-live-modes/) -- Mode switching
+- [Razorpay Webhook Documentation Review](https://www.svix.com/blog/reviewing-razorpay-webhook-docs/) -- Independent review of webhook docs
+- [Razorpay Webhooks with Node.js](https://sreyas.com/blog/razorpay-webhooks-with-node-js/) -- HMAC-SHA256 implementation
+- [Razorpay Node SDK Issue #434](https://github.com/razorpay/razorpay-node/issues/434) -- Webhook validation bug
+- [Razorpay Next.js Integration Guide](https://dev.to/hanuchaudhary/how-to-integrate-razorpay-in-nextjs-1415-with-easy-steps-fl7) -- Integration patterns
+
+### Supabase Storage
+- [Supabase Storage Access Control](https://supabase.com/docs/guides/storage/security/access-control) -- RLS policies for storage
+- [Supabase Storage Buckets](https://supabase.com/docs/guides/storage/buckets/fundamentals) -- Public vs private buckets
+- [Supabase CORS Issues - GitHub #29421](https://github.com/supabase/supabase/issues/29421) -- Direct upload CORS problems
+- [Supabase Signed Upload URLs](https://supabase.com/docs/reference/javascript/storage-from-createsigneduploadurl) -- 2-hour expiry limitation
+- [Supabase Storage Tradeoffs Discussion #6458](https://github.com/orgs/supabase/discussions/6458) -- Public bucket vs signed URL
+
+### Next.js Architecture
+- [Next.js Route Groups](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups) -- Admin/client layout separation
+- [Next.js Layouts and Pages](https://nextjs.org/docs/app/getting-started/layouts-and-pages) -- Layout inheritance
+- [Next.js Raw Body for Webhooks - GitHub #60002](https://github.com/vercel/next.js/issues/60002) -- Raw body access in App Router
+- [CVE-2025-29927](https://jfrog.com/blog/cve-2025-29927-next-js-authorization-bypass/) -- Middleware authorization bypass vulnerability
+
+### Payment Security
+- [Idempotency in Payment APIs](https://medium.com/@ashishgupta_34644/idempotency-in-payment-apis-ensuring-safe-retries-without-double-charges-b5a2baa5ed0b) -- Double charge prevention patterns
+- [Stripe Idempotency Keys](https://singhajit.com/how-stripe-prevents-double-payment/) -- Industry patterns applicable to Razorpay
+
+### Mobile Performance
+- [Mobile Landing Page Optimization 2025](https://www.fermatcommerce.com/post/mobile-landing-page) -- Load time impact on conversions
+- [Landing Page Best Practices](https://landingi.com/landing-page/41-best-practices/) -- Conversion optimization patterns
+
+### Geo-Detection
+- [IP Geolocation Best Practices 2025](https://medium.com/@eshakamran569/the-ultimate-guide-to-ip-geolocation-api-how-it-works-why-it-matters-and-best-practices-for-2025-e2a7f6d7ec20) -- VPN detection limitations, caching strategies
 
 ---
 
 *Research completed: 2026-03-18*
-*Sources: PROJECT.md, CONCERNS.md, ARCHITECTURE.md, STRUCTURE.md, INTEGRATIONS.md, STACK.md, CONVENTIONS.md*
+*Scope: v2.0 Client Claim Flow pitfalls for adding payment/uploads/client pages to existing Next.js + Supabase internal tool*
