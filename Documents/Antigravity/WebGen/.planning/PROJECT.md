@@ -39,22 +39,23 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - ✓ Prompt versioning (versioned system prompts, tagged to generations) — v1.0
 - ✓ Queue health and stuck job admin UI — v1.0
 - ✓ Project data prefetch cache for instant navigation — v1.0
+<!-- v2.0: Client Claim Flow (completed 2026-03-19) -->
+- ✓ Sticky CTA bar with countdown on every generated site — v2.0
+- ✓ Claim landing page with preview, geo-detected pricing, domain options, trust elements — v2.0
+- ✓ Razorpay payment with HMAC webhook, idempotent processing, GST for India — v2.0
+- ✓ Post-payment customization form (logo, colors, contacts, photos, text changes) — v2.0
+- ✓ Booking system setup for Pro plan clients — v2.0
+- ✓ Strategy call upsell with Cal.com (free for Pro, paid for Standard) — v2.0
+- ✓ Confirmation page with timeline, polling, and support contacts — v2.0
+- ✓ Geo-detection for INR/USD pricing via Vercel headers — v2.0
+- ✓ Domain options (existing domain, buy new, free subdomain) — v2.0
+- ✓ Supabase Storage file uploads (logos, photos) via server-proxy — v2.0
+- ✓ Claim funnel analytics with 7 tracked events and admin dashboard — v2.0
+- ✓ Expired offer handling with re-request form — v2.0
 
 ### Active
 
-<!-- v2.0: Client Claim Flow -->
-- [ ] Sticky "Claim This Website" CTA bar with countdown on every generated site
-- [ ] Claim landing page with site preview, pricing, domain options, trust elements
-- [ ] Razorpay payment integration (INR pricing, webhook verification)
-- [ ] Post-payment customization form (logo, colors, contacts, photos, text changes)
-- [ ] Booking system setup for Pro plan clients
-- [ ] Strategy call upsell (free for Pro, paid for Standard)
-- [ ] Confirmation page with timeline and next steps
-- [ ] Geo-detection for INR/USD pricing display
-- [ ] Domain options (existing domain, buy new, free subdomain)
-- [ ] Supabase Storage file uploads (logos, client photos) via signed URLs
-- [ ] Claim flow analytics and conversion tracking
-- [ ] Expired offer handling (grace states, re-request flow)
+(None — planning next milestone)
 
 ### Out of Scope
 
@@ -62,46 +63,35 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - Public-facing API — no external consumers
 - Rate limiting on admin — trusted local use only
 - Mobile admin app — desktop browser workflow for admin
-- CI/CD pipeline — deploy manually or via Vercel
 - Stripe payments — Razorpay only for all markets
-- Domain registration API integration — manual domain setup via DNS instructions
-- Automated site deployment to hosting — manual for now
+- Domain registration API — manual DNS instructions for now
+- Automated site deployment — manual for now
 - CMS / client self-edit — operator handles all changes
-
-## Current Milestone: v2.0 Client Claim Flow
-
-**Goal:** Turn every generated website into a revenue opportunity with a 6-step client-facing claim flow: CTA injection → claim landing page → Razorpay payment → customization form → upsell → confirmation.
-
-**Target features:**
-- Sticky CTA bar with "5 days left to claim" countdown on generated sites
-- High-converting claim landing page (preview, pricing, domain options, trust)
-- Razorpay payment (Standard ₹4,999 / Pro ₹9,999, USD fallback $499 / $1,299)
-- Post-payment customization form with file uploads
-- Strategy call upsell
-- Confirmation with delivery timeline
-- Full conversion funnel analytics
+- Email notifications (receipts, reminders) — no email service in stack yet
+- Admin notification on customization submit — deferred, operator monitors via dashboard/logs
 
 ## Context
 
-- Brownfield project with established Next.js + Supabase + AI SDK stack
-- v1.0 shipped 5 phases (15 plans) covering generation engine, instrumentation, quality, autopilot, UX
-- Editor page is the most complex component (~56KB, client-side heavy)
-- Generator decomposed into focused modules in v1.0
-- No test suite exists — relies on manual testing and type safety
-- Existing tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs
-- New tables needed: claims, customizations
-- Client-facing pages must be mobile-first (WhatsApp/email prospects open on phone)
-- Site preview screenshots needed for claim page hero (generate during site creation)
+- Next.js App Router + Supabase + AI SDK stack
+- v1.0 shipped generation engine (5 phases, 15 plans) — 2026-03-18
+- v2.0 shipped client claim flow (5 phases, 14 plans) — 2026-03-19
+- Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow
+- Tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs, claims, customizations, claim_events
+- Supabase Storage: site-screenshots (public), claim-uploads (private)
+- Razorpay for payments (INR primary, USD secondary)
+- Client pages are mobile-first, SSR, Inter font
+- Admin pages use Geist font, desktop-optimized
+- No test suite — relies on TypeScript safety and manual testing
+- CTA bar uses sendBeacon for cross-origin analytics tracking
 
 ## Constraints
 
-- **Single operator**: Admin features for one power user, client pages for prospects
+- **Single operator**: Admin for one power user, client pages for prospects
 - **Razorpay only**: All payments through Razorpay (INR primary, USD secondary)
-- **Existing schema**: Extend with new tables (claims, customizations), don't modify existing
+- **Existing schema**: Extend with new tables, don't modify existing
 - **No breaking changes**: Generation pipeline and admin dashboard must keep working
-- **Next.js App Router**: Server-side render client-facing pages for speed and SEO
 - **Mobile-first client pages**: Prospects arrive from WhatsApp/email on phones
-- **Supabase Storage**: File uploads (logos, photos) via signed URLs, not proxied through API
+- **Supabase Storage**: File uploads via server-proxy (not direct signed URLs — CORS issues)
 
 ## Key Decisions
 
@@ -110,12 +100,16 @@ Maximize the number of high-quality websites generated per hour with minimal man
 | Keep existing Supabase schema | Avoid migration complexity, extend with new columns/tables | ✓ Good |
 | All 12 v1.0 improvements in scope | Comprehensive upgrade of internal tool | ✓ Good |
 | Maintain existing generation pipeline | Can't break what works while adding features | ✓ Good |
-| Rename project WebGen → Flogen | Product evolution from generator to full platform | — Pending |
-| Razorpay only (no Stripe) | Simplified payment integration, single provider | — Pending |
-| 5-day claim expiry window | Creates urgency without being too aggressive | — Pending |
-| Standard ₹4,999 / Pro ₹9,999 pricing | Competitive for Indian market, Pro includes booking system | — Pending |
-| Supabase Storage for file uploads | Already using Supabase, signed URLs for direct upload | — Pending |
-| Mobile-first client pages | Prospects arrive via WhatsApp/email on phones | — Pending |
+| Rename project WebGen → Flogen | Product evolution from generator to full platform | ✓ Good |
+| Razorpay only (no Stripe) | Simplified payment integration, single provider | ✓ Good |
+| 5-day claim expiry window | Creates urgency without being too aggressive | ✓ Good |
+| Standard ₹4,999 / Pro ₹9,999 pricing | Competitive for Indian market, Pro includes booking | ✓ Good |
+| Server-proxy uploads (not signed URLs) | Eliminates CORS issues with Supabase Storage | ✓ Good |
+| Mobile-first client pages | Prospects arrive via WhatsApp/email on phones | ✓ Good |
+| GST as separate line item for INR | Transparent pricing for Indian clients | ✓ Good |
+| Cal.com iframe (not npm package) | React 19 peer dep incompatibility with @calcom/embed-react | ✓ Good |
+| SVG uploads rejected | Security risk (XSS vector), accept PNG/JPG/WebP only | ✓ Good |
+| CTA beacon tracking via sendBeacon + GET pixel | Cross-origin analytics from injected CTA bar | ✓ Good |
 
 ---
-*Last updated: 2026-03-18 after v2.0 milestone start*
+*Last updated: 2026-03-19 after v2.0 milestone*
