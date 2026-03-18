@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 6 of 10 (Foundation and CTA Injection) -- first phase of v2.0
-Plan: 1 of 3 in current phase (06-01 complete)
+Plan: 2 of 3 in current phase (06-02 complete)
 Status: Executing
-Last activity: 2026-03-18 -- completed 06-01 (data foundation)
+Last activity: 2026-03-18 -- completed 06-02 (route group restructure)
 
-Progress: [###########.........] 55% (v2.0 Phase 6: 1/3 plans complete)
+Progress: [############........] 60% (v2.0 Phase 6: 2/3 plans complete)
 
 ## Performance Metrics
 
@@ -38,12 +38,13 @@ Progress: [###########.........] 55% (v2.0 Phase 6: 1/3 plans complete)
 - Phases: 5/5 complete
 
 **v2.0:**
-- Total plans completed: 1
+- Total plans completed: 2
 - Phases: 0/5 complete
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 06 | 01 | 2min | 2 | 4 |
+| 06 | 02 | 37min | 2 | 32 |
 
 ## Accumulated Context
 
@@ -63,6 +64,9 @@ Relevant to current work:
 - [06-01]: Default currency INR with x-vercel-ip-country header fallback
 - [06-01]: Separate pricing files: claim-pricing.ts for client plans, pricing.ts for AI costs
 - [06-01]: ON CONFLICT DO NOTHING for idempotent storage bucket creation
+- [06-02]: Dashboard layout becomes (admin)/ group layout wrapping both /dashboard and /editor
+- [06-02]: Claim page uses UUID as slug (not custom slug) per research
+- [06-02]: Route groups: (admin)/ for internal, (client)/ for customer-facing
 
 ### Pending Todos
 
@@ -80,5 +84,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 06-01-PLAN.md (data foundation)
+Stopped at: Completed 06-02-PLAN.md (route group restructure)
 Resume file: None

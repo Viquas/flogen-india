@@ -105,7 +105,7 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 
 - [x] **INFRA-01**: New Supabase tables: `claims` and `customizations` with proper foreign keys to existing `projects` table
 - [x] **INFRA-02**: Supabase Storage buckets: `site-screenshots` and `claim-uploads` with appropriate access policies
-- [ ] **INFRA-03**: Route group restructuring: `(admin)/` for dashboard/editor, `(client)/` for claim flow pages
+- [x] **INFRA-03**: Route group restructuring: `(admin)/` for dashboard/editor, `(client)/` for claim flow pages
 - [ ] **INFRA-04**: Screenshot generation for site previews (generated during site creation, stored in Supabase Storage)
 - [x] **INFRA-05**: Geo-detection utility using Vercel's `x-vercel-ip-country` header with USD fallback
 
@@ -241,7 +241,7 @@ Deferred to future milestone. Tracked but not in current roadmap.
 |-------------|-------|--------|
 | INFRA-01 | Phase 6 | Complete |
 | INFRA-02 | Phase 6 | Complete |
-| INFRA-03 | Phase 6 | Pending |
+| INFRA-03 | Phase 6 | Complete |
 | INFRA-04 | Phase 6 | Pending |
 | INFRA-05 | Phase 6 | Complete |
 | CTA-01 | Phase 6 | Pending |
