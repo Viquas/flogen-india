@@ -433,6 +433,36 @@ export type Database = {
                     }
                 ]
             }
+            claim_events: {
+                Row: {
+                    id: string
+                    site_slug: string
+                    event_type: string
+                    ip: string | null
+                    user_agent: string | null
+                    metadata: Json
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    site_slug: string
+                    event_type: string
+                    ip?: string | null
+                    user_agent?: string | null
+                    metadata?: Json
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    site_slug?: string
+                    event_type?: string
+                    ip?: string | null
+                    user_agent?: string | null
+                    metadata?: Json
+                    created_at?: string
+                }
+                Relationships: []
+            }
             claims: {
                 Row: {
                     id: string

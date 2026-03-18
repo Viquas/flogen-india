@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, Settings, Plus, BarChart3 } from "lucide-react"
+import { LayoutDashboard, Layers, Settings, Plus, BarChart3, TrendingDown } from "lucide-react"
 
 const items = [
     {
@@ -20,6 +20,11 @@ const items = [
         title: "Analytics",
         href: "/dashboard/analytics",
         icon: BarChart3,
+    },
+    {
+        title: "Funnel",
+        href: "/dashboard/funnel",
+        icon: TrendingDown,
     },
     {
         title: "Config",

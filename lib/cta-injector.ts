@@ -13,6 +13,7 @@ export interface CtaConfig {
     businessName: string
     claimUrl: string
     expiresAt: string // ISO 8601 timestamp
+    siteSlug: string  // project ID for analytics tracking
 }
 
 /**
@@ -34,6 +35,7 @@ function buildCtaBarHtml(config: CtaConfig): string {
     const safeName = escapeHtml(config.businessName)
     const safeUrl = escapeHtml(config.claimUrl)
     const safeExpires = escapeHtml(config.expiresAt)
+    const safeSlug = escapeHtml(config.siteSlug)
 
     return `
 <!-- Flogen CTA Bar -->
@@ -133,6 +135,40 @@ function buildCtaBarHtml(config: CtaConfig): string {
     // Run immediately, then every 60 seconds
     updateCountdown();
     intervalId = setInterval(updateCountdown, 60000);
+
+    // --- Analytics beacon ---
+    var slug = "${safeSlug}";
+    var analyticsUrl = "";
+    try {
+        var btnHref = document.getElementById("flogen-cta-button").href;
+        if (btnHref && btnHref.indexOf("http") === 0) {
+            analyticsUrl = btnHref.split("/claim")[0];
+        }
+    } catch(e) {}
+    if (!analyticsUrl) {
+        try { analyticsUrl = window.location.origin; } catch(e) {}
+    }
+
+    function flogenTrack(evtType) {
+        if (!analyticsUrl || !slug) return;
+        var url = analyticsUrl + "/api/analytics/claim-event?slug=" + encodeURIComponent(slug) + "&event=" + encodeURIComponent(evtType);
+        try {
+            if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+                navigator.sendBeacon(url);
+            } else {
+                new Image().src = url;
+            }
+        } catch(e) {}
+    }
+
+    flogenTrack("preview_view");
+
+    var ctaBtn = document.getElementById("flogen-cta-button");
+    if (ctaBtn) {
+        ctaBtn.addEventListener("click", function() {
+            flogenTrack("cta_click");
+        });
+    }
 })();
 </script>
 <!-- /Flogen CTA Bar -->
