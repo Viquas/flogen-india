@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next"
+import { Inter } from "next/font/google"
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
     title: "Claim Your Website",
@@ -13,7 +16,7 @@ export const viewport: Viewport = {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="min-h-screen bg-white">
+        <div className={`${inter.variable} min-h-screen bg-white font-[family-name:var(--font-inter)]`}>
             {children}
         </div>
     )

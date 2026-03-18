@@ -10,6 +10,11 @@ export const DISPLAY_PRICING = {
     pro:      { INR: '9,999', USD: '1,299' },
 } as const
 
+export const HOSTING_PRICING = {
+    INR: { amount: 49900, display: '499' },
+    USD: { amount: 1000, display: '10' },
+} as const
+
 export const CURRENCY_SYMBOL = { INR: '\u20B9', USD: '$' } as const
 
 export const CLAIM_WINDOW_DAYS = 5
