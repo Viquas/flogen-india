@@ -1,5 +1,6 @@
 import { SidebarNav } from "@/components/dashboard/sidebar-nav"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { Toaster } from "sonner"
 
 export default function DashboardLayout({
     children,
@@ -24,6 +25,7 @@ export default function DashboardLayout({
                     </ErrorBoundary>
                 </div>
             </main>
+            <Toaster position="bottom-right" richColors />
         </div>
     )
 }

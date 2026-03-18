@@ -5,7 +5,7 @@ import { BadRequestError } from '@/lib/middleware/errors'
 
 export const POST = withApiMiddleware(
     async (req, { body }) => {
-        const { prompt, currentCode, currentJson, rules, model } = body as any
+        const { prompt, currentCode, currentJson, rules, model, projectId } = body as any
 
         if (!prompt) {
             throw new BadRequestError('Prompt is required')
@@ -24,6 +24,14 @@ export const POST = withApiMiddleware(
             const { code, updatedJson, patchCount, fallbackUsed, reasoning } =
                 await reviseWebsiteWithPatches(prompt, currentCode, parsedJson, rules, model)
 
+            // Fire-and-forget screenshot refresh
+            if (projectId) {
+                try {
+                    const { generateScreenshot } = await import('@/lib/screenshot')
+                    generateScreenshot(projectId, code).catch(() => {})
+                } catch {}
+            }
+
             return apiSuccess({
                 code,
                 updatedJson,
@@ -37,6 +45,14 @@ export const POST = withApiMiddleware(
         }
 
         const { code, updatedJson } = await reviseWebsite(prompt, currentCode, parsedJson, rules, model)
+
+        // Fire-and-forget screenshot refresh
+        if (projectId) {
+            try {
+                const { generateScreenshot } = await import('@/lib/screenshot')
+                generateScreenshot(projectId, code).catch(() => {})
+            } catch {}
+        }
 
         return apiSuccess({
             code,

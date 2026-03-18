@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckSquare, Square, RefreshCw, Rocket, Trash2 } from 'lucide-react'
+import { CheckSquare, Square, RefreshCw, Rocket, Trash2, CheckCircle } from 'lucide-react'
 
 interface BatchActionsProps {
     selectedCount: number
@@ -11,6 +11,7 @@ interface BatchActionsProps {
     onDeselectAll: () => void
     onRegenerateSelected: () => void
     onDeploySelected: () => void
+    onApproveSelected?: () => void
     isProcessing?: boolean
 }
 
@@ -21,6 +22,7 @@ export function BatchActions({
     onDeselectAll,
     onRegenerateSelected,
     onDeploySelected,
+    onApproveSelected,
     isProcessing,
 }: BatchActionsProps) {
     const allSelected = selectedCount === totalCount && totalCount > 0
@@ -51,6 +53,18 @@ export function BatchActions({
 
             {someSelected && (
                 <div className="flex items-center gap-2">
+                    {onApproveSelected && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onApproveSelected}
+                            disabled={isProcessing}
+                            className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        >
+                            <CheckCircle className="h-4 w-4" />
+                            Approve ({selectedCount})
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"

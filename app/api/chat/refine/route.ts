@@ -124,6 +124,12 @@ export async function POST(req: NextRequest) {
             )
         }
 
+        // Fire-and-forget screenshot refresh
+        try {
+            const { generateScreenshot } = await import('@/lib/screenshot')
+            generateScreenshot(projectId, code).catch(() => {})
+        } catch {}
+
         return NextResponse.json({ success: true, code })
     } catch (error) {
         console.error('Refinement error:', error)

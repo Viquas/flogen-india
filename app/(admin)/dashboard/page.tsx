@@ -38,6 +38,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const monthEndFull = endOfMonth(today).toISOString()
 
   let projects: any[] = []
+  let batchesMap: Record<string, { id: string; metadata: any; source: string; created_at: string }> = {}
   let activityCounts: Record<string, number> = {}
 
   let stats = {
@@ -62,7 +63,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ] = await Promise.all([
       supabase
         .from('projects')
-        .select('*')
+        .select('*, batches(id, metadata, source, created_at)')
         .gte('created_at', dayStart)
         .lte('created_at', dayEnd)
         .order('created_at', { ascending: false }),
@@ -98,6 +99,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       tableMissing = true
     } else if (projectsResponse.data) {
       projects = projectsResponse.data
+      // Extract unique batches from the joined data
+      for (const p of projects) {
+        if (p.batches && p.batch_id && !batchesMap[p.batch_id]) {
+          batchesMap[p.batch_id] = p.batches
+        }
+      }
     }
 
     stats = {
@@ -178,7 +185,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         </div>
 
-        <ProjectGrid projects={projects} />
+        <ProjectGrid projects={projects} batchesMap={batchesMap} />
       </div>
     </div>
   )

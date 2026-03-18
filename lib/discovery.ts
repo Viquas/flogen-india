@@ -248,7 +248,13 @@ export async function discoverBusinesses(config: DiscoveryConfig): Promise<Disco
     .insert({
       source: 'google-places',
       status: 'processing',
-      metadata: { query: primaryQuery, count: validPlaces.length },
+      metadata: {
+        query: primaryQuery,
+        count: validPlaces.length,
+        location: config.location || '',
+        industry: config.industry || '',
+        entries: maxResults,
+      },
     })
     .select()
     .single()

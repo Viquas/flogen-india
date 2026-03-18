@@ -9,9 +9,13 @@ import {
     XCircle,
     ChevronDown,
     ExternalLink,
+    RefreshCcw,
+    Loader2,
+    Trash2,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ErrorType } from "@/lib/ai/error-classifier"
+import { regenerateProject, fixWebsiteErrors } from "@/app/(admin)/dashboard/actions"
 
 interface BatchReportProps {
     runId: string
@@ -82,7 +86,31 @@ function groupByErrorType(projects: ProjectRow[]): Map<string, ProjectRow[]> {
 
 function ErrorTypeGroup({ errorType, projects }: { errorType: string; projects: ProjectRow[] }) {
     const [expanded, setExpanded] = useState(false)
+    const [isRetrying, setIsRetrying] = useState(false)
+    const [isFixing, setIsFixing] = useState(false)
     const label = ERROR_TYPE_LABELS[errorType] || errorType
+
+    const handleRetryAll = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (isRetrying) return
+        setIsRetrying(true)
+        try {
+            await Promise.allSettled(projects.map(p => regenerateProject(p.id)))
+        } finally {
+            setIsRetrying(false)
+        }
+    }
+
+    const handleFixAll = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (isFixing) return
+        setIsFixing(true)
+        try {
+            await Promise.allSettled(projects.map(p => fixWebsiteErrors(p.id)))
+        } finally {
+            setIsFixing(false)
+        }
+    }
 
     return (
         <div className="border border-red-100 rounded-md overflow-hidden">
@@ -93,9 +121,29 @@ function ErrorTypeGroup({ errorType, projects }: { errorType: string; projects: 
                 <span className="font-medium text-red-700">
                     {label} ({projects.length})
                 </span>
-                <ChevronDown
-                    className={`h-4 w-4 text-red-400 transition-transform ${expanded ? "rotate-180" : ""}`}
-                />
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleFixAll}
+                        disabled={isFixing}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 disabled:opacity-50"
+                        title={`Auto-fix all ${projects.length} ${label} errors`}
+                    >
+                        {isFixing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wrench className="h-3 w-3" />}
+                        Fix All
+                    </button>
+                    <button
+                        onClick={handleRetryAll}
+                        disabled={isRetrying}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 disabled:opacity-50"
+                        title={`Retry all ${projects.length} failed projects`}
+                    >
+                        {isRetrying ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCcw className="h-3 w-3" />}
+                        Retry All
+                    </button>
+                    <ChevronDown
+                        className={`h-4 w-4 text-red-400 transition-transform ${expanded ? "rotate-180" : ""}`}
+                    />
+                </div>
             </button>
             {expanded && (
                 <div className="divide-y divide-red-50">

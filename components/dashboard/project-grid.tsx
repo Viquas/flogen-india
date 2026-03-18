@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProjectCard } from './project-card'
 import { BatchActions } from './batch-actions'
+import { BatchGroup } from './batch-group'
 import { KeyboardHelpOverlay } from './keyboard-help-overlay'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 import { regenerateProjects, deployProjects, autoFixAllErrors, resetStuckProjects, searchProjects, approveProject, regenerateProject, fixWebsiteErrors } from '@/app/(admin)/dashboard/actions'
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input'
 
 interface Project {
     id: string
+    batch_id?: string | null
     business_data: {
         businessName: string
         industry?: string
@@ -26,8 +28,16 @@ interface Project {
 
 type SortOption = 'newest' | 'quality'
 
+interface BatchInfo {
+    id: string
+    metadata: any
+    source: string
+    created_at: string
+}
+
 interface ProjectGridProps {
     projects: Project[]
+    batchesMap?: Record<string, BatchInfo>
 }
 
 type StatusFilter = 'all' | 'review' | 'generating' | 'queued' | 'error'
@@ -40,7 +50,7 @@ const filterTabs: { key: StatusFilter; label: string; statuses: string[] }[] = [
     { key: 'error', label: 'Error', statuses: ['error'] },
 ]
 
-export function ProjectGrid({ projects }: ProjectGridProps) {
+export function ProjectGrid({ projects, batchesMap = {} }: ProjectGridProps) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isPending, startTransition] = useTransition()
     const [activeFilter, setActiveFilter] = useState<StatusFilter>('all')
@@ -113,6 +123,24 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
 
         return result
     }, [sourceProjects, activeFilter, sortBy])
+
+    // Group filtered projects by batch_id
+    const groupedProjects = useMemo(() => {
+        const hasBatches = Object.keys(batchesMap).length > 0
+        if (!hasBatches) return null
+
+        const grouped = new Map<string, Project[]>()
+        const order: string[] = []
+        for (const project of filteredProjects) {
+            const key = project.batch_id || 'ungrouped'
+            if (!grouped.has(key)) {
+                grouped.set(key, [])
+                order.push(key)
+            }
+            grouped.get(key)!.push(project)
+        }
+        return { grouped, order }
+    }, [filteredProjects, batchesMap])
 
     // Scroll focused card into view
     useEffect(() => {
@@ -438,21 +466,101 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
             )}
 
             {filteredProjects.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredProjects.map((project, index) => (
-                        <ProjectCard
-                            key={project.id}
-                            project={project}
-                            isSelected={selectedIds.has(project.id)}
-                            isFocused={focusedIndex === index}
-                            onSelect={handleSelect}
-                            cardRef={(el) => {
-                                if (el) cardRefs.current.set(index, el)
-                                else cardRefs.current.delete(index)
-                            }}
-                        />
-                    ))}
-                </div>
+                groupedProjects ? (
+                    <div className="space-y-6">
+                        {groupedProjects.order.map(batchKey => {
+                            const batchProjects = groupedProjects.grouped.get(batchKey)!
+                            const batch = batchKey !== 'ungrouped' ? batchesMap[batchKey] : null
+
+                            const completedCount = batchProjects.filter(p => ['review', 'approved', 'deployed'].includes(p.status)).length
+                            const failedCount = batchProjects.filter(p => p.status === 'error').length
+
+                            // Calculate global index offset for keyboard navigation
+                            let globalOffset = 0
+                            for (const k of groupedProjects.order) {
+                                if (k === batchKey) break
+                                globalOffset += groupedProjects.grouped.get(k)!.length
+                            }
+
+                            if (batch) {
+                                return (
+                                    <BatchGroup
+                                        key={batchKey}
+                                        batchId={batchKey}
+                                        metadata={batch.metadata || {}}
+                                        source={batch.source}
+                                        createdAt={batch.created_at}
+                                        projectCount={batchProjects.length}
+                                        completedCount={completedCount}
+                                        failedCount={failedCount}
+                                    >
+                                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                            {batchProjects.map((project, localIndex) => {
+                                                const globalIndex = globalOffset + localIndex
+                                                return (
+                                                    <ProjectCard
+                                                        key={project.id}
+                                                        project={project}
+                                                        isSelected={selectedIds.has(project.id)}
+                                                        isFocused={focusedIndex === globalIndex}
+                                                        onSelect={handleSelect}
+                                                        cardRef={(el) => {
+                                                            if (el) cardRefs.current.set(globalIndex, el)
+                                                            else cardRefs.current.delete(globalIndex)
+                                                        }}
+                                                    />
+                                                )
+                                            })}
+                                        </div>
+                                    </BatchGroup>
+                                )
+                            }
+
+                            // Ungrouped projects (no batch)
+                            return (
+                                <div key="ungrouped" className="space-y-3">
+                                    <div className="px-4 py-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                                        Ungrouped
+                                    </div>
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        {batchProjects.map((project, localIndex) => {
+                                            const globalIndex = globalOffset + localIndex
+                                            return (
+                                                <ProjectCard
+                                                    key={project.id}
+                                                    project={project}
+                                                    isSelected={selectedIds.has(project.id)}
+                                                    isFocused={focusedIndex === globalIndex}
+                                                    onSelect={handleSelect}
+                                                    cardRef={(el) => {
+                                                        if (el) cardRefs.current.set(globalIndex, el)
+                                                        else cardRefs.current.delete(globalIndex)
+                                                    }}
+                                                />
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {filteredProjects.map((project, index) => (
+                            <ProjectCard
+                                key={project.id}
+                                project={project}
+                                isSelected={selectedIds.has(project.id)}
+                                isFocused={focusedIndex === index}
+                                onSelect={handleSelect}
+                                cardRef={(el) => {
+                                    if (el) cardRefs.current.set(index, el)
+                                    else cardRefs.current.delete(index)
+                                }}
+                            />
+                        ))}
+                    </div>
+                )
             ) : (
                 <div className="flex justify-center py-16">
                     <div className="max-w-md w-full text-center space-y-6">

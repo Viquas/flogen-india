@@ -91,7 +91,7 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
 
                             <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
                                 <div className="h-full">
-                                    <RefinementChat projectId={project.id} onCodeUpdate={onCodeUpdate} />
+                                    <RefinementChat projectId={project.id} currentCode={project.generated_code} onCodeUpdate={onCodeUpdate} />
                                 </div>
                             </TabsContent>
 

@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Send, Loader2, Sparkles, ImagePlus, X, Upload } from 'lucide-react'
 import { uploadProjectAssets } from '@/lib/supabase/storage'
+import { QualitySuggestions } from './quality-suggestions'
 
 interface Message {
     role: 'user' | 'assistant'
@@ -17,10 +18,11 @@ interface Message {
 
 interface RefinementChatProps {
     projectId: string
+    currentCode?: string | null
     onCodeUpdate?: (code: string) => void
 }
 
-export function RefinementChat({ projectId, onCodeUpdate }: RefinementChatProps) {
+export function RefinementChat({ projectId, currentCode, onCodeUpdate }: RefinementChatProps) {
     const [messages, setMessages] = useState<Message[]>([
         {
             role: 'assistant',
@@ -73,11 +75,10 @@ export function RefinementChat({ projectId, onCodeUpdate }: RefinementChatProps)
         })
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if ((!input.trim() && pendingImages.length === 0) || isLoading) return
+    const submitMessage = async (directMessage?: string) => {
+        const messageText = directMessage ?? input.trim()
+        if ((!messageText && pendingImages.length === 0) || isLoading) return
 
-        const userMessage = input.trim()
         setInput('')
         setIsLoading(true)
 
@@ -100,7 +101,7 @@ export function RefinementChat({ projectId, onCodeUpdate }: RefinementChatProps)
         // Add user message to UI
         const newUserMessage: Message = {
             role: 'user',
-            content: userMessage || (imageUrls.length > 0 ? 'Added images' : ''),
+            content: messageText || (imageUrls.length > 0 ? 'Added images' : ''),
             attachments: imageUrls.length > 0 ? imageUrls : undefined,
         }
         setMessages(prev => [...prev, newUserMessage])
@@ -112,7 +113,7 @@ export function RefinementChat({ projectId, onCodeUpdate }: RefinementChatProps)
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     projectId,
-                    message: userMessage,
+                    message: messageText,
                     imageUrls,
                 }),
             })
@@ -139,6 +140,15 @@ export function RefinementChat({ projectId, onCodeUpdate }: RefinementChatProps)
         } finally {
             setIsLoading(false)
         }
+    }
+
+    const handleSuggestionClick = (prompt: string) => {
+        submitMessage(prompt)
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        submitMessage()
     }
 
     return (
@@ -211,6 +221,9 @@ export function RefinementChat({ projectId, onCodeUpdate }: RefinementChatProps)
                         </div>
                     </div>
                 )}
+
+                {/* Quality Suggestions */}
+                <QualitySuggestions code={currentCode ?? null} onSuggestionClick={handleSuggestionClick} />
 
                 {/* Drop Zone / Input */}
                 <div

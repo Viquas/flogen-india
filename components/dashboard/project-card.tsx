@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { format } from "date-fns"
-import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2, RefreshCcw, Wrench } from "lucide-react"
+import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2, RefreshCcw, Wrench, Check, X } from "lucide-react"
 import React, { useState, useEffect } from "react"
-import { regenerateProject, fixWebsiteErrors } from "@/app/(admin)/dashboard/actions"
+import { regenerateProject, fixWebsiteErrors, approveProject } from "@/app/(admin)/dashboard/actions"
 import { createClient } from "@/lib/supabase/client"
 
 interface Project {
@@ -173,6 +173,23 @@ export function ProjectCard({ project, isSelected, isFocused, onSelect, cardRef 
                     Open
                 </Link>
 
+                {project.status === 'review' && (
+                    <button
+                        onClick={async (e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            if (isLoading) return
+                            setIsLoading(true)
+                            try { await approveProject(project.id) } catch {} finally { setIsLoading(false) }
+                        }}
+                        disabled={isLoading}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 h-9 w-9 text-emerald-700"
+                        title="Approve"
+                    >
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    </button>
+                )}
+
                 {project.status === 'error' && (
                     <button
                         onClick={(e) => handleAction(e, 'retry')}
@@ -197,7 +214,15 @@ export function ProjectCard({ project, isSelected, isFocused, onSelect, cardRef 
             </div>
 
             {project.thumbnail_url && (
-                <div className="mt-4 aspect-video w-full overflow-hidden rounded-md bg-muted" />
+                <div className="mt-3 aspect-video w-full overflow-hidden rounded-md bg-muted relative group/thumb">
+                    <img
+                        src={project.thumbnail_url}
+                        alt={`Preview of ${project.business_data?.businessName || 'website'}`}
+                        className="w-full h-full object-cover object-top transition-transform duration-300 group-hover/thumb:scale-105"
+                        loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/thumb:opacity-100 transition-opacity" />
+                </div>
             )}
         </div>
     )
