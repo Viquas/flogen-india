@@ -127,12 +127,12 @@ Plans:
   3. Contact info fields are pre-filled from the business's Google Maps data (phone, email, address, hours, WhatsApp) and the client can edit them, set brand colors, and submit text change requests (1000 char limit)
   4. Pro plan clients see a booking system setup section (service types, available days/hours, buffer time) that Standard plan clients do not see
   5. After customization submission, a strategy call upsell appears with a Cal.com scheduling embed (free for Pro, paid for Standard), and a clearly visible "No thanks, continue" skip link that proceeds to confirmation
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
-- [ ] 09-03: TBD
+- [ ] 09-01-PLAN.md -- Upload API with magic byte validation, payment-gated customize page scaffold, progress indicator
+- [ ] 09-02-PLAN.md -- Customization form components (logo, photos, colors, contact, text, booking) and form orchestrator with submission action
+- [ ] 09-03-PLAN.md -- Strategy call upsell page with Cal.com iframe, conditional Standard plan payment, skip link
 
 ### Phase 10: Claim Analytics
 **Goal**: The operator can see exactly where prospects drop off in the claim funnel and which sites convert best, enabling data-driven optimization of the claim flow
@@ -163,9 +163,9 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 6. Foundation and CTA Injection | v2.0 | 3/3 | Complete | 2026-03-18 |
 | 7. Claim Landing Page | v2.0 | 2/3 | In progress | - |
 | 8. Payment and Confirmation | v2.0 | 0/3 | Not started | - |
-| 9. Customization and Upsell | v2.0 | 0/? | Not started | - |
+| 9. Customization and Upsell | v2.0 | 0/3 | Not started | - |
 | 10. Claim Analytics | v2.0 | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-19 -- Phase 8 planned (3 plans)*
+*Last updated: 2026-03-19 -- Phase 9 planned (3 plans)*
