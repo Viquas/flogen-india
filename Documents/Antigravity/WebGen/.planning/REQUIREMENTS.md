@@ -148,7 +148,7 @@ Requirements for the client claim flow. Each maps to roadmap phases 6-10.
 - [x] **CUST-05**: Text changes textarea (1000 char limit) for headline/content modification requests
 - [x] **CUST-06**: Multi-photo upload (optional, max 10 photos, 5MB each) via Supabase Storage with thumbnails and remove button
 - [x] **CUST-07**: Booking system setup section visible only for Pro plan (service types, available days/hours, buffer time)
-- [x] **CUST-08**: On submit, creates customization record, updates site status to 'customizing', sends admin notification
+- [x] **CUST-08**: On submit, creates customization record and updates site status to 'customizing' (admin notification deferred -- no email service in stack; operator monitors via dashboard/logs)
 - [x] **CUST-09**: Progress indicator shows Step 1 (Payment) -> Step 2 (Customize - current) -> Step 3 (Go Live)
 
 ### Upsell
