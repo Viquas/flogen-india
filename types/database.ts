@@ -39,6 +39,7 @@ export type Database = {
                     batch_id: string | null
                     business_data: Json
                     generated_code: string | null
+                    design_language: string | null
                     status: 'queued' | 'generating' | 'review' | 'approved' | 'deployed' | 'error'
                     version: number
                     thumbnail_url: string | null
@@ -58,6 +59,7 @@ export type Database = {
                     batch_id?: string | null
                     business_data: Json
                     generated_code?: string | null
+                    design_language?: string | null
                     status?: 'queued' | 'generating' | 'review' | 'approved' | 'deployed' | 'error'
                     version?: number
                     thumbnail_url?: string | null
@@ -77,6 +79,7 @@ export type Database = {
                     batch_id?: string | null
                     business_data?: Json
                     generated_code?: string | null
+                    design_language?: string | null
                     status?: 'queued' | 'generating' | 'review' | 'approved' | 'deployed' | 'error'
                     version?: number
                     thumbnail_url?: string | null
