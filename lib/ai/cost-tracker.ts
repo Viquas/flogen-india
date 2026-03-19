@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { calculateCost } from './pricing'
 
-export type CallType = 'generation' | 'enrichment' | 'revision' | 'auto_fix' | 'refinement' | 'template_swap' | 'stream-generation' | 'template-generation'
+export type CallType = 'generation' | 'enrichment' | 'revision' | 'auto_fix' | 'refinement' | 'template_swap' | 'stream-generation' | 'template-generation' | 'design-architect'
 
 export interface CostRecord {
   project_id: string | null
