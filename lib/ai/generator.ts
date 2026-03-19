@@ -9,15 +9,17 @@ import { updateProjectWithCode } from './project-persistence'
 import { cleanTemplateCode } from './template-cleaning'
 import { recordCost, buildCostRecord, getModelId } from './cost-tracker'
 import { getActivePrompt } from './prompt-manager'
+import { generateDLS } from './design-architect'
+import { CODE_GENERATOR_PROMPT } from './prompts/code-generator'
 
-// Generate website code based on business data (Supports Monolithic and Modular Sections)
+// Generate website code based on business data (Supports Multi-Agent, Monolithic, and Modular Sections)
 export async function generateWebsiteCode(
     businessData: BusinessData | null,
     rules?: string,
     markdownContext?: string,
     model?: string,
     onProgress?: (phase: string) => void
-): Promise<{ code: string; promptVersionId: string }> {
+): Promise<{ code: string; promptVersionId: string; dls?: string }> {
     const rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
     let richData = businessData as unknown as { sections?: Record<string, unknown>[], brandIdentity?: Record<string, unknown>, $$manifest?: Record<string, unknown>, businessName?: string };
 
@@ -124,7 +126,82 @@ export default function GeneratedPage() {
     }
 
 
-    // --- FALLBACK: MONOLITHIC GENERATION ---
+    // --- MULTI-AGENT PATH: DLS + Code Generator ---
+    // When enriched data is present ($$manifest), try the two-agent approach first
+    if (richData && richData.$$manifest) {
+        if (onProgress) onProgress('Designing visual language...')
+        try {
+            const dlsResult = await generateDLS(richData as Record<string, unknown>)
+            const dls = dlsResult.dls
+
+            if (dls && dls.length > 100) {
+                console.log(`[Generator] Multi-agent path: DLS generated (${dls.length} chars). Proceeding with Code Generator...`)
+                if (onProgress) onProgress('Generating code from DLS...')
+
+                // Build content-only user prompt (no design rules — DLS handles design)
+                const contentPrompt = _buildContentOnlyPrompt(richData as Record<string, unknown>, businessData)
+
+                // Template seeding: inject industry few-shot context
+                const dlsIndustry = (richData as any)?.brandIdentity?.vibe?.industry || (richData as any)?.industry || null
+                let dlsFewShotBlock = ''
+                if (dlsIndustry) {
+                    try {
+                        const { getFewShotContext } = await import('./template-seeder')
+                        const fewShot = await getFewShotContext(dlsIndustry)
+                        if (fewShot) dlsFewShotBlock = '\n\n' + fewShot + '\n'
+                    } catch (err) {
+                        console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+                    }
+                }
+
+                // Combine Code Generator prompt + DLS as system prompt
+                const dlsSystemPrompt = CODE_GENERATOR_PROMPT
+                    + '\n\n## DESIGN LANGUAGE SPECIFICATION:\n' + dls
+                    + rulesSection
+
+                const dlsUserPrompt = `Create a COMPLETE, production-ready landing page for:
+${contentPrompt}
+${dlsFewShotBlock}
+
+EXECUTION PLAN:
+1. Read the DLS above carefully. Every color, font, spacing, shadow, and border value is pre-resolved.
+2. Write the React code implementing all required sections (Nav, Hero, Features/Services, Contact, Footer) plus recommended sections for this industry.
+3. Use the EXACT business data provided — names, prices, phone, address, testimonials.
+4. Use the hero variant specified in the DLS.
+5. Include at least ONE interactive Dialog with realistic content.
+6. Verify: mobile menu works, star ratings use <Star />, FAQs toggle open/close, all images have real Unsplash src + onError fallback, CTA buttons have proper contrast.
+
+Generate the code now.`
+
+                const modelInstance = getModel(model)
+                const { text, usage } = await generateText({
+                    model: modelInstance,
+                    system: dlsSystemPrompt,
+                    prompt: dlsUserPrompt,
+                })
+                // Track cost for DLS-powered generation
+                await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
+
+                let code = text.trim()
+                if (code.startsWith('```')) {
+                    code = code.replace(/^\`\`\`(?:tsx|typescript|jsx|javascript)?\n?/, '')
+                    code = code.replace(/\n?\`\`\`$/, '')
+                }
+
+                console.log(`[Generator] Multi-agent generation complete (${code.length} chars)`)
+                return { code, promptVersionId, dls }
+            } else {
+                console.warn('[Generator] DLS too short or empty, falling back to legacy prompt')
+            }
+        } catch (dlsError) {
+            console.error('[Generator] Multi-agent DLS generation failed, falling back to legacy prompt:', dlsError)
+            // Fall through to legacy monolithic generation below
+        }
+    }
+
+
+    // --- LEGACY FALLBACK: MONOLITHIC GENERATION ---
+    // Used when: no $$manifest, DLS generation failed, or DLS was too short
     let contextPrompt = ""
     let richPrompt = ""
     let vibePrompt = ""
@@ -239,6 +316,79 @@ Generate the code now.`
 
     return { code, promptVersionId }
 }
+
+
+/**
+ * Build a content-only user prompt for the multi-agent Code Generator.
+ * Contains ONLY business content (services, testimonials, contact, hours) —
+ * no design rules, no color instructions, no typography guidance.
+ * The DLS handles all visual decisions.
+ */
+function _buildContentOnlyPrompt(
+    richData: Record<string, unknown>,
+    businessData: BusinessData | null
+): string {
+    const brand = richData.brandIdentity as any
+    const content = (richData as any)?.contentRepository
+    const ops = (richData as any)?.operationalData
+
+    const lines: string[] = []
+    lines.push('Business Name: ' + (brand?.core?.brandName || (businessData as any)?.businessName || 'Business'))
+    lines.push('Industry: ' + (brand?.vibe?.industry || (richData as any)?.industry || 'General Business'))
+    lines.push('Description: ' + ((businessData as any)?.description || ''))
+
+    if (content?.hero) {
+        lines.push('Hero Headline: ' + content.hero.headline)
+        lines.push('Hero Subheadline: ' + content.hero.subheadline)
+        lines.push('Hero CTA Primary: ' + content.hero.ctaPrimary)
+        if (content.hero.ctaSecondary) lines.push('Hero CTA Secondary: ' + content.hero.ctaSecondary)
+    }
+
+    if (content?.about) {
+        lines.push('About Heading: ' + content.about.heading)
+        lines.push('About Content: ' + content.about.content)
+    }
+
+    if (content?.services) {
+        lines.push('Services (USE THESE EXACT NAMES AND PRICES):')
+        content.services.forEach((s: any) => {
+            lines.push('- ' + s.name + ': ' + (s.price || '') + ' \u2014 ' + (s.description || ''))
+        })
+    } else if ((businessData as any)?.services) {
+        lines.push('Services: ' + ((businessData as any).services || []).join(', '))
+    }
+
+    if (content?.testimonials) {
+        lines.push('Testimonials (USE THESE EXACT NAMES AND QUOTES):')
+        content.testimonials.forEach((t: any) => {
+            lines.push('- "' + t.quote + '" \u2014 ' + t.author + ' (' + t.rating + '/5 stars)')
+        })
+    }
+
+    if (ops?.contact) {
+        lines.push('Contact (USE EXACTLY \u2014 DO NOT INVENT):')
+        lines.push('- Phone: ' + (ops.contact.phone || (businessData as any)?.contactInfo?.phone || ''))
+        lines.push('- Email: ' + (ops.contact.email || (businessData as any)?.contactInfo?.email || ''))
+        const addr = ops.contact.address
+        if (addr) {
+            lines.push('- Address: ' + [addr.street, addr.city, addr.state, addr.postalCode, addr.country].filter(Boolean).join(', '))
+        } else if ((businessData as any)?.contactInfo?.address) {
+            lines.push('- Address: ' + (businessData as any).contactInfo.address)
+        }
+    } else if ((businessData as any)?.contactInfo) {
+        lines.push('Contact Info: ' + JSON.stringify((businessData as any).contactInfo))
+    }
+
+    if (ops?.hours) {
+        lines.push('Operating Hours (USE EXACTLY):')
+        Object.entries(ops.hours).forEach(([day, time]) => {
+            lines.push('- ' + day + ': ' + time)
+        })
+    }
+
+    return lines.join('\n')
+}
+
 
 // Stream website code generation -- returns a streamText result for progressive token delivery
 export async function streamWebsiteCode(
@@ -588,17 +738,21 @@ Return the modified React code. Remember: modify the template code above, don't 
             }
         }
 
-        // --- 2. GENERATION PHASE ---
+        // --- 2. GENERATION PHASE (Multi-Agent or Legacy) ---
         /* generation_phase removed */
 
         const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined);
 
-        const code = typeof genResult === 'string' ? genResult : (genResult as { code: string; promptVersionId: string }).code
+        const code = typeof genResult === 'string' ? genResult : (genResult as { code: string; promptVersionId: string; dls?: string }).code
         const promptVersionId = typeof genResult === 'string' ? null : (genResult as { code: string; promptVersionId: string }).promptVersionId
+        const generatedDLS = typeof genResult === 'string' ? null : (genResult as { code: string; promptVersionId: string; dls?: string }).dls
 
-        // Save prompt_version_id to the project record (PROMPT-02)
-        if (promptVersionId) {
-            await supabase.from('projects').update({ prompt_version_id: promptVersionId }).eq('id', projectId)
+        // Save prompt_version_id and DLS to the project record
+        const projectUpdate: Record<string, unknown> = {}
+        if (promptVersionId) projectUpdate.prompt_version_id = promptVersionId
+        if (generatedDLS) projectUpdate.design_language = generatedDLS
+        if (Object.keys(projectUpdate).length > 0) {
+            await supabase.from('projects').update(projectUpdate).eq('id', projectId)
         }
 
         // --- 3. VALIDATION + AUTO-FIX PHASE ---
