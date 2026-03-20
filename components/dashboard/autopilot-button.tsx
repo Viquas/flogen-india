@@ -13,6 +13,7 @@ interface AutopilotButtonProps {
     industry: string
     entries: number
     templateId?: string
+    designLanguageId?: string
     onRunStart?: (runId: string) => void
 }
 
@@ -22,6 +23,7 @@ export function AutopilotButton({
     industry,
     entries,
     templateId,
+    designLanguageId,
     onRunStart,
 }: AutopilotButtonProps) {
     const [isStarting, setIsStarting] = useState(false)
@@ -62,6 +64,7 @@ export function AutopilotButton({
             industry: industry.trim(),
             entries,
             templateId: templateId || undefined,
+            designLanguageId: designLanguageId || undefined,
             autoFixEnabled,
             qualityThreshold,
         }

@@ -50,13 +50,13 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
     }
 
     return (
-        <div className="h-[calc(100vh-12rem)] border rounded-lg overflow-hidden bg-background">
+        <div className="h-[calc(100vh-12rem)] border border-gray-200 rounded-xl overflow-hidden bg-white">
             <ResizablePanelGroup direction="horizontal">
                 {/* Left Panel - Controls */}
                 <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
                     <div className="h-full flex flex-col">
                         <Tabs defaultValue="data" className="flex-1 flex flex-col">
-                            <div className="border-b px-4 py-2 flex items-center justify-between">
+                            <div className="border-b border-gray-200 px-4 py-2 flex items-center justify-between bg-white">
                                 <TabsList className="h-8">
                                     <TabsTrigger value="data" className="text-xs">
                                         <Database className="h-3 w-3 mr-1" />
@@ -114,7 +114,7 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                 <ResizablePanel defaultSize={60} minSize={40}>
                     <div className="h-full flex flex-col">
                         {/* View Toggle */}
-                        <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/30">
+                        <div className="border-b border-gray-200 px-4 py-2 flex items-center justify-between bg-white">
                             <div className="flex items-center gap-2">
                                 <Button
                                     size="sm"
@@ -156,9 +156,9 @@ export function SplitWorkbench({ project, onRegenerate, isRegenerating, onCodeUp
                                 <div className="h-full w-full">
                                     {project.generated_code ? (
                                         <Suspense fallback={
-                                            <div className="flex items-center justify-center h-full bg-zinc-900">
-                                                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-                                                <span className="ml-2 text-sm text-zinc-400">Loading editor...</span>
+                                            <div className="flex items-center justify-center h-full bg-gray-900">
+                                                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                                <span className="ml-2 text-sm text-gray-400">Loading editor...</span>
                                             </div>
                                         }>
                                             {diffCode ? (

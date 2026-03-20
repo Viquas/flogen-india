@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WebGen V1 — AI Website Factory",
-  description: "AI-powered website generation platform by Overglide Studio",
+  title: "Flogen — AI Website Generator",
+  description: "AI-powered website generation platform by Antigravity",
 };
 
 export default function RootLayout({

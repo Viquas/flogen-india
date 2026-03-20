@@ -11,12 +11,17 @@ const DEFAULT_RULES = `# WebGen AI Rules — Default Configuration
 
 ## ICONS
 - Use ONLY verified lucide-react icon names from this whitelist:
-  ArrowRight, ArrowLeft, ArrowUp, ArrowDown, ChevronRight, ChevronLeft, ChevronDown, ChevronUp,
+  Core: ArrowRight, ArrowLeft, ArrowUp, ArrowDown, ChevronRight, ChevronLeft, ChevronDown, ChevronUp,
   Check, X, Plus, Minus, Search, Menu, Send, Download, Upload, Share2, Copy, Pencil, Trash2, ExternalLink,
   Star, Heart, Bookmark, Bell, Settings, Info, AlertCircle, HelpCircle, Eye, EyeOff, Lock, Unlock,
   Play, Pause, Volume2, Camera, Mic,
   Phone, Mail, MapPin, Clock, Calendar, Globe, Users, User, Building2, Briefcase, Zap, Shield, Award, TrendingUp, CheckCircle
-- NEVER use: ArrowUpCircle, ArrowDownCircle, LogIn, LogOut, Edit, Image, or any icon outside the list.
+  Industry: Scissors, Sparkles, Sparkle, Droplet, Flower, Brush, Gem, Crown, Bath, SprayCan, Flower2,
+  Coffee, Wine, UtensilsCrossed, Utensils, Flame, Dumbbell, Activity, Stethoscope, Smile,
+  GraduationCap, Book, BookOpen, Palette, Car, Wrench, Hammer, HardHat, Home, Key, Ruler,
+  ShoppingCart, CreditCard, Gift, Truck, Scale, Gavel, Wallet, Calculator,
+  Plane, Ship, Luggage, Aperture, Headphones, PawPrint, Dog, Cat, Leaf, Sun, Moon, Cloud, Wind, TreePine, Timer
+- NEVER use: ArrowUpCircle, ArrowDownCircle, LogIn, LogOut, Edit, or any icon outside the list.
 - NEVER name any variable, component, or function: Map, Set, Array, Image, Screen, Window, or any browser global.
 - HEROICONS FALLBACK: If a Lucide icon does not render or is missing, fall back to writing raw inline SVGs from heroicons.com into the component.
 - ICON CONTRAST: When placing an icon in a container, ensure high contrast (e.g. \\\`text-white\\\` inside a dark/primary container).
@@ -36,18 +41,20 @@ const DEFAULT_RULES = `# WebGen AI Rules — Default Configuration
   Business:   1497366216548-37526070297c | 1522202176988-66273c7fd55a | 1600880292203-757bb62b4baf
 
 ## LAYOUT & COLOR
-- Monochromatic Base: The website MUST be mostly black, white, and gray. Backgrounds should be \\\`bg-[#f1f2f4]\\\` or \\\`bg-zinc-50\\\`. Cards \\\`bg-white\\\`.
-- Single Primary Color: Pick ONE minimal, premium, modern primary color based on industry. Apply it ONLY for main actions (buttons) and icons.
+- Follow the AESTHETIC DIRECTION from the system prompt — do NOT override with a single palette.
+- Card backgrounds MUST match their section: dark cards on dark sections, light cards on light sections. NEVER use bg-white on a dark section.
+- Single Primary Color: Pick ONE accent color based on industry. Apply it for main CTAs and key highlights only.
 - No cookie consent banners, GDPR popups, or overlays rendered on first mount.
 - Navigation: sticky, backdrop-blur, collapses to hamburger on mobile.
 - Generous spacing: py-24 md:py-32 on all major sections.
 - Footer: multi-column with links, contact info, and copyright.
 
 ## TYPOGRAPHY
-- Hero headline: text-5xl md:text-7xl font-bold tracking-tighter
-- Section title: text-3xl md:text-4xl font-bold tracking-tight
-- Card title: text-xl font-semibold
-- Body: text-base text-zinc-600 leading-relaxed
+- Hero headline: text-5xl md:text-7xl font-semibold tracking-tighter (NOT font-bold — too heavy for premium)
+- Section title: text-3xl md:text-4xl font-semibold tracking-tight
+- Card title: text-lg font-medium
+- Body: text-base font-normal leading-relaxed (text color matches section: text-zinc-600 on light, text-zinc-300 on dark)
+- WEIGHT RULE: Prefer font-medium over font-semibold. Prefer font-semibold over font-bold. Use font-bold ONLY for bold-energy direction. Never use font-extrabold except for bold-energy hero headlines.
 
 ## ABOUT SECTION IMAGE (MANDATORY)
 - The "About Us" section MUST have a real photograph (Unsplash <img>).

@@ -33,6 +33,7 @@ interface BatchInfo {
     metadata: any
     source: string
     created_at: string
+    assigned_to?: string | null
 }
 
 interface ProjectGridProps {
@@ -493,6 +494,7 @@ export function ProjectGrid({ projects, batchesMap = {} }: ProjectGridProps) {
                                         projectCount={batchProjects.length}
                                         completedCount={completedCount}
                                         failedCount={failedCount}
+                                        assignedTo={batch.assigned_to}
                                     >
                                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                             {batchProjects.map((project, localIndex) => {
@@ -571,7 +573,7 @@ export function ProjectGrid({ projects, batchesMap = {} }: ProjectGridProps) {
                         </div>
                         <div>
                             <h3 className="text-xl font-bold tracking-tight text-zinc-900">
-                                {activeFilter === 'all' ? "Welcome to WebGen" : `No ${filterTabs.find(t => t.key === activeFilter)?.label.toLowerCase()} projects`}
+                                {activeFilter === 'all' ? "Welcome to Flogen" : `No ${filterTabs.find(t => t.key === activeFilter)?.label.toLowerCase()} projects`}
                             </h3>
                             <p className="text-sm text-zinc-500 mt-2">
                                 {activeFilter === 'all'

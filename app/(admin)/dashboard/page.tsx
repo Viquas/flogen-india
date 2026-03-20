@@ -5,7 +5,7 @@ import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, subDa
 import { RealtimeProjectsListener } from '@/components/dashboard/realtime-listener'
 import { Search } from 'lucide-react'
 import Link from 'next/link'
-import { DiscoverySearch } from '@/components/dashboard/discovery-search'
+import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { getMonthActivityCounts, getCostStats } from '@/app/(admin)/dashboard/actions'
 import { QuickDateChips } from '@/components/dashboard/quick-date-chips'
 
@@ -38,7 +38,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const monthEndFull = endOfMonth(today).toISOString()
 
   let projects: any[] = []
-  let batchesMap: Record<string, { id: string; metadata: any; source: string; created_at: string }> = {}
+  let batchesMap: Record<string, { id: string; metadata: any; source: string; created_at: string; assigned_to?: string | null }> = {}
   let activityCounts: Record<string, number> = {}
 
   let stats = {
@@ -107,6 +107,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       }
     }
 
+    // Try to fetch assigned_to for batches (column may not exist yet)
+    if (Object.keys(batchesMap).length > 0) {
+      try {
+        const { data: batchAssignees } = await supabase
+          .from('batches')
+          .select('id, assigned_to')
+          .in('id', Object.keys(batchesMap))
+        if (batchAssignees) {
+          for (const b of batchAssignees) {
+            if (batchesMap[b.id]) {
+              (batchesMap[b.id] as any).assigned_to = b.assigned_to
+            }
+          }
+        }
+      } catch {
+        // assigned_to column doesn't exist yet — ignore
+      }
+    }
+
     stats = {
       totalCreated: totalCreatedResponse.count || 0,
       pendingApprovals: pendingResponse.count || 0,
@@ -147,15 +166,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <div className="space-y-8">
       <RealtimeProjectsListener />
 
-      <div className="mb-8">
-        <DiscoverySearch />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">{getGreeting()}</h2>
-        </div>
-      </div>
+      <DashboardHeader greeting={getGreeting()} />
 
       <StatsCards stats={stats} costStats={costStats} />
 

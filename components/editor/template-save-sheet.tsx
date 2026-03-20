@@ -118,7 +118,7 @@ export function TemplateSaveSheet({
                                 <>
                                     <iframe
                                         srcDoc={srcDoc}
-                                        sandbox="allow-scripts"
+                                        sandbox="allow-scripts allow-same-origin"
                                         title="Website hero preview"
                                         className="absolute top-0 left-0 border-0"
                                         style={{

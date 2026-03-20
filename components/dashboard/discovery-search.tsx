@@ -23,6 +23,8 @@ import { TemplateLibraryModal } from "./template-library-modal"
 import { AutopilotButton } from "./autopilot-button"
 import { BatchProgress } from "./batch-progress"
 import { BatchReport } from "./batch-report"
+import { listDesignLanguages, type DesignLanguage } from "@/app/(admin)/dashboard/dls/actions"
+import { Palette } from "lucide-react"
 
 const STORAGE_KEY_INDUSTRIES = "webgen-industry-history"
 const STORAGE_KEY_LOCATIONS = "webgen-location-history"
@@ -63,7 +65,16 @@ const persistList = (key: string, list: string[]) => {
     } catch { /* ignore */ }
 }
 
-export function DiscoverySearch() {
+interface DiscoverySearchProps {
+    /** When true, renders without outer card wrapper (for use inside a Dialog) */
+    embedded?: boolean
+    /** Called when autopilot starts with the runId */
+    onAutopilotStart?: (runId: string) => void
+    /** Called to close the parent dialog */
+    onClose?: () => void
+}
+
+export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: DiscoverySearchProps = {}) {
     // Core fields
     const [searchTerm, setSearchTerm] = useState("")
     const [location, setLocation] = useState("")
@@ -89,6 +100,12 @@ export function DiscoverySearch() {
     const [selectedTemplate, setSelectedTemplate] = useState<{ id: string; name: string; industry_tag: string } | null>(null)
     const [isTemplateLibraryOpen, setIsTemplateLibraryOpen] = useState(false)
 
+    // DLS state
+    const [dlsList, setDlsList] = useState<DesignLanguage[]>([])
+    const [selectedDls, setSelectedDls] = useState<{ id: string; name: string } | null>(null)
+    const [showDlsDropdown, setShowDlsDropdown] = useState(false)
+    const dlsRef = useRef<HTMLDivElement>(null)
+
     // Autopilot state
     const [autopilotRunId, setAutopilotRunId] = useState<string | null>(null)
     const [showAutopilotReport, setShowAutopilotReport] = useState(false)
@@ -99,10 +116,13 @@ export function DiscoverySearch() {
     const entriesRef = useRef<HTMLDivElement>(null)
     const newIndustryInputRef = useRef<HTMLInputElement>(null)
 
-    // Load persisted history on mount
+    // Load persisted history + DLS list on mount
     useEffect(() => {
         setIndustryHistory(getStoredList(STORAGE_KEY_INDUSTRIES, DEFAULT_INDUSTRIES))
         setLocationHistory(getStoredList(STORAGE_KEY_LOCATIONS, []))
+        listDesignLanguages().then(res => {
+            if (res.success) setDlsList(res.data)
+        })
     }, [])
 
     // Close dropdowns on outside click
@@ -117,6 +137,9 @@ export function DiscoverySearch() {
             }
             if (entriesRef.current && !entriesRef.current.contains(e.target as Node)) {
                 setShowEntriesDropdown(false)
+            }
+            if (dlsRef.current && !dlsRef.current.contains(e.target as Node)) {
+                setShowDlsDropdown(false)
             }
         }
         document.addEventListener("mousedown", handleClick)
@@ -245,21 +268,22 @@ export function DiscoverySearch() {
     const queryPreview = `${entries} ${searchTerm || industry}${location ? ` in ${location}` : ""}`
 
     return (
-        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-            {/* ── Zone 1: Search Form ── */}
-            <div className="p-5 space-y-4">
-                {/* Header */}
-                <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <Sparkles className="h-3.5 w-3.5 text-purple-600" />
+        <div className={embedded ? "" : "bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden"}>
+            <div className={embedded ? "space-y-4" : "p-5 space-y-4"}>
+                {/* Header — only show when not embedded (dialog provides its own header) */}
+                {!embedded && (
+                    <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <Sparkles className="h-3.5 w-3.5 text-purple-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-semibold leading-none">Discovery Engine</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Find businesses on Google Maps and auto-generate websites
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-sm font-semibold leading-none">Discovery Engine</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Find businesses on Google Maps and auto-generate websites
-                        </p>
-                    </div>
-                </div>
+                )}
 
                 {/* Business / Service — full width */}
                 <div>
@@ -483,89 +507,94 @@ export function DiscoverySearch() {
                         </Badge>
                     )}
 
+                    {/* Selected DLS badge */}
+                    {selectedDls && (
+                        <Badge variant="secondary" className="bg-violet-50 text-violet-700 border-violet-200 gap-1 shrink-0 text-xs">
+                            <Palette className="h-3 w-3" />
+                            {selectedDls.name}
+                            <button
+                                onClick={() => setSelectedDls(null)}
+                                className="ml-0.5 hover:text-violet-900"
+                                aria-label="Remove DLS"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </Badge>
+                    )}
+
                     {/* Template button */}
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setIsTemplateLibraryOpen(true)}
-                        className="gap-1.5 h-8 text-xs border-zinc-200 text-zinc-600 hover:text-zinc-900 shrink-0"
+                        className="gap-1.5 h-8 text-xs border-gray-200 text-gray-600 hover:text-gray-900 shrink-0"
                     >
                         <Layers className="h-3.5 w-3.5" />
                         Template
                     </Button>
 
-                    {/* Generate button */}
-                    <Button
-                        onClick={handleSearch}
-                        disabled={isLoading || !isReady}
-                        size="sm"
-                        className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5 h-8 px-4 text-xs shrink-0"
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Discovering...
-                            </>
-                        ) : (
-                            <>
-                                <Search className="h-3.5 w-3.5" />
-                                Generate Sites
-                            </>
+                    {/* DLS picker */}
+                    <div ref={dlsRef} className="relative">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowDlsDropdown(!showDlsDropdown)}
+                            className="gap-1.5 h-8 text-xs border-gray-200 text-gray-600 hover:text-gray-900 shrink-0"
+                        >
+                            <Palette className="h-3.5 w-3.5" />
+                            DLS
+                        </Button>
+                        {showDlsDropdown && (
+                            <div className="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 min-w-[200px] max-h-64 overflow-y-auto">
+                                {dlsList.length === 0 ? (
+                                    <p className="px-3 py-2 text-xs text-gray-400">No DLS documents found. Create one in the DLS page.</p>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => { setSelectedDls(null); setShowDlsDropdown(false) }}
+                                            className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors ${!selectedDls ? 'font-medium text-purple-700' : 'text-gray-700'}`}
+                                        >
+                                            Auto (industry default)
+                                        </button>
+                                        {dlsList.map(dls => (
+                                            <button
+                                                key={dls.id}
+                                                onClick={() => { setSelectedDls({ id: dls.id, name: dls.name }); setShowDlsDropdown(false) }}
+                                                className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${selectedDls?.id === dls.id ? 'font-medium text-purple-700' : 'text-gray-700'}`}
+                                            >
+                                                <span className="truncate">{dls.name}</span>
+                                                {dls.is_default && (
+                                                    <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full shrink-0 ml-2">default</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
                         )}
-                    </Button>
+                    </div>
                 </div>
+
+                {/* Autopilot — single action (replaces Generate Sites + old Autopilot zone) */}
+                <AutopilotButton
+                    query={searchTerm}
+                    location={location}
+                    industry={industry}
+                    entries={entries}
+                    templateId={selectedTemplate?.id}
+                    designLanguageId={selectedDls?.id}
+                    onRunStart={(runId) => {
+                        setAutopilotRunId(runId)
+                        onAutopilotStart?.(runId)
+                        onClose?.()
+                    }}
+                />
 
                 {/* Status message */}
                 {status && (
                     <p className={`text-xs ${status.type === "success" ? "text-green-600" : "text-red-600"}`}>
                         {status.message}
                     </p>
-                )}
-            </div>
-
-            {/* ── Zone 2: Autopilot Section ── */}
-            <div className="border-t border-zinc-100">
-                {/* Toggle header */}
-                <button
-                    onClick={() => setAutopilotExpanded(!autopilotExpanded)}
-                    className="w-full flex items-center gap-2 px-5 py-2.5 text-xs hover:bg-zinc-50 transition-colors"
-                >
-                    {autopilotExpanded
-                        ? <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
-                        : <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-                    }
-                    <Rocket className="h-3.5 w-3.5 text-orange-500" />
-                    <span className="font-semibold text-zinc-600 uppercase tracking-wider">Autopilot</span>
-                    <span className="text-zinc-400">Full pipeline: discover, generate, fix, score</span>
-                </button>
-
-                {autopilotExpanded && (
-                    <div className="px-5 pb-4 space-y-3">
-                        <AutopilotButton
-                            query={searchTerm}
-                            location={location}
-                            industry={industry}
-                            entries={entries}
-                            templateId={selectedTemplate?.id}
-                            onRunStart={(runId) => {
-                                setAutopilotRunId(runId)
-                                setShowAutopilotReport(false)
-                            }}
-                        />
-
-                        {/* Progress */}
-                        {autopilotRunId && (
-                            <BatchProgress
-                                runId={autopilotRunId}
-                                onComplete={() => setShowAutopilotReport(true)}
-                            />
-                        )}
-
-                        {/* Report */}
-                        {showAutopilotReport && autopilotRunId && (
-                            <BatchReport runId={autopilotRunId} />
-                        )}
-                    </div>
                 )}
             </div>
 

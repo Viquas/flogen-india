@@ -847,3 +847,53 @@ export async function getActiveAutopilotRuns() {
         config: run.config,
     }))
 }
+
+export async function getBatches() {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+        .from('batches')
+        .select('id, source, created_at, assigned_to')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Failed to fetch batches:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, data }
+}
+
+export async function updateBatchAssignee(batchId: string, assignee: string | null) {
+    const supabase = createAdminClient()
+
+    const { error } = await supabase
+        .from('batches')
+        .update({ assigned_to: assignee })
+        .eq('id', batchId)
+
+    if (error) {
+        console.error('[Batches] Failed to update assignee:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+/**
+ * Save code changes from Edit Mode (inline text/image edits).
+ * Uses updateProjectWithCode which snapshots the previous version as a revision.
+ */
+export async function saveEditModeChanges(projectId: string, newCode: string) {
+    const { updateProjectWithCode } = await import('@/lib/ai/generator')
+    const result = await updateProjectWithCode(projectId, newCode)
+
+    if (!result.success) {
+        console.error('[EditMode] Failed to save changes:', result.error)
+        return { success: false, error: result.error || 'Failed to save' }
+    }
+
+    revalidatePath(`/editor?id=${projectId}`)
+    return { success: true }
+}

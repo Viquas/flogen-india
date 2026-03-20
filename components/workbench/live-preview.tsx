@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { Loader2, AlertCircle, Eye, Zap, Code2, Clock, Hash, LayoutGrid, ExternalLink } from 'lucide-react'
+import { Loader2, AlertCircle, Eye, Zap, Code2, Clock, Hash } from 'lucide-react'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
 
 export interface StreamLogEntry {
@@ -18,6 +18,7 @@ interface LivePreviewProps {
   tokenCount?: number
   elapsedTime?: number
   isStreaming?: boolean
+  matrixView?: boolean
 }
 
 export function LivePreview({
@@ -28,11 +29,11 @@ export function LivePreview({
   tokenCount = 0,
   elapsedTime = 0,
   isStreaming = false,
+  matrixView = false,
 }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const logContainerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'matrix'>('desktop')
 
   // Generate the srcDoc HTML with Babel transpilation in-browser
   const srcDoc = useMemo(() => {
@@ -86,7 +87,7 @@ export function LivePreview({
               AI Generation Active
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-zinc-500">
+          <div className="flex items-center gap-4 text-[11px] text-gray-500">
             <div className="flex items-center gap-1.5">
               <Hash className="h-3 w-3" />
               <span>{tokenCount.toLocaleString()} chars</span>
@@ -166,7 +167,7 @@ export function LivePreview({
 
   if (!code) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+      <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <Eye className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground">No code to preview</p>
@@ -190,88 +191,29 @@ export function LivePreview({
   }
 
 
-  const handleOpenNewTab = () => {
-    if (!srcDoc) return
-    const newWindow = window.open('', '_blank')
-    if (newWindow) {
-      newWindow.document.write(srcDoc)
-      newWindow.document.close()
-    }
-  }
-
   return (
-    <div className="flex flex-col h-full w-full bg-zinc-100 overflow-hidden">
-      {/* Device Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b bg-white shrink-0">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('desktop')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'desktop' ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100'}`}
-          >
-            Desktop
-          </button>
-          <button
-            onClick={() => setViewMode('mobile')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'mobile' ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-100'}`}
-          >
-            Mobile
-          </button>
-          <button
-            onClick={() => setViewMode('matrix')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5 ${viewMode === 'matrix' ? 'bg-purple-100 text-purple-700' : 'text-purple-600 hover:bg-purple-50'}`}
-          >
-            <LayoutGrid className="h-3 w-3" />
-            Matrix View
-          </button>
-        </div>
-
-        <button
-          onClick={handleOpenNewTab}
-          disabled={!srcDoc}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Open preview in new tab for fullscreen testing"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Open in New Tab</span>
-        </button>
-      </div>
-
+    <div className="flex flex-col h-full w-full bg-gray-50 overflow-hidden">
       {/* Preview Container */}
       <div className="flex-1 overflow-auto flex items-center justify-center p-4">
-        {viewMode === 'desktop' && (
-          <div className="w-full h-full max-w-[1200px] border shadow-xl bg-white rounded-md overflow-hidden transition-all duration-300">
+        {!matrixView ? (
+          <div className="w-full h-full border shadow-xl bg-white rounded-md overflow-hidden transition-all duration-300">
             <iframe
               ref={iframeRef}
               srcDoc={srcDoc || ''}
               className="w-full h-full border-0"
-              title="Desktop Preview"
+              title="Preview"
               sandbox="allow-scripts allow-same-origin"
             />
           </div>
-        )}
-
-        {viewMode === 'mobile' && (
-          <div className="w-[375px] h-[812px] border-4 border-zinc-800 shadow-2xl bg-white rounded-[2.5rem] overflow-hidden transition-all duration-300 shrink-0 relative">
-            <div className="absolute top-0 inset-x-0 h-6 bg-zinc-800 rounded-b-xl max-w-[150px] mx-auto z-10" />
-            <iframe
-              ref={iframeRef}
-              srcDoc={srcDoc || ''}
-              className="w-full h-full border-0"
-              title="Mobile Preview"
-              sandbox="allow-scripts allow-same-origin"
-            />
-          </div>
-        )}
-
-        {viewMode === 'matrix' && (
+        ) : (
           <div className="flex w-full h-full items-center justify-center gap-8 overflow-hidden">
             {/* Scaled Desktop */}
-            <div className="relative w-[1024px] h-[768px] shrink-0 border border-zinc-300 shadow-lg bg-white rounded-md overflow-hidden" style={{ transform: 'scale(0.65)', transformOrigin: 'center center' }}>
-              <div className="absolute top-0 inset-x-0 h-8 bg-zinc-100 border-b flex items-center px-4 gap-2">
+            <div className="relative w-[1024px] h-[768px] shrink-0 border border-gray-200 shadow-lg bg-white rounded-md overflow-hidden" style={{ transform: 'scale(0.65)', transformOrigin: 'center center' }}>
+              <div className="absolute top-0 inset-x-0 h-8 bg-gray-100 border-b flex items-center px-4 gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
                 <div className="w-3 h-3 rounded-full bg-amber-400" />
                 <div className="w-3 h-3 rounded-full bg-green-400" />
-                <span className="text-xs text-zinc-500 font-mono ml-2">Desktop View (1024px)</span>
+                <span className="text-xs text-gray-500 font-mono ml-2">Desktop View (1024px)</span>
               </div>
               <iframe
                 srcDoc={srcDoc || ''}
@@ -282,7 +224,7 @@ export function LivePreview({
             </div>
 
             {/* Scaled Mobile */}
-            <div className="relative w-[375px] h-[812px] shrink-0 border-4 border-zinc-800 shadow-xl bg-white rounded-[2rem] overflow-hidden" style={{ transform: 'scale(0.7)', transformOrigin: 'center center' }}>
+            <div className="relative w-[375px] h-[812px] shrink-0 border-4 border-gray-800 shadow-xl bg-white rounded-[2rem] overflow-hidden" style={{ transform: 'scale(0.7)', transformOrigin: 'center center' }}>
               <div className="absolute top-0 inset-x-0 h-5 bg-zinc-800 rounded-b-lg max-w-[120px] mx-auto z-10" />
               <iframe
                 srcDoc={srcDoc || ''}

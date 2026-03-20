@@ -1,6 +1,8 @@
 import { getQueueStats, getQueueJobs } from './actions'
 import { QueueDashboard } from './queue-dashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function QueuePage() {
   const [stats, jobs] = await Promise.all([
     getQueueStats(),
