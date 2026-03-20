@@ -83,7 +83,7 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"><\/script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"><\/script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"><\/script>
-  <script src="https://unpkg.com/lucide-react@0.469.0/dist/umd/lucide-react.js" crossorigin="anonymous"><\/script>
+  <script src="https://unpkg.com/lucide-react@0.475.0/dist/umd/lucide-react.js" crossorigin="anonymous"><\/script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" />
   
@@ -108,8 +108,12 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
   <\/script>
   
   <style>
-    body { margin: 0; font-family: "Inter", sans-serif; background: #fff; }
+    *, *::before, *::after { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    html { scroll-behavior: smooth; text-rendering: optimizeLegibility; font-size: 16px; }
+    body { margin: 0; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fff; color: #1a1a1a; line-height: 1.6; letter-spacing: -0.011em; }
     #root { min-height: 100vh; }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
     .error-container {
       padding: 20px;
       background: #fef2f2;
@@ -120,9 +124,8 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
       margin: 20px;
       border-radius: 8px;
     }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    html { scroll-behavior: smooth; }
   </style>
 </head>
 <body>

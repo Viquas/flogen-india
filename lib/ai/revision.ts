@@ -11,11 +11,13 @@ export async function reviseWebsiteWithPatches(
     currentCode: string,
     currentJson: any,
     rules?: string,
-    model?: string
+    model?: string,
+    imageUrls?: string[]
 ): Promise<{ code: string; updatedJson?: any; patchCount: number; fallbackUsed: boolean; reasoning: string }> {
     const rulesSection = rules ? `\n\nADDITIONAL RULES:\n${rules}` : '';
 
     const patchSchema = z.object({
+        analysis: z.string().describe("First, analyze the code to identify the root cause of the user's issue. What CSS classes, conditional logic, or component structure is causing the problem? Be specific about line-level details."),
         patches: z.array(z.object({
             search: z.string().describe("Exact text from the current code to find and replace. Must match character-for-character including whitespace."),
             replace: z.string().describe("The new text to replace the search string with."),
@@ -24,10 +26,10 @@ export async function reviseWebsiteWithPatches(
             hasChanges: z.boolean().describe("true ONLY if the user's request requires changing business data (name, services, contact info, etc). false for pure styling/layout changes."),
             updatedJson: z.string().optional().describe("The COMPLETE updated JSON as a string. Only provide if hasChanges is true."),
         }),
-        reasoning: z.string().describe("1-2 sentence explanation of what was changed and why."),
+        reasoning: z.string().describe("User-facing explanation: what was the root cause, what you changed, and how it fixes the issue."),
     });
 
-    const revisionPrompt = `USER REQUEST: "${prompt}"
+    const textContent = `USER REQUEST: "${prompt}"
 
 CURRENT CODE:
 ${currentCode}
@@ -35,7 +37,24 @@ ${currentCode}
 ${currentJson ? `CURRENT BUSINESS DATA (JSON):
 ${JSON.stringify(currentJson, null, 2)}` : ''}
 
-Analyze the user's request and return the minimal set of search/replace patches to fulfill it. Remember: the "search" field must EXACTLY match text in the current code.`;
+Step 1: Analyze the code to understand the root cause of the user's issue.
+Step 2: Return the minimal set of search/replace patches to fix it.
+Remember: the "search" field must EXACTLY match text in the current code.`;
+
+    // Build multimodal message parts if images are provided
+    const messageParts: Array<{ type: 'text'; text: string } | { type: 'image'; image: URL }> = []
+
+    if (imageUrls && imageUrls.length > 0) {
+        messageParts.push({ type: 'text', text: 'The user attached these screenshots showing the current state of the page. Study them carefully to understand the visual issue:\n' })
+        for (const url of imageUrls) {
+            try {
+                messageParts.push({ type: 'image', image: new URL(url) })
+            } catch {
+                // Skip invalid URLs
+            }
+        }
+        messageParts.push({ type: 'text', text: '\n' + textContent })
+    }
 
     let result;
     const modelInstance = getModel(model);
@@ -44,7 +63,10 @@ Analyze the user's request and return the minimal set of search/replace patches 
             model: modelInstance,
             system: REVISION_SYSTEM_PROMPT + rulesSection,
             output: Output.object({ schema: patchSchema }),
-            prompt: revisionPrompt,
+            ...(messageParts.length > 0
+                ? { messages: [{ role: 'user' as const, content: messageParts }] }
+                : { prompt: textContent }
+            ),
         });
         // Track cost for patch-based revision
         await recordCost(buildCostRecord(result.usage, getModelId(modelInstance), 'revision', null))

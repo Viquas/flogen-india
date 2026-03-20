@@ -135,6 +135,14 @@ Every element inside a section MUST be contrast-compatible with that section's b
 - Text: \`text-zinc-900\`, \`text-zinc-700\`, \`text-zinc-500\`
 - Borders: \`border-zinc-200/60\`, \`border-zinc-200\`
 
+## ICON CONTAINER CONTRAST (CRITICAL):
+When icons sit inside rounded squares (squircles) or circles, the icon and its container MUST have strong visual contrast.
+- On LIGHT sections: container = \`bg-[accent]/10\` or \`bg-[accent]/15\`, icon = \`text-[accent]\` at full opacity. E.g. \`bg-[#0f766e]/10\` + \`text-[#0f766e]\`
+- On DARK sections: container = \`bg-white/10\`, icon = \`text-white\` or \`text-[accent]\` (if accent is light enough)
+- NEVER use accent at >30% opacity as container bg with same-color icon — they become invisible
+- NEVER use dark icon color on a dark container background (e.g. navy icon on navy-tinted squircle)
+- The squint test: if you squint, the icon shape must be clearly distinct from its container
+
 ## YOUR OUTPUT — DLS DOCUMENT FORMAT:
 
 Given the business data, produce a DLS document in EXACTLY this format. Fill in every placeholder with resolved, exact Tailwind classes and hex values. Do not leave any placeholder unfilled.
@@ -202,6 +210,12 @@ Section divider: {Tailwind class or "none"}
 On light bg: {exact Tailwind classes}
 On dark bg: {exact Tailwind classes}
 On image/hero: {exact Tailwind classes}
+
+## Icons & Containers
+Container (light section): {Tailwind classes e.g. bg-[#0f766e]/10 rounded-xl p-3}
+Icon color (light section): {Tailwind class e.g. text-[#0f766e]}
+Container (dark section): {Tailwind classes e.g. bg-white/10 rounded-xl p-3}
+Icon color (dark section): {Tailwind class e.g. text-white}
 
 ## Hero Variant
 Type: {split | full-bleed | gradient-mesh | typographic | stacked}

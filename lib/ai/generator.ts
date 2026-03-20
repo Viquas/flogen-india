@@ -131,8 +131,28 @@ export default function GeneratedPage() {
     if (richData && richData.$$manifest) {
         if (onProgress) onProgress('Designing visual language...')
         try {
-            const dlsResult = await generateDLS(richData as Record<string, unknown>)
-            const dls = dlsResult.dls
+            // Check for a stored default DLS for this industry before generating
+            let dls: string | null = null
+            let dlsFromStore = false
+            const dlsIndustryTag = (richData as any)?.brandIdentity?.vibe?.industry || (richData as any)?.industry || null
+            if (dlsIndustryTag) {
+                try {
+                    const { getDefaultDLSForIndustry } = await import('@/app/(admin)/dashboard/dls/actions')
+                    const stored = await getDefaultDLSForIndustry(dlsIndustryTag)
+                    if (stored) {
+                        dls = stored.content
+                        dlsFromStore = true
+                        console.log(`[Generator] Using stored default DLS for industry "${dlsIndustryTag}" (${dls!.length} chars)`)
+                    }
+                } catch (lookupErr) {
+                    console.error('[Generator] DLS store lookup failed, generating fresh:', lookupErr)
+                }
+            }
+
+            if (!dls) {
+                const dlsResult = await generateDLS(richData as Record<string, unknown>)
+                dls = dlsResult.dls
+            }
 
             if (dls && dls.length > 100) {
                 console.log(`[Generator] Multi-agent path: DLS generated (${dls.length} chars). Proceeding with Code Generator...`)
@@ -154,9 +174,24 @@ export default function GeneratedPage() {
                     }
                 }
 
+                // Inject industry-specific images — try Unsplash API first, then fallback to registry
+                let imageBlock = ''
+                try {
+                    const { formatDynamicImageBlock } = await import('./unsplash')
+                    imageBlock = await formatDynamicImageBlock(dlsIndustryTag)
+                } catch { /* non-critical */ }
+                if (!imageBlock) {
+                    try {
+                        const { formatImageIdsForPrompt } = await import('./image-registry')
+                        imageBlock = formatImageIdsForPrompt(dlsIndustryTag)
+                    } catch { /* non-critical */ }
+                }
+                if (imageBlock) imageBlock = '\n\n' + imageBlock
+
                 // Combine Code Generator prompt + DLS as system prompt
                 const dlsSystemPrompt = CODE_GENERATOR_PROMPT
                     + '\n\n## DESIGN LANGUAGE SPECIFICATION:\n' + dls
+                    + imageBlock
                     + rulesSection
 
                 const dlsUserPrompt = `Create a COMPLETE, production-ready landing page for:
@@ -283,6 +318,20 @@ ${markdownContext}
         }
     }
 
+    // Inject industry-specific images — try Unsplash API first, then fallback to registry
+    let legacyImageBlock = ''
+    try {
+        const { formatDynamicImageBlock } = await import('./unsplash')
+        legacyImageBlock = await formatDynamicImageBlock(industry)
+    } catch { /* non-critical */ }
+    if (!legacyImageBlock) {
+        try {
+            const { formatImageIdsForPrompt } = await import('./image-registry')
+            legacyImageBlock = formatImageIdsForPrompt(industry)
+        } catch { /* non-critical */ }
+    }
+    if (legacyImageBlock) legacyImageBlock = '\n\n' + legacyImageBlock
+
     const userPrompt = `Create a COMPLETE, production-ready landing page for:
 ${contextPrompt}
 
@@ -302,7 +351,7 @@ Generate the code now.`
     const modelInstance = getModel(model)
     const { text, usage } = await generateText({
         model: modelInstance,
-        system: systemPromptContent + rulesSection,
+        system: systemPromptContent + legacyImageBlock + rulesSection,
         prompt: userPrompt,
     })
     // Track cost for monolithic generation

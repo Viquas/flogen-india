@@ -6,13 +6,18 @@ export interface ModelPricing {
 // Configurable pricing -- update when providers change prices
 // Prices as of March 2026
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  // Google
-  'gemini-3.1-pro-preview': { inputPer1kTokens: 0.00125, outputPer1kTokens: 0.005 },
+  // Google Gemini
+  'gemini-3-flash-preview':   { inputPer1kTokens: 0.00015, outputPer1kTokens: 0.0006 },  // $0.15/$0.60 per 1M
+  'gemini-2.5-flash':         { inputPer1kTokens: 0.00015, outputPer1kTokens: 0.0006 },
+  'gemini-2.0-flash':         { inputPer1kTokens: 0.0001,  outputPer1kTokens: 0.0004 },  // $0.10/$0.40 per 1M
+  'gemini-3.1-pro-preview':   { inputPer1kTokens: 0.00125, outputPer1kTokens: 0.005 },
   // OpenAI
-  'gpt-4o':                 { inputPer1kTokens: 0.0025,  outputPer1kTokens: 0.01 },
-  'gpt-4o-mini':            { inputPer1kTokens: 0.00015, outputPer1kTokens: 0.0006 },
-  'o3-mini':                { inputPer1kTokens: 0.0011,  outputPer1kTokens: 0.0044 },
-  'o3':                     { inputPer1kTokens: 0.01,    outputPer1kTokens: 0.04 },
+  'gpt-4o':                   { inputPer1kTokens: 0.0025,  outputPer1kTokens: 0.01 },
+  'gpt-4o-mini':              { inputPer1kTokens: 0.00015, outputPer1kTokens: 0.0006 },
+  'o3-mini':                  { inputPer1kTokens: 0.0011,  outputPer1kTokens: 0.0044 },
+  'o3':                       { inputPer1kTokens: 0.01,    outputPer1kTokens: 0.04 },
+  // OpenRouter (common models)
+  'moonshotai/kimi-k2.5':     { inputPer1kTokens: 0.0002,  outputPer1kTokens: 0.0008 },
 }
 
 export function calculateCost(model: string, inputTokens: number, outputTokens: number): number {

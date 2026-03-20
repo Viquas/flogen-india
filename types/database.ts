@@ -16,6 +16,7 @@ export type Database = {
                     created_at: string
                     status: 'processing' | 'completed' | 'failed'
                     metadata: Json | null
+                    assigned_to: string | null
                 }
                 Insert: {
                     id?: string
@@ -23,6 +24,7 @@ export type Database = {
                     created_at?: string
                     status?: 'processing' | 'completed' | 'failed'
                     metadata?: Json | null
+                    assigned_to?: string | null
                 }
                 Update: {
                     id?: string
@@ -30,6 +32,7 @@ export type Database = {
                     created_at?: string
                     status?: 'processing' | 'completed' | 'failed'
                     metadata?: Json | null
+                    assigned_to?: string | null
                 }
                 Relationships: []
             }
@@ -138,6 +141,42 @@ export type Database = {
                         referencedColumns: ["id"]
                     }
                 ]
+            }
+            design_languages: {
+                Row: {
+                    id: string
+                    name: string
+                    industry_tag: string | null
+                    content: string
+                    source: 'manual' | 'stitch' | 'auto-generated' | 'url-extracted'
+                    stitch_project_id: string | null
+                    is_default: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    industry_tag?: string | null
+                    content: string
+                    source?: 'manual' | 'stitch' | 'auto-generated' | 'url-extracted'
+                    stitch_project_id?: string | null
+                    is_default?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    industry_tag?: string | null
+                    content?: string
+                    source?: 'manual' | 'stitch' | 'auto-generated' | 'url-extracted'
+                    stitch_project_id?: string | null
+                    is_default?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
             }
             configurations: {
                 Row: {

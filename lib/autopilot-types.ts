@@ -23,6 +23,7 @@ export interface BatchRunConfig {
   industry: string
   entries: number
   templateId?: string
+  designLanguageId?: string
   autoFixEnabled: boolean
   qualityThreshold: number
 }

@@ -175,6 +175,23 @@ async function executeEnqueueStage(run: BatchRun): Promise<void> {
 
   const projectIds = projects.map(p => p.id)
 
+  // If a specific DLS was selected, pre-load it onto all projects so the generator uses it
+  if (run.config.designLanguageId) {
+    try {
+      const { getDesignLanguage } = await import('@/app/(admin)/dashboard/dls/actions')
+      const dlsResult = await getDesignLanguage(run.config.designLanguageId)
+      if (dlsResult.success && dlsResult.data.content) {
+        await supabase
+          .from('projects')
+          .update({ design_language: dlsResult.data.content })
+          .in('id', projectIds)
+        logger.autopilot.info('ENQUEUE: pre-loaded DLS onto projects', { dlsId: run.config.designLanguageId, count: projectIds.length })
+      }
+    } catch (dlsErr) {
+      logger.autopilot.error('ENQUEUE: failed to pre-load DLS, generation will use auto-detect', { error: dlsErr })
+    }
+  }
+
   // addBatch handles duplicates (23505 error code) gracefully
   await generationQueue.addBatch(projectIds, undefined, run.config.templateId)
 

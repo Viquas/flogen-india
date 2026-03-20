@@ -18,10 +18,13 @@ The preview runtime includes an automatic scroll animation system. Every \`<sect
 ## ICONS & CONTRAST (CRITICAL RULES):
 Import from \`lucide-react\`. Every icon MUST be rendered as JSX: \`<ArrowRight className="h-5 w-5" />\`.
 
-**ICON CONTRAST RULE:**
-When placing an icon inside a box/circle container, ensure strict contrast:
-- Dark container -> icon MUST be \`text-white\`
-- Light container -> icon MUST be dark or primary colored
+**ICON CONTRAST RULE (MANDATORY):**
+When placing an icon inside a squircle/rounded-square/circle container:
+- Light sections: container bg = accent at 10-15% opacity, icon = accent at 100%. E.g. \`bg-[#0f766e]/10\` + \`text-[#0f766e]\`
+- Dark sections: container bg = \`bg-white/10\`, icon = \`text-white\`
+- NEVER use accent at >30% opacity as container bg with same-color icon — they become invisible
+- The icon must be CLEARLY visible against its container at a glance
+- If the DLS defines "Icons & Containers" styles, use those EXACT classes
 
 **HEROICONS SVG FALLBACK:**
 If a Lucide icon does not render, use inline SVGs from Heroicons instead.
@@ -33,16 +36,21 @@ UI:        Star, Heart, Bookmark, Bell, Settings, Info, AlertCircle, HelpCircle,
 Media:     Play, Pause, Volume2, Camera, Mic
 Business:  Phone, Mail, MapPin, Clock, Calendar, Globe, Users, User, Building2, Briefcase, Zap, Shield, Award, TrendingUp, CheckCircle
 
-### EXTENDED ICONS (use for industry-specific needs):
-Food/Dining:   Coffee, Wine, UtensilsCrossed, Flame
-Beauty/Spa:    Scissors, Sparkles, Droplet, Flower
-Fitness:       Dumbbell, Activity, Heart
-Medical:       Stethoscope, Shield, Heart
-Education:     GraduationCap, Book, Palette
-Auto:          Car, Wrench, Hammer
-Home/Realty:   Home, Key, Ruler
-Shopping:      ShoppingCart, CreditCard, Gift, Truck
-Nature:        Leaf, Sun, Moon, Cloud
+### EXTENDED ICONS (all guaranteed to render — use freely for industry-specific needs):
+Food/Dining:     Coffee, Wine, UtensilsCrossed, Utensils, Flame, Beef, CakeSlice, Cookie
+Beauty/Salon:    Scissors, Sparkles, Sparkle, Droplet, Flower, Brush, Gem, Crown, Bath, SprayCan, Hand, Flower2
+Fitness/Gym:     Dumbbell, Activity, Heart, Timer
+Medical/Dental:  Stethoscope, Shield, Heart, Smile, CircleDot
+Education:       GraduationCap, Book, BookOpen, Palette
+Auto/Repair:     Car, Wrench, Hammer, HardHat, Drill
+Home/Realty:     Home, Key, Ruler
+Shopping:        ShoppingCart, CreditCard, Gift, Truck
+Legal/Finance:   Scale, Gavel, FileCheck, ShieldCheck, Wallet, PiggyBank, Receipt, Calculator
+Travel:          Plane, Ship, Luggage, MapPinned, Compass, Navigation
+Photography:     Aperture, Focus, ImagePlus
+Music:           Headphones, Radio, MicVocal, Music
+Pets:            PawPrint, Dog, Cat
+Nature:          Leaf, Sun, Moon, Cloud, Wind, TreePine
 
 ### FORBIDDEN ICONS (DO NOT USE):
 **NEVER use brand icons like \`<Facebook />\`, \`<Instagram />\`, \`<Twitter />\`, \`<TikTok />\`, or \`<LinkedIn />\`.** They do NOT exist. For social links use: \`<Globe />\`, \`<Link2 />\`, or \`<Mail />\`.
@@ -99,15 +107,15 @@ cn  (utility function: merges Tailwind class strings)
    \`\`\`
 2. ONLY use Unsplash or placehold.co URLs.
 3. VERIFIED UNSPLASH IDS — match business industry to closest category:
-   Beauty/Salon:     1522337915551-9a2a95c4f33e | 1560066984-138daed4a7fb | 1487412720507-e7ab37603c6f
-   Sports/Fitness:   1534438327431-90a7bfbf0c50 | 1571019613454-1cb2f99b2d8b | 1526506118085-60ce8714f8c5
-   Food/Restaurant:  1504674900247-0877df9cc836 | 1414235077428-338989a2e8c0 | 1565299624946-b28f40a0ae38
-   Technology:       1518770660439-4636190af475 | 1461749280684-dccba630e2f6 | 1498050108023-c5249f4df085
-   Healthcare:       1576091160399-112ba8d25d1d | 1559839734-2b71ea197ec2 | 1631815589968-fdb09a223b1e
-   Retail/Shop:      1441986300917-64674bd600d8 | 1472851294608-062f824d29cc | 1607082349566-187342175046
-   Real Estate:      1560518883-ce09059eeffa     | 1512917774080-9991f1c4c750 | 1582407947304-d5a4b9e8e595
-   Auto/Mechanic:    1486262715619-5d3ae3c5a8e4 | 1492144534655-ae79c964c9d7 | 1503376780353-7e6692767b70
-   Car Detailing:    1507136566006-cfc505b114fc | 1489824904406-3a9c03c4e4b4 | 1520340356584-f9166066d83e | 1494976388531-d1058494cdd8 | 1542282088-fe8426f55e57
+   Beauty/Salon:     1487412720507-e7ab37603c6f | 1516975080664-ed2fc6a32937 | 1470259078422-826894b933aa | 1562322140-8baeececf3df | 1595476108010-b4d1f102b1b1 | 1457972851104-4fd469440bf9
+   Sports/Fitness:   1517836357463-d25dfeac3438 | 1518611012118-696072aa579a | 1574680096145-d05b474e2155 | 1571019613576-2b22c76fd955 | 1590439471364-192aa70c0b53
+   Food/Restaurant:  1504674900247-0877df9cc836 | 1414235077428-338989a2e8c0 | 1565299624946-b28f40a0ae38 | 1517248135467-4c7edcad34c4 | 1555396273-367ea4eb4db5 | 1466978913421-dad2ebd01d17
+   Technology:       1518770660439-4636190af475 | 1461749280684-dccba630e2f6 | 1498050108023-c5249f4df085 | 1504639725590-34d0984388bd
+   Healthcare:       1576091160399-112ba8d25d1d | 1559839734-2b71ea197ec2 | 1631815589968-fdb09a223b1e | 1579684385127-1ef15d508118
+   Retail/Shop:      1441986300917-64674bd600d8 | 1472851294608-062f824d29cc | 1567401893414-76b7b1e5a7a5 | 1528698827591-e19cef791fa2
+   Real Estate:      1560518883-ce09059eeffa     | 1512917774080-9991f1c4c750 | 1582407947304-d5a4b9e8e595 | 1600596542815-ffad4c1539a9
+   Auto/Mechanic:    1492144534655-ae79c964c9d7 | 1503376780353-7e6692767b70 | 1507136566006-cfc505b114fc | 1494976388531-d1058494cdd8
+   Dental:           1606811841689-23dfddce3e95 | 1588776814546-1ffcf47267a5 | 1445527815795-3b3bf5bfe792
    Education:        1523050854058-8df90110c9f1 | 1434030216411-0b3acf1bc645 | 1503676260728-1c00da094a0b
    General Business: 1497366216548-37526070297c | 1522202176988-66273c7fd55a | 1600880292203-757bb62b4baf
 4. NEVER invent an Unsplash photo ID. NEVER set src to a text description.
@@ -193,7 +201,7 @@ NEVER use \`target="_blank"\` on mailto: or tel: links.
 - \`window.location\`, \`fetch()\`, \`localStorage\`
 - \`<script>\` tags or \`dangerouslySetInnerHTML\`
 - Markdown fences in output
-- CSS syntax with nested quotes in Tailwind arbitrary values (NO \`bg-[url('...')]\`, use \`bg-[url(...)]\`)
+- CSS syntax with nested quotes inside url() in Tailwind background classes
 - Large semi-transparent decorative text
 
 ## OUTPUT FORMAT:
