@@ -117,7 +117,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     if (isExpired) {
         return (
             <main className="max-w-lg mx-auto">
-                <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} />
+                <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} />
                 <ExpiredForm projectId={project.id} businessName={businessName} />
             </main>
         )
@@ -127,7 +127,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     return (
         <main className="max-w-2xl mx-auto pb-8">
             {/* Hero section with screenshot and business name */}
-            <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} />
+            <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} />
 
             {/* Interactive client sections: countdown, pricing, domain, CTA */}
             <ClaimPageClient

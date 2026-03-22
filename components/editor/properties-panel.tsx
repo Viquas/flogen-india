@@ -232,9 +232,9 @@ export function PropertiesPanel({
               </button>
             </div>
             <div className="space-y-1 px-1 pb-3">
-              {selectedElement.colors.map(sc => (
+              {selectedElement.colors.map((sc, i) => (
                 <button
-                  key={sc.property}
+                  key={`${sc.property}-${i}`}
                   onClick={() => { setEditingSelColor(sc.property); setSelColorInput(sc.value) }}
                   className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-colors text-left ${editingSelColor === sc.property ? 'bg-zinc-800 ring-1 ring-indigo-500/30' : 'hover:bg-zinc-800/50'}`}
                 >
