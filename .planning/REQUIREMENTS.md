@@ -9,13 +9,13 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 ### Payment-First Funnel
 
-- [ ] **FUNNEL-01**: Claim page removes all pre-payment forms — only interaction is plan selection and "Get Started" button
-- [ ] **FUNNEL-02**: Claim page removes domain selection section — domain management moves to portal post-payment
+- [x] **FUNNEL-01**: Claim page removes all pre-payment forms — only interaction is plan selection and "Get Started" button
+- [x] **FUNNEL-02**: Claim page removes domain selection section — domain management moves to portal post-payment
 - [x] **FUNNEL-03**: Pricing switches to USD-only ($499 Standard, $1,299 Pro) — remove INR pricing, GST calculations, and geo-detection
 - [x] **FUNNEL-04**: Razorpay test/live mode toggle via RAZORPAY_MODE env var with separate test/live key pairs
-- [ ] **FUNNEL-05**: Claim page shows "Test Mode" badge when RAZORPAY_MODE=test
-- [ ] **FUNNEL-06**: Premium plan card displays "Contact Us" CTA linking to WhatsApp/email (no payment flow)
-- [ ] **FUNNEL-07**: Analytics tracks premium_contact event when user clicks Premium "Contact Us"
+- [x] **FUNNEL-05**: Claim page shows "Test Mode" badge when RAZORPAY_MODE=test
+- [x] **FUNNEL-06**: Premium plan card displays "Contact Us" CTA linking to WhatsApp/email (no payment flow)
+- [x] **FUNNEL-07**: Analytics tracks premium_contact event when user clicks Premium "Contact Us"
 - [x] **FUNNEL-08**: createRazorpayOrder() creates claim with only project_id, plan, amount — no contact info fields
 
 ### Authentication
@@ -113,13 +113,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FUNNEL-01 | Phase 12 | Pending |
-| FUNNEL-02 | Phase 12 | Pending |
+| FUNNEL-01 | Phase 12 | Complete |
+| FUNNEL-02 | Phase 12 | Complete |
 | FUNNEL-03 | Phase 12 | Complete |
 | FUNNEL-04 | Phase 12 | Complete |
-| FUNNEL-05 | Phase 12 | Pending |
-| FUNNEL-06 | Phase 12 | Pending |
-| FUNNEL-07 | Phase 12 | Pending |
+| FUNNEL-05 | Phase 12 | Complete |
+| FUNNEL-06 | Phase 12 | Complete |
+| FUNNEL-07 | Phase 12 | Complete |
 | FUNNEL-08 | Phase 12 | Complete |
 | AUTH-01 | Phase 12 | Pending |
 | AUTH-02 | Phase 13 | Pending |
