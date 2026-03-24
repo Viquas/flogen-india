@@ -43,6 +43,7 @@ export type Database = {
                     business_data: Json
                     generated_code: string | null
                     design_language: string | null
+                    cal_embed_slug: string | null
                     status: 'queued' | 'generating' | 'review' | 'approved' | 'deployed' | 'error'
                     version: number
                     thumbnail_url: string | null
@@ -63,6 +64,7 @@ export type Database = {
                     business_data: Json
                     generated_code?: string | null
                     design_language?: string | null
+                    cal_embed_slug?: string | null
                     status?: 'queued' | 'generating' | 'review' | 'approved' | 'deployed' | 'error'
                     version?: number
                     thumbnail_url?: string | null
@@ -83,6 +85,7 @@ export type Database = {
                     business_data?: Json
                     generated_code?: string | null
                     design_language?: string | null
+                    cal_embed_slug?: string | null
                     status?: 'queued' | 'generating' | 'review' | 'approved' | 'deployed' | 'error'
                     version?: number
                     thumbnail_url?: string | null
@@ -505,10 +508,65 @@ export type Database = {
                 }
                 Relationships: []
             }
+            client_requests: {
+                Row: {
+                    id: string
+                    claim_id: string
+                    project_id: string
+                    auth_user_id: string
+                    type: 'logo_upload' | 'text_change' | 'domain_setup' | 'agent_call' | 'booking_setup'
+                    status: 'pending' | 'in_progress' | 'completed'
+                    content: Json
+                    admin_notes: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    claim_id: string
+                    project_id: string
+                    auth_user_id: string
+                    type: 'logo_upload' | 'text_change' | 'domain_setup' | 'agent_call' | 'booking_setup'
+                    status?: 'pending' | 'in_progress' | 'completed'
+                    content?: Json
+                    admin_notes?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    claim_id?: string
+                    project_id?: string
+                    auth_user_id?: string
+                    type?: 'logo_upload' | 'text_change' | 'domain_setup' | 'agent_call' | 'booking_setup'
+                    status?: 'pending' | 'in_progress' | 'completed'
+                    content?: Json
+                    admin_notes?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "client_requests_claim_id_fkey"
+                        columns: ["claim_id"]
+                        isOneToOne: false
+                        referencedRelation: "claims"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "client_requests_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             claims: {
                 Row: {
                     id: string
                     project_id: string
+                    auth_user_id: string | null
                     status: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
                     plan: 'standard' | 'pro'
                     amount_paise: number
@@ -530,6 +588,7 @@ export type Database = {
                 Insert: {
                     id?: string
                     project_id: string
+                    auth_user_id?: string | null
                     status?: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
                     plan: 'standard' | 'pro'
                     amount_paise: number
@@ -551,6 +610,7 @@ export type Database = {
                 Update: {
                     id?: string
                     project_id?: string
+                    auth_user_id?: string | null
                     status?: 'pending' | 'order_created' | 'paid' | 'customizing' | 'completed' | 'expired' | 'cancelled'
                     plan?: 'standard' | 'pro'
                     amount_paise?: number
