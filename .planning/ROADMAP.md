@@ -121,24 +121,25 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 11-01: DB migrations (client_requests table, claims.auth_user_id, projects.cal_embed_slug) and TypeScript types
-- [ ] 11-02: proxy.ts with whitelist matcher, Supabase proxy client, portal anon-key client
+- [x] 11-02: proxy.ts with whitelist matcher, Supabase proxy client, portal anon-key client
 
 ### Phase 12: Payment-First Claim Flow
-**Goal**: The claim page is simplified to plan selection and a single "Get Started" button -- Razorpay collects contact info during checkout, the webhook creates Supabase Auth accounts, and dual verification eliminates the race condition
+**Goal**: The claim page is simplified to payment-first with a confirmation step before Razorpay checkout -- the webhook updates claim status and contact info, dual verification eliminates the race condition, and the confirmation page creates Supabase Auth accounts when clients set their password
 **Depends on**: Phase 11
 **Requirements**: FUNNEL-01, FUNNEL-02, FUNNEL-03, FUNNEL-04, FUNNEL-05, FUNNEL-06, FUNNEL-07, FUNNEL-08, AUTH-01, AUTH-06
 **Success Criteria** (what must be TRUE):
-  1. The claim page at `/claim/{slug}` shows only the site preview, pricing cards ($499 Standard, $1,299 Pro, Premium "Contact Us"), and a "Get Started" button per plan -- no domain selection section, no pre-payment contact forms, no INR pricing or currency toggle
-  2. Clicking "Get Started" calls `createRazorpayOrder()` which creates a claim record with only project_id, plan, and amount -- Razorpay's checkout modal collects the client's name, email, and phone
-  3. After successful payment, the webhook handler creates a Supabase Auth user with the email from the Razorpay payload using `auth.admin.createUser()`, links it to the claim via `auth_user_id`, and stores contact info from the Razorpay payload
-  4. The confirmation page uses dual verification (checks DB for webhook result, falls back to Razorpay Orders API) to resolve the race condition -- payment is confirmed within 30 seconds regardless of webhook timing
-  5. Setting `RAZORPAY_MODE=test` in env switches to test API keys, and the claim page displays a visible "Test Mode" badge
-**Plans**: TBD
+  1. The claim page at `/claim/{slug}` shows the site preview, pricing cards ($499 Standard, $1,299 Pro, Premium "Contact Us"), and a "Get Started" button per plan -- no domain selection section, no pre-payment contact forms, no INR pricing or currency toggle
+  2. Clicking "Get Started" shows a confirmation step (plan + price + "Confirm & Pay" button), then opens the Razorpay checkout modal -- `createRazorpayOrder()` creates a claim with only project_id, plan, and amount
+  3. The webhook handler updates the claim to 'paid' and populates client_name, client_email, client_phone from the Razorpay payload -- the webhook does NOT create auth accounts
+  4. The confirmation page uses dual verification (checks DB for webhook result, falls back to Razorpay Orders API) to resolve the race condition -- payment is confirmed within seconds
+  5. After payment verification, the confirmation page prominently presents a password setup form with pre-filled read-only email -- setting the password creates a Supabase Auth account via `auth.admin.createUser()` and auto-logs the client in with redirect to /portal
+  6. Setting `RAZORPAY_MODE=test` in env switches to test API keys, and all payment pages display a visible "Test Mode" banner
+**Plans**: 3 plans
 
 Plans:
-- [ ] 12-01: Webhook hardening (dual verification endpoint, account creation in webhook, error logging)
-- [ ] 12-02: Claim page simplification (remove forms/domain section, USD-only pricing, Premium card, test mode badge)
-- [ ] 12-03: Confirmation page update (dual verification polling, portal login link, password setup prompt)
+- [ ] 12-01-PLAN.md -- Backend hardening: USD-only pricing, Razorpay test/live mode, webhook error handling, dual verification endpoint, simplified server action
+- [ ] 12-02-PLAN.md -- Claim page simplification: remove domain section and summary CTA, add confirmation step, Cal.com Premium popup, test mode banner
+- [ ] 12-03-PLAN.md -- Confirmation page rewrite: dual verification polling, password setup with account creation, auto-login and /portal redirect
 
 ### Phase 13: Portal Shell
 **Goal**: Paying clients can log in to an authenticated portal at `/portal` and see their site preview, live URL, and plan details -- the minimum viable portal proves the auth flow end-to-end
@@ -206,7 +207,7 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 8. Payment and Confirmation | v2.0 | 3/3 | Complete | 2026-03-19 |
 | 9. Customization and Upsell | v2.0 | 3/3 | Complete | 2026-03-19 |
 | 10. Claim Analytics | v2.0 | 2/2 | Complete | 2026-03-18 |
-| 11. Auth Infrastructure & Schema | 2/2 | Complete    | 2026-03-24 | - |
+| 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 12. Payment-First Claim Flow | v3.0 | 0/3 | Not started | - |
 | 13. Portal Shell | v3.0 | 0/2 | Not started | - |
 | 14. Portal Features | v3.0 | 0/4 | Not started | - |
@@ -214,4 +215,4 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-25 -- v3.0 milestone roadmapped (5 phases, 14 plans)*
+*Last updated: 2026-03-25 -- Phase 12 plans finalized (3 plans, 2 waves)*
