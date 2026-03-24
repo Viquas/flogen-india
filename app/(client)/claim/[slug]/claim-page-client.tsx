@@ -6,8 +6,7 @@ import Script from 'next/script'
 import type { PlanType } from '@/lib/claim-pricing'
 import { CountdownTimer } from './components/countdown-timer'
 import { PricingSection } from './components/pricing-section'
-import { DomainSection, type DomainOption } from './components/domain-section'
-import { SummaryCTA } from './components/summary-cta'
+import { ConfirmationStep } from './components/confirmation-step'
 import { createRazorpayOrder } from './claim-actions'
 
 interface ClaimPageClientProps {
@@ -27,8 +26,7 @@ export default function ClaimPageClient({
     const searchParams = useSearchParams()
 
     const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null)
-    const [domainOption, setDomainOption] = useState<DomainOption>('subdomain')
-    const [domainValue, setDomainValue] = useState('')
+    const [showConfirmation, setShowConfirmation] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [paymentError, setPaymentError] = useState<string | null>(null)
 
@@ -37,6 +35,12 @@ export default function ClaimPageClient({
             setPaymentError('Your previous payment was not completed. You can try again.')
         }
     }, [searchParams])
+
+    const handleGetStarted = () => {
+        if (!selectedPlan) return
+        setShowConfirmation(true)
+        setPaymentError(null)
+    }
 
     const handleProceedToPayment = async () => {
         if (!selectedPlan || isProcessing) return
@@ -55,8 +59,13 @@ export default function ClaimPageClient({
                 return
             }
 
+            const razorpayMode = process.env.NEXT_PUBLIC_RAZORPAY_MODE || 'test'
+            const razorpayKey = razorpayMode === 'test'
+                ? process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY_ID
+                : process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID
+
             const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                key: razorpayKey,
                 order_id: result.orderId,
                 name: 'Flogen',
                 description: `${selectedPlan === 'pro' ? 'Pro' : 'Standard'} Website Plan`,
@@ -95,36 +104,36 @@ export default function ClaimPageClient({
             <section id="pricing" className="px-4 py-10 scroll-mt-4">
                 <PricingSection
                     selectedPlan={selectedPlan}
-                    onPlanSelect={setSelectedPlan}
+                    onPlanSelect={(plan) => {
+                        setSelectedPlan(plan)
+                        setShowConfirmation(false)
+                        setPaymentError(null)
+                    }}
+                    onGetStarted={handleGetStarted}
+                    projectId={projectId}
                 />
             </section>
 
-            {/* Domain section — only visible after plan selection */}
-            {selectedPlan && (
-                <section className="px-4 py-10">
-                    <div className="max-w-2xl mx-auto">
-                        <DomainSection
-                            businessName={businessName}
-                            selectedOption={domainOption}
-                            domainValue={domainValue}
-                            onOptionChange={setDomainOption}
-                            onDomainValueChange={setDomainValue}
-                        />
-                    </div>
+            {/* Confirmation step -- visible after clicking "Get Started" */}
+            {showConfirmation && selectedPlan && (
+                <section className="px-4 py-6">
+                    <ConfirmationStep
+                        plan={selectedPlan}
+                        onConfirm={handleProceedToPayment}
+                        onCancel={() => setShowConfirmation(false)}
+                        isProcessing={isProcessing}
+                    />
                 </section>
             )}
 
-            {/* Summary CTA — only visible after plan selection */}
-            <div className="max-w-2xl mx-auto">
-                <SummaryCTA
-                    selectedPlan={selectedPlan}
-                    domainOption={domainOption}
-                    domainValue={domainValue}
-                    onProceedToPayment={handleProceedToPayment}
-                    isProcessing={isProcessing}
-                    paymentError={paymentError}
-                />
-            </div>
+            {/* Payment error */}
+            {paymentError && (
+                <div className="max-w-md mx-auto px-4">
+                    <p className="text-sm text-red-600 text-center bg-red-50 rounded-lg py-3 px-4">
+                        {paymentError}
+                    </p>
+                </div>
+            )}
 
             <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         </div>

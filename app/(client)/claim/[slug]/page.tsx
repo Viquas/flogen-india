@@ -1,12 +1,14 @@
-import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Metadata } from 'next'
 import { HeroSection } from './components/hero-section'
+import { CustomizationSection } from './components/customization-section'
+import { TestimonialsSection } from './components/testimonials-section'
 import { FeaturesGrid } from './components/features-grid'
 import { TrustSection } from './components/trust-section'
 import { FaqAccordion } from './components/faq-accordion'
 import { ExpiredForm } from './components/expired-form'
+import { TestModeBanner } from './components/test-mode-banner'
 import ClaimPageClient from './claim-page-client'
 
 interface ClaimPageProps {
@@ -53,12 +55,6 @@ export async function generateMetadata({ params }: ClaimPageProps): Promise<Meta
 export default async function ClaimPage({ params }: ClaimPageProps) {
     const { slug } = await params
 
-    // Geo-detection: read country from Vercel header
-    const headersList = await headers()
-    const country = headersList.get('x-vercel-ip-country') || process.env.NEXT_PUBLIC_DEV_COUNTRY || 'IN'
-    const initialCurrency = country === 'IN' ? 'INR' as const : 'USD' as const
-
-    // Data fetching
     const supabase = createAdminClient()
 
     const { data: project } = await supabase
@@ -74,7 +70,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'
 
-    // Check if already paid -- route based on status and customization state
+    // Check if already paid — route based on status and customization state
     const { data: paidClaim } = await supabase
         .from('claims')
         .select('id, status, plan')
@@ -87,7 +83,6 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         if (paidClaim.status === 'completed') {
             redirect(`/claim/${slug}/confirmed`)
         }
-        // Check if customization already submitted
         const { data: customization } = await supabase
             .from('customizations')
             .select('id')
@@ -95,10 +90,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
             .maybeSingle()
 
         if (customization) {
-            // Customization submitted -> go to confirmed
             redirect(`/claim/${slug}/confirmed`)
         }
-        // Paid but no customization -> go to customize
         redirect(`/claim/${slug}/customize`)
     }
 
@@ -113,38 +106,39 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'approved')
 
-    // Expired state: show hero + expired form only
+    // Expired state
     if (isExpired) {
         return (
-            <main className="max-w-lg mx-auto">
+            <main>
+                <TestModeBanner />
                 <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} />
-                <ExpiredForm projectId={project.id} businessName={businessName} />
+                <div className="max-w-lg mx-auto">
+                    <ExpiredForm projectId={project.id} businessName={businessName} />
+                </div>
             </main>
         )
     }
 
     // Active state: full claim landing page
     return (
-        <main className="max-w-2xl mx-auto pb-8">
-            {/* Hero section with screenshot and business name */}
+        <main className="pb-8">
+            <TestModeBanner />
             <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} />
 
-            {/* Interactive client sections: countdown, pricing, domain, CTA */}
             <ClaimPageClient
                 projectId={project.id}
-                initialCurrency={initialCurrency}
                 expiresAt={project.claim_expires_at || ''}
                 businessName={businessName}
                 slug={slug}
             />
 
-            {/* Server-rendered static sections */}
+            <CustomizationSection />
+            <TestimonialsSection />
             <FeaturesGrid />
             <TrustSection approvedCount={approvedCount || 0} />
             <FaqAccordion />
 
-            {/* Footer */}
-            <footer className="px-4 py-6 text-center text-xs text-gray-400">
+            <footer className="max-w-2xl mx-auto px-4 py-8 text-center text-xs text-[#050304]/20">
                 <p>Made with care by Flogen</p>
             </footer>
         </main>

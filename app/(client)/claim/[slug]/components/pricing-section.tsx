@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowRight, Crown } from 'lucide-react'
+import Script from 'next/script'
 import {
     DISPLAY_PRICING,
     CURRENCY_SYMBOL,
@@ -11,6 +12,8 @@ import {
 interface PricingSectionProps {
     selectedPlan: PlanType | null
     onPlanSelect: (plan: PlanType) => void
+    onGetStarted: () => void
+    projectId: string
 }
 
 const STANDARD_FEATURES = [
@@ -47,7 +50,33 @@ function Dot({ className }: { className?: string }) {
 export function PricingSection({
     selectedPlan,
     onPlanSelect,
+    onGetStarted,
+    projectId,
 }: PricingSectionProps) {
+    const handleStandardClick = () => {
+        if (selectedPlan === 'standard') {
+            onGetStarted()
+        } else {
+            onPlanSelect('standard')
+        }
+    }
+
+    const handleProClick = () => {
+        if (selectedPlan === 'pro') {
+            onGetStarted()
+        } else {
+            onPlanSelect('pro')
+        }
+    }
+
+    const handlePremiumClick = () => {
+        fetch('/api/analytics/claim-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event: 'premium_contact', projectId }),
+        }).catch(() => {}) // fire-and-forget
+    }
+
     return (
         <section className="max-w-4xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-[family-name:var(--font-signifier)] font-light text-[#050304] text-center mb-10">
@@ -62,7 +91,7 @@ export function PricingSection({
                             ? 'border-[#050304] shadow-[0_2px_20px_rgba(0,0,0,0.08)]'
                             : 'border-[#050304]/8 hover:border-[#050304]/20'
                     }`}
-                    onClick={() => onPlanSelect('standard')}
+                    onClick={handleStandardClick}
                 >
                     <h3 className="text-lg font-bold text-[#050304]">Standard</h3>
                     <div className="mt-3">
@@ -86,14 +115,17 @@ export function PricingSection({
 
                     <button
                         type="button"
-                        onClick={() => onPlanSelect('standard')}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleStandardClick()
+                        }}
                         className={`w-full py-3 rounded-full font-semibold transition-all mt-6 text-sm ${
                             selectedPlan === 'standard'
                                 ? 'bg-[#050304] text-white'
                                 : 'bg-[#050304]/5 text-[#050304] hover:bg-[#050304]/10'
                         }`}
                     >
-                        {selectedPlan === 'standard' ? 'Selected' : 'Select Standard'}
+                        {selectedPlan === 'standard' ? 'Get Started' : 'Select Standard'}
                     </button>
                 </div>
 
@@ -102,7 +134,7 @@ export function PricingSection({
                     className={`relative rounded-2xl p-6 cursor-pointer transition-all bg-[#050304] border border-[#050304] flex flex-col ${
                         selectedPlan === 'pro' ? 'shadow-[0_4px_32px_rgba(0,0,0,0.2)]' : ''
                     }`}
-                    onClick={() => onPlanSelect('pro')}
+                    onClick={handleProClick}
                 >
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#AF92FF] text-[#050304] text-xs font-semibold px-4 py-1 rounded-full">
                         Recommended
@@ -130,18 +162,21 @@ export function PricingSection({
 
                     <button
                         type="button"
-                        onClick={() => onPlanSelect('pro')}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleProClick()
+                        }}
                         className={`w-full py-3 rounded-full font-semibold transition-all mt-6 text-sm ${
                             selectedPlan === 'pro'
                                 ? 'bg-[#AF92FF] text-[#050304]'
                                 : 'bg-white/10 text-white hover:bg-white/15'
                         }`}
                     >
-                        {selectedPlan === 'pro' ? 'Selected' : 'Select Pro'}
+                        {selectedPlan === 'pro' ? 'Get Started' : 'Select Pro'}
                     </button>
                 </div>
 
-                {/* Premium -- contact us */}
+                {/* Premium -- Cal.com popup */}
                 <div className="rounded-2xl p-6 bg-white border border-[#050304]/8 flex flex-col">
                     <h3 className="text-lg font-bold text-[#050304] flex items-center gap-2">
                         Premium
@@ -165,15 +200,27 @@ export function PricingSection({
                         ))}
                     </ul>
 
-                    <a
-                        href="mailto:hello@essodigital.com?subject=Premium Website Inquiry"
+                    <button
+                        type="button"
+                        data-cal-link={process.env.NEXT_PUBLIC_CAL_LINK || 'essodigital/30min'}
+                        data-cal-config='{"layout":"month_view"}'
+                        onClick={handlePremiumClick}
                         className="w-full py-3 rounded-full font-semibold transition-all mt-6 text-sm bg-[#050304]/5 text-[#050304] hover:bg-[#050304]/10 flex items-center justify-center gap-2"
                     >
                         Contact Us
                         <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
+                    </button>
                 </div>
             </div>
+
+            <Script
+                src="https://app.cal.com/embed/embed.js"
+                strategy="lazyOnload"
+                onLoad={() => {
+                    // @ts-expect-error Cal is injected by CDN script
+                    if (typeof Cal !== 'undefined') Cal('init', { origin: 'https://cal.com' })
+                }}
+            />
         </section>
     )
 }
