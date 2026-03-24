@@ -137,9 +137,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 12-01-PLAN.md -- Backend hardening: USD-only pricing, Razorpay test/live mode, webhook error handling, dual verification endpoint, simplified server action
-- [ ] 12-02-PLAN.md -- Claim page simplification: remove domain section and summary CTA, add confirmation step, Cal.com Premium popup, test mode banner
-- [ ] 12-03-PLAN.md -- Confirmation page rewrite: dual verification polling, password setup with account creation, auto-login and /portal redirect
+- [x] 12-01-PLAN.md -- Backend hardening: USD-only pricing, Razorpay test/live mode, webhook error handling, dual verification endpoint, simplified server action
+- [x] 12-02-PLAN.md -- Claim page simplification: remove domain section and summary CTA, add confirmation step, Cal.com Premium popup, test mode banner
+- [x] 12-03-PLAN.md -- Confirmation page rewrite: dual verification polling, password setup with account creation, auto-login and /portal redirect
 
 ### Phase 13: Portal Shell
 **Goal**: Paying clients can log in to an authenticated portal at `/portal` and see their site preview, live URL, and plan details -- the minimum viable portal proves the auth flow end-to-end
@@ -150,11 +150,11 @@ Plans:
   2. Returning clients can log in at `/portal/login` with email and password and are redirected to `/portal`
   3. The portal dashboard at `/portal` displays a full-width iframe preview of the client's generated site, their live URL (subdomain or custom domain) with a copy-to-clipboard button, a plan badge (Standard/Pro), and a site status indicator (Active, Customization Pending, Update in Progress)
   4. The portal layout is mobile-responsive and works at 375px width -- navigation, preview, and all information cards are usable on a phone screen
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: Portal login page and confirmation page password setup flow
-- [ ] 13-02: Auth-guarded portal layout and dashboard (preview iframe, URL card, plan badge, status indicator)
+- [ ] 13-01-PLAN.md -- Portal login page with split layout, password reset flow, proxy.ts update for /portal/reset
+- [ ] 13-02-PLAN.md -- Auth-guarded portal layout and dashboard (preview iframe, URL card, plan badge, status indicator, responsive nav)
 
 ### Phase 14: Portal Features
 **Goal**: Clients can manage their domain, upload a logo with AI background removal, submit change requests, set up booking (Pro), and pay for agent support -- all from the portal
@@ -208,11 +208,11 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 9. Customization and Upsell | v2.0 | 3/3 | Complete | 2026-03-19 |
 | 10. Claim Analytics | v2.0 | 2/2 | Complete | 2026-03-18 |
 | 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
-| 12. Payment-First Claim Flow | 3/3 | Complete    | 2026-03-24 | - |
+| 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
 | 13. Portal Shell | v3.0 | 0/2 | Not started | - |
 | 14. Portal Features | v3.0 | 0/4 | Not started | - |
 | 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-25 -- Phase 12 plans finalized (3 plans, 2 waves)*
+*Last updated: 2026-03-25 -- Phase 13 plans finalized (2 plans, 2 waves)*
