@@ -23,7 +23,7 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 - [x] **AUTH-01**: Supabase Auth account created server-side in webhook handler after payment.captured using auth.admin.createUser() with email from Razorpay payload
 - [ ] **AUTH-02**: Confirmation page presents password field for first-time portal access — creates account linked to claim and project
 - [x] **AUTH-03**: proxy.ts protects /portal/* routes with Supabase session validation — whitelist matcher to avoid breaking webhooks, admin, and public routes
-- [ ] **AUTH-04**: Portal login page with email + password for returning clients
+- [x] **AUTH-04**: Portal login page with email + password for returning clients
 - [x] **AUTH-05**: claims table gains auth_user_id column linking to Supabase Auth user
 - [x] **AUTH-06**: Dual payment verification on confirmation page — webhook push + Razorpay API pull to handle race condition
 
@@ -124,7 +124,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 12 | Complete |
 | AUTH-02 | Phase 13 | Pending |
 | AUTH-03 | Phase 11 | Complete |
-| AUTH-04 | Phase 13 | Pending |
+| AUTH-04 | Phase 13 | Complete |
 | AUTH-05 | Phase 11 | Complete |
 | AUTH-06 | Phase 12 | Complete |
 | PORTAL-01 | Phase 13 | Pending |

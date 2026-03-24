@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
-status: unknown
-last_updated: "2026-03-24T22:37:22.988Z"
+status: in-progress
+last_updated: "2026-03-24T23:14:54.000Z"
 progress:
   total_phases: 12
   completed_phases: 12
-  total_plans: 34
-  completed_plans: 34
+  total_plans: 35
+  completed_plans: 35
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-**Current focus:** Phase 12 - Payment-First Claim Flow
+**Current focus:** Phase 13 - Portal Shell
 
 ## Current Position
 
-Phase: 12 of 15 (Payment-First Claim Flow)
-Plan: 3 of 3 in current phase (12-01, 12-02, 12-03 complete)
-Status: Phase 12 COMPLETE -- all 3 plans delivered
-Last activity: 2026-03-25 -- Completed 12-03 (confirmation page account setup)
+Phase: 13 of 15 (Portal Shell)
+Plan: 1 of 2 in current phase (13-01 complete)
+Status: Phase 13 in progress
+Last activity: 2026-03-25 -- Completed 13-01 (portal login and password reset)
 
-Progress: [*********] 100%
+Progress: [*********] 97%
 
 ## Performance Metrics
 
@@ -40,7 +40,7 @@ Progress: [*********] 100%
 - Phases: 5/5 complete (phases 6-10)
 
 **v3.0:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Phases: 2/5 complete (phases 11-15)
 
 | Plan | Duration | Tasks | Files |
@@ -50,6 +50,7 @@ Progress: [*********] 100%
 | 12-01 | 7min | 2 | 11 |
 | Phase 12 P02 | 3min | 2 tasks | 5 files |
 | 12-03 | 3min | 2 | 4 |
+| 13-01 | 3min | 2 | 8 |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Relevant to current work:
 - [12-03]: Duplicate user detection via createUser-then-catch (not listUsers) for O(1) performance
 - [12-03]: Auto-login failure is non-fatal -- user created, manual login is fallback
 - [12-03]: Timeline "Up next" step is "Set Up Your Account" (not Customization)
+- [13-01]: (auth) route group for layout boundary -- separates public portal pages from auth-guarded dashboard
+- [13-01]: isPublicPortalPage array in proxy.ts -- extensible pattern replacing single isLoginPage boolean
+- [13-01]: Authenticated users NOT redirected from /portal/reset -- needed for password update after email callback
 
 ### Pending Todos
 
@@ -99,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 12-03-PLAN.md (confirmation page account setup) -- Phase 12 COMPLETE
+Stopped at: Completed 13-01-PLAN.md (portal login and password reset)
 Resume file: None
