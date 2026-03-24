@@ -11,12 +11,12 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 - [ ] **FUNNEL-01**: Claim page removes all pre-payment forms — only interaction is plan selection and "Get Started" button
 - [ ] **FUNNEL-02**: Claim page removes domain selection section — domain management moves to portal post-payment
-- [ ] **FUNNEL-03**: Pricing switches to USD-only ($499 Standard, $1,299 Pro) — remove INR pricing, GST calculations, and geo-detection
-- [ ] **FUNNEL-04**: Razorpay test/live mode toggle via RAZORPAY_MODE env var with separate test/live key pairs
+- [x] **FUNNEL-03**: Pricing switches to USD-only ($499 Standard, $1,299 Pro) — remove INR pricing, GST calculations, and geo-detection
+- [x] **FUNNEL-04**: Razorpay test/live mode toggle via RAZORPAY_MODE env var with separate test/live key pairs
 - [ ] **FUNNEL-05**: Claim page shows "Test Mode" badge when RAZORPAY_MODE=test
 - [ ] **FUNNEL-06**: Premium plan card displays "Contact Us" CTA linking to WhatsApp/email (no payment flow)
 - [ ] **FUNNEL-07**: Analytics tracks premium_contact event when user clicks Premium "Contact Us"
-- [ ] **FUNNEL-08**: createRazorpayOrder() creates claim with only project_id, plan, amount — no contact info fields
+- [x] **FUNNEL-08**: createRazorpayOrder() creates claim with only project_id, plan, amount — no contact info fields
 
 ### Authentication
 
@@ -25,7 +25,7 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 - [x] **AUTH-03**: proxy.ts protects /portal/* routes with Supabase session validation — whitelist matcher to avoid breaking webhooks, admin, and public routes
 - [ ] **AUTH-04**: Portal login page with email + password for returning clients
 - [x] **AUTH-05**: claims table gains auth_user_id column linking to Supabase Auth user
-- [ ] **AUTH-06**: Dual payment verification on confirmation page — webhook push + Razorpay API pull to handle race condition
+- [x] **AUTH-06**: Dual payment verification on confirmation page — webhook push + Razorpay API pull to handle race condition
 
 ### Client Portal
 
@@ -115,18 +115,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | FUNNEL-01 | Phase 12 | Pending |
 | FUNNEL-02 | Phase 12 | Pending |
-| FUNNEL-03 | Phase 12 | Pending |
-| FUNNEL-04 | Phase 12 | Pending |
+| FUNNEL-03 | Phase 12 | Complete |
+| FUNNEL-04 | Phase 12 | Complete |
 | FUNNEL-05 | Phase 12 | Pending |
 | FUNNEL-06 | Phase 12 | Pending |
 | FUNNEL-07 | Phase 12 | Pending |
-| FUNNEL-08 | Phase 12 | Pending |
+| FUNNEL-08 | Phase 12 | Complete |
 | AUTH-01 | Phase 12 | Pending |
 | AUTH-02 | Phase 13 | Pending |
 | AUTH-03 | Phase 11 | Complete |
 | AUTH-04 | Phase 13 | Pending |
 | AUTH-05 | Phase 11 | Complete |
-| AUTH-06 | Phase 12 | Pending |
+| AUTH-06 | Phase 12 | Complete |
 | PORTAL-01 | Phase 13 | Pending |
 | PORTAL-02 | Phase 13 | Pending |
 | PORTAL-03 | Phase 13 | Pending |
