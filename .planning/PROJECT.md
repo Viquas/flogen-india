@@ -55,39 +55,63 @@ Maximize the number of high-quality websites generated per hour with minimal man
 
 ### Active
 
-(None — planning next milestone)
+<!-- v3.0: Client Portal & Updated Funnel -->
+- [ ] Payment-first Razorpay flow (no pre-payment forms, contact info from webhook)
+- [ ] Razorpay test mode with test/live key switching
+- [ ] Supabase Auth account creation on confirmation page (post-payment)
+- [ ] Client portal with authenticated dashboard, site preview iframe, live URL
+- [ ] Domain management: free subdomain, connect existing (DNS verification), buy new (Domainr + AI suggestions)
+- [ ] Logo upload with Gemini Vision AI background removal
+- [ ] Single textarea for all change requests (text, colors, images, anything)
+- [ ] Booking setup for Pro plan clients (Cal.com embed slug)
+- [ ] $49 agent support payment (domain setup, logo fixes, minor edits)
+- [ ] client_requests table and CRUD API for all client submissions
+- [ ] Admin purchased clients view with customer request queue
+- [ ] Admin redeploy button (update code, increment version, save revision)
+- [ ] USD-only pricing ($499 Standard, $1,299 Pro, Premium "Contact Us")
+- [ ] Premium plan display-only card with "Contact Us" CTA
+- [ ] Updated claim page (remove domain selection, remove pre-payment forms)
+- [ ] Analytics: premium_contact event tracking
 
 ### Out of Scope
 
-- Multi-user auth / RBAC — single operator, internal admin
+- Multi-user auth / RBAC — single operator for admin, Supabase Auth for clients only
 - Public-facing API — no external consumers
 - Rate limiting on admin — trusted local use only
 - Mobile admin app — desktop browser workflow for admin
 - Stripe payments — Razorpay only for all markets
-- Domain registration API — manual DNS instructions for now
-- Automated site deployment — manual for now
-- CMS / client self-edit — operator handles all changes
-- Email notifications (receipts, reminders) — no email service in stack yet
-- Admin notification on customization submit — deferred, operator monitors via dashboard/logs
+- Domain registration (in-app purchase) — clients buy externally, connect via DNS
+- CMS / client self-edit — operator handles all changes via admin editor
+- Email notifications — deferred, will use Instantly AI later
+- PDF DNS guides — static text instructions in portal instead
+- INR pricing — USD-only for v3.0
+- Custom scheduling infrastructure — Cal.com handles all booking logic
+- Auto-deployment to custom domains — manual DNS + hosting setup for now
 
 ## Context
 
 - Next.js App Router + Supabase + AI SDK stack
 - v1.0 shipped generation engine (5 phases, 15 plans) — 2026-03-18
 - v2.0 shipped client claim flow (5 phases, 14 plans) — 2026-03-19
-- Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow
+- v3.0 target: client portal, payment-first funnel, Supabase Auth, domain management, admin fulfillment
+- Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow, `(portal)/` for client portal (new)
 - Tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs, claims, customizations, claim_events
+- New tables needed: client_requests (central request queue)
+- New column needed: projects.cal_embed_slug (Cal.com booking slug for Pro)
 - Supabase Storage: site-screenshots (public), claim-uploads (private)
-- Razorpay for payments (INR primary, USD secondary)
+- Supabase Auth: new dependency for client portal authentication
+- Razorpay for payments (USD-only for v3.0)
 - Client pages are mobile-first, SSR, Inter font
 - Admin pages use Geist font, desktop-optimized
 - No test suite — relies on TypeScript safety and manual testing
 - CTA bar uses sendBeacon for cross-origin analytics tracking
+- Domainr API for domain availability checking
+- Gemini Vision for logo background removal
 
 ## Constraints
 
 - **Single operator**: Admin for one power user, client pages for prospects
-- **Razorpay only**: All payments through Razorpay (INR primary, USD secondary)
+- **Razorpay only**: All payments through Razorpay (USD-only for v3.0)
 - **Existing schema**: Extend with new tables, don't modify existing
 - **No breaking changes**: Generation pipeline and admin dashboard must keep working
 - **Mobile-first client pages**: Prospects arrive from WhatsApp/email on phones
@@ -111,5 +135,14 @@ Maximize the number of high-quality websites generated per hour with minimal man
 | SVG uploads rejected | Security risk (XSS vector), accept PNG/JPG/WebP only | ✓ Good |
 | CTA beacon tracking via sendBeacon + GET pixel | Cross-origin analytics from injected CTA bar | ✓ Good |
 
+| USD-only pricing for v3.0 | Simplify payment flow, target international market | — Pending |
+| Payment-first (no pre-payment forms) | Reduce friction, Razorpay collects contact info | — Pending |
+| Supabase Auth for client portal | Native to existing stack, row-level security | — Pending |
+| Gemini Vision for bg removal | Reuse existing AI provider, no new service dependency | — Pending |
+| Domainr for domain availability | Free tier, simple API, sufficient for availability checks | — Pending |
+| Single textarea for change requests | Admin interprets and executes, preserves design quality | — Pending |
+| Email notifications deferred | Will use Instantly AI later, not blocking v3.0 | — Pending |
+| Static DNS instructions (no PDFs) | Simpler implementation, update-friendly text format | — Pending |
+
 ---
-*Last updated: 2026-03-19 after v2.0 milestone*
+*Last updated: 2026-03-25 after v3.0 milestone start*

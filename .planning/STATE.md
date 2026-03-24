@@ -1,62 +1,41 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Client Claim Flow
-status: unknown
-last_updated: "2026-03-18T20:31:07.099Z"
+milestone: v3.0
+milestone_name: Client Portal & Updated Funnel
+status: defining_requirements
+last_updated: "2026-03-25"
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 29
-  completed_plans: 29
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-**Current focus:** Phase 10 -- Claim Analytics
+**Current focus:** Defining requirements for v3.0
 
 ## Current Position
 
-Phase: 10 of 10 (Claim Analytics)
-Plan: 2 of 2 in current phase (2 complete)
-Status: Phase 10 complete -- all v2.0 phases done
-Last activity: 2026-03-19 -- completed 10-02 (claim funnel analytics dashboard)
-
-Progress: [####################] 100% (v2.0 Phase 10: 2/2 plans complete)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-25 — Milestone v3.0 started
 
 ## Performance Metrics
 
 **v1.0 Summary:**
 - Total plans completed: 15
-- Average duration: 4min
-- Total execution time: 0.90 hours
 - Phases: 5/5 complete
 
-**v2.0:**
+**v2.0 Summary:**
 - Total plans completed: 14
-- Phases: 5/5 complete
-
-| Phase | Plan | Duration | Tasks | Files |
-|-------|------|----------|-------|-------|
-| 06 | 01 | 2min | 2 | 4 |
-| 06 | 02 | 37min | 2 | 32 |
-| 06 | 03 | 4min | 3 | 5 |
-| 07 | 01 | 3min | 3 | 8 |
-| 07 | 02 | 5min | 2 | 2 |
-| 07 | 03 | 2min | 2 | 2 |
-| 08 | 01 | 3min | 2 | 4 |
-| 08 | 02 | 2min | 2 | 2 |
-| 08 | 03 | 3min | 2 | 5 |
-| 09 | 01 | 2min | 2 | 4 |
-| 09 | 02 | 4min | 2 | 9 |
-| 09 | 03 | 3min | 2 | 4 |
-| 10 | 01 | 7min | 3 | 9 |
-| 10 | 02 | 3min | 2 | 6 |
+- Phases: 5/5 complete (phases 6-10)
 
 ## Accumulated Context
 
@@ -68,59 +47,16 @@ Relevant to current work:
 - [v1.0]: Keep existing Supabase schema, extend with new tables
 - [v1.0]: Maintain existing generation pipeline (no breaking changes)
 - [v2.0]: Razorpay only for all payments (no Stripe)
-- [v2.0]: 5-day claim expiry window
-- [v2.0]: Standard 4,999 INR / Pro 9,999 INR (USD: $499 / $1,299)
 - [v2.0]: Mobile-first client-facing pages
 - [v2.0]: Supabase Storage for file uploads
-- [06-01]: Integer paise/cents for all monetary amounts (no floats)
-- [06-01]: Default currency INR with x-vercel-ip-country header fallback
-- [06-01]: Separate pricing files: claim-pricing.ts for client plans, pricing.ts for AI costs
-- [06-01]: ON CONFLICT DO NOTHING for idempotent storage bucket creation
-- [06-02]: Dashboard layout becomes (admin)/ group layout wrapping both /dashboard and /editor
-- [06-02]: Claim page uses UUID as slug (not custom slug) per research
-- [06-02]: Route groups: (admin)/ for internal, (client)/ for customer-facing
-- [06-03]: All CTA styles inline with flogen-cta-* ID prefix for complete style isolation
-- [06-03]: 60-second countdown interval (not 1s) for minute-level precision
-- [06-03]: iframe srcDoc for rendering CTA-injected HTML inline without separate route
-- [06-03]: puppeteer headless: true (chromium-min has no headless property)
-- [07-01]: Native details/summary for FAQ accordion -- progressive enhancement, works without JS
-- [07-01]: useActionState (React 19) for expired form -- modern pattern matching project codebase
-- [07-01]: Claim components use explicit hex colors (#2563EB, #0F172A, #F8FAFC), not admin theme variables
-- [07-02]: Radio card pattern with sr-only inputs for accessible domain selection
-- [07-02]: Summary CTA returns null until plan selected (progressive disclosure)
-- [07-02]: Domain validation visual-only on blur (no WHOIS check in Phase 7)
-- [07-03]: Named imports for all section components (matching actual exports, not default imports)
-- [07-03]: Inline geo-detection using headers() instead of getCurrencyFromRequest() (server component)
-- [07-03]: Page-level server/client boundary: page.tsx fetches data, ClaimPageClient manages interactive state
-- [08-02]: Timing-safe comparison for HMAC verification (crypto.timingSafeEqual) to prevent timing attacks
-- [08-02]: Three-layer idempotency: event ID dedup, status guard (order_created only), order ID lookup
-- [08-01]: GST (18%) applied to plan price only, not hosting fee
-- [08-01]: Idempotent order creation: reuse existing pending/order_created claim for same project_id
-- [08-01]: Server-only RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET (no NEXT_PUBLIC_ prefix for secret)
-- [08-01]: Pending claims without Razorpay order get updated with latest selections on retry
-- [08-02]: No auth on status endpoint -- UUID-based security matches existing claim page pattern
-- [08-03]: checkout.js via next/script lazyOnload -- defers loading until after page hydration
-- [08-03]: Polling uses setTimeout in useEffect (not setInterval) for clean cancellation on status change
-- [08-03]: Three-state polling UI: verifying -> confirmed -> timeout (graceful fallback)
-- [09-01]: Magic byte validation over MIME type checking for upload security
-- [09-01]: Server-proxy upload via admin client to bypass CORS entirely
-- [09-01]: Return storage path only (not full URL) from upload API for security
-- [09-01]: Three-way redirect routing: completed -> /confirmed, customized -> /confirmed, paid -> /customize
-- [09-02]: Single scrollable page instead of multi-step wizard for customization form
-- [09-02]: Logo required as only mandatory field -- all other sections optional
-- [09-02]: Server action upsert: update existing pending customization or insert new
-- [09-02]: No form library -- individual useState per field for simplicity
-- [09-03]: Cal.com iframe fallback message when NEXT_PUBLIC_CAL_LINK not configured
-- [09-03]: Skip link as full-width outlined button with equal CTA prominence
-- [09-03]: Razorpay checkout.js conditionally loaded only for Standard plan
-- [10-01]: Record<string, Json> for metadata param to satisfy Supabase JSONB typing
-- [10-01]: GET pixel endpoint returns 1x1 transparent GIF for cross-origin tracking
-- [10-01]: CTA bar derives analytics URL from claim button href origin with window.location.origin fallback
-- [10-01]: All CTA beacon JS uses vanilla var/function syntax for older browser compatibility
-- [10-02]: JS-side aggregation for funnel counts matching v1.0 analytics pattern (Supabase JS has no GROUP BY)
-- [10-02]: Horizontal bar chart with gradient blue coloring to visually represent funnel narrowing
-- [10-02]: Revenue split by currency (INR/USD) with paise-to-rupees and cents-to-dollars conversion
-- [10-02]: Conversion rate calculated as payment_completed / claim_page_view percentage
+- [v3.0]: USD-only pricing ($499/$1,299)
+- [v3.0]: Payment-first (no pre-payment forms, contact from Razorpay webhook)
+- [v3.0]: Supabase Auth for client portal
+- [v3.0]: Gemini Vision for logo background removal
+- [v3.0]: Domainr API for domain availability
+- [v3.0]: Single textarea for change requests (admin interprets)
+- [v3.0]: Email notifications deferred (Instantly AI later)
+- [v3.0]: Static DNS instructions (no PDF generation)
 
 ### Pending Todos
 
@@ -128,15 +64,13 @@ None yet.
 
 ### Blockers/Concerns
 
-- Zero test infrastructure (carried from v1.0)
-- 2 pre-existing TypeScript errors in route.ts and validation.ts (carried from v1.0)
-- Razorpay API keys needed before Phase 8 (payment integration)
-- Razorpay live mode KYC must be initiated early -- blocks production payments
-- Puppeteer + chromium-min installed and verified (Phase 6 complete)
-- Cal.com account with configured event type URL needed before Phase 9 (upsell)
+- Supabase Auth needs to be configured (new dependency for v3.0)
+- Domainr API key needed for domain availability checking
+- Razorpay test mode keys needed for test flow verification
+- Zero test infrastructure (carried from v1.0/v2.0)
 
 ## Session Continuity
 
-Last session: 2026-03-19
-Stopped at: Completed 10-02-PLAN.md (claim funnel analytics dashboard) -- all phases complete
+Last session: 2026-03-25
+Stopped at: Defining v3.0 requirements
 Resume file: None
