@@ -1,198 +1,203 @@
 # Project Research Summary
 
-**Project:** Flogen / WebGen v2.0 — Client Claim Flow
-**Domain:** AI website generator with client conversion and payment pipeline
-**Researched:** 2026-03-18
+**Project:** Flogen v3.0 — Client Portal & Updated Funnel
+**Domain:** AI website generator with payment-first funnel, authenticated client portal, and admin fulfillment workflow
+**Researched:** 2026-03-25
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Flogen v2.0 converts an existing internal AI website generation tool into a revenue-generating platform by adding a client-facing claim flow. The product pattern is a 6-step funnel: CTA injection on generated sites, claim landing page, Razorpay payment, post-payment customization form, strategy call upsell, and confirmation page. The entire flow builds on a validated and shipped v1.0 stack (Next.js 16, Supabase, AI SDK v6) and requires only 5 new npm packages. The most significant architectural change is not a new library but a structural one: introducing public mobile-first SSR pages alongside existing admin pages using Next.js route groups (`(admin)/` and `(client)/`), which enables different layouts, meta tags, and script loading without touching any existing URLs.
+v3.0 transforms Flogen from a one-shot claim-to-site pipeline into a persistent client relationship platform. The core architectural shift is payment-first: Razorpay collects contact info during checkout (eliminating all pre-payment forms), then a Supabase Auth account is created server-side in the webhook handler after payment is confirmed. Clients access an authenticated portal to preview their site, manage domains, upload logos, and submit change requests — replacing the old `/customize` flow with a persistent queue that feeds an admin fulfillment dashboard. The entire new capability surface is achievable with zero new npm packages by extending existing dependencies (`@supabase/supabase-js`, `@supabase/ssr`, `@ai-sdk/google`, and Node.js built-ins).
 
-The recommended approach ships the minimum viable funnel in strict dependency order — CTA injection first (it modifies existing HTML boilerplate and establishes the entry point), then the claim landing page (the conversion hub), then Razorpay payment (the revenue gate), then the customization form and confirmation page. Strategy call upsell and funnel analytics are deferred optimization layers. All 4 research areas return HIGH confidence because primary sources (official Razorpay, Supabase, Next.js, and Vercel documentation) were used throughout, with the sole MEDIUM areas being puppeteer-core + chromium-min version coupling (requires install-time verification) and WHOIS domain availability (best-effort, rate-limited by TLD).
+The recommended implementation order follows a strict dependency chain: auth infrastructure must land first (proxy.ts + session middleware, DB schema), then the payment-first claim flow update (which depends on auth for post-payment account creation), then the portal shell (depends on auth), then portal features (domain, logo, requests), and finally admin fulfillment (depends on `client_requests` table being populated). This order is non-negotiable — attempting to build the portal before auth infrastructure is wired up produces throwaway code.
 
-The non-negotiable implementation risks are payment-specific and must be built correctly on day one, not retrofitted: Razorpay webhook signature verification requires `await request.text()` before any JSON parsing — using `request.json()` causes 100% signature failure in production. All amounts must be stored as integer paise/cents from the start. The confirmation page must implement polling because webhooks and browser redirects race with no ordering guarantee. File upload security requires server-side magic byte validation (the existing `uploadProjectAsset()` has zero validation). These four constraints shape the implementation order of every payment and upload task.
+The two dominant risk areas are auth integration and webhook reliability. Adding auth middleware to an app that currently has none touches every HTTP route — the matcher must be a whitelist targeting `/portal/*` only, or it will break the Razorpay webhook (body consumed by middleware), the admin dashboard (unnecessary auth overhead), and public claim pages. Simultaneously, the payment-first flow removes the pre-payment contact-collection buffer that currently masks a webhook race condition on the confirmation page — dual verification (webhook push + Razorpay API pull) is required before removing pre-payment forms.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack (Next.js 16, Supabase, AI SDK v6, Zod, date-fns, Recharts) requires only 5 new packages. Infrastructure additions come from extending existing Supabase patterns (2 new Storage buckets, 3-4 new tables) and Next.js routing (route groups, public SSR pages). See `.planning/research/STACK.md` for full integration code patterns.
+No new npm packages are needed for v3.0. All five new capabilities are covered by existing dependencies plus Node.js built-ins. Supabase Auth is already bundled in `@supabase/supabase-js` and `@supabase/ssr`. Domain availability checking uses `fetch()` against the Domainr/RapidAPI endpoint (free tier: 10,000 calls/month). DNS verification uses `node:dns` with Google DNS-over-HTTPS as a more reliable alternative to the OS resolver. Logo background removal uses the existing `@ai-sdk/google` provider with `gemini-3.1-flash-image-preview`, with a green screen + server-side pixel processing fallback. Cal.com booking embeds via CDN script (the npm package has a React 19 peer dep conflict, already documented in PROJECT.md).
+
+The critical new infrastructure file is `proxy.ts` at the project root — Next.js 16 renamed `middleware.ts` to `proxy.ts`. This handles Supabase session cookie refresh and portal route protection. Two new utility files are also required: `lib/supabase/proxy.ts` (updateSession function) and `lib/supabase/portal.ts` (anon-key server client for portal data access, distinct from the service-role admin client). The existing `lib/supabase/server.ts` already implements the `getAll`/`setAll` cookie bridge pattern — the proxy utility adapts this for the proxy context where `cookies()` from `next/headers` is not available.
 
 **Core technologies:**
-- `razorpay` ^2.9.6: Payment SDK — sole payment provider per project constraints; provides `validatePaymentVerification` and `validateWebhookSignature` as built-in utilities, eliminating the need to reimplement HMAC verification
-- Vercel `x-vercel-ip-country` header (via `@vercel/functions` or direct header access): Geo-detection for INR/USD pricing — free, zero-latency, no rate limits, available on all Vercel plans; external geo APIs add 50-200ms latency for zero benefit
-- `puppeteer-core` ^24.x + `@sparticuz/chromium-min` ^133.x: Screenshot generation — required because generated sites use CSS Grid, animations, and arbitrary Tailwind that Satori/@vercel/og cannot render; generate during batch processing, not on claim page load
-- `whoiser` ^1.18.0: Domain availability WHOIS lookup — zero-cost, zero-dependency; appropriate for low-volume informational display; upgrade path to paid API if rate limiting becomes an issue
-- Cal.com iframe or inline script embed (NOT `@calcom/embed-react`): Strategy call booking — the npm package has unresolved React 19 peer dependency conflicts confirmed in GitHub issues #20814, #20681, #20990
-- Supabase signed upload URLs + server-proxy pattern: Client file uploads — extends existing Supabase infrastructure; server generates signed URL, client uploads direct to avoid Next.js 1MB body limit; CORS risk is eliminated by routing through an API proxy route
+- `@supabase/ssr` v0.8.0 (existing): Auth session management via cookie bridge — already present in `lib/supabase/server.ts`, needs proxy adaptation
+- `@supabase/supabase-js` v2.95.3 (existing): `auth.admin.createUser()` for server-side account creation post-payment
+- `@ai-sdk/google` v3.0.30 (existing): Gemini image editing for logo background removal via green screen approach
+- `node:dns` (built-in): DNS TXT/CNAME/A record verification for domain connection workflow
+- Domainr via RapidAPI (`fetch`, no npm package): Domain availability search — deprecated but functional, free tier sufficient; monitor for shutdown
 
-**New packages to install:**
-```
-npm install razorpay whoiser @vercel/functions
-npm install puppeteer-core @sparticuz/chromium-min
-```
-
-**New environment variables:** `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`, `RAZORPAY_WEBHOOK_SECRET`, `NEXT_PUBLIC_DEV_COUNTRY` (dev fallback), `CHROMIUM_REMOTE_URL` (optional).
-
-**New Supabase Storage buckets:** `site-screenshots` (public, WebP previews for claim page hero) and `claim-uploads` (private, client-uploaded logos and photos).
-
-**New database tables:** `claims` (full lifecycle tracking), `customizations` (post-payment form data), `claim_events` (funnel analytics event log). No modifications to existing tables.
+**New env variables required:**
+- `RAPIDAPI_KEY` — Domainr domain availability API
+- `RAZORPAY_TEST_KEY_ID`, `RAZORPAY_TEST_KEY_SECRET`, `NEXT_PUBLIC_RAZORPAY_TEST_KEY_ID`, `RAZORPAY_MODE` — test/live key switching
+- `REMOVEBG_API_KEY` — conditional fallback only if Gemini bg removal proves unreliable in testing
 
 ### Expected Features
 
-The funnel has 8 feature areas. Research provides explicit table stakes, differentiators, and anti-features for each. See `.planning/research/FEATURES.md` for the full breakdown including complexity ratings and dependency maps.
+**Must have (table stakes):**
+- Payment-first funnel: remove all pre-payment forms and domain selection; USD-only pricing; single click from plan card to Razorpay checkout
+- Razorpay test/live mode toggle via environment variable
+- Server-side account creation in webhook handler using `auth.admin.createUser({ email_confirm: true })`
+- Magic link or password-based first login to portal (no email verification required — they proved identity by paying)
+- Authenticated client portal dashboard: site preview iframe, live URL display, plan info
+- Change request form: single textarea + optional file upload, feeds `client_requests` table
+- Request history with status badges (pending, in-progress, completed)
+- Logo upload with AI background removal (before/after approval flow, client must approve before use)
+- Free subdomain auto-provisioned on payment (`{slug}.flogen.site`)
+- Custom domain connection via DNS TXT verification with step-by-step copy-paste instructions
+- Domain availability search (Domainr API) with external registrar links
+- Admin: purchased clients list with pending request count and plan/status filters
+- Admin: client detail view with request queue and status transitions
+- Admin: redeploy button (save code + bump version + create revision + mark request complete)
+- Cal.com booking setup field (Pro plan only, CDN embed)
 
-**Must have — blocks revenue if missing:**
-- Sticky CTA bar injected into generated HTML with real countdown tied to `claim_expires_at` — funnel entry point; fake/resetting countdowns kill trust immediately
-- Claim landing page with SSR site preview (screenshot hero + lazy iframe), Standard/Pro pricing cards in INR/USD based on geo, trust elements (guarantee badge, Razorpay logo, social proof), business-specific content, mobile-first layout, and SEO/OG meta
-- Domain selection section within the claim page (free subdomain as default/fallback, existing domain input, "help me buy a domain" option) — removes a purchase barrier without requiring domain registration infrastructure
-- Razorpay Standard Checkout with server-side order creation, client-side checkout.js modal, webhook verification (`payment.captured`), client-side verification backup, idempotent order creation, and payment failure recovery
-- Post-payment multi-step customization form with logo upload, photo uploads (up to 10), pre-filled contact details from `business_data`, color palette selection, text change requests, and per-step persistence keyed by `claim_id`
-- Confirmation page with order summary, delivery timeline, contact info, and payment receipt reference
+**Should have (competitive differentiators):**
+- Dual payment verification (webhook push + Razorpay API pull) on confirmation page to eliminate race condition
+- Supabase real-time subscription in portal to update site preview automatically when admin redeploys
+- DNS polling via Google/Cloudflare DoH API (not OS resolver) with multi-resolver confirmation before marking verified
+- Optimistic concurrency control on project updates (version column, conflict detection on redeploy)
+- $49 agent support upsell payment flow in portal
+- Version query param on preview URLs for cache busting after redeploy
 
-**Should have — deferred but not v2+:**
-- Strategy call upsell (between customization form and confirmation): Cal.com/Calendly iframe, skip button must be equally prominent as book button, Pro plan frames it as included benefit
-- Funnel analytics: `claim_events` table + Recharts visualization in admin dashboard showing step-by-step conversion and drop-off rates; Recharts already installed from v1.0
-
-**Defer to v2+:**
-- In-flow domain registration (explicitly out of scope per PROJECT.md)
-- Live preview with real-time changes applied
-- Automated email confirmation (requires separate email service)
-- Abandoned payment recovery email
-- A/B testing claim page variants
-- Video walkthrough of generated site
-
-**Anti-features to actively avoid:** Fake countdown that resets on refresh, blocking site preview behind email gate, custom payment form touching card data (PCI), multiple upsells post-payment, mandatory account creation for confirmation access, auto-playing media.
+**Defer to v4.0:**
+- WhatsApp magic link delivery
+- Registrar-specific DNS instructions with deep links (requires WHOIS lookup integration)
+- Site health monitoring and uptime status page
+- Email notifications on request completion (Instantly AI integration)
+- Batch redeploy across multiple sites
+- Manual logo crop and reposition tool
+- Multi-logo support (horizontal, square, icon variants)
 
 ### Architecture Approach
 
-The v2.0 architecture extends the existing monolithic Next.js App Router structure with hard separation between admin and client-facing concerns using route groups, new API route namespaces, and new lib/ modules — all following established project patterns. The admin side retains its service-role Supabase access (no auth, single operator). Client-facing claim pages are fully public SSR routes; security comes from unguessable project UUIDs and Razorpay signature verification rather than session auth. See `.planning/research/ARCHITECTURE.md` for full schema DDL, data flow diagrams, and signed URL sequence.
+v3.0 adds a third route group `(portal)/` alongside the existing `(admin)/` and `(client)/` groups. Portal routes live at `/portal/*` URLs (the route group provides layout isolation without creating a URL segment, and the `portal/` directory inside it creates the real URL prefix — avoiding the `/dashboard` conflict with admin routes). A new `proxy.ts` at the project root handles Supabase session refresh and redirects unauthenticated requests from `/portal/*` to the login page, with a whitelist matcher targeting only `/portal/:path*` and `/auth/callback`. Data access in portal routes follows a two-client pattern: the cookie-aware anon-key client (`createPortalClient()`) for identity verification, then the service-role admin client for data queries scoped by `auth_user_id` in application code. RLS is enabled only on the new `client_requests` table — not on the 12 existing tables where adding RLS would be a high-risk migration.
 
 **Major components:**
-1. `app/(admin)/dashboard/` and `app/(admin)/editor/` — existing pages moved into route group, unchanged; sidebar desktop layout
-2. `app/(client)/claim/[slug]/` — public SSR claim flow (landing, customize, confirmed) with mobile-first layout, no navigation chrome, SEO meta
-3. `app/api/claims/create-order/`, `app/api/claims/[claimId]/customize/`, `app/api/webhooks/razorpay/` — payment API routes, all using `createAdminClient()` (consistent with existing pattern)
-4. `app/api/uploads/signed-url/` — server-generated upload URL with claim status gate before issuing the URL
-5. `lib/cta-injector.ts` — injects sticky CTA bar into `constructHtmlBoilerplate()` output as pure HTML/CSS/vanilla JS at render time (not generation time); Option A recommended: inject before `</body>`, not into iframe
-6. `lib/razorpay.ts`, `lib/geo.ts`, `lib/claims.ts`, `lib/tracking.ts` — new business logic modules following the existing lib/ pattern
-7. Database: `claims` (1:many from `projects`) -> `customizations` (1:1 from `claims`), plus optional `claim_events`; small optional additions to `projects` table: `slug`, `claim_expires_at`, `screenshot_url`
+1. `proxy.ts` + `lib/supabase/proxy.ts` — session refresh and portal route protection; whitelist matcher is mandatory to avoid breaking webhooks
+2. `(portal)/portal/layout.tsx` — auth-guarded layout with server-side `getUser()` as defense-in-depth, fetches claim data for nav context
+3. `client_requests` table — central FIFO queue linking portal submissions to admin fulfillment; JSONB `content` field handles all request types (text_change, logo_upload, domain_connect, domain_subdomain, booking_setup, agent_support, general)
+4. `app/(portal)/portal/` pages — dashboard, domain, requests, logo, booking, support
+5. `app/(admin)/dashboard/clients/` pages — purchased clients list, client detail, request queue with status management
+6. `api/portal/*` routes — auth-validated API routes using dual-client pattern (anon-key for identity, service-role for data)
+7. Webhook handler update — account creation moves here (guaranteed email availability) rather than the confirmation page
 
-**Data flow:** discovery -> enrichment -> generation -> `constructHtmlBoilerplate()` (with CTA bar injected) -> claim initiated by prospect clicking CTA -> claim page SSR -> Razorpay order created server-side -> checkout modal -> webhook confirms payment -> customization form -> operator delivers site.
+**Database schema additions:**
+- `client_requests` table (new): `id, claim_id, project_id, auth_user_id, type, status, content JSONB, admin_notes, created_at, updated_at` + 5 indexes on claim_id, project_id, status, auth_user_id, created_at
+- `claims.auth_user_id` column (new, nullable): links claim to Supabase Auth user, set by webhook handler
+- `projects.cal_embed_slug` column (new): Cal.com booking slug for Pro plan
+- `projects.version` integer column (recommended): optimistic concurrency for redeploy conflict detection
 
 ### Critical Pitfalls
 
-1. **Razorpay webhook raw body trap (P1)** — Call `await request.text()` first, then `JSON.parse()`. Never use `await request.json()`. Using the parsed body for HMAC verification fails 100% of the time in production due to key ordering and whitespace differences. Must be built correctly from day one; this is the largest single risk in the project.
+1. **Auth middleware breaks Razorpay webhook and admin routes** — The middleware matcher defaults to all routes. The Razorpay webhook uses `request.text()` for HMAC verification, which fails if middleware has already touched the body or added response cookies. Use a whitelist matcher: `'/portal/:path*'` and `'/auth/callback'` only. Immediately after adding proxy.ts, test webhook returns 200, admin dashboard loads, and claim pages load without auth redirects.
 
-2. **Paise conversion errors (P2)** — Build `lib/pricing.ts` with hardcoded integer paise/cents values (`standard: { inr_paise: 499900, usd_cents: 49900 }`) before any Razorpay order creation. Never compute from rupee values via float multiplication. Verify amount in the webhook matches expected plan price exactly.
+2. **Webhook race condition breaks the confirmation page** — Razorpay's `handler` callback fires client-side before the webhook arrives (60+ seconds in test mode). In v3.0, removing pre-payment forms eliminates the buffer that currently masks this. Add a `/api/claims/[id]/verify` endpoint that checks the DB first, then falls back to Razorpay's `orders.fetch()` API directly. The confirmation page uses this dual verification instead of polling alone.
 
-3. **Webhook vs. redirect race condition (P3)** — Confirmation page must poll claim status every 2 seconds for up to 30 seconds after redirect. Never depend solely on the browser redirect callback. Webhook and confirmation page are designed together in the same implementation step.
+3. **Auth account creation on the confirmation page creates orphan accounts** — The confirmation page loads before the webhook fires, so `client_email` is NULL when account creation is attempted. Move account creation entirely into the webhook handler (guaranteed email availability). Handle duplicate emails by looking up existing users before calling `createUser`. Use `email_confirm: true` — clients proved identity by paying, requiring email verification is friction with no benefit.
 
-4. **Razorpay key secret exposure (P4)** — Only `RAZORPAY_KEY_ID` uses `NEXT_PUBLIC_` prefix. The `RAZORPAY_KEY_SECRET` must never be client-accessible. Add runtime validation that throws in production if a test-mode key (`rzp_test_`) is detected.
+4. **Admin client imported in portal routes exposes all client data** — Every existing server component uses `createAdminClient()` (service role, bypasses RLS). Portal routes must use a dedicated `createPortalClient()` with the anon key, and all data queries must be scoped by `auth_user_id`. Add a warning comment in `lib/supabase/admin.ts` flagging that portal routes must not import it.
 
-5. **File upload security (P6)** — Client-reported `file.type` is spoofable. Validate PNG/JPEG/WebP magic bytes server-side. Reject SVG entirely (embedded script attack vector). The existing `uploadProjectAsset()` has zero validation and must not be reused as-is for client-submitted files.
-
-6. **CTA bar CSS isolation (P8)** — Generated pages have their own z-index hierarchies, Tailwind classes, and `position: fixed` elements. Render the CTA as a sibling to an iframe containing the preview, or use inline styles only with `z-index: 2147483647`. Test against 20+ generated pages before shipping.
-
-7. **Signed URL expiry (P7)** — Supabase upload signed URLs expire in 2 hours (fixed, not configurable). Store the storage path in the database, not the URL. Generate fresh signed URLs at render time for operator review.
+5. **Gemini does not produce transparent PNGs** — This is a documented fundamental limitation confirmed as of March 2026, not a bug or version issue. Use the green screen approach: prompt Gemini to place the logo on `#00FF00` background, then replace green pixels with alpha via server-side processing. For logos with green elements, detect dominant colors first and use magenta (`#FF00FF`) instead. If quality remains unacceptable in testing, pivot to remove.bg API (~$0.20/image, reliable, no npm package needed).
 
 ## Implications for Roadmap
 
-Research confirms a 4-phase delivery sequence based on strict feature dependencies. See the full dependency graph in `.planning/research/FEATURES.md`.
+The dependency graph from FEATURES.md and the build order from ARCHITECTURE.md converge on the same five-phase sequence. The ordering is driven by hard technical dependencies, not arbitrary preference.
 
-### Phase 1: Foundation — Data Model and Route Architecture
-**Rationale:** All other phases reference the `claims` table and the `(client)/` route group. This work has no UI value but unblocks everything else. The CTA injector is included here because it is the funnel entry point and touches existing lib/ code.
-**Delivers:** `claims`, `customizations`, `claim_events` tables with indexes; `site-screenshots` and `claim-uploads` Storage buckets; `(admin)/` and `(client)/` route groups with separate layouts; `lib/cta-injector.ts` with CTA bar injected into generated HTML; `lib/geo.ts` for INR/USD currency detection; `lib/pricing.ts` with hardcoded paise/cents values; Razorpay SDK singleton in `lib/razorpay.ts`.
-**Avoids:** P8 (CTA isolation approach locked in here), P14 (route group prevents layout leakage between admin and client pages), P2 (pricing utility built before any order creation).
-**Research flag:** Standard patterns. No additional research needed.
+### Phase 1: Auth Infrastructure and Schema
+**Rationale:** Every subsequent phase depends on auth cookies working and the DB schema existing. This phase has no user-visible output — it is pure foundation. Do not start Phase 2 until proxy.ts is verified working correctly on all three route types (webhook, admin, public claim page, portal route).
+**Delivers:** proxy.ts with whitelist matcher, `lib/supabase/proxy.ts` updateSession utility, `lib/supabase/portal.ts` anon-key client, DB migration for `client_requests` table + `claims.auth_user_id` + `projects.cal_embed_slug` + `projects.version`, TypeScript types updated, RLS policy on `client_requests`.
+**Avoids:** Pitfall 1 (middleware breaks routes), Pitfall 8 (admin client in portal), Pitfall 5 (cookie bloat — scope or accept overhead early)
+**Research flag:** Standard patterns. Supabase SSR is well-documented. Follow the official `@supabase/ssr` Next.js guide. No phase research needed.
 
-### Phase 2: Claim Landing Page
-**Rationale:** Depends on Phase 1 (claims table, slug routing, CTA link target). The claim page is the conversion hub and the most complex individual page. It must be built and validated before payment is added to it.
-**Delivers:** `/claim/[slug]` fully SSR-rendered page with: site screenshot hero (WebP from `site-screenshots` bucket), lazy-loaded interactive iframe preview, Standard/Pro pricing cards with INR/USD geo-detection, domain selection UI, trust elements, FAQ accordion, mobile-first layout, SEO meta and OG image using `generateMetadata`.
-**Avoids:** P9 (countdown with UTC timestamp, re-synced every 60s), P10 (Vercel geo header with manual toggle and INR default), P13 (performance: screenshot hero not live iframe above the fold, SSR for initial paint, minimal client JS).
-**Research flag:** Standard SSR patterns. Note: verify puppeteer-core + @sparticuz/chromium-min version pairing at install time before screenshot generation is implemented.
+### Phase 2: Payment-First Claim Flow
+**Rationale:** Depends on Phase 1 for account creation server action. Hardens the webhook BEFORE simplifying the claim page — this sequence is critical. Removing pre-payment forms with a fragile webhook is a production incident waiting to happen.
+**Delivers:** Webhook hardened with dual verification endpoint + comprehensive error logging, simplified claim page (no domain section, no pre-payment forms), USD-only pricing, Razorpay test/live key switching, server-side account creation in webhook handler, `confirmed/` page updated with portal login link.
+**Avoids:** Pitfall 2 (webhook race condition), Pitfall 3 (orphan accounts), Pitfall 9 (webhook failure loses contact info), Pitfall 12 (test/live key mismatch)
+**Research flag:** Standard patterns. Razorpay webhook and Supabase admin API are both well-documented. The dual verification pattern is known. No phase research needed.
 
-### Phase 3: Payment Flow and Confirmation
-**Rationale:** Depends on Phase 2 (the "Pay" button lives on the claim page). All three payment pitfalls (P1, P2, P3) are interdependent and must be implemented as a unit. Webhook handler and confirmation page are designed together to prevent the race condition.
-**Delivers:** Server-side order creation (`/api/claims/create-order`), Razorpay checkout.js modal integration with prefilled client details, webhook handler (`/api/webhooks/razorpay/`) with raw body signature verification and idempotent processing, client-side payment verification backup (`/api/claims/[claimId]/verify-payment/`), payment failure recovery UI, confirmation page with polling loop (2s interval, 30s max), order summary, and delivery timeline.
-**Avoids:** P1 (raw body webhook), P2 (paise via pricing utility already built in Phase 1), P3 (polling on confirmation page), P4 (key secret never in `NEXT_PUBLIC_`), P5 (idempotent order creation checking existing `razorpay_order_id`), P12 (runtime key mode validation on Razorpay SDK init).
-**Research flag:** All patterns are fully documented in STACK.md. Implementation discipline is the risk, not missing knowledge. Verify Razorpay live mode KYC status before starting this phase (operational dependency that can block go-live).
+### Phase 3: Portal Shell
+**Rationale:** Depends on Phase 1 (auth) and Phase 2 (user accounts exist to test with). The shell with auth-guarded layout must exist before any portal feature pages can be added. This phase delivers the minimum viable portal — enough to prove the auth flow end-to-end.
+**Delivers:** `(portal)/portal/` route group with auth-guarded layout, portal dashboard (site preview iframe, live URL card, plan badge), portal navigation, login page with password input and magic link fallback.
+**Avoids:** Pitfall 10 (session expiry — middleware handles page navigations automatically; add client-side refresh interval in Phase 4 if needed)
+**Research flag:** Standard patterns. Next.js route groups and Supabase SSR server components. No phase research needed.
 
-### Phase 4: Post-Payment Customization and Upsell
-**Rationale:** Depends on Phase 3 (accessible only after payment confirmed). File upload architecture must be decided before building the form. Recommended: server-proxy upload route rather than direct signed URL uploads (eliminates CORS entirely per P11).
-**Delivers:** Multi-step customization form at `/claim/[slug]/customize/` with: logo upload, up to 10 photo uploads, pre-filled contact details from `business_data`, hex color palette picker with preset swatches, text change requests textarea (2000 char max), per-step persistence in `customizations` table. Strategy call upsell with Cal.com iframe prefilled with client name and email. Confirmation page enhancements (domain setup instructions, referral prompt).
-**Avoids:** P6 (MIME magic byte validation server-side, SVG rejected), P7 (store paths not URLs in `customizations` table), P11 (server-proxy upload route eliminates CORS entirely).
-**Research flag:** Standard multi-step form and file upload patterns. Cal.com iframe embed approach is confirmed. No additional research needed.
+### Phase 4: Portal Features
+**Rationale:** Depends on Phase 3 (portal shell). Individual features within this phase are largely independent and can be sequenced or parallelized. Build logo background removal first within this phase — it is the highest technical risk and needs early validation to determine whether to use the Gemini green screen approach or pivot to remove.bg.
+**Delivers:** Change request form + `/api/portal/requests` CRUD API, logo upload with Gemini green-screen bg removal + before/after approval flow, domain management (subdomain auto, DNS TXT verification via DoH API, Domainr availability search), Cal.com booking setup (Pro only), $49 agent support payment.
+**Avoids:** Pitfall 6 (DNS false negatives — use DoH API not OS resolver), Pitfall 7 (Gemini transparent PNG — use green screen), Pitfall 11 (logo edge cases — adaptive screen color for green-heavy logos)
+**Research flag:** Logo background removal requires early prototyping. Test Gemini green screen approach on a range of real business logo types before committing to the approval UI. If quality is unacceptable, pivot to remove.bg as primary path (no npm package needed, simple REST call). Domain DNS verification requires testing with real domains at a registrar — propagation behavior cannot be fully validated in local dev.
 
-### Phase 5: Funnel Analytics
-**Rationale:** Deferred until the funnel is live and producing real data. Recharts and Supabase are already in the stack. The `claim_events` table is created in Phase 1 but only instrumented here.
-**Delivers:** Event logging on all client-facing claim pages (`/api/tracking/event/`), server-side event logging from webhook handler, admin dashboard section with funnel bar chart (step counts + drop-off %), revenue totals by plan, date range filter reusing existing dashboard UI patterns.
-**Avoids:** Premature analytics overhead before the funnel is validated with real data.
-**Research flag:** Standard patterns. Recharts funnel visualization is well-established.
+### Phase 5: Admin Fulfillment
+**Rationale:** Depends on Phase 4 — the admin queue only has value once `client_requests` are being populated by real portal usage. Building it last also ensures the data model is stable and all request types are defined.
+**Delivers:** "Clients" tab in admin sidebar, purchased clients list with filters (status, plan, date), client detail view (request queue, site preview, actions), request status transitions (pending → in_progress → completed → rejected with admin notes), redeploy button (code save + version bump + revision record + request completion), version query param on preview URLs for cache busting.
+**Avoids:** Pitfall 4 (redeploy version conflicts — optimistic locking with `projects.version` column added in Phase 1), Pitfall 13 (stale preview cache — version param + `revalidatePath`)
+**Research flag:** Standard patterns. Extends existing admin dashboard and Monaco editor. Redeploy concurrency control is straightforward SQL optimistic locking. No phase research needed.
 
 ### Phase Ordering Rationale
 
-- Phases 1 through 3 form the minimum viable revenue funnel. A prospect can see a CTA on a generated site, visit the claim page, pay, and receive a confirmation. Revenue flows before Phase 4 begins.
-- Phase 4 transforms a completed payment into a deliverable — the operator has everything needed to customize and ship the site.
-- Phase 5 adds observability to optimize what is already working, not speculation about what might work.
-- Database migrations for all 3 new tables should be scripted in Phase 1 even if `claim_events` is not actively used until Phase 5 — prevents migration drift.
-- The confirmation page shell (with polling) is built in Phase 3; domain setup instructions and referral prompt enhancements are added in Phase 4.
+- Auth infrastructure cannot be deferred — no portal routes function without it; wrong middleware config breaks existing production flows
+- Webhook hardening precedes claim simplification — removing pre-payment forms with a fragile webhook is a revenue risk
+- Portal shell before portal features — prevents building auth-dependent feature code on an untested auth foundation
+- Admin fulfillment last — it is a consumer of the `client_requests` queue, which is empty until portal features ship
+- Logo background removal is the highest technical risk within Phase 4 — prototype it first, have remove.bg as a validated fallback before building the approval UI
 
 ### Research Flags
 
-All 5 phases use well-documented patterns with HIGH confidence sources. No phase requires a `/gsd:research-phase` call.
+Phases needing deeper research or validation during implementation:
+- **Phase 4 (Logo background removal):** Gemini transparent PNG limitation is confirmed, but green screen quality on real business logos (varied complexity, colors, formats, scanned originals) is unknown until tested. Prototype before building approval UI. If unacceptable, add remove.bg as primary path.
+- **Phase 4 (DNS verification UX):** Technical implementation is clear (DoH polling), but UX copy for non-technical business owners managing DNS at their registrar requires real-domain testing. Instructions must be tested against GoDaddy/Namecheap flows before finalizing copy.
 
-Phases with specific install-time verification needed:
-- **Phase 2:** Verify `puppeteer-core` + `@sparticuz/chromium-min` compatible version pairing by checking the @sparticuz/chromium-min releases before running `npm install`.
-
-Operational dependencies to verify before phases begin:
-- **Phase 3:** Confirm Razorpay live mode KYC approval. Configure live-mode webhook URLs in Razorpay Dashboard. Without live mode, the payment phase cannot go to production.
-- **Phase 4:** Confirm Cal.com (or Calendly) account with a configured event type URL for the strategy call upsell iframe.
+Phases with standard patterns (skip research-phase):
+- **Phase 1:** Supabase SSR auth is covered by official Next.js guides with code examples
+- **Phase 2:** Razorpay webhook handling and dual verification are well-understood
+- **Phase 3:** Next.js route groups and server component auth checks are standard
+- **Phase 5:** Extends existing admin dashboard patterns; no novel infrastructure
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All 5 new packages verified via official GitHub repos and npm registry. Razorpay, Vercel geo headers, Supabase signed URLs, Next.js route handlers all confirmed via official docs. Cal.com React 19 incompatibility confirmed via 3 open GitHub issues. Only gap: puppeteer-core + @sparticuz/chromium-min version coupling requires install-time verification. |
-| Features | HIGH | 8-step claim flow is grounded in specific table columns, API methods, and implementation patterns — not generic SaaS research. MVP vs. defer split is explicit and justified against PROJECT.md constraints. Anti-features are documented with clear rationale. |
-| Architecture | HIGH | Route group approach, data flow, and component boundaries validated against Next.js App Router docs. Full schema DDL provided in ARCHITECTURE.md. 1:many and 1:1 table relationships are well-defined. |
-| Pitfalls | HIGH | All 6 critical pitfalls are verified against official documentation. P1 confirmed via Razorpay docs and multiple GitHub issues. P6 confirmed by reading existing `lib/supabase/storage.ts` (zero validation). P11 confirmed via multiple Supabase GitHub CORS issues. Prevention code is provided for each pitfall. |
+| Stack | HIGH | Zero new packages confirmed. All capabilities verified against existing installed versions. One MEDIUM exception: Domainr API is deprecated but functional via RapidAPI; monitor for shutdown. |
+| Features | HIGH | Feature scope verified against Supabase Auth docs, Razorpay webhook docs, Gemini API docs. Dependency ordering confirmed by architecture analysis. |
+| Architecture | HIGH | Route group pattern, dual-client data access, and RLS strategy all verified. Next.js 16 proxy.ts convention confirmed (verify exact export name against 16.1.6 before implementing). |
+| Pitfalls | HIGH | All top pitfalls (middleware scope, webhook race, Gemini transparency, data leakage) are verified against the current codebase and confirmed by external sources. Phase warnings include detection and mitigation for each. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Puppeteer + Chromium version pairing:** Verify the exact compatible pair at install time by checking the @sparticuz/chromium-min releases page. A version mismatch causes silent failures. Allocate time for this in Phase 2 planning.
-
-- **Upload architecture decision:** STACK.md recommends Supabase signed upload URLs; PITFALLS.md documents a confirmed CORS problem with direct signed URL uploads from browsers (P11). Recommendation is to use a server-proxy upload route (`/api/claims/upload/`) instead — client sends the file to Next.js API, server uploads to Supabase using the service role key. This eliminates CORS entirely. Lock this in at Phase 4 kickoff.
-
-- **Screenshot trigger point:** Screenshots must be generated during batch processing, not on claim page load. The exact trigger — post-generation hook in `updateProjectWithCode()`, or on-demand on first claim page visit with a cache — is an implementation decision to resolve in Phase 1 or Phase 2 planning.
-
-- **Razorpay live mode activation:** Razorpay requires KYC verification before live mode is enabled. This is an operational dependency outside code that can block Phase 3 from going to production. Initiate KYC verification early.
-
-- **Expired claim UX:** Research identified that expired claims should show an "Offer expired" state with a grace period option to request renewal, rather than a dead 404 page. The exact state machine transitions (`expired` -> `renewal_requested`) are not fully specified and need design decisions during Phase 2 or Phase 3 planning.
-
-- **Cal.com TypeScript declarations:** The `<cal-inline>` custom element used in JSX requires a TypeScript declaration file. This is a minor implementation detail but causes `TypeScript error TS2339` without it. Add a `components/claim/cal-inline.d.ts` file in Phase 4.
+- **Gemini background removal quality on real business logos:** Cannot validate until a prototype is built and tested against actual client logo types (scanned business cards, photographed logos, logos with green elements). Plan to prototype early in Phase 4 and have remove.bg ready as a drop-in fallback.
+- **Domainr API stability:** API is deprecated (Fastly acquisition, 2023). Free tier still works as of March 2026 but has no SLA. If it shuts down, fallback is WhoisXML API ($100/yr) or DNS-based availability checks. Monitor RapidAPI status.
+- **Next.js 16 `proxy.ts` convention:** ARCHITECTURE.md notes the rename from `middleware.ts` to `proxy.ts` in Next.js 16. Verify the exact export name (`proxy` vs `middleware`) against the installed version (next@16.1.6) before implementing — a wrong export name means the proxy silently does nothing.
+- **Supabase `@supabase/ssr` v0.8.0 cookie path scoping:** PITFALLS.md recommends scoping auth cookies to `/portal` path to avoid sending 4KB tokens on every request. Verify that `@supabase/ssr@0.8.0` supports custom `path` in cookie options before relying on this optimization. Accepting the overhead on all requests is the safe fallback.
+- **RLS coverage on existing tables:** Current approach enables RLS only on `client_requests` and uses application-level `auth_user_id` filtering for all other tables. This is pragmatic but not defense-in-depth. If portal ever needs direct client-side Supabase queries (not via API routes), RLS on `claims` and `projects` will be required.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Razorpay Node.js SDK v2.9.6 GitHub + official integration docs — payment order creation, HMAC signature verification, webhook validation, live/test mode separation
-- Vercel request headers reference + @vercel/functions API reference — `x-vercel-ip-country` geo header behavior and geolocation helper
-- Supabase Storage API reference — `createSignedUploadUrl`, `uploadToSignedUrl`, bucket fundamentals, RLS patterns
-- Next.js App Router official docs — Route Groups, route handlers, raw body access, hydration error patterns, `generateMetadata`
-- Vercel Puppeteer deployment guide and official template — @sparticuz/chromium-min serverless deployment pattern
-- Cal.com GitHub issues #20814, #20681, #20990 — React 19 peer dependency conflict confirmed unresolved
+- [Supabase Auth Server-Side Next.js](https://supabase.com/docs/guides/auth/server-side/nextjs) — `@supabase/ssr` updateSession pattern, server component auth
+- [Supabase auth.admin.createUser](https://supabase.com/docs/reference/javascript/auth-admin-createuser) — server-side account creation, email_confirm flag, user_metadata
+- [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security) — RLS policy syntax, service role bypass behavior
+- [Supabase Password-based Auth](https://supabase.com/docs/guides/auth/passwords) — signInWithPassword, auto-confirm configuration
+- [Next.js 16 proxy.ts convention](https://nextjs.org/docs/app/api-reference/file-conventions/proxy) — file location, matcher config, Node.js runtime
+- [Razorpay Webhook Best Practices + Payload docs](https://razorpay.com/docs/webhooks/) — email/contact fields, retry behavior, HMAC verification
+- [Node.js DNS module docs](https://nodejs.org/api/dns.html) — `dns.promises.resolveTxt/resolveCname/resolve4`, Resolver class
+- [Cal.com embed docs](https://cal.com/embed) — CDN script pattern, namespace config, UI customization
+- [Gemini Image Generation API docs](https://ai.google.dev/gemini-api/docs/image-generation) — `generateText` with `responseModalities: ['IMAGE']`, model selection
 
 ### Secondary (MEDIUM confidence)
-- @sparticuz/chromium-min blog post on Vercel cold-start performance — approach confirmed; exact version mapping requires install-time verification
-- whoiser npm registry and GitHub (LayeredStudio/whoiser) — WHOIS library functional; TLD rate limiting is environment-dependent
-- Multiple Next.js + Razorpay integration guides — cross-verified patterns for order creation, webhook handling, and checkout.js integration
+- [Domainr API docs (deprecated, via RapidAPI)](https://domainr.com/docs/api) — `/v2/status` and `/v2/search` endpoints, free tier: 10,000/month
+- [Gemini transparent background forum threads](https://discuss.ai.google.dev/t/transparency-issue-in-image-generation-ui-gemini-2-0-flash-experimental-api/74170) — alpha channel limitation confirmed March 2026
+- [Gemini background removal green screen technique](https://medium.com/google-cloud/background-removal-on-the-fly-with-gemini-and-code-execution-48621565fa9f) — production-validated workaround
+- [DNS propagation delays documentation](https://domaindetails.com/kb/troubleshooting/dns-propagation-slow) — 5min to 48hr range, registrar batch behavior
+- [DNS TXT vs CNAME verification for SaaS](https://www.namesilo.com/blog/en/dns/custom-domains-in-saas-txt-vs-cname-verification-and-when-to-use-each) — TXT preferred for non-destructive verification
 
-### Tertiary (informational only, not load-bearing for implementation decisions)
-- Nielsen Norman Group on progressive disclosure — cited in FEATURES.md for customization form design rationale
-- Conversion rate statistics for countdown timers, video, and personalized CTAs — directional guidance for feature prioritization
+### Tertiary (LOW confidence — informational only)
+- Payment-first SaaS signup flow UX research — conversion impact of pre-payment forms
+- Design agency client portal feature expectations — change request UX patterns
+- remove.bg API pricing — fallback cost estimate (~$0.20/image at current plans)
 
 ---
-*Research completed: 2026-03-18*
+*Research completed: 2026-03-25*
 *Ready for roadmap: yes*

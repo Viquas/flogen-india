@@ -1,462 +1,340 @@
-# Feature Landscape: Client Claim Flow (v2.0)
+# Feature Landscape: Client Portal & Updated Funnel (v3.0)
 
-**Domain:** AI-generated website claim/conversion pipeline
-**Researched:** 2026-03-18
-**Confidence:** MEDIUM-HIGH (patterns well-established in ecommerce/SaaS; Razorpay-specific details verified against official docs)
+**Domain:** Client portal, payment-first funnel, domain management, AI logo processing, admin fulfillment
+**Researched:** 2026-03-25
+**Confidence:** MEDIUM-HIGH (Supabase Auth and Razorpay verified against official docs; domain management and AI bg removal verified via official APIs; client portal patterns synthesized from industry standards)
 
 ## Executive Summary
 
-The claim flow converts a generated website from a showcase into revenue. It is a 6-step funnel: CTA injection on generated sites --> claim landing page --> payment via Razorpay --> post-payment customization form --> strategy call upsell --> confirmation/onboarding page. Each step has distinct table-stakes features that must work or the funnel breaks, differentiators that improve conversion, and anti-features that waste time or erode trust.
+v3.0 transforms Flogen from a one-shot claim flow into a persistent client relationship platform. The core shift: payment happens first (Razorpay collects contact info), then post-payment account creation gives clients an authenticated portal where they can preview their site, manage domains, upload logos with AI background removal, and submit change requests. The admin side gets a fulfillment queue to process client requests and redeploy updated sites.
 
-The flow splits into two fundamentally different audiences with different technical requirements:
+Six feature areas, in dependency order:
 
-1. **Admin-facing** (operator): CTA injection settings, funnel analytics dashboard, claim management. Extends existing admin dashboard.
-2. **Client-facing** (prospect): Claim page, payment, customization form, upsell, confirmation. New public pages, mobile-first, zero auth required.
+1. **Payment-first funnel update** -- Remove pre-payment forms, simplify claim page, extract contact info from Razorpay webhook. Lowest risk, modifies existing code.
+2. **Post-payment account creation** -- Supabase Auth `admin.createUser()` triggered from confirmation page. Depends on webhook having email.
+3. **Client portal** -- Authenticated dashboard with site preview, live URL, domain status, change requests. Depends on auth.
+4. **Domain management** -- Free subdomain (auto), connect existing (DNS TXT verification), buy new (Domainr search + external purchase). Depends on portal.
+5. **AI logo background removal** -- Gemini image editing API to remove logo backgrounds on upload. Independent, can be built in parallel.
+6. **Admin fulfillment workflow** -- Client request queue, redeploy button, purchased clients view. Depends on client_requests table.
 
-Critical dependencies on the existing system: generated_code stored in `projects` table, `constructHtmlBoilerplate` for preview rendering, existing Supabase infrastructure, existing `project-assets` Storage bucket. New tables needed: `claims`, `customizations`, `payments`. New Storage bucket: `client-uploads`.
+The audience split from v2.0 continues: client-facing pages are mobile-first (prospects on WhatsApp/email), admin pages are desktop-optimized. Non-technical business owners are the client audience -- every client-facing feature must work without technical knowledge.
 
 ---
 
-## Step 1: Sticky CTA Bar on Generated Sites
+## Category 1: Payment-First Funnel Update
 
-**What it is:** A persistent bar injected at the top or bottom of every generated website that says "This website was made for [Business Name]. Claim it before [date]." with a countdown timer and a CTA button.
+**What changes:** Remove the domain selection section and all pre-payment form fields from the claim page. Razorpay collects email/phone during checkout. The webhook payload already includes `email` and `contact` fields. Move domain selection to the client portal (post-payment). Switch to USD-only pricing. Add Razorpay test/live key toggling.
+
+**Depends on (existing):** `claim-page-client.tsx`, `claim-actions.ts`, `razorpay/route.ts` webhook handler, `claim-pricing.ts`
 
 ### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|-------------|------------|-------|
-| **Sticky bar injection into static export** | Without a CTA, the generated site is a dead-end -- no conversion path exists. The bar must be injected into the HTML output when the site is served/exported for client preview. | M | Modify `buildStaticExport` in `lib/export/static-export.ts` to inject a fixed-position bar. Bar HTML/CSS must be self-contained, not dependent on the generated site's styles. |
-| **Countdown to claim expiry** | Urgency drives action. Research shows countdown timers improve conversion 9-40% when tied to real deadlines. The 5-day window from PROJECT.md is the deadline. | S | Client-side JS countdown using `claim_expires_at` timestamp from the `claims` table. Show days + hours remaining. |
-| **Business name personalization** | The CTA must reference the specific business ("Made for Dr. Patel's Dental Clinic") to feel personal, not generic. Personalized CTAs convert 202% better than generic ones. | S | Pull `business_name` from `projects.business_data` JSON. Already available in the generation pipeline. |
-| **Mobile-responsive bar** | Prospects arrive via WhatsApp/email on phones (PROJECT.md constraint). A bar that breaks on mobile kills conversion immediately. | S | Fixed-position bottom bar on mobile (avoids Safari address bar overlap at top). Max height 60px. Large tap target (48px min). |
-| **CTA links to claim page** | Button must link to `/claim/[projectId]` or similar unique URL. Without a link, the bar is decorative. | S | URL constructed from project ID. No auth required -- public page. |
+| **Remove domain section from claim page** | v3.0 moves domain management to portal. Having it pre-payment adds friction and confusion -- the client doesn't own the site yet. | Low | Delete `DomainSection` import and rendering from `claim-page-client.tsx`. Remove `domainOption`/`domainValue` state. The `domain_option` and `domain_value` columns in `claims` table become nullable/deferred. |
+| **Remove pre-payment customization forms** | Payment-first means zero forms before checkout. Razorpay collects contact info. Every field before payment is a conversion killer. | Low | Remove any contact/email/name fields that currently appear before the Razorpay modal. The only pre-payment interaction: select plan, click pay. |
+| **Extract email/phone from Razorpay webhook** | The `payment.captured` webhook payload includes `email` and `contact` fields that the customer enters during Razorpay checkout. This is how we get client contact info without pre-payment forms. | Low | Already partially implemented -- `razorpay/route.ts` line 127-128 saves `client_email` and `client_phone` from `payment.email` and `payment.contact`. Verify this works with test mode. Confidence: HIGH (verified in existing code). |
+| **USD-only pricing** | Simplifies payment flow. PROJECT.md specifies USD-only for v3.0. Removes GST logic, currency switching, and geo-detection complexity. | Low | Update `claim-pricing.ts`: remove INR pricing, GST calculations, currency toggle. Hardcode `currency: 'USD'`. Remove geo-detection from claim page. The pricing section already defaults to USD. |
+| **Razorpay test/live mode toggle** | Cannot test payments without test mode. Currently hardcoded to one key set. Need separate test vs live API keys. | Low | Use `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` for live, `RAZORPAY_TEST_KEY_ID` / `RAZORPAY_TEST_KEY_SECRET` for test. Toggle via `RAZORPAY_MODE=test|live` env var. The Razorpay client in `lib/razorpay.ts` selects keys based on mode. Frontend uses `NEXT_PUBLIC_RAZORPAY_KEY_ID` (test) or `NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID`. Razorpay docs confirm test and live keys are completely separate and generated independently. Confidence: HIGH (verified against Razorpay docs). |
+| **Premium plan "Contact Us" card** | Display-only pricing card with email CTA. Already exists in `pricing-section.tsx` with "From $3,000" and mailto link. Needs `premium_contact` analytics event. | Low | Add `trackClaimEvent('premium_contact')` on the mailto click. The card UI is already built. |
+| **Updated claim page layout** | Simpler page without domain section and pre-payment forms. Flow becomes: hero preview + countdown + pricing cards + pay button. | Low | Remove sections, reorder remaining ones. The page gets shorter and more focused. |
 
 ### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Animated attention pulse** | Subtle animation on the CTA button after 10s of inactivity draws eye without being annoying. | S | CSS animation, no JS needed. `@keyframes pulse` on the button. |
-| **Dismissible but re-appearing** | Let user close the bar (reduces annoyance) but re-show on scroll or after 60s. Respects user while maintaining conversion pressure. | S | CSS transition + `sessionStorage` flag. Re-show on scroll past 50%. |
-| **Bar position preference** | Top bar on desktop, bottom bar on mobile. Desktop users are accustomed to notification bars at top; mobile users expect bottom sheets. | S | CSS media query. No logic change. |
-| **Custom bar color matching** | Bar color derived from the generated site's primary brand color (from `business_data.design_system`). Feels native, not jarring. | M | Read color from enriched business data. Fallback to brand default. |
+| **Instant checkout after plan select** | Single-tap from plan card to Razorpay modal. No intermediate summary screen. Fewer steps = higher conversion. | Low | Merge SummaryCTA into pricing cards. Plan card click opens Razorpay directly (after confirmation). |
+| **Payment success animation** | Confetti or checkmark animation on the confirmation page before redirect. Creates a dopamine moment that reinforces the purchase decision. | Low | CSS animation on confirmation-client.tsx. Lottie or CSS keyframes. |
+| **Smart plan recommendation based on business type** | If business data indicates high foot traffic (restaurant, salon), pre-select Pro plan since booking system is valuable. | Med | Read `business_data.category` to determine recommendation. Already have enriched business data from generation pipeline. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Fake countdown that resets on refresh** | Dark pattern. Destroys trust immediately. Research explicitly calls this out as the fastest way to erode credibility. | Use real `claim_expires_at` timestamp from database. When expired, show "Offer expired" state, not a reset timer. |
-| **Full-page interstitial before showing site** | Blocking the site preview defeats the purpose -- the prospect needs to see the site quality to want to claim it. | Non-blocking sticky bar that floats over content. |
-| **Multiple CTAs/popups on the generated site** | One CTA is enough. Multiple popups feel spammy and desperate. The generated site should speak for itself. | Single sticky bar. No modals, no popups, no exit-intent overlays. |
-| **Countdown showing seconds ticking** | Creates anxiety, not urgency. Days and hours are sufficient granularity for a 5-day window. Seconds feel manipulative. | Show "4 days, 12 hours left" format. |
-
-### Dependencies on Existing System
-
-- **`lib/export/static-export.ts`**: CTA bar HTML injected here. New function `injectClaimBar(html, claimData)` that wraps the existing `buildStaticExport` output.
-- **`constructHtmlBoilerplate`**: The preview iframe rendering. CTA bar must also work in the preview context (admin sees what client sees).
-- **`projects` table**: `business_data` JSON provides business name, design colors.
-- **New `claims` table**: Provides `claim_expires_at`, `claim_status`, `project_id`.
+| **Pre-payment email/phone collection** | Duplicates what Razorpay collects. Adds friction. The whole point of payment-first is removing barriers. | Let Razorpay handle contact collection during checkout. Extract from webhook. |
+| **INR pricing for v3.0** | PROJECT.md explicitly scopes v3.0 to USD-only. Adding multi-currency doubles the testing surface for marginal benefit. | USD-only. Revisit INR in v4.0 if needed. |
+| **Domain selection before payment** | Client hasn't paid yet. Domain choice adds decision paralysis. Move to portal where they've already committed. | Domain management in client portal, post-payment. |
+| **Cart/order summary page** | Extra step between plan selection and payment. Business owners on mobile don't want a shopping cart experience for a single purchase. | Direct plan-to-payment. Show selected plan + price inline on the pricing card. |
 
 ---
 
-## Step 2: Claim Landing Page
+## Category 2: Post-Payment Account Creation
 
-**What it is:** A dedicated page at `/claim/[projectId]` that shows the generated website preview, pricing, domain options, trust elements, and a primary "Claim This Website" CTA leading to payment.
+**What changes:** After payment confirmation, create a Supabase Auth account for the client using `auth.admin.createUser()`. The client gets portal access without a traditional signup flow. They never chose a password before paying -- the account is created on their behalf.
+
+**Depends on (existing):** Razorpay webhook (for email/phone), confirmation page (`confirmed/page.tsx`)
 
 ### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|-------------|------------|-------|
-| **Full-site preview embed** | The prospect must see what they are buying. An iframe or screenshot of the generated site is the hero element. Without seeing the site, there is nothing to sell. | M | Render `generated_code` via `constructHtmlBoilerplate` in a responsive iframe. Add device-frame chrome (phone/desktop mockup) for visual appeal. |
-| **Pricing display (Standard/Pro)** | Transparent pricing is table stakes. 83% of B2B buyers complete research before contacting sales (Gartner). Two tiers: Standard ₹4,999 / Pro ₹9,999. | M | Pricing cards with feature comparison. Highlight Pro as "recommended". Show INR by default, USD for non-Indian geo. |
-| **Feature comparison between tiers** | Prospects need to understand what they get at each tier. Without comparison, the price is just a number with no context. | S | Two-column comparison table. Standard: website + basic customization. Pro: website + customization + booking system + strategy call. |
-| **Business-specific content** | The page must reference the specific business: name, industry, location. Generic pages feel like spam. | S | Pull from `projects.business_data`. Dynamic server-rendered page with business name in title, h1, and meta tags. |
-| **Trust elements near CTA** | Testimonials, guarantee badges, and security indicators near the payment button reduce hesitation. 98% of consumers read reviews before purchasing. | M | "30-day money-back guarantee" badge, "Secure payment via Razorpay" badge with Razorpay logo, "100+ businesses served" counter (or similar social proof). |
-| **Mobile-first responsive layout** | Prospects arrive via WhatsApp/email on phones. The claim page MUST be mobile-optimized. | M | Server-rendered Next.js page. Stacked layout on mobile: preview at top, pricing below, CTA sticky at bottom. |
-| **SEO meta tags and OG images** | When the claim link is shared on WhatsApp, it should show a rich preview (title, description, screenshot thumbnail). | S | `generateMetadata` in the page component. OG image from site screenshot (generated during creation or on-demand). |
+| **Server-side account creation via admin API** | Use `supabase.auth.admin.createUser({ email, email_confirm: true })` with the service role key. Creates a verified account without sending a confirmation email. The client's email comes from the Razorpay webhook `payment.email` field. | Med | Call in the webhook handler after `status: 'paid'` update. Set `email_confirm: true` to skip email verification (they proved identity by paying). Store the `auth.users.id` on the claim record. Confidence: HIGH (verified against Supabase docs -- `auth.admin.createUser` is the official pattern for server-side account creation). |
+| **Magic link for first portal login** | Client receives a magic link (via Supabase Auth email or manual send) to access their portal. No password to remember. Non-technical users forget passwords immediately. | Med | Use `supabase.auth.admin.generateLink({ type: 'magiclink', email })` to create a one-time login URL. Display it on the confirmation page ("Access your portal") or send via email later. Magic links expire after 1 hour by default. Confidence: HIGH (Supabase docs confirm this API). |
+| **Password-optional account setup** | Let clients optionally set a password from inside the portal. Some prefer passwords; most won't bother. Magic link is the primary login. | Low | Standard Supabase Auth `updateUser({ password })` from the portal settings page. Non-blocking -- portal works fine with magic-link-only. |
+| **Link auth user to claim record** | The claim record needs a `user_id` column pointing to the Supabase Auth user. This enables RLS policies and portal data access. | Low | Add `user_id` column to `claims` table. Set during account creation in webhook. All portal queries filter by authenticated user's ID. |
+| **Handle duplicate emails** | If the same email pays for multiple sites (unlikely but possible), `createUser` will fail on the second attempt. Must handle gracefully. | Low | Catch the "user already exists" error. Look up existing user by email, link new claim to their existing `user_id`. Do not create a second account. |
 
 ### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Interactive site preview** | Let the prospect scroll and interact with the generated site in the iframe, not just see a static screenshot. Shows the site is real and functional. | S | Already possible with iframe embed. Add "Click to interact" overlay that removes pointer-events: none on tap. |
-| **Video walkthrough of site** | Landing pages with video convert up to 86% more. A short auto-generated video tour of the site sections. | L | Requires screen recording tooling. Defer -- high complexity for marginal gain. |
-| **"See it on your phone" QR code** | Desktop viewers can scan QR to view site on their phone. Demonstrates mobile responsiveness. | S | QR code library generating URL to same claim page. |
-| **Comparison to competitor sites** | "Sites like yours cost $2,000-5,000 elsewhere" price anchoring. | S | Static copy block. No dynamic data needed. |
-| **FAQ accordion** | Addresses common objections: "Can I customize it?", "What about hosting?", "Do I own the code?" | S | Collapsible FAQ section. Static content. |
-| **Live chat / WhatsApp button** | Prospects with questions should be able to reach the operator instantly. | S | WhatsApp link with pre-filled message. No chat infrastructure needed. |
+| **Inline portal access on confirmation page** | Instead of "check your email for a link," show a "Set up your portal" button directly on the confirmation page that signs them in immediately (using a short-lived token). Zero friction to first portal visit. | Med | Generate a session token server-side on the confirmation page. Use `supabase.auth.admin.generateLink()` and redirect. The client goes from payment confirmation to portal in one click. |
+| **WhatsApp magic link delivery** | For markets where email is unreliable, send the portal link via WhatsApp. The client's WhatsApp number is in the claim record. | Med | Depends on WhatsApp Business API or a messaging service. Defer to v4.0 unless email delivery proves problematic. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Gated preview (email required to see site)** | Adding friction before showing value kills conversion. The site preview IS the sales pitch. | Show site preview immediately. Collect contact info during payment. |
-| **Complex multi-page claim flow** | Every additional page in the funnel loses 20-40% of visitors. Claim page should lead directly to payment, not through 3 intermediate pages. | Single-page claim with anchor sections. Preview -> Pricing -> Payment CTA, all on one page. |
-| **Pricing calculator/configurator** | Over-engineering. Two fixed tiers are clear and simple. A configurator implies negotiation. | Fixed Standard/Pro pricing. No customization of price. |
-| **Auto-playing audio/video** | Annoying, especially on mobile with data costs. Always muted or click-to-play. | No auto-play media. |
-
-### Dependencies on Existing System
-
-- **`projects` table**: Provides `business_data`, `generated_code`, `status`.
-- **`constructHtmlBoilerplate`**: Renders the site preview in an iframe.
-- **New `claims` table**: Tracks claim status, expiry, selected plan, payment status.
-- **New Next.js route**: `app/claim/[projectId]/page.tsx` -- server-rendered, public, no auth.
-- **Geo-detection**: For INR/USD pricing. Use request headers (`Accept-Language`, Cloudflare/Vercel geo headers) or IP geolocation API.
+| **Signup form before payment** | Defeats the payment-first model. If they have to create an account to pay, conversion drops dramatically. | Create account silently after payment, using Razorpay-provided email. |
+| **Email verification requirement** | They just paid $499-$1,299. Requiring email verification to access their portal is insulting. They proved their identity with money. | Use `email_confirm: true` in `createUser` to auto-verify. |
+| **Complex onboarding wizard** | Non-technical business owners don't want a 5-step setup wizard. They want to see their site and submit changes. | Minimal portal: site preview, domain status, change request form. That's it. |
+| **Social login (Google/GitHub)** | These are local business owners, not developers. Google login adds OAuth complexity for zero benefit. Most will use magic links. | Magic link + optional password. Keep it simple. |
 
 ---
 
-## Step 3: Payment Flow with Razorpay
+## Category 3: Client Portal
 
-**What it is:** Razorpay Standard Checkout integration for accepting payment (Standard ₹4,999 / Pro ₹9,999, or USD $499 / $1,299 for international). Server-side order creation, client-side checkout modal, webhook verification.
+**What changes:** New `(portal)/` route group with authenticated pages. Clients see their site preview, live URL, domain status, and can submit change requests. This replaces the one-shot customization form from v2.0 with a persistent relationship hub.
+
+**Depends on (existing):** Supabase Auth (from Category 2), `projects` table (site data), `claims` table (payment/plan info)
 
 ### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|-------------|------------|-------|
-| **Server-side order creation** | Razorpay requires creating an order on the server before opening checkout. Amount in paise (499900 for ₹4,999). Never trust client-side amount. | M | New API route `POST /api/payments/create-order`. Uses `razorpay` Node.js SDK. Stores order in `payments` table with `razorpay_order_id`. |
-| **Razorpay Standard Checkout modal** | The embedded checkout.js modal is the standard pattern. Loads payment methods (UPI, cards, netbanking, wallets) without leaving the page. | M | Load `checkout.js` script dynamically. Open with order_id, amount, currency, prefill (name, email, phone from form). Handler callback on success. |
-| **Prefill customer contact info** | Prefilling name, email, phone in checkout reduces friction. Payment method pre-selection only works if contact and email are prefilled. | S | Collect name, email, phone BEFORE opening checkout (on claim page form). Pass to Razorpay `prefill` option. |
-| **Webhook payment verification** | Never rely on client callback alone. Razorpay webhooks (`payment.captured`, `payment.failed`) are the authoritative source. HMAC SHA256 signature verification with webhook secret. | M | New API route `POST /api/webhooks/razorpay`. Verify `x-razorpay-signature` header. Update `claims` and `payments` tables on capture. |
-| **Client-side payment verification** | After checkout callback, verify `razorpay_payment_id` + `razorpay_order_id` + `razorpay_signature` server-side as an immediate check (webhook is the safety net). | S | New API route `POST /api/payments/verify`. Compute HMAC, compare with signature, update payment status. Redirect to post-payment page on success. |
-| **INR/USD currency handling** | INR is primary market. USD for international. Currency detected from geo or user selection. Amount in smallest unit (paise/cents). | M | Geo-detect currency, allow manual toggle. Store selected currency on order. Razorpay handles conversion to INR for settlement. |
-| **Payment failure handling** | Show clear error message on failure. Allow retry without re-entering info. Razorpay sends `payment.failed` webhook; handle it. | S | On failure callback: show error message, keep form state, offer "Try Again" button that reopens checkout with same order. |
-| **Idempotent payment processing** | Prevent double-charging. Use `razorpay_order_id` as idempotency key. Check if payment already captured before processing webhook. | S | Check `payments.status = 'captured'` before processing. Use `x-razorpay-event-id` header to detect duplicate webhooks. |
+| **Authenticated dashboard** | Single page showing: site preview (iframe or screenshot), current plan, domain status, and recent requests. Protected by Supabase Auth middleware. | Med | New route: `app/(portal)/dashboard/page.tsx`. Server component fetches claim + project data for authenticated user. Use `@supabase/ssr` for auth in server components (already in stack). RLS policies on `claims` and `projects` tables scoped to `auth.uid()`. |
+| **Site preview iframe** | Full-width iframe showing the client's generated website. This is the "wow factor" -- they see their actual site in the portal. | Med | Render the generated code in a sandboxed iframe. Reuse the preview pattern from `app/(client)/preview/[slug]/page.tsx` which already serves generated HTML. Add auth check to ensure only the site owner can preview. |
+| **Live URL display** | Show the client their live URL (subdomain or custom domain) with a copy button and "Visit Site" link. If not yet live, show status ("Setting up..."). | Low | Read domain configuration from claim/project record. Display as a prominent link card. Status: pending, dns_verifying, live, error. |
+| **Change request submission** | Single textarea where clients describe what they want changed. Text, colors, images, anything. The admin interprets and executes. This is deliberate -- no structured form, because non-technical users can't fill out structured change requests accurately. | Med | New `client_requests` table: `id, claim_id, user_id, type, content, status, created_at, resolved_at`. API route for CRUD. Client sees a textarea + optional file upload. Submit creates a request with `status: 'pending'`. |
+| **Request history** | List of all submitted change requests with status (pending, in-progress, completed). Client can see what they asked for and whether it's done. | Low | Query `client_requests` for authenticated user, ordered by `created_at DESC`. Status badges: pending (yellow), in-progress (blue), completed (green). |
+| **Logo upload with AI background removal** | Upload a logo image, Gemini Vision removes the background automatically, client approves the result. This solves the #1 pain point: business owners upload logos with white/colored backgrounds that look terrible on the generated site. | Med | See Category 5 for detailed breakdown. In the portal, this is a card/section with upload + preview of before/after. |
+| **Booking setup (Pro plan only)** | Cal.com embed slug configuration. Client provides their Cal.com link or we set one up. | Low | Text input for Cal.com slug. Store in `projects.cal_embed_slug`. Only visible for Pro plan claims. |
+| **Mobile-responsive portal** | Business owners access the portal from phones. The portal must work on 375px screens. | Med | Mobile-first design using existing Tailwind patterns. Stack layout on mobile, side-by-side on desktop. Reuse the Inter font and design language from client-facing pages. |
 
 ### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **UPI intent flow on mobile** | On Android, Razorpay can trigger UPI app directly (GPay, PhonePe). Faster than typing VPA. Most popular payment method in India. | S | Razorpay handles this automatically in Standard Checkout on mobile. No extra code needed. |
-| **Saved card / Magic Checkout** | Razorpay Magic Checkout remembers customer details for repeat purchases. Reduces checkout time. | S | Enable in Razorpay Dashboard settings. No code change. |
-| **Payment link fallback** | If checkout.js fails to load (ad blockers, corporate firewalls), provide a Razorpay Payment Link as fallback. | M | Generate payment link via Razorpay API. Show as "Having trouble? Pay via this link" alternative. |
-| **Partial payment / EMI** | EMI options for higher-tier purchases. Razorpay supports card EMI. | S | Enable EMI in Razorpay Dashboard. Configure minimum EMI amount. No code change. |
-| **Abandoned payment recovery email** | If user starts checkout but doesn't complete, send reminder email after 1 hour. | M | Track `payment_initiated_at` in claims table. Cron or scheduled function to send reminder. Requires email integration (out of scope per constraints). Defer. |
+| **Real-time site preview updates** | After admin redeploys, the client's portal iframe automatically updates to show the latest version without page refresh. | Med | Supabase real-time subscription on the `projects` table for the client's project. When `updated_at` changes, reload iframe. Similar pattern to admin dashboard's real-time listener. |
+| **Version history visible to client** | "Your site was updated on [date]" with a list of what changed. Builds trust that work is being done. | Low | Query `revisions` table for the client's project. Display as a timeline. Admin adds a note when redeploying. |
+| **Agent support payment** | $49 one-time payment for hands-on help (domain setup, logo fixes, minor edits). Shows in portal as an upsell card. | Med | Razorpay order creation for $49 via existing payment patterns. Store as a separate claim or a flag on the existing claim. Route to admin fulfillment queue. |
+| **Status page for site health** | Show basic site health: uptime, last checked, SSL status. Builds confidence the site is being maintained. | High | Requires external monitoring. Defer to v4.0. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Custom payment form (card fields on page)** | PCI compliance nightmare. Razorpay's checkout modal handles all card data securely. Never touch raw card numbers. | Use Razorpay Standard Checkout modal exclusively. |
-| **Multiple payment providers** | PROJECT.md explicitly states Razorpay only. Adding Stripe adds complexity, split webhook handling, and reconciliation burden for zero benefit. | Razorpay handles all payment methods including international cards. |
-| **Coupon/discount codes at checkout** | Adds UI complexity, requires discount management system, and opens abuse vectors. For a two-tier product with fixed pricing, it is unnecessary. | If discounts are needed, create a separate Razorpay order with reduced amount. No UI for codes. |
-| **Subscription/recurring billing** | These are one-time website purchases, not SaaS subscriptions. Recurring billing adds cancellation logic, proration, and churn management. | One-time payment only. Upsells are separate transactions. |
-
-### Dependencies on Existing System
-
-- **New `payments` table**: `id`, `claim_id`, `razorpay_order_id`, `razorpay_payment_id`, `amount`, `currency`, `status`, `created_at`.
-- **New `claims` table**: Links to `projects.id`. Stores `plan` (standard/pro), `payment_status`, `customer_email`, `customer_phone`.
-- **Environment variables**: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
-- **npm package**: `razorpay` (Node.js SDK for server-side order creation).
-- **Webhook endpoint**: Must be publicly accessible. Vercel deployments handle this automatically.
+| **Client-side code editor** | Business owners can't edit code. A code editor in the portal would be terrifying and lead to broken sites. | Single textarea for change requests. Admin handles all code changes. |
+| **Drag-and-drop page builder** | Massive engineering effort. The generated sites are static HTML -- no component system to drag and drop. | Text-based change requests. The admin edits code in the existing Monaco editor. |
+| **Real-time chat with admin** | Requires always-on support infrastructure. WhatsApp already handles real-time communication. | Change request system + WhatsApp link for urgent items. |
+| **Self-service domain purchase** | Integrating a registrar API (GoDaddy, Namecheap) is complex, error-prone, and adds financial liability. Out of scope per PROJECT.md. | Show domain availability via Domainr, but client buys externally and connects via DNS. |
+| **PDF DNS setup guides** | PDFs are hard to maintain, can't be updated without re-downloading. | Inline text instructions in the portal, step-by-step with copy buttons for DNS values. |
+| **Multi-site dashboard** | Unlikely scenario (same business owner buying multiple sites). Adds complexity for zero practical value in v3.0. | Portal shows the single site associated with their claim. If edge case arises, handle manually. |
 
 ---
 
-## Step 4: Post-Payment Customization Form
+## Category 4: Domain Management
 
-**What it is:** After successful payment, the client fills out a customization form: upload logo, choose colors, provide updated contact info, upload photos, request text changes. This form captures what the operator needs to finalize the site.
+**What changes:** Move domain management from pre-payment claim page to client portal. Three options: free subdomain (automatic), connect existing domain (DNS verification), buy new domain (search + external purchase). The client sees domain status and DNS verification progress in their portal.
+
+**Depends on (existing):** Client portal (Category 3), `claims` table (`domain_option`, `domain_value` columns)
 
 ### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|-------------|------------|-------|
-| **Multi-step form with progressive disclosure** | Asking for everything at once overwhelms. Progressive disclosure reduces task completion time by 20-40% (Nielsen Norman Group). Steps: (1) Logo & brand colors, (2) Contact details, (3) Photos, (4) Text change requests. | M | Multi-step form with progress indicator. 1-2 fields per screen. "Skip" option on optional sections. React state machine or simple step counter. |
-| **File upload for logo** | Every client wants their logo on the site. Direct upload to Supabase Storage via signed URL. Max 5MB, image types only (PNG, SVG, JPG). | M | Extend existing `uploadProjectAsset` pattern but use signed URLs for client-side upload (bypass 1MB Next.js body limit). New bucket `client-uploads` with appropriate RLS. |
-| **File upload for photos** | Clients want real photos of their business, team, products instead of stock images. Multiple file upload (up to 10 photos). | M | Batch upload with progress indicators. Use `uploadProjectAssets` pattern. Thumbnail preview after upload. Drag-and-drop zone. |
-| **Pre-filled contact details** | Pull existing contact info from `business_data` (from Google Places enrichment). Client confirms or corrects. Reduces typing, shows we already know their business. | S | Pre-populate form fields from `projects.business_data.contactInfo`. Editable fields for phone, email, address, hours. |
-| **Color picker or preset palette** | Let client pick brand colors or choose from presets. Generated site already has colors from enrichment; show those as defaults. | S | Preset palettes (5-6 options) plus a simple hex input. Show live preview swatch. No full color wheel needed. |
-| **Text change request textarea** | Free-form "What would you like to change about the text?" field. The operator applies these manually -- no automated AI revision from client input. | S | Single textarea with placeholder examples: "Change the tagline to...", "Update the service list to include...". Max 2000 chars. |
-| **Form state persistence** | If client closes the browser mid-form, their progress is saved. They can resume from where they left off. | M | Save form state to `customizations` table on each step completion. Load on page revisit. Keyed by `claim_id`. |
-| **Submission confirmation** | After form submission, clear feedback: "Got it! We'll start customizing your site." Prevents re-submission anxiety. | S | Redirect to confirmation page (Step 6) with success state. |
+| **Free subdomain (auto-provisioned)** | Every client gets `{business-slug}.flogen.site` by default. No configuration needed. This is the "zero friction" option. | Low | Generate subdomain from business name slug (existing `slugify()` function in `domain-section.tsx`). Store in claim record. Display in portal immediately after payment. No DNS configuration needed -- admin sets up a wildcard DNS for `*.flogen.site`. |
+| **Connect existing domain (DNS TXT verification)** | Client enters their domain, gets a TXT record to add at their registrar. Portal checks verification status. This is the standard SaaS pattern -- TXT records are preferred over CNAME because they don't interfere with existing services and multiple TXT records can coexist. | High | Generate a unique verification token: `flogen-verify={random_string}`. Client adds TXT record at `_flogen.theirdomain.com`. Portal polls DNS to check for the record. Status flow: `pending -> verifying -> verified -> live / failed`. Use `dns.resolveTxt()` in Node.js to check. Confidence: MEDIUM (DNS verification is well-established, but the UX for non-technical users requires careful step-by-step instructions). |
+| **DNS verification instructions** | Step-by-step text instructions tailored to common registrars (GoDaddy, Namecheap, Google Domains, Cloudflare). Must be copy-paste friendly with actual values pre-filled. | Med | Static text content with dynamic values (the TXT record name and value). Copy-to-clipboard buttons for each value. Registrar-specific screenshots or links to their DNS management pages. |
+| **Domain status display** | Show current domain state in the portal: "Using free subdomain", "DNS verification pending -- add this TXT record", "Domain verified -- going live", "Domain active". | Low | Read domain status from claim/project record. Render as a status card with color-coded badge. Include the subdomain as a fallback ("Your site is also available at {slug}.flogen.site"). |
+| **Domain availability search (Domainr API)** | Client can search for available domains before buying externally. Domainr API (now Fastly) provides instant availability checks. Free tier: 10,000 lookups/month via RapidAPI. | Med | API route: `POST /api/domains/search` that proxies to Domainr `/v2/search` and `/v2/status`. Client-side debounced input. Show availability status and register URL (links to external registrar). Confidence: MEDIUM (Domainr API is deprecated in favor of Fastly API, but still functional via RapidAPI. Free tier is 10,000/month which is more than enough). |
+| **AI domain suggestions** | Given the business name, suggest relevant domain names. "Patel Dental Clinic" -> `pateldental.com`, `pateldentalclinic.com`, `drpatel.dental`. | Low | Generate 5-10 suggestions from business name permutations (no AI needed -- string manipulation). Check availability via Domainr. Display as a list with status badges. |
 
 ### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Live preview with changes** | Show a mock preview of the site with the uploaded logo overlaid. Makes the form feel impactful, not administrative. | L | Complex: would need real-time re-rendering. Defer. A static "before" screenshot is sufficient for v1. |
-| **Image cropping/resizing** | Client uploads may be wrong aspect ratio. Basic crop tool saves operator time. | M | Use a library like `react-easy-crop`. Worth considering but not blocking. |
-| **Template for "text changes"** | Instead of free-form text, provide structured fields: "Hero tagline", "About us paragraph", "Services list". More actionable for operator. | M | Depends on knowing the generated site's structure. Could auto-detect sections from generated code. Useful but adds complexity. |
-| **Font preference selection** | Let client choose from 3-4 font pairings. The generation pipeline already supports font selection. | S | Dropdown with font name + preview text sample. Maps to existing design system data. |
+| **Auto-detection of DNS propagation** | Instead of making the client click "Verify" repeatedly, poll DNS every 5 minutes and notify when verification succeeds. | Med | Background job (or cron via Vercel) that checks pending verifications. Update status in DB. Client portal shows real-time status via Supabase subscription. |
+| **Registrar-specific instructions with deep links** | Instead of generic "go to your DNS settings," detect the registrar from WHOIS data and show specific instructions with direct links to their DNS management page. | High | Requires WHOIS lookup integration. Defer to v4.0. For v3.0, show generic instructions with the top 4-5 registrars as tabs. |
+| **Domain health check post-connection** | After domain is connected, verify SSL, A record, and CNAME are all correct. Show a green checkmark when everything is healthy. | Med | After DNS verification passes, check A/CNAME records point to the right IP/hostname. Report any misconfiguration. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Client self-editing the code/design** | PROJECT.md explicitly states "CMS / client self-edit -- operator handles all changes." Clients editing HTML will break things. | Structured form that captures intent. Operator applies changes using existing editor. |
-| **Unlimited file uploads** | Storage costs and processing time. 10 photos + 1 logo is generous. More than that signals scope creep. | Cap at 10 photos (5MB each) + 1 logo (5MB). Show clear limits. |
-| **AI-powered auto-customization** | Tempting but risky. Automated changes based on client input could produce worse results than manual operator work. The operator is the quality gate. | Form captures client wishes. Operator applies changes manually with AI-assisted editor. |
-| **Version selection** | Letting clients choose between different generated versions adds decision fatigue and implies the operator doesn't know best. | Operator selects the best version before sharing the claim link. Client sees one site. |
-
-### Dependencies on Existing System
-
-- **New `customizations` table**: `id`, `claim_id`, `step` (current form step), `logo_url`, `photos` (JSON array of URLs), `colors` (JSON), `contact_updates` (JSON), `text_requests` (text), `submitted_at`.
-- **Supabase Storage**: New `client-uploads` bucket with signed URL upload policy. Separate from admin `project-assets` bucket for access control.
-- **`projects.business_data`**: Pre-fills contact info fields.
-- **New route**: `app/claim/[projectId]/customize/page.tsx` -- accessible only after payment verified.
+| **In-app domain purchase** | Registrar API integration adds financial liability, error handling for failed purchases, refund logic, and support burden. Explicitly out of scope per PROJECT.md. | Show availability + link to external registrar. Client buys themselves, then connects in portal. |
+| **Automated DNS configuration** | Setting DNS records on behalf of clients requires registrar API access. Too many registrars to support. Out of scope. | Provide copy-paste TXT record values and step-by-step instructions. Admin handles final hosting setup manually. |
+| **CNAME verification** | CNAME records can only have one value per hostname, which means they can conflict with existing records. TXT records are non-destructive and the industry standard for domain verification. | Use TXT record verification only. |
+| **Email-based domain verification** | Requires sending email to `admin@theirdomain.com` and hoping someone checks it. Business owners often don't have domain email set up. | DNS TXT verification is more reliable and doesn't depend on email infrastructure. |
 
 ---
 
-## Step 5: Strategy Call Upsell
+## Category 5: AI Logo Background Removal
 
-**What it is:** After customization form, offer a strategy call booking. Free for Pro plan clients (included in their package). Paid add-on for Standard plan clients. Skippable -- never block the flow.
+**What changes:** When a client uploads their logo in the portal (or during post-payment customization), Gemini Vision API automatically removes the background. Client sees before/after and approves the result. This solves the universal pain point: business logos photographed on colored backgrounds, scanned from business cards, or exported with white backgrounds that clash with the generated site.
+
+**Depends on (existing):** Logo upload component (`logo-upload.tsx`), Supabase Storage upload API (`/api/uploads`), Google Gemini API key (already in stack)
 
 ### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|-------------|------------|-------|
-| **Upsell page/section after form submission** | Present the upsell at the natural "what's next?" moment. Post-purchase, pre-confirmation is the optimal timing -- client is engaged and invested. | S | Dedicated page or section between customization form and confirmation. Clear value proposition: "Get a free 30-minute strategy call to maximize your website's impact." |
-| **Clear skip option** | Upsell must NEVER block the flow. "Skip for now" must be equally prominent as "Book a call." Forced upsells generate resentment and support tickets. | S | Two equal-sized buttons: "Book Strategy Call" and "Skip, Continue to Confirmation". No dark patterns (tiny skip link, countdown to unlock skip). |
-| **Pro plan: included messaging** | For Pro clients, frame as "Your plan includes a free strategy call" -- not an upsell, but a benefit they already paid for. | S | Conditional copy based on `claims.plan`. Pro: "Included in your plan." Standard: "Add for ₹999 / $99." |
-| **Booking via external tool** | Use Calendly or Cal.com embed for scheduling. Building a custom booking system is not worth the effort for a single operator. | S | Calendly inline embed or Cal.com widget. Prefill client name/email from form data. Link opens in new tab or embedded. |
+| **Upload logo and auto-process** | Client uploads PNG/JPG/WebP logo. Server sends to Gemini API with prompt "Remove the background from this logo, make it transparent, keep the logo subject exactly as is." Returns processed PNG with transparent background. | Med | API route: `POST /api/logos/process`. Accepts uploaded image, converts to base64, sends to Gemini 2.5 Flash Image (or 3.1 Flash Image Preview) with `responseModalities: ['IMAGE']`. Gemini returns base64 PNG. Save both original and processed to Supabase Storage. Confidence: MEDIUM (Gemini image editing works for bg removal per multiple sources, but quality varies -- need fallback). Model: `gemini-2.5-flash-image` or newer. |
+| **Before/after preview** | Side-by-side or toggle view showing original upload vs. background-removed version. Client must approve before the processed version is used. | Low | Two `<img>` tags with a toggle or slider. Checkerboard background behind the processed image to show transparency. Approval button saves the selection to the request record. |
+| **Fallback for failed processing** | Gemini may fail (safety filters, complex logos, API errors). Must handle gracefully -- use the original upload and flag for admin manual processing. | Low | Catch API errors. If processing fails, save the original and create a `client_request` with type `logo_processing_failed`. Admin processes manually in Photoshop/Figma. Notify client: "We'll process your logo manually." |
+| **File size and format validation** | Same as existing: PNG/JPG/WebP, max 5MB. Reject SVG (XSS risk, already a project convention). | Low | Already implemented in `logo-upload.tsx` lines 24-30. Reuse the same validation. |
+| **Transparent PNG output** | The processed logo must be a PNG with alpha channel (transparent background). Other formats don't support transparency. | Low | Ensure Gemini response is saved as PNG regardless of input format. The API returns base64 image data that can be decoded and saved as PNG. |
 
 ### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Booking confirmation synced to claims** | When client books via Calendly/Cal.com, a webhook updates the claim record with booking datetime. Operator sees everything in one dashboard. | M | Calendly/Cal.com webhook -> update `claims.strategy_call_booked_at`. Requires webhook integration with external scheduling tool. |
-| **Social proof on upsell** | "87% of our Pro clients book a strategy call" or a testimonial from a satisfied client. | S | Static copy block. No dynamic data needed initially. |
-| **Reminder email if skipped** | Send a "You still have a free strategy call waiting" email 3 days after purchase if client skipped. | M | Requires email sending capability. Defer unless email integration is already planned. |
+| **Color-aware background detection** | If the logo background is a solid color (white, light gray), use simpler processing. If complex (photographed on a desk, scanned), use more aggressive prompting. | Med | Analyze the image histogram before sending to Gemini. Adjust the prompt based on detected background complexity. Or just use a good universal prompt -- Gemini handles most cases. |
+| **Manual crop/reposition** | Let the client crop or reposition the logo after background removal. Sometimes the AI trims too aggressively. | Med | Canvas-based crop tool. Increases engineering effort. Defer to v4.0 unless demand is high. |
+| **Multi-logo support** | Client can upload multiple logo variants (horizontal, square, icon-only) and select which to use where. | Low | Array of logo URLs instead of single URL. UI shows thumbnails with "use for header" / "use for favicon" labels. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Aggressive multi-upsell sequence** | One upsell offer is acceptable. A sequence of 3-4 upsell pages after payment feels predatory and increases refund requests. | Single upsell offer, easily skippable. |
-| **Time-limited upsell discount** | "Book in the next 10 minutes for 50% off" creates pressure that erodes trust right after a purchase. Post-purchase goodwill is fragile. | Present value, not urgency. The strategy call sells itself if positioned as helpful. |
-| **Custom booking system** | Building appointment scheduling from scratch (calendar UI, timezone handling, conflict detection, email reminders) is a massive effort for a feature that Calendly/Cal.com does better. | Embed Calendly/Cal.com. $0-12/month for the operator's use case. |
-| **Mandatory call for Pro plan** | Even though the call is "included," making it mandatory adds friction. Some clients just want their site delivered fast. | Optional but encouraged. "Your plan includes this -- book whenever you're ready." |
-
-### Dependencies on Existing System
-
-- **`claims` table**: `plan` field determines free vs. paid call. Add `strategy_call_booked_at` column.
-- **External**: Calendly or Cal.com account. Embed widget loaded via script tag.
-- **Razorpay** (for Standard plan upsell payment): Reuse existing order creation flow for ₹999/$99 add-on.
+| **Real-time background removal in browser** | Client-side AI processing is slow, unreliable, and eats mobile battery. Server-side is faster and more consistent. | Server-side Gemini API processing. Show a loading spinner for 3-5 seconds. |
+| **SVG output** | SVG conversion from raster logos is unreliable and creates vector artifacts. SVGs are also an XSS vector (project convention: reject SVGs). | PNG with transparency. Always. |
+| **Automatic logo placement without approval** | The AI result may be imperfect (edge artifacts, partial removal). Using it without client approval leads to complaints. | Always show before/after and require explicit approval. |
+| **Complex editing tools (levels, curves, color adjustment)** | Business owners don't know what levels and curves are. This is not Photoshop. | Simple: upload, auto-process, approve or reject. If rejected, admin handles manually. |
 
 ---
 
-## Step 6: Confirmation / Onboarding Page
+## Category 6: Admin Fulfillment Workflow
 
-**What it is:** The final page after payment (and optional upsell). Sets expectations on delivery timeline, reduces buyer's remorse, provides next steps, and reinforces the purchase decision.
+**What changes:** Admin dashboard gets a new section for managing purchased clients: viewing their requests, processing changes, and redeploying updated sites. This is the operator's workflow for delivering on paid orders.
+
+**Depends on (existing):** Admin dashboard (`app/(admin)/dashboard/`), editor (`app/(admin)/editor/`), `projects` table, `revisions` table, existing redeploy/revision system
 
 ### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|-------------|------------|-------|
-| **Order summary** | Show what was purchased: plan name, amount paid, business name, date. Reduces "what did I just buy?" anxiety. | S | Pull from `claims` and `payments` tables. Display plan, amount, currency, payment date. |
-| **Delivery timeline** | Clear timeline: "Your customized website will be ready in 3-5 business days." Manage expectations. Any friction in post-purchase communication amplifies regret. | S | Static timeline infographic. Steps: (1) Customization received, (2) Designer review (1-2 days), (3) Revisions if needed, (4) Site delivered. |
-| **Next steps checklist** | Tell the client what happens next and what they need to do (if anything). Reduces anxiety and support questions. | S | Checklist: "We've received your customization details", "You'll receive a preview link via email/WhatsApp", "Reply to request any changes." |
-| **Contact info for support** | WhatsApp number or email for the operator. The client just spent money -- they need to know they can reach someone. | S | Prominent WhatsApp button and email link. Same as claim page. |
-| **Purchase receipt** | Razorpay sends a receipt email automatically. But the confirmation page should also show payment ID for records. | S | Display `razorpay_payment_id` and offer "Download receipt" link to Razorpay's receipt URL. |
+| **Purchased clients list** | Admin view showing all paid claims with client name, email, plan, payment date, site status, and pending request count. Sortable/filterable. | Med | New admin page: `app/(admin)/dashboard/clients/page.tsx`. Server component querying `claims` joined with `projects` and `client_requests`. Filter by status (all, pending requests, in-progress, completed). |
+| **Client request queue** | List of all pending `client_requests` across all clients. Admin can claim, process, and resolve requests. Shows request content, attached files, and client info. | Med | New admin page: `app/(admin)/dashboard/requests/page.tsx`. Query `client_requests` with `status: 'pending'` ordered by `created_at ASC` (FIFO). Each request card shows client name, request text, attached images, and action buttons. |
+| **Request status management** | Admin marks requests as in-progress when working on them, and completed when done. Client sees status updates in their portal. | Low | Status enum: `pending -> in_progress -> completed -> rejected`. Server action to update status. Optional admin note when completing ("Changed headline text, updated contact phone"). |
+| **Redeploy button** | After editing a client's site in the Monaco editor, admin clicks "Redeploy" to publish the latest code. This saves a new revision, increments the version, and makes the updated code live. | Med | Server action: `redeployProject(projectId)`. Steps: save current editor code as new revision in `revisions` table, update `projects.generated_code` and `projects.updated_at`, invalidate any CDN cache. The existing revision system already handles versioning -- this is a one-click wrapper. |
+| **Client detail view** | Admin clicks a client in the list to see their full profile: claim details, payment info, all requests, site preview, domain status, and an "Open in Editor" button. | Med | New admin page: `app/(admin)/dashboard/clients/[claimId]/page.tsx`. Server component fetching all related data. Links to editor with the project pre-loaded. |
+| **CRUD API for client requests** | REST endpoints for creating, reading, updating, and listing client requests. Used by both portal (create/read) and admin (read/update). | Med | API routes: `POST /api/client-requests` (create), `GET /api/client-requests` (list, filtered by user or admin), `PATCH /api/client-requests/[id]` (update status/notes). Zod validation on all inputs. RLS: clients see only their own requests, admin sees all. |
 
 ### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Animated success state** | Confetti animation or checkmark animation on page load. Small dopamine hit reinforces purchase decision. Reduces buyer's remorse. | S | CSS animation or lightweight library (canvas-confetti, ~3KB). One-time on page load. |
-| **Referral prompt** | "Know someone who needs a website? Share this link." Turns satisfied customers into lead sources. | S | Pre-filled WhatsApp share link or copy-to-clipboard referral URL. |
-| **Domain setup instructions** | If client selected "connect existing domain" or "buy new domain," show DNS instructions or next steps for domain setup. | M | Conditional section based on domain selection. DNS A/CNAME record instructions. |
-| **Email confirmation** | Send a copy of the confirmation details via email. Professional touch. | M | Requires email sending capability (Resend, SendGrid, or Supabase Edge Functions with email). |
+| **Batch redeploy** | Redeploy multiple sites at once after making similar changes (e.g., updating a footer template across all sites). | Med | Select multiple projects, click "Redeploy All." Reuses the queue system from v1.0 batch pipeline. |
+| **Request templates** | Pre-defined request types with guided inputs: "Change phone number" (phone input), "Update hours" (hours grid), "Add photos" (file upload). Reduces ambiguity in freeform requests. | Med | Typed request system with optional structured fields. But keep the single textarea as the primary input -- templates are shortcuts, not requirements. |
+| **Time tracking per request** | Admin logs time spent on each request. Useful for pricing decisions and identifying high-maintenance clients. | Low | `time_spent_minutes` column on `client_requests`. Admin enters manually when completing a request. |
+| **Client notification on completion** | When admin completes a request, send a notification (email or WhatsApp) to the client. | Med | Depends on email service (deferred per PROJECT.md). For v3.0, the client sees status updates in portal. Email notifications in v4.0 via Instantly AI. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Second upsell on confirmation page** | Client just completed the flow. Do NOT try to sell more on the confirmation page. It undermines the "we're taking care of you" message. | Pure confirmation and reassurance. No sales. |
-| **Account creation requirement** | Do NOT require the client to create an account to see their confirmation or track their order. Zero-friction experience. | Use claim URL with unique token for revisiting status. No password, no account. |
-| **Automated progress tracking** | Building a real-time "order tracker" with status updates requires workflow automation. The operator manually delivers sites. | Static timeline. Operator sends WhatsApp/email updates manually. |
-
-### Dependencies on Existing System
-
-- **`claims` table**: Provides order details, plan, status.
-- **`payments` table**: Provides payment amount, ID, date.
-- **`customizations` table**: Confirms form was submitted.
-- **New route**: `app/claim/[projectId]/confirmation/page.tsx`.
+| **Auto-deployment to custom domains** | Deploying to arbitrary domains requires DNS management, SSL provisioning, and hosting orchestration. Explicitly out of scope. | Admin manually configures hosting after domain verification. Redeploy updates the code in the database; deployment to hosting is a separate manual step. |
+| **Client-facing real-time chat** | Requires WebSocket infrastructure, always-on support, and response time commitments. | Client submits requests; admin processes asynchronously. WhatsApp for urgent matters. |
+| **Automated change application** | Using AI to interpret freeform requests and automatically edit code is unreliable and risks breaking sites. | Admin reads the request, manually edits in Monaco editor, and redeploys. The human in the loop ensures quality. |
+| **SLA timers / escalation** | Single operator doesn't need SLA management. Adds complexity for no benefit. | Simple FIFO queue with manual prioritization. |
 
 ---
 
-## Step 7: Domain Selection UX
-
-**What it is:** During the claim flow (on the claim page), the prospect chooses how they want their website addressed: use their existing domain, buy a new domain, or use a free subdomain.
-
-### Table Stakes
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|-------------|------------|-------|
-| **Three clear options** | (1) "I have a domain" -- text input for existing domain, (2) "Help me buy a domain" -- shows recommended domain + price, (3) "Use free subdomain" -- e.g., drclinic.flogen.site. Each option must be clearly explained. | M | Radio button group with expanding detail panels. Option 1: domain input + DNS instructions. Option 2: domain suggestion + "we'll set it up" messaging. Option 3: auto-generated subdomain preview. |
-| **Free subdomain as default/fallback** | Not every client has or wants a custom domain. The free subdomain removes a barrier to purchase. Must feel like a real option, not a consolation prize. | S | Auto-generate from business name: `dr-patels-dental.flogen.site`. Show it as "Your free web address." |
-| **Domain input validation** | If client enters their existing domain, validate format (not availability -- that requires API). Prevent typos like "mysite.con" or "www .example.com". | S | Regex validation for domain format. Strip www prefix, lowercase, trim whitespace. |
-
-### Differentiators
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Domain availability check** | Check if a suggested domain is available using a domain registrar API (GoDaddy, Namecheap). Show pricing. | L | Requires API integration with a registrar. PROJECT.md marks "Domain registration API integration" as out of scope. Defer. |
-| **Domain name suggestions** | Suggest 3-5 domain names based on business name and industry. E.g., for "Dr. Patel's Dental": drpatelsdental.com, pateldental.in, drpateldentist.com. | M | Algorithmic generation from business name. No availability check needed for suggestions -- just show them as ideas. |
-| **DNS setup wizard** | Step-by-step DNS configuration guide with copy-paste record values for the client's specific registrar (GoDaddy, Namecheap, Google Domains). | M | Conditional instructions based on registrar selection dropdown. Static content per registrar. |
-
-### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **In-flow domain purchase** | Integrating domain registration API, payment for domain separately, and DNS automation is massive scope. PROJECT.md explicitly excludes this. | Show "we'll help you buy [domain]" and handle domain purchase manually. Charge domain cost separately or include in price. |
-| **SSL certificate management** | Automated HTTPS setup requires DNS validation, certificate provisioning, and renewal. Out of scope. | Free subdomain on operator's wildcard SSL. Custom domains get manual SSL setup post-delivery. |
-| **Hosting selection** | Do NOT ask the client to choose a hosting provider during claim flow. Adds confusion and decisions to a purchase flow. | Hosting is handled by operator. Client doesn't need to know or decide. |
-
-### Dependencies on Existing System
-
-- **`claims` table**: Add `domain_option` (enum: 'existing', 'new', 'subdomain'), `domain_value` (the actual domain or subdomain).
-- **Claim page UI**: Domain selection is a section of the claim landing page, not a separate page.
-
----
-
-## Step 8: Conversion Funnel Analytics
-
-**What it is:** Track every step of the claim funnel to identify where prospects drop off: site view -> claim page visit -> plan selected -> payment initiated -> payment completed -> form submitted -> upsell converted.
-
-### Table Stakes
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|-------------|------------|-------|
-| **Funnel step tracking** | Record when each prospect hits each funnel step. Without this, you cannot optimize. Track: `cta_clicked`, `claim_page_viewed`, `plan_selected`, `payment_initiated`, `payment_completed`, `form_started`, `form_submitted`, `upsell_shown`, `upsell_converted`, `confirmation_viewed`. | M | New `claim_events` table: `id`, `claim_id`, `event_type`, `metadata` (JSON), `created_at`. Log events from both client-side (page views) and server-side (payment captured). |
-| **Funnel visualization** | Show the funnel as a bar chart or step diagram in the admin dashboard. Each step shows count and drop-off percentage. Without visualization, raw data in a table is useless. | M | New dashboard section or page. Bar chart with step labels and percentages. Use existing Recharts from v1.0 analytics dashboard. |
-| **Conversion rate by time period** | Daily/weekly/monthly conversion rates. See trends over time. | S | Date filter on funnel data. Reuse existing date filtering from admin dashboard. |
-| **Revenue tracking** | Total revenue, revenue by plan, average revenue per claim. The business metric that matters most. | S | Aggregate from `payments` table where status = 'captured'. Sum by plan, by date range. |
-
-### Differentiators
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Drop-off alerts** | Notify operator when conversion rate drops below threshold or when a specific step has unusual abandonment. | M | Threshold check on funnel query. Could be a dashboard warning banner rather than email/notification. |
-| **Funnel segmentation** | Break down funnel by industry, location, plan type. See if dentists convert better than restaurants. | M | Add dimensions to `claim_events`. Filter UI on analytics page. |
-| **Attribution tracking** | Track how the prospect found the site: direct link, WhatsApp share, email campaign. UTM parameter capture. | S | Parse UTM params on claim page load. Store in `claim_events.metadata`. |
-| **A/B testing claim page variants** | Test different pricing, copy, or layouts on the claim page. | L | Requires variant assignment, consistent serving, and statistical analysis. Defer -- optimize manually first based on funnel data. |
-| **Google Analytics integration** | Send funnel events to GA4 for cross-site analytics. | S | `gtag('event', ...)` calls on each funnel step. Requires GA4 property setup. |
-
-### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Third-party analytics platform** | Mixpanel, Amplitude, or Segment add cost, complexity, and data duplication. The funnel is simple enough for custom tracking. | Custom tracking in Supabase `claim_events` table. Full control, zero cost beyond Supabase. |
-| **Session recording (Hotjar/FullStory)** | Overkill for a single-page claim flow with 3-4 steps. The funnel metrics tell you enough. | Focus on step-level drop-off rates. If a step has high drop-off, inspect the page manually. |
-| **Real-time analytics dashboard** | The claim flow processes dozens of claims, not millions. Real-time is unnecessary overhead. | Refresh on page load. Optionally add a "Refresh" button. |
-
-### Dependencies on Existing System
-
-- **New `claim_events` table**: Event log with claim_id foreign key.
-- **Existing analytics infrastructure**: v1.0 built an analytics dashboard with Recharts. Extend with new claim funnel section.
-- **Client-side event logging**: New API route `POST /api/analytics/claim-event` for logging from client-facing pages.
-- **Server-side event logging**: Log payment events from webhook handler.
-
----
-
-## Feature Dependencies Map
+## Feature Dependencies
 
 ```
-                    +-----------------+
-                    |   CTA Bar (1)   |
-                    +--------+--------+
-                             |
-                             v
-                    +--------+--------+
-                    | Claim Page (2)  |
-                    +--------+--------+
-                             |
-                    +--------+--------+
-                    |  Domain UX (7)  |  (section within Claim Page)
-                    +--------+--------+
-                             |
-                             v
-                    +--------+--------+
-                    | Payment (3)     |
-                    +--------+--------+
-                             |
-                             v
-                    +--------+--------+
-                    | Custom Form (4) |
-                    +--------+--------+
-                             |
-                             v
-                    +--------+--------+
-                    | Upsell (5)      |
-                    +--------+--------+
-                             |
-                             v
-                    +--------+--------+
-                    | Confirmation (6)|
-                    +--------+--------+
-
-    Analytics (8) tracks ALL steps above (cross-cutting)
-
-    Existing system dependencies:
-    - CTA Bar (1) depends on: static-export.ts, constructHtmlBoilerplate
-    - Claim Page (2) depends on: projects table, business_data
-    - Payment (3) depends on: new Razorpay integration, new tables
-    - Custom Form (4) depends on: Supabase Storage (signed URLs)
-    - Upsell (5) depends on: external Calendly/Cal.com
-    - Confirmation (6) depends on: claims + payments tables
-    - Analytics (8) depends on: new claim_events table
+Payment-first funnel (Cat 1) ---> independent, modify existing code
+                                     |
+Post-payment auth (Cat 2) ----------+ depends on webhook having email
+                                     |
+Client portal (Cat 3) --------------+ depends on Supabase Auth
+     |                               |
+     +-- Domain management (Cat 4)   |
+     +-- Logo bg removal (Cat 5) ----+ independent, can parallel with Cat 3
+     +-- Change requests             |
+                                     |
+Admin fulfillment (Cat 6) ----------+ depends on client_requests table
+     +-- Redeploy button             + depends on existing editor/revision system
 ```
+
+Key dependency chain: Payment-first -> Auth -> Portal -> Domain/Logo/Requests -> Admin fulfillment
+
+AI logo background removal (Cat 5) is the most independent feature -- it can be built and tested in isolation since it only needs an image input and Gemini API access.
 
 ---
 
 ## MVP Recommendation
 
-### Prioritize (must ship together for a working funnel):
+**Build in this order:**
 
-1. **CTA Bar injection** (Step 1) -- Without it, no entry point to funnel.
-2. **Claim Landing Page** (Step 2 + Step 7 domain selection) -- Without it, CTA has nowhere to go.
-3. **Razorpay Payment** (Step 3) -- Without it, no revenue.
-4. **Post-Payment Customization Form** (Step 4) -- Without it, operator can't deliver what client wants.
-5. **Confirmation Page** (Step 6) -- Without it, client feels abandoned after payment.
+1. **Payment-first funnel update** (Cat 1) -- Lowest risk. Simplifies existing code. Immediately testable.
+2. **Post-payment account creation** (Cat 2) -- Foundation for everything else. Small surface area.
+3. **AI logo background removal** (Cat 5) -- Independent. High-impact UX improvement. Can be built in parallel with portal.
+4. **Client portal with change requests** (Cat 3) -- Core new feature. Depends on auth.
+5. **Domain management** (Cat 4) -- Complex DNS verification UX. Needs careful testing with real domains.
+6. **Admin fulfillment workflow** (Cat 6) -- Builds on all the above. The admin queue only has value once clients are submitting requests.
 
-### Defer to fast-follow:
+**Defer to v4.0:**
+- WhatsApp magic link delivery
+- Registrar-specific DNS instructions with deep links
+- Site health monitoring / status page
+- Email notifications (will use Instantly AI)
+- Batch redeploy across multiple sites
+- Manual logo crop/reposition tool
+- Client notification on request completion (email)
 
-6. **Strategy Call Upsell** (Step 5) -- Nice but not blocking revenue. Can be added post-launch as a page between form and confirmation.
-7. **Funnel Analytics** (Step 8) -- Can track manually via database queries initially. Dashboard visualization comes after the funnel is live and producing data.
+---
 
-### Rationale:
+## New Database Schema Requirements
 
-Steps 1-4 + 6 form a minimum viable funnel. A prospect sees a CTA, visits the claim page, pays, submits their customization requests, and sees a confirmation. Revenue flows. The upsell and analytics are optimization layers on top of a working funnel.
+| Table/Column | Purpose | Category |
+|---|---|---|
+| `client_requests` table | Central request queue for all client submissions | Cat 3, 6 |
+| `claims.user_id` column | Link claim to Supabase Auth user | Cat 2 |
+| `claims.domain_status` column | Track domain verification state | Cat 4 |
+| `claims.domain_verification_token` column | TXT record verification token | Cat 4 |
+| `projects.cal_embed_slug` column | Cal.com booking slug for Pro plan | Cat 3 |
+| `projects.live_url` column | The deployed URL of the site | Cat 3 |
+| `projects.deploy_version` column | Integer version counter for redeploys | Cat 6 |
 
 ---
 
 ## Complexity Summary
 
-| Step | Feature | Complexity | Blocking? |
-|------|---------|-----------|-----------|
-| 1 | Sticky CTA Bar | **M** | Yes -- funnel entry point |
-| 2 | Claim Landing Page | **L** | Yes -- conversion hub |
-| 3 | Razorpay Payment | **L** | Yes -- revenue enabler |
-| 4 | Customization Form | **M** | Yes -- delivery enabler |
-| 5 | Strategy Call Upsell | **S** | No -- optimization layer |
-| 6 | Confirmation Page | **S** | Yes -- purchase closure |
-| 7 | Domain Selection UX | **M** | No -- section within claim page, can start with subdomain-only |
-| 8 | Funnel Analytics | **M** | No -- optimization layer |
-
-**Total estimated complexity: L-XL** (6-8 plans across 3-4 phases)
+| Category | Table Stakes Complexity | Total Features | Risk Level |
+|----------|------------------------|----------------|------------|
+| 1. Payment-first funnel | Low | 7 table stakes, 3 differentiators | Low -- modifying existing code |
+| 2. Post-payment auth | Med | 5 table stakes, 2 differentiators | Low -- well-documented Supabase APIs |
+| 3. Client portal | Med | 8 table stakes, 3 differentiators | Med -- new route group, auth middleware, RLS |
+| 4. Domain management | Med-High | 6 table stakes, 3 differentiators | High -- DNS verification UX for non-technical users |
+| 5. AI logo bg removal | Med | 5 table stakes, 3 differentiators | Med -- Gemini API quality varies |
+| 6. Admin fulfillment | Med | 6 table stakes, 4 differentiators | Low -- extends existing admin patterns |
 
 ---
 
-## New Database Tables Required
+## Sources
 
-| Table | Purpose | Key Columns |
-|-------|---------|-------------|
-| `claims` | Tracks claim lifecycle | `id`, `project_id` (FK), `plan`, `status`, `customer_name`, `customer_email`, `customer_phone`, `domain_option`, `domain_value`, `claim_expires_at`, `payment_status`, `strategy_call_booked_at`, `created_at` |
-| `payments` | Razorpay payment records | `id`, `claim_id` (FK), `razorpay_order_id`, `razorpay_payment_id`, `amount`, `currency`, `status`, `webhook_verified`, `created_at` |
-| `customizations` | Post-payment form data | `id`, `claim_id` (FK), `current_step`, `logo_url`, `photos` (JSONB), `colors` (JSONB), `contact_updates` (JSONB), `text_requests`, `font_preference`, `submitted_at`, `created_at` |
-| `claim_events` | Funnel analytics | `id`, `claim_id` (FK), `event_type`, `metadata` (JSONB), `created_at` |
+### Verified (HIGH confidence)
+- [Supabase Auth admin.createUser](https://supabase.com/docs/reference/javascript/auth-admin-createuser) -- Server-side account creation API
+- [Supabase Magic Link Auth](https://supabase.com/docs/guides/auth/auth-email-passwordless) -- Passwordless login via magic links
+- [Razorpay Standard Checkout Integration](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps/) -- Prefill and customer data capture
+- [Razorpay Test/Live Modes](https://razorpay.com/docs/payments/dashboard/test-live-modes/) -- Separate API keys for test and live
+- [Razorpay Payment Webhooks](https://razorpay.com/docs/webhooks/payloads/payments/) -- Webhook payload includes email and contact fields
+- [Gemini Image Generation/Editing API](https://ai.google.dev/gemini-api/docs/image-generation) -- Image editing with prompt-based approach
+- [Gemini Image Editing Next.js Quickstart](https://github.com/google-gemini/gemini-image-editing-nextjs-quickstart) -- Reference implementation
+
+### Verified (MEDIUM confidence)
+- [Domainr API (deprecated, via RapidAPI)](https://domainr.com/docs/api) -- Domain search and availability, 10K free lookups/month
+- [DNS TXT vs CNAME Verification](https://www.namesilo.com/blog/en/dns/custom-domains-in-saas-txt-vs-cname-verification-and-when-to-use-each) -- TXT preferred for SaaS domain verification
+- [Gemini Background Removal Approaches](https://blog.laozhang.ai/en/posts/gemini-image-background-change) -- 7 methods, tested March 2026
+- [Client Portal Best Practices](https://www.agencyhandy.com/client-portal-for-design-agencies/) -- Design agency portal feature expectations
+
+### Industry context (LOW confidence -- informational only)
+- [SaaS Signup Flow UX](https://userpilot.com/blog/saas-signup-flow/) -- Minimal friction patterns
+- [Client Portal Software Guide](https://www.weweb.io/blog/client-portal-software) -- Market landscape
+- [Order Fulfillment Dashboard Patterns](https://www.blaze.tech/post/order-fulfillment-dashboard) -- Admin workflow design
 
 ---
-
-## New Environment Variables Required
-
-| Variable | Purpose | When Needed |
-|----------|---------|-------------|
-| `RAZORPAY_KEY_ID` | Razorpay API key (public) | Payment flow |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay key for client-side checkout.js | Payment flow |
-| `RAZORPAY_KEY_SECRET` | Razorpay API secret (server-only) | Order creation, verification |
-| `RAZORPAY_WEBHOOK_SECRET` | Webhook signature verification | Webhook handler |
-| `CALENDLY_URL` or `CAL_URL` | Booking widget URL | Upsell step |
-
----
-
-*Research completed: 2026-03-18*
-*Sources: Razorpay official docs, Microsoft Clarity blog, OptimizePress, Contentsquare, Wisepops, Nielsen Norman Group research on progressive disclosure, Shopify conversion funnel analysis, GrowthSuite countdown timer research, Supabase Storage signed URL docs*
+*Features research: 2026-03-25*
+*Scope: v3.0 Client Portal & Updated Funnel*

@@ -1,1016 +1,898 @@
-# Architecture: Client Claim Flow Integration
+# Architecture: v3.0 Client Portal & Updated Funnel Integration
 
-**Domain:** AI website generator with client conversion/payment flow
-**Researched:** 2026-03-18
-**Scope:** How v2.0 client claim flow integrates with existing v1.0 admin architecture
-
----
-
-## Existing Architecture (v1.0)
-
-The system is a monolithic Next.js App Router application with four layers, all admin-facing:
-
-```
-PRESENTATION    app/dashboard/page.tsx, app/editor/page.tsx
-                components/dashboard/*, components/workbench/*, components/editor/*
-
-API ROUTES      app/api/generate/stream, app/api/generate/revision,
-                app/api/chat/refine, app/api/discovery/google-places,
-                app/api/export/[projectId], app/api/webhooks/ingest
-
-BUSINESS LOGIC  lib/ai/ (generator, enricher, pricing, prompt-manager, validation)
-                lib/queue.ts, lib/discovery.ts, lib/autopilot.ts
-                app/dashboard/actions.ts (server actions)
-
-DATA ACCESS     lib/supabase/admin.ts, server.ts, client.ts, storage.ts
-                lib/file-utils.ts (saved_html/)
-```
-
-**Database tables (v1.0):** projects, batches, queue_jobs, project_revisions, templates, generation_costs, prompt_versions, quality_scores, batch_runs, configurations
-
-**Key pattern:** All Supabase access uses `createAdminClient()` (service role key) because there is no user auth -- the app is a single-operator internal tool. This is critical context: the admin side has no auth layer, while the new client-facing claim pages need a different access pattern.
+**Domain:** AI website generator with client portal, payment-first funnel, and admin fulfillment
+**Researched:** 2026-03-25
+**Scope:** How v3.0 features integrate with existing v1.0 (admin) + v2.0 (claim flow) architecture
+**Overall confidence:** HIGH
 
 ---
 
-## Recommended Architecture (v2.0)
+## Existing Architecture (v1.0 + v2.0)
 
-### Component Boundaries
-
-```
-EXISTING (unchanged)                  NEW (v2.0 additions)
-========================              ============================
-
-app/dashboard/**                      app/claim/[slug]/page.tsx          (claim landing)
-app/editor/**                         app/claim/[slug]/customize/page.tsx (post-payment form)
-                                      app/claim/[slug]/confirmed/page.tsx (confirmation)
-
-app/api/generate/**                   app/api/claims/**                  (claim CRUD)
-app/api/discovery/**                  app/api/webhooks/razorpay/route.ts (payment webhook)
-app/api/webhooks/ingest/**            app/api/uploads/signed-url/route.ts(file upload URLs)
-app/api/export/**                     app/api/domains/check/route.ts     (domain availability)
-                                      app/api/tracking/event/route.ts    (conversion events)
-
-lib/ai/**                             lib/claims.ts                      (claim business logic)
-lib/queue.ts                          lib/razorpay.ts                    (payment wrapper)
-lib/discovery.ts                      lib/cta-injector.ts                (CTA bar injection)
-lib/autopilot.ts                      lib/geo.ts                         (currency detection)
-                                      lib/tracking.ts                    (analytics events)
-
-components/dashboard/**               components/claim/**                (claim UI components)
-components/editor/**                  components/claim/cta-bar.tsx
-components/workbench/**               components/claim/pricing-card.tsx
-                                      components/claim/customize-form.tsx
-                                      components/claim/domain-picker.tsx
-                                      components/claim/upload-zone.tsx
-```
-
-### Data Flow: Full Claim Pipeline
-
-```
-1. GENERATION (existing, unchanged)
-   discovery -> enrichment -> generation -> validation -> save to projects table
-
-2. CTA INJECTION (new, post-generation hook)
-   updateProjectWithCode() completes
-       |
-       v
-   cta-injector.ts injects sticky CTA bar HTML into generated code
-       |
-       v
-   Static export also includes CTA (buildStaticExport enhanced)
-
-3. CLAIM INITIATION (new, client-facing)
-   Prospect clicks "Claim This Website" on CTA bar
-       |
-       v
-   GET /claim/[slug] -- SSR page fetches project + claim state
-       |
-       v
-   Renders: live preview iframe, pricing cards, domain options, trust elements
-
-4. PAYMENT (new)
-   Client selects plan -> POST /api/claims/create-order
-       |
-       v
-   Server creates Razorpay order -> returns order_id
-       |
-       v
-   Client opens Razorpay checkout modal (client-side SDK)
-       |
-       v
-   On success: Razorpay POSTs to /api/webhooks/razorpay
-       |
-       v
-   Webhook verifies signature, marks claim as 'paid'
-
-5. CUSTOMIZATION (new, post-payment)
-   Client redirected to /claim/[slug]/customize
-       |
-       v
-   Form: logo upload, color preferences, contact changes, photo uploads
-       |
-       v
-   File uploads via signed URLs (server generates, client uploads direct to Supabase)
-       |
-       v
-   Form submission: POST /api/claims/[claimId]/customize
-
-6. CONFIRMATION (new)
-   Redirect to /claim/[slug]/confirmed
-       |
-       v
-   Renders: timeline, delivery estimate, upsell (strategy call), next steps
-```
-
----
-
-## 1. Route Structure: /claim/* Coexisting with /dashboard and /editor
-
-### Recommended Approach: Route Groups with Separate Layouts
-
-The claim pages are public-facing and mobile-first. The admin pages are desktop-only with a sidebar layout. Use Next.js route groups to give each a distinct layout without conflicting:
+### Route Structure
 
 ```
 app/
-  layout.tsx                          # Root layout (fonts, globals only)
-  page.tsx                            # Landing/marketing (existing)
+  layout.tsx                          Root layout (Geist font, admin context)
+  page.tsx                            Redirect -> /dashboard
 
-  (admin)/                            # Route group -- admin layout
-    layout.tsx                        # Sidebar layout (move from dashboard/layout.tsx)
+  (admin)/
+    layout.tsx                        Sidebar nav + Geist font
     dashboard/
-      page.tsx
-      project/[id]/page.tsx
-      config/page.tsx
-      templates/page.tsx
+      page.tsx                        Home (project grid, stats, calendar)
+      analytics/                      Generation analytics
+      funnel/                         Claim funnel analytics + revenue
+      config/                         Configuration
+      dls/                            Design language system
+      templates/                      Template management
+      prompts/                        Prompt versioning
+      queue/                          Queue health
+      project/[id]/                   Project detail
     editor/
-      page.tsx
+      page.tsx                        Code editor with live preview
 
-  (client)/                           # Route group -- public/mobile layout
-    layout.tsx                        # Minimal mobile-first layout (no sidebar)
-    claim/
-      [slug]/
-        page.tsx                      # Claim landing page
-        customize/
-          page.tsx                    # Post-payment customization
-        confirmed/
-          page.tsx                    # Confirmation + upsell
+  (client)/
+    layout.tsx                        Inter + Signifier fonts, bg-[#f5f0ea]
+    preview/[slug]/                   Full-page site preview (public)
+    claim/[slug]/
+      page.tsx                        Claim landing page (pricing, CTA)
+      claim-page-client.tsx           Razorpay checkout orchestration
+      claim-actions.ts                Server actions (createRazorpayOrder, submitCustomization, etc.)
+      customize/                      Post-payment customization form
+      confirmed/                      Payment confirmation + polling
+      upsell/                         Strategy call upsell
+      components/                     Claim page UI components
+
+  api/
+    generate/                         AI generation (stream, process, revision, test)
+    discovery/google-places/          Google Places business discovery
+    chat/refine/                      AI chat refinement
+    export/[projectId]/               Static HTML export
+    unsplash/search/                  Unsplash image search
+    uploads/                          Server-proxy file uploads (claim-uploads bucket)
+    webhooks/
+      ingest/                         General webhook ingestion
+      razorpay/                       Razorpay payment webhook
+    analytics/claim-event/            Claim funnel event tracking
+    claims/[claimId]/status/          Claim status polling
+    debug/                            Debug endpoints
 ```
 
-**Why route groups:** The `(admin)` and `(client)` directories do not appear in URLs. `/dashboard` and `/claim/xyz` continue to work as before, but each gets its own `layout.tsx` with appropriate styling. The admin layout has the 220px sidebar; the client layout is clean, mobile-first, no navigation chrome.
+### Database Tables (12 tables)
 
-**Migration note:** Moving existing `dashboard/layout.tsx` into `(admin)/layout.tsx` is a file move, not a breaking change. URL paths remain identical. The `editor/page.tsx` similarly moves under `(admin)/`. This is the cleanest way to prevent the sidebar from leaking into claim pages.
+```
+v1.0 Tables:
+  projects              Core entity. business_data JSON, generated_code, status, slug, claim_expires_at
+  batches               Batch grouping for discovery runs
+  queue_jobs            Generation queue with retry logic
+  project_revisions     Code version history per project
+  templates             Approved generation templates
+  generation_costs      Token/cost tracking per AI call
+  prompt_versions       Versioned system prompts
+  batch_runs            Autopilot batch orchestration
+  configurations        Key-value settings
+  design_languages      DLS definitions
+  assets                Project file assets
 
-**Alternative (simpler, less clean):** Keep existing routes in place, add `claim/` as a top-level route with its own layout. This works but means the root `layout.tsx` must be careful not to add admin-specific elements. Given the root layout is already minimal (just fonts), this is also viable. The route group approach is recommended because it explicitly separates concerns and makes the architecture self-documenting.
+v2.0 Tables:
+  claims                Payment records. project_id FK, status lifecycle, Razorpay IDs, client contact
+  customizations        Post-payment form data. claim_id FK, logo/colors/photos/booking
+  claim_events          Funnel analytics. event_type, site_slug, metadata
+```
 
-### Slug Design
+### Supabase Client Pattern
 
-The `[slug]` parameter identifies a project. Use the project's UUID directly (already in the URL for the editor: `?id=<uuid>`). No need for a separate slug table. The claim page does `supabase.from('projects').select(fields).eq('id', slug).single()`.
+```
+lib/supabase/admin.ts    createAdminClient() — service role key, bypasses RLS. Used EVERYWHERE.
+lib/supabase/server.ts   createClient() — anon key + cookies. EXISTS but rarely used.
+lib/supabase/client.ts   createClient() — browser client with anon key. Used for real-time subscriptions.
+lib/supabase/storage.ts  Browser-side uploads to project-assets bucket.
+```
 
-If you want human-readable slugs later (e.g., `acme-dental-clinic`), add a `slug` column to the `projects` table and generate it from `business_data.businessName` during creation. Not needed for MVP -- UUIDs work because prospects reach the page via direct link (WhatsApp/email), not search.
+**Critical observation:** The codebase uses `createAdminClient()` (service role key) for all server-side operations including claim pages. This bypasses RLS entirely. The server.ts client with cookie-based auth exists but is underutilized. v3.0 must introduce auth-aware clients for the portal routes while keeping admin routes on the service role key.
+
+### Auth State: None
+
+No `middleware.ts` or `proxy.ts` exists. No authentication on any route. Admin is open (single operator), client pages are public (slug-based access). The claim flow gates on payment status checks in server components, not auth.
 
 ---
 
-## 2. New API Route Organization
+## v3.0 Architecture
 
-### Grouping Pattern
-
-The existing API routes follow a domain-based grouping (`/api/generate/*`, `/api/discovery/*`, `/api/webhooks/*`). Continue this pattern:
+### 1. Route Structure with New (portal)/ Group
 
 ```
-app/api/
-  claims/
-    create-order/route.ts             # POST: Create Razorpay order for a claim
-    [claimId]/
-      route.ts                        # GET: Fetch claim status, PATCH: Update claim
-      customize/route.ts              # POST: Submit customization data
-      verify-payment/route.ts         # POST: Client-side payment verification (backup)
-
-  webhooks/
-    ingest/route.ts                   # Existing: business data ingestion
-    razorpay/route.ts                 # NEW: Razorpay payment webhook
-
-  uploads/
-    signed-url/route.ts               # POST: Generate Supabase signed upload URL
-
-  domains/
-    check/route.ts                    # POST: Check domain availability (future)
-
-  tracking/
-    event/route.ts                    # POST: Record conversion funnel event
-```
-
-### Key Design Decisions
-
-**Claims API uses admin client:** Even though claim pages are "public," there is no user auth. The claim API routes use `createAdminClient()` (same pattern as all existing routes). Security comes from knowing the project UUID (unguessable) and Razorpay webhook signature verification, not from session-based auth.
-
-**Razorpay webhook is separate from ingest webhook:** Different payload format, different verification (HMAC signature vs. schema validation). Keep them in separate files under `/api/webhooks/`.
-
-**Signed URL route uses admin client:** The server generates a signed upload URL using the service role key. The client uploads directly to Supabase Storage. This avoids proxying file uploads through the Next.js server (important for performance on Vercel's function size/timeout limits).
-
----
-
-## 3. Database Schema: Claims and Customizations
-
-### New Tables
-
-```sql
--- Claims table: tracks the entire claim lifecycle
-CREATE TABLE claims (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-
-    -- Claim state
-    status TEXT NOT NULL DEFAULT 'pending'
-        CHECK (status IN ('pending', 'order_created', 'paid', 'customizing',
-                          'completed', 'expired', 'cancelled')),
-    plan TEXT NOT NULL DEFAULT 'standard'
-        CHECK (plan IN ('standard', 'pro')),
-
-    -- Pricing (stored at claim time, not computed dynamically)
-    amount_paise INTEGER NOT NULL,          -- e.g. 499900 for Rs 4,999
-    currency TEXT NOT NULL DEFAULT 'INR',    -- INR or USD
-
-    -- Razorpay references
-    razorpay_order_id TEXT,                 -- set when order created
-    razorpay_payment_id TEXT,               -- set when payment confirmed
-    razorpay_signature TEXT,                -- stored for audit trail
-
-    -- Client info (captured during checkout)
-    client_name TEXT,
-    client_email TEXT,
-    client_phone TEXT,
-
-    -- Domain choice
-    domain_option TEXT CHECK (domain_option IN ('subdomain', 'existing', 'new')),
-    domain_value TEXT,                      -- e.g. "acme.flogen.site" or "acme.com"
-
-    -- Expiry (5-day claim window)
-    expires_at TIMESTAMPTZ NOT NULL,
-
-    -- Webhook idempotency
-    webhook_event_id TEXT,                  -- x-razorpay-event-id for dedup
-
-    -- Timestamps
-    paid_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Indexes
-CREATE INDEX idx_claims_project ON claims(project_id);
-CREATE INDEX idx_claims_status ON claims(status);
-CREATE INDEX idx_claims_razorpay_order ON claims(razorpay_order_id);
-CREATE UNIQUE INDEX idx_claims_webhook_event ON claims(webhook_event_id)
-    WHERE webhook_event_id IS NOT NULL;  -- Partial unique index for idempotency
-
--- Customizations table: post-payment client preferences
-CREATE TABLE customizations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    claim_id UUID NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
-
-    -- Logo & branding
-    logo_url TEXT,                          -- Supabase Storage URL
-    primary_color TEXT,                     -- hex color
-    secondary_color TEXT,                   -- hex color
-
-    -- Contact updates
-    phone TEXT,
-    email TEXT,
-    address TEXT,
-
-    -- Content changes
-    tagline TEXT,
-    about_text TEXT,
-
-    -- Photos (array of Supabase Storage URLs)
-    photo_urls JSONB DEFAULT '[]'::jsonb,
-
-    -- Additional notes from client
-    notes TEXT,
-
-    -- Booking system (Pro plan only)
-    wants_booking_system BOOLEAN DEFAULT false,
-    booking_preferences JSONB,              -- { type: 'calendar', provider: 'calendly', ... }
-
-    -- Strategy call (upsell)
-    wants_strategy_call BOOLEAN DEFAULT false,
-    preferred_call_time TEXT,               -- e.g. "weekday mornings"
-
-    -- Status
-    status TEXT NOT NULL DEFAULT 'pending'
-        CHECK (status IN ('pending', 'in_review', 'applied', 'delivered')),
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_customizations_claim ON customizations(claim_id);
-```
-
-### Relationship to Existing Projects Table
-
-```
-projects (existing, unchanged)
-    |
-    |-- 1:many --> claims
-    |                |
-    |                |-- 1:1 --> customizations
-    |
-    |-- 1:many --> project_revisions (existing)
-    |-- 1:many --> queue_jobs (existing)
-    |-- 1:many --> generation_costs (existing)
-```
-
-**Design decisions:**
-
-- **claims is a separate table, not columns on projects:** A project may have multiple claim attempts (expired claim, re-claim). The projects table represents the generated website; claims represents the business transaction. Separation of concerns.
-
-- **1:many projects->claims:** A project can have one active claim and past expired/cancelled claims. Query active claim with `WHERE status NOT IN ('expired', 'cancelled')`.
-
-- **1:1 claims->customizations:** Each paid claim gets exactly one customization record. Created when payment is confirmed, filled by the client form, updated by the operator.
-
-- **No modifications to existing tables:** The only touch point is adding a `claim_url` or `cta_injected` boolean column to `projects` if needed. Even this is optional -- the CTA injector can check if a project is in 'approved' or 'deployed' status and inject accordingly.
-
-### Optional: Projects Table Additions
-
-```sql
--- Small additions to projects table for claim flow support
-ALTER TABLE projects ADD COLUMN slug TEXT UNIQUE;           -- human-readable URL slug
-ALTER TABLE projects ADD COLUMN claim_expires_at TIMESTAMPTZ; -- when the claim window closes
-ALTER TABLE projects ADD COLUMN screenshot_url TEXT;         -- for claim page hero image
-```
-
-These are optional quality-of-life additions. The slug enables `/claim/acme-dental` instead of `/claim/<uuid>`. The screenshot_url stores a pre-rendered preview image for the claim landing page hero section.
-
----
-
-## 4. CTA Bar Injection: Where in the Pipeline
-
-### Injection Point: Static Export / HTML Boilerplate
-
-The CTA bar must appear in the generated website when it's shown to prospects. There are two injection points to consider:
-
-**Option A (Recommended): Inject at render time in the HTML boilerplate**
-
-Modify `constructHtmlBoilerplate()` in `lib/utils/html-boilerplate.ts` to accept a `ctaConfig` parameter. When present, append the CTA bar HTML after the `<div id="root"></div>` and before the script block. The CTA bar is pure HTML/CSS (not React) so it works regardless of whether the React component renders successfully.
-
-```typescript
-// lib/cta-injector.ts
-export interface CtaConfig {
-    claimUrl: string       // /claim/<slug>
-    businessName: string
-    expiresAt: string      // ISO date
-    plan?: 'standard' | 'pro'
-}
-
-export function injectCtaBar(html: string, config: CtaConfig): string {
-    const ctaHtml = buildCtaBarHtml(config)
-    // Insert before </body>
-    return html.replace('</body>', `${ctaHtml}\n</body>`)
-}
-
-function buildCtaBarHtml(config: CtaConfig): string {
-    // Self-contained sticky bar with countdown timer
-    // Pure HTML + inline CSS + vanilla JS countdown
-    // No React dependency -- works even if main component fails
-    return `
-    <div id="flogen-cta" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;...">
-        <div style="...">
-            <span>Claim this website for your business</span>
-            <span id="flogen-countdown"></span>
-            <a href="${config.claimUrl}" style="...">Claim Now</a>
-        </div>
-    </div>
-    <script>
-        (function() {
-            var expires = new Date("${config.expiresAt}");
-            // ... countdown timer logic ...
-        })();
-    </script>`
-}
-```
-
-**Why at render time, not at generation time:**
-
-1. **Generated code is React source code** (JSX). The CTA bar is HTML. Injecting HTML into JSX would break the component or require complex AST manipulation.
-
-2. **The boilerplate already converts React to HTML.** It's the natural boundary where we control the full HTML document.
-
-3. **CTA config is dynamic** (expiry date changes, claim URL depends on slug). Injecting at render time means the CTA always reflects current state.
-
-4. **Separation of concerns.** The generator produces the website component. The CTA is a platform overlay, not part of the website design.
-
-**Integration points:**
-
-| Where | What to Modify |
-|-------|----------------|
-| `lib/utils/html-boilerplate.ts` | Add optional `ctaConfig` parameter to `constructHtmlBoilerplate()` |
-| `lib/export/static-export.ts` | Pass `ctaConfig` through `buildStaticExport()` |
-| `app/api/export/[projectId]/route.ts` | Look up claim status, pass CTA config if project is unclaimed/active |
-| `components/workbench/live-preview.tsx` | When previewing in "client mode," include CTA in iframe |
-| Claim landing page | Render preview iframe WITH CTA bar enabled |
-
-**Option B (Alternative): Inject into generated_code at save time**
-
-Modify `updateProjectWithCode()` in `lib/ai/project-persistence.ts` to append CTA React component to the generated code. This is fragile because it modifies AI output and can break if the code structure varies. Not recommended.
-
----
-
-## 5. Supabase Storage: Bucket Structure and Signed URL Flow
-
-### Bucket Structure
-
-```
-Supabase Storage Buckets:
-
-  project-assets/              (EXISTING -- admin uploads)
-    {projectId}/
-      {timestamp}-{random}.{ext}
-
-  claim-uploads/               (NEW -- client file uploads)
-    {claimId}/
+app/
+  proxy.ts                            NEW — Supabase Auth session refresh + portal protection
+  layout.tsx                          Unchanged (root layout)
+  page.tsx                            Unchanged (redirect -> /dashboard)
+
+  (admin)/                            UNCHANGED — no auth protection (single operator)
+    layout.tsx                        Unchanged
+    dashboard/
+      ...existing pages...
+      clients/                        NEW — Purchased clients view
+        page.tsx                      Customer request queue + filters
+        [claimId]/                    NEW — Individual client detail
+          page.tsx                    Request history, site preview, actions
+    editor/
+      page.tsx                        MODIFIED — add redeploy button for fulfilled requests
+
+  (client)/                           MODIFIED — payment-first flow changes
+    layout.tsx                        Unchanged
+    preview/[slug]/                   Unchanged
+    claim/[slug]/
+      page.tsx                        MODIFIED — remove domain section, remove pre-payment forms
+      claim-page-client.tsx           MODIFIED — simplified payment-first Razorpay flow
+      claim-actions.ts                MODIFIED — remove domain/contact params from order creation
+      confirmed/
+        page.tsx                      MODIFIED — add account creation form + portal link
+        confirmation-client.tsx       MODIFIED — Supabase Auth signup after payment
+      customize/                      REMOVED or DEPRECATED — replaced by portal
+      upsell/                         REMOVED or DEPRECATED — replaced by portal agent support
+      components/
+        domain-section.tsx            REMOVED — domain management moves to portal
+        summary-cta.tsx               MODIFIED — simplified (no domain, no form fields)
+        pricing-section.tsx           MODIFIED — USD-only, add Premium card
+        ...other components...        MODIFIED — updated copy/layout
+
+  (portal)/                           NEW — authenticated client portal
+    layout.tsx                        NEW — auth guard layout, Inter font, portal nav
+    dashboard/
+      page.tsx                        NEW — site preview iframe, live URL, plan details
+    domain/
+      page.tsx                        NEW — domain management (subdomain, connect, buy)
+    requests/
+      page.tsx                        NEW — change request form + history
+    logo/
+      page.tsx                        NEW — logo upload with Gemini bg removal
+    booking/
+      page.tsx                        NEW — Cal.com booking setup (Pro only)
+    support/
+      page.tsx                        NEW — $49 agent support payment
+
+  api/
+    ...existing routes unchanged...
+    auth/
+      signup/route.ts                 NEW — server-side account creation (admin.createUser)
+      callback/route.ts              NEW — Supabase Auth callback handler
+    portal/
+      requests/route.ts              NEW — client_requests CRUD (GET/POST)
+      requests/[id]/route.ts         NEW — individual request (GET/PATCH)
+      domain/
+        check/route.ts               NEW — domain availability (Domainr/Fastly API)
+        verify/route.ts              NEW — DNS verification check
       logo/
-        {timestamp}-{random}.{ext}
-      photos/
-        {timestamp}-{random}.{ext}
+        remove-bg/route.ts           NEW — Gemini Vision background removal
+      support/
+        order/route.ts               NEW — $49 agent support Razorpay order
+    admin/
+      clients/route.ts               NEW — admin client list (GET with filters)
+      clients/[claimId]/
+        requests/route.ts            NEW — admin view of client requests
+        redeploy/route.ts            NEW — trigger redeploy (update code, bump version)
 ```
 
-**Why a separate bucket:** The `project-assets` bucket is for admin use (operator uploading assets during editing). The `claim-uploads` bucket is for untrusted client uploads. Separate buckets allow different RLS policies and size limits.
+### 2. proxy.ts — Auth Session Refresh and Portal Protection
 
-### Signed URL Flow
+**Location:** `/Users/sohail/Documents/Antigravity/WebGen/webgen/proxy.ts` (project root)
+
+**Why proxy.ts, not middleware.ts:** The project runs Next.js 16.1.6. In Next.js 16, `middleware.ts` is deprecated and renamed to `proxy.ts`. The exported function must be named `proxy` (not `middleware`). The proxy runs on Node.js runtime by default (stable since 15.5), which is required for `@supabase/ssr` compatibility.
+
+**Design principle:** proxy.ts handles ONLY session refresh and portal redirect. It does NOT enforce authorization — that happens in server components and API routes. This follows the Next.js 16 guidance that proxy is a network boundary, not a security layer.
 
 ```
-Client Form                    Next.js API                   Supabase Storage
-    |                              |                              |
-    |  POST /api/uploads/signed-url|                              |
-    |  { claimId, fileType, fileName }                            |
-    |----------------------------->|                              |
-    |                              |                              |
-    |                  Verify claim exists & is paid               |
-    |                  Generate signed upload URL                  |
-    |                              |                              |
-    |                              |  createSignedUploadUrl()     |
-    |                              |----------------------------->|
-    |                              |  { signedUrl, token, path }  |
-    |                              |<-----------------------------|
-    |                              |                              |
-    |  { signedUrl, token, path }  |                              |
-    |<-----------------------------|                              |
-    |                                                             |
-    |  PUT {signedUrl}                                            |
-    |  (direct upload with file body)                             |
-    |------------------------------------------------------------>|
-    |                                                             |
-    |  200 OK                                                     |
-    |<------------------------------------------------------------|
-    |                                                             |
-    |  POST /api/claims/{claimId}/customize                       |
-    |  { logoPath, photosPaths, ... }                             |
-    |----------------------------->|                              |
-    |                              |                              |
-    |                  Store paths in customizations table          |
-    |                  Generate public URLs for display             |
+proxy.ts responsibilities:
+  1. Refresh Supabase Auth session (call supabase.auth.getUser())
+  2. Forward refreshed cookies to server components and browser
+  3. Redirect unauthenticated users from /portal/* to /claim/[slug]/confirmed (login prompt)
+  4. Pass through all other routes untouched
+
+proxy.ts does NOT:
+  - Protect admin routes (single operator, no auth)
+  - Protect client routes (public access by design)
+  - Protect API routes (each validates auth independently)
+  - Make database queries beyond session refresh
 ```
 
-### Server-Side Implementation
+**Matcher config:**
 
 ```typescript
-// app/api/uploads/signed-url/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-
-export async function POST(req: NextRequest) {
-    const { claimId, fileType, fileName } = await req.json()
-    const supabase = createAdminClient()
-
-    // 1. Verify claim exists and is in paid/customizing status
-    const { data: claim } = await supabase
-        .from('claims')
-        .select('id, status')
-        .eq('id', claimId)
-        .in('status', ['paid', 'customizing'])
-        .single()
-
-    if (!claim) {
-        return NextResponse.json({ error: 'Invalid claim' }, { status: 403 })
-    }
-
-    // 2. Determine subfolder based on file type
-    const subfolder = fileType === 'logo' ? 'logo' : 'photos'
-    const ext = fileName.split('.').pop() || 'jpg'
-    const path = `${claimId}/${subfolder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-    // 3. Create signed upload URL (valid for 2 hours)
-    const { data, error } = await supabase.storage
-        .from('claim-uploads')
-        .createSignedUploadUrl(path)
-
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json({
-        signedUrl: data.signedUrl,
-        token: data.token,
-        path: path,
-    })
+export const config = {
+  matcher: [
+    // Only run on portal routes and auth callback
+    '/portal/:path*',
+    '/auth/callback',
+    // Also run on API portal routes for session cookies
+    '/api/portal/:path*',
+  ],
 }
 ```
 
-**File size limits:** Configure the `claim-uploads` bucket with a 5MB max file size (logos and photos don't need to be larger). Set allowed MIME types to `image/jpeg, image/png, image/webp, image/svg+xml`.
+This is deliberately narrow. Running proxy on all routes would add latency to public pages (claim, preview) and admin pages that don't need auth. The matcher targets only the routes that depend on Supabase Auth sessions.
+
+**Implementation pattern:**
+
+```
+lib/supabase/proxy.ts (NEW utility)
+  export async function updateSession(request: NextRequest): NextResponse
+    1. Create Supabase server client with request/response cookie bridge
+    2. Call supabase.auth.getUser() to refresh token
+    3. If on /portal/* and no user: redirect to login
+    4. Return response with updated cookies
+```
+
+**Confidence:** HIGH — this is the standard Supabase SSR pattern, adapted for Next.js 16 proxy convention. The `@supabase/ssr` package already in the project (v0.8.0) provides `createServerClient` with cookie handlers. The existing `lib/supabase/server.ts` already implements the cookie bridge pattern; it just needs to be adapted for proxy context where `cookies()` from `next/headers` isn't available.
+
+### 3. Route Group Coexistence: (admin)/ + (client)/ + (portal)/
+
+**How Next.js route groups work:** Route groups `(admin)/`, `(client)/`, `(portal)/` are organizational — they don't create URL segments. URLs are:
+
+```
+(admin)/dashboard/page.tsx     -> /dashboard
+(admin)/editor/page.tsx        -> /editor
+(client)/claim/[slug]/page.tsx -> /claim/[slug]
+(client)/preview/[slug]/       -> /preview/[slug]
+(portal)/dashboard/page.tsx    -> /portal/dashboard    <-- URL conflict? NO.
+```
+
+**Wait — (portal)/dashboard creates /dashboard conflict?** No. The route group name is stripped, but the directory structure inside it still matters. If we put `(portal)/dashboard/page.tsx`, it would map to `/dashboard` which CONFLICTS with `(admin)/dashboard/page.tsx`.
+
+**Solution: Use `/portal` as a real URL prefix inside the route group.**
+
+```
+(portal)/
+  layout.tsx           -> Layout for all /portal/* routes
+  portal/              -> This creates the /portal URL prefix
+    dashboard/page.tsx -> /portal/dashboard
+    domain/page.tsx    -> /portal/domain
+    requests/page.tsx  -> /portal/requests
+    ...
+```
+
+**Wait, that's awkward.** Better approach: Don't nest. Keep it flat.
+
+```
+app/(portal)/portal/
+  layout.tsx           -> /portal layout
+  page.tsx             -> /portal (redirects to /portal/dashboard or serves dashboard)
+  dashboard/page.tsx   -> /portal/dashboard
+  domain/page.tsx      -> /portal/domain
+  requests/page.tsx    -> /portal/requests
+  logo/page.tsx        -> /portal/logo
+  booking/page.tsx     -> /portal/booking
+  support/page.tsx     -> /portal/support
+```
+
+**Even simpler — just use the route group for layout isolation, put portal routes directly:**
+
+```
+app/(portal)/portal/layout.tsx      Auth-guarded layout, Inter font, portal sidebar/nav
+app/(portal)/portal/page.tsx        Portal home / dashboard
+app/(portal)/portal/domain/page.tsx Domain management
+app/(portal)/portal/requests/page.tsx Change requests
+...
+```
+
+This is the cleanest pattern:
+- `(portal)` provides layout isolation (different fonts, nav, auth wrapper)
+- `/portal` is the real URL prefix, no conflicts with `/dashboard`
+- Proxy matcher targets `/portal/:path*` cleanly
+- Each route group has its own layout.tsx with different concerns
+
+**Layout hierarchy:**
+
+```
+app/layout.tsx                        Root: <html>, <body>, global CSS
+  (admin)/layout.tsx                  Admin: Geist font, sidebar nav, Toaster
+  (client)/layout.tsx                 Client: Inter + Signifier fonts, bg-[#f5f0ea]
+  (portal)/portal/layout.tsx          Portal: Inter font, auth guard, portal nav
+```
+
+**Portal layout responsibilities:**
+
+```typescript
+// app/(portal)/portal/layout.tsx
+export default async function PortalLayout({ children }) {
+  // Server-side auth check (defense in depth, proxy handles redirect)
+  const supabase = await createClient()  // cookie-aware server client
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/claim')  // or a login page
+  }
+
+  // Fetch claim data for this user
+  const claim = await getClaimForUser(user.id)
+
+  return (
+    <div className="min-h-screen bg-white font-[family-name:var(--font-inter)]">
+      <PortalNav claim={claim} />
+      <main>{children}</main>
+    </div>
+  )
+}
+```
+
+### 4. Database Schema Changes
+
+#### New Table: client_requests
+
+Central queue for all client submissions — change requests, logo uploads, domain changes, booking setup.
+
+```sql
+CREATE TABLE client_requests (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  claim_id      UUID NOT NULL REFERENCES claims(id),
+  project_id    UUID NOT NULL REFERENCES projects(id),
+  auth_user_id  UUID NOT NULL,                           -- Supabase Auth user ID
+  type          TEXT NOT NULL CHECK (type IN (
+    'text_change',     -- Content/copy changes
+    'logo_upload',     -- Logo with bg removal
+    'domain_connect',  -- DNS verification request
+    'domain_subdomain',-- Free subdomain assignment
+    'booking_setup',   -- Cal.com booking configuration
+    'agent_support',   -- $49 paid support request
+    'general'          -- Catch-all for textarea requests
+  )),
+  status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
+    'pending',         -- Submitted, awaiting admin review
+    'in_progress',     -- Admin is working on it
+    'completed',       -- Admin finished, changes deployed
+    'rejected'         -- Admin rejected with reason
+  )),
+  content       JSONB NOT NULL DEFAULT '{}',             -- Type-specific payload
+  admin_notes   TEXT,                                     -- Admin response/notes
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for common queries
+CREATE INDEX idx_client_requests_claim_id ON client_requests(claim_id);
+CREATE INDEX idx_client_requests_project_id ON client_requests(project_id);
+CREATE INDEX idx_client_requests_status ON client_requests(status);
+CREATE INDEX idx_client_requests_auth_user ON client_requests(auth_user_id);
+CREATE INDEX idx_client_requests_created ON client_requests(created_at DESC);
+```
+
+**Relationship to existing tables:**
+
+```
+projects (v1.0)
+  |-- claims (v2.0)           1:many  (one project can have multiple claim attempts)
+  |     |-- customizations    1:1     (legacy v2.0, will be deprecated)
+  |     |-- client_requests   1:many  (NEW v3.0, replaces customizations)
+  |
+  |-- project_revisions       1:many  (code versions, used for redeploy)
+```
+
+**content JSONB examples by type:**
+
+```jsonc
+// type: 'text_change'
+{ "description": "Change the hero heading to 'Welcome to Our Clinic'" }
+
+// type: 'logo_upload'
+{ "original_url": "...", "processed_url": "...", "bg_removed": true }
+
+// type: 'domain_connect'
+{ "domain": "mybusiness.com", "dns_records": [...], "verified": false }
+
+// type: 'domain_subdomain'
+{ "subdomain": "mybusiness", "full_url": "mybusiness.flogen.site" }
+
+// type: 'booking_setup'
+{ "cal_embed_slug": "mybusiness/consultation", "services": [...] }
+
+// type: 'agent_support'
+{ "description": "Help me set up my domain", "razorpay_payment_id": "..." }
+
+// type: 'general'
+{ "description": "Free-form textarea content from the portal" }
+```
+
+#### Modified Table: claims
+
+Add `auth_user_id` column to link Supabase Auth users to claims.
+
+```sql
+ALTER TABLE claims ADD COLUMN auth_user_id UUID;
+CREATE INDEX idx_claims_auth_user ON claims(auth_user_id);
+```
+
+This column is nullable because:
+- Existing v2.0 claims have no auth users
+- The auth user is created AFTER payment, so the claim exists before the user
+- The webhook sets client_email/client_phone, then confirmation page creates the auth user and backfills auth_user_id
+
+#### Modified Table: projects
+
+Add `cal_embed_slug` for Pro plan booking setup.
+
+```sql
+ALTER TABLE projects ADD COLUMN cal_embed_slug TEXT;
+```
+
+#### TypeScript Types Update
+
+```typescript
+// Add to types/database.ts
+client_requests: {
+  Row: {
+    id: string
+    claim_id: string
+    project_id: string
+    auth_user_id: string
+    type: 'text_change' | 'logo_upload' | 'domain_connect' | 'domain_subdomain' | 'booking_setup' | 'agent_support' | 'general'
+    status: 'pending' | 'in_progress' | 'completed' | 'rejected'
+    content: Json
+    admin_notes: string | null
+    created_at: string
+    updated_at: string
+  }
+  // Insert/Update types follow same pattern
+  Relationships: [
+    { foreignKeyName: "client_requests_claim_id_fkey", columns: ["claim_id"], referencedRelation: "claims", referencedColumns: ["id"] },
+    { foreignKeyName: "client_requests_project_id_fkey", columns: ["project_id"], referencedRelation: "projects", referencedColumns: ["id"] },
+  ]
+}
+```
+
+### 5. Payment-First Flow: Changes to Existing Claim Flow
+
+#### Current Flow (v2.0)
+
+```
+Claim Page -> Select Plan -> Select Domain -> Fill Contact Info -> Summary CTA -> Razorpay Checkout
+  -> Webhook confirms payment -> Confirmed Page (polling) -> Customize Page -> Upsell Page
+```
+
+#### New Flow (v3.0)
+
+```
+Claim Page -> Select Plan (USD only, + Premium card) -> Razorpay Checkout (collects contact info)
+  -> Webhook confirms payment (extracts email/phone from Razorpay) -> Confirmed Page
+  -> Account Creation Form (password only, email pre-filled from Razorpay)
+  -> Redirect to Portal Dashboard
+```
+
+**What changes in claim-page-client.tsx:**
+
+1. Remove `domainOption` and `domainValue` state
+2. Remove `<DomainSection>` component render
+3. Remove domain params from `createRazorpayOrder()` call
+4. Hard-code `currency: 'USD'` (already partially done)
+5. Add Premium plan card to `<PricingSection>` (display only, "Contact Us" CTA)
+6. Simplify `<SummaryCTA>` — no domain summary, no form fields
+
+**What changes in claim-actions.ts:**
+
+1. `createRazorpayOrder()` — remove `domainOption` and `domainValue` from schema and params
+2. New claim insert: don't set `domain_option` or `domain_value`
+3. Remove or deprecate `submitCustomization()` — customization moves to portal
+4. Add new action: `createPortalAccount()` — creates Supabase Auth user + links to claim
+
+**What changes in the Razorpay webhook:**
+
+1. Extract `payment.email` and `payment.contact` (already done in v2.0)
+2. No changes needed — webhook already stores contact info on claim
+3. The confirmation page reads this contact info to pre-fill account creation
+
+**What changes in confirmed/page.tsx:**
+
+1. After payment confirmation, show account creation form
+2. Email pre-filled from claim.client_email (from Razorpay webhook)
+3. User sets a password
+4. Server action calls `supabase.auth.admin.createUser()` with `email_confirm: true` (auto-confirms)
+5. Then signs the user in with `supabase.auth.signInWithPassword()`
+6. Redirect to `/portal/dashboard`
+
+#### Account Creation Flow (Server Action)
+
+```typescript
+// New server action in claim-actions.ts or a dedicated auth-actions.ts
+export async function createPortalAccount(input: {
+  claimId: string
+  password: string
+}): Promise<{ success: true } | { success: false; error: string }> {
+  const adminSupabase = createAdminClient()
+
+  // 1. Get claim with contact info from Razorpay
+  const claim = await adminSupabase.from('claims').select('*').eq('id', input.claimId).single()
+
+  // 2. Create user with admin API (no email confirmation needed)
+  const { data: user, error } = await adminSupabase.auth.admin.createUser({
+    email: claim.data.client_email,
+    password: input.password,
+    email_confirm: true,  // Auto-confirm since they just paid
+    user_metadata: {
+      claim_id: claim.data.id,
+      project_id: claim.data.project_id,
+      plan: claim.data.plan,
+    },
+  })
+
+  // 3. Backfill auth_user_id on claim
+  await adminSupabase.from('claims').update({ auth_user_id: user.user.id }).eq('id', input.claimId)
+
+  // 4. Sign in the user (client-side follows up with supabase.auth.signInWithPassword)
+  return { success: true }
+}
+```
+
+### 6. Admin Fulfillment: Customer Requests Tab
+
+#### Sidebar Nav Addition
+
+```typescript
+// components/dashboard/sidebar-nav.tsx — add to "Manage" section
+{
+  label: "Manage",
+  items: [
+    { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+    { title: "Funnel", href: "/dashboard/funnel", icon: TrendingDown },
+    { title: "Clients", href: "/dashboard/clients", icon: Users },  // NEW
+    { title: "Config", href: "/dashboard/config", icon: Settings },
+  ],
+}
+```
+
+#### Clients Dashboard Page
+
+```
+/dashboard/clients — Admin view of all purchased clients
+
+Layout:
+  - Filter bar: status (all/pending/in_progress/completed), plan (standard/pro), date range
+  - Table/cards: client name, email, plan, request count, latest request status, actions
+  - Click row -> /dashboard/clients/[claimId]
+
+Data source:
+  - Join claims (status IN paid/customizing/completed) with client_requests
+  - Aggregate pending request count per claim
+  - Sort by latest request created_at DESC (newest first)
+```
+
+#### Client Detail Page
+
+```
+/dashboard/clients/[claimId] — Individual client detail
+
+Layout:
+  - Header: business name, plan badge, client email/phone, paid date
+  - Site preview: iframe of current generated site
+  - Request queue: list of client_requests with status badges
+  - Each request: type badge, content preview, status, admin action buttons
+  - Admin actions per request:
+    - "Start Working" (pending -> in_progress)
+    - "Mark Complete" (in_progress -> completed) + admin_notes
+    - "Reject" (-> rejected) + admin_notes
+  - Redeploy button: update project generated_code, increment version, save revision
+```
+
+#### Integration with Editor
+
+The editor page already loads projects by ID. The redeploy flow:
+
+```
+1. Admin views client request in /dashboard/clients/[claimId]
+2. Clicks "Open in Editor" -> navigates to /editor?project=[projectId]
+3. Makes changes in Monaco editor (existing functionality)
+4. Clicks "Redeploy" button (NEW):
+   a. Saves updated generated_code to projects table
+   b. Increments project version
+   c. Creates project_revision record
+   d. Marks associated client_request as completed
+   e. Toast: "Changes deployed"
+```
+
+This is a new server action, not a new page. The editor already handles code editing and saving — redeploy just formalizes the save + version bump + request status update as a single operation.
+
+### 7. New API Routes
+
+#### Portal API Routes (authenticated)
+
+All portal API routes validate auth:
+
+```typescript
+// Pattern for all /api/portal/* routes
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()  // cookie-aware server client
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Query using admin client but scoped to user's claim
+  const adminSupabase = createAdminClient()
+  const { data } = await adminSupabase
+    .from('client_requests')
+    .select('*')
+    .eq('auth_user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  return Response.json({ requests: data })
+}
+```
+
+**Why admin client for data queries:** The existing codebase has no RLS policies. Adding RLS to 12+ existing tables would be a high-risk migration. Instead: validate auth via server client, then query with admin client scoped to the user's data. This is the pragmatic approach — auth for identity, admin client for data access with application-level filtering.
+
+#### Admin API Routes (no auth, existing pattern)
+
+```typescript
+// Pattern for all /api/admin/* routes
+// No auth — single operator, internal use only (matches existing pattern)
+export async function GET() {
+  const supabase = createAdminClient()
+  // ... admin queries
+}
+```
+
+#### Auth API Routes
+
+```
+POST /api/auth/signup     Server-side user creation (admin.createUser)
+GET  /api/auth/callback   Supabase Auth email confirmation callback (if needed)
+```
+
+### 8. Supabase Auth Configuration
+
+#### Auth Settings (Supabase Dashboard)
+
+```
+Email confirmations: DISABLED (users are auto-confirmed via admin.createUser with email_confirm: true)
+Password minimum: 8 characters
+Password requirements: At least one uppercase, one lowercase, one number
+Magic links: DISABLED (password-only for simplicity)
+OAuth providers: NONE (password-only for v3.0)
+```
+
+#### RLS Strategy
+
+**DO NOT enable RLS on existing tables.** This would break all existing admin operations that use service role key (which bypasses RLS) — wait, service role key actually bypasses RLS. But it would break the anon key client (`lib/supabase/client.ts`) used for real-time subscriptions.
+
+**RLS on new table only:**
+
+```sql
+-- Enable RLS on client_requests only
+ALTER TABLE client_requests ENABLE ROW LEVEL SECURITY;
+
+-- Clients can read their own requests
+CREATE POLICY "clients_read_own" ON client_requests
+  FOR SELECT USING (auth.uid() = auth_user_id);
+
+-- Clients can insert their own requests
+CREATE POLICY "clients_insert_own" ON client_requests
+  FOR INSERT WITH CHECK (auth.uid() = auth_user_id);
+
+-- Service role (admin) can do everything (automatically bypasses RLS)
+```
+
+However, since portal API routes use `createAdminClient()` (service role), RLS won't actually filter for them. RLS here is defense-in-depth for any future direct-client-access patterns. The application-level `auth_user_id` check in API routes is the primary access control.
+
+### 9. Data Flow Diagrams
+
+#### Payment-First Flow
+
+```
+CLIENT                          SERVER                              SUPABASE/RAZORPAY
+------                          ------                              -----------------
+Claim Page
+  |
+  Select Plan (Standard/Pro)
+  |
+  Click "Get Started"
+  |
+  [createRazorpayOrder()]  -->  Create claim (no domain/contact)
+                                Create Razorpay order           -->  Razorpay Order
+                           <--  Return orderId, claimId
+  |
+  Open Razorpay Checkout
+  (Razorpay collects email,
+   phone, payment details)
+  |
+  Payment Success
+  |
+  Redirect to /confirmed
+  |                              [Webhook POST]                <--  payment.captured
+                                 Update claim: status=paid,
+                                 client_email, client_phone
+  |
+  Poll /api/claims/[id]/status
+  |
+  Show Account Creation Form
+  (email pre-filled)
+  |
+  Set Password
+  |
+  [createPortalAccount()]  -->  admin.createUser(email, password,
+                                  email_confirm: true)          -->  Auth User Created
+                                Update claim: auth_user_id
+                                Sign in user                    -->  Session Cookie
+  |
+  Redirect to /portal/dashboard
+```
+
+#### Client Request Flow
+
+```
+PORTAL CLIENT                   SERVER                              ADMIN
+-------------                   ------                              -----
+Portal Dashboard
+  |
+  Submit Change Request
+  (textarea: "Change hero text")
+  |
+  [POST /api/portal/requests]
+  --> Validate auth (getUser)
+  --> Insert client_request
+      (type=general, status=pending)
+                                                                    /dashboard/clients
+                                                                    |
+                                                                    See new pending request
+                                                                    |
+                                                                    Click "Start Working"
+                                                                    |
+                                                                    [PATCH] status=in_progress
+                                                                    |
+                                                                    Open in Editor
+                                                                    Make code changes
+                                                                    |
+                                                                    Click "Redeploy"
+                                                                    |
+                                                                    Save code, bump version,
+                                                                    create revision,
+                                                                    mark request completed
+                                                                    |
+Portal Dashboard                                                    Done
+  |
+  See request: "completed"
+  Site preview: updated
+```
+
+### 10. New Component Map
+
+```
+PORTAL COMPONENTS (new)
+  components/portal/
+    portal-nav.tsx              Side nav or top nav for portal
+    site-preview.tsx            Iframe preview of generated site
+    domain-manager.tsx          Domain connection/verification UI
+    request-form.tsx            Single textarea change request
+    request-list.tsx            History of submitted requests
+    logo-uploader.tsx           Upload + Gemini bg removal preview
+    booking-setup.tsx           Cal.com embed slug input
+    support-payment.tsx         $49 agent support Razorpay flow
+
+ADMIN ADDITIONS (new)
+  components/dashboard/
+    client-table.tsx            Purchased clients list
+    client-detail.tsx           Individual client view
+    request-queue.tsx           Admin request queue with actions
+    redeploy-button.tsx         Save + version bump + mark complete
+```
+
+### 11. Environment Variables (New)
+
+```env
+# Supabase Auth (already have NEXT_PUBLIC_SUPABASE_URL and keys)
+# No new env vars needed for auth itself
+
+# Razorpay Test Mode
+RAZORPAY_TEST_KEY_ID=rzp_test_...
+RAZORPAY_TEST_KEY_SECRET=...
+NEXT_PUBLIC_RAZORPAY_TEST_KEY_ID=rzp_test_...
+RAZORPAY_MODE=test                          # 'test' or 'live'
+
+# Domainr / Fastly API
+DOMAINR_API_KEY=...                          # For domain availability checks
+
+# Gemini Vision (reuse existing Google AI key)
+# Already have: GOOGLE_GENERATIVE_AI_API_KEY (used by @ai-sdk/google)
+```
 
 ---
 
-## 6. Public vs Admin Page Separation: Auth/Access Control
+## Build Order (Dependency-Aware)
 
-### Current State: No Auth
+The ordering is critical because later features depend on earlier infrastructure.
 
-The existing app has no authentication at all. `createAdminClient()` uses the service role key for all database access. The admin routes (`/dashboard`, `/editor`) are implicitly protected by being an internal tool deployed to a known URL.
-
-### Recommended Pattern for Claim Flow: No Auth, Security by Obscurity + Validation
-
-**Do NOT add a full auth system for v2.0.** The claim flow does not need user login. Here is why and what to do instead:
-
-| Page | Access Model | Security Mechanism |
-|------|-------------|-------------------|
-| `/dashboard/*` | Admin only | Deploy URL is internal (not public). No auth needed per PROJECT.md ("single operator"). |
-| `/editor/*` | Admin only | Same as dashboard. |
-| `/claim/[slug]` | Public (anyone with the link) | UUID slug is unguessable (122 bits of entropy). Link shared via WhatsApp/email by operator. |
-| `/claim/[slug]/customize` | Post-payment only | Server checks claim status is 'paid' before rendering form. Redirects to claim landing if unpaid. |
-| `/claim/[slug]/confirmed` | Post-payment only | Same check as customize. |
-| `/api/claims/*` | Public API | Validates claim exists, checks status transitions, rate-limits by IP (optional). |
-| `/api/webhooks/razorpay` | Razorpay only | HMAC-SHA256 signature verification. Rejects unsigned requests. |
-| `/api/uploads/signed-url` | Post-payment clients only | Validates claim ID is in paid/customizing status before generating URL. |
-
-### Server-Side Access Control Pattern
-
-Each claim page should validate state before rendering:
-
-```typescript
-// app/(client)/claim/[slug]/customize/page.tsx
-import { createAdminClient } from '@/lib/supabase/admin'
-import { redirect } from 'next/navigation'
-import { notFound } from 'next/navigation'
-
-export default async function CustomizePage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params
-    const supabase = createAdminClient()
-
-    // 1. Find project
-    const { data: project } = await supabase
-        .from('projects')
-        .select('id, business_data, generated_code')
-        .eq('id', slug)
-        .single()
-
-    if (!project) notFound()
-
-    // 2. Find active paid claim
-    const { data: claim } = await supabase
-        .from('claims')
-        .select('*, customizations(*)')
-        .eq('project_id', project.id)
-        .in('status', ['paid', 'customizing', 'completed'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-    // 3. Gate: unpaid -> redirect to claim landing
-    if (!claim) redirect(`/claim/${slug}`)
-
-    // 4. Gate: already completed -> redirect to confirmation
-    if (claim.status === 'completed') redirect(`/claim/${slug}/confirmed`)
-
-    // 5. Render customization form
-    return <CustomizeForm project={project} claim={claim} />
-}
-```
-
-### Why Not Middleware
-
-Adding auth middleware would require retrofitting the entire admin side (currently zero auth) or maintaining a split middleware config. The server-side validation pattern above is simpler, keeps the admin side untouched, and is sufficient for the claim flow's security model.
-
----
-
-## 7. Razorpay Webhook Handling
-
-### Signature Verification
-
-Razorpay sends webhooks with an `x-razorpay-signature` header containing an HMAC-SHA256 hash of the raw request body, using the webhook secret as the key.
-
-**Critical:** The webhook handler MUST read the raw request body (not parsed JSON) for signature verification. In Next.js App Router, `req.text()` gives the raw body.
-
-```typescript
-// app/api/webhooks/razorpay/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { createAdminClient } from '@/lib/supabase/admin'
-
-const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET!
-
-export async function POST(req: NextRequest) {
-    // 1. Read RAW body (before any JSON parsing)
-    const rawBody = await req.text()
-    const signature = req.headers.get('x-razorpay-signature')
-
-    if (!signature) {
-        return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
-    }
-
-    // 2. Verify HMAC-SHA256 signature
-    const expectedSignature = crypto
-        .createHmac('sha256', WEBHOOK_SECRET)
-        .update(rawBody)
-        .digest('hex')
-
-    if (signature !== expectedSignature) {
-        console.error('[Razorpay Webhook] Signature mismatch')
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    }
-
-    // 3. Parse body AFTER verification
-    const event = JSON.parse(rawBody)
-
-    // 4. Idempotency: check x-razorpay-event-id
-    const eventId = req.headers.get('x-razorpay-event-id')
-    if (eventId) {
-        const supabase = createAdminClient()
-        const { data: existing } = await supabase
-            .from('claims')
-            .select('id')
-            .eq('webhook_event_id', eventId)
-            .single()
-
-        if (existing) {
-            // Already processed this event -- return 200 to acknowledge
-            return NextResponse.json({ status: 'already_processed' })
-        }
-    }
-
-    // 5. Handle event type
-    switch (event.event) {
-        case 'payment.captured':
-            await handlePaymentCaptured(event.payload.payment.entity, eventId)
-            break
-        case 'payment.failed':
-            await handlePaymentFailed(event.payload.payment.entity, eventId)
-            break
-        default:
-            console.log(`[Razorpay Webhook] Unhandled event: ${event.event}`)
-    }
-
-    // 6. Return 200 immediately (Razorpay retries on non-2xx)
-    return NextResponse.json({ status: 'ok' })
-}
-```
-
-### Idempotency Strategy
-
-Razorpay may send the same webhook multiple times. Use a three-layer idempotency defense:
-
-1. **Event ID dedup:** Store `x-razorpay-event-id` in `claims.webhook_event_id`. The partial unique index prevents processing the same event twice.
-
-2. **Status guard:** The `handlePaymentCaptured` function checks claim status before updating. If the claim is already 'paid', it skips the update.
-
-3. **Razorpay order ID lookup:** Use `razorpay_order_id` to find the correct claim. One order ID maps to exactly one claim.
-
-```typescript
-async function handlePaymentCaptured(payment: any, eventId: string | null) {
-    const supabase = createAdminClient()
-
-    // Find claim by Razorpay order ID
-    const { data: claim } = await supabase
-        .from('claims')
-        .select('id, status')
-        .eq('razorpay_order_id', payment.order_id)
-        .single()
-
-    if (!claim) {
-        console.error('[Razorpay] No claim found for order:', payment.order_id)
-        return
-    }
-
-    // Status guard: only transition from order_created -> paid
-    if (claim.status !== 'order_created') {
-        console.log(`[Razorpay] Claim ${claim.id} already in ${claim.status}, skipping`)
-        return
-    }
-
-    // Update claim to paid
-    await supabase.from('claims').update({
-        status: 'paid',
-        razorpay_payment_id: payment.id,
-        webhook_event_id: eventId,
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-    }).eq('id', claim.id)
-
-    // Create empty customization record for the client to fill
-    await supabase.from('customizations').insert({
-        claim_id: claim.id,
-        status: 'pending',
-    })
-}
-```
-
-### Vercel Function Configuration
-
-The Razorpay webhook route needs specific Vercel config because webhook processing can be slow:
-
-```typescript
-// At the top of the route file
-export const maxDuration = 30  // 30 seconds (webhook processing)
-export const dynamic = 'force-dynamic'  // No caching
-```
-
----
-
-## 8. Suggested Build Order (Dependencies Considered)
-
-The claim flow has a strict dependency chain. Build in this order:
-
-### Phase 1: Foundation -- Database + Core Logic
-
-**What:** Schema migration, claim business logic, Razorpay SDK setup.
-
-| Step | What | Why First | Depends On |
-|------|------|-----------|------------|
-| 1a | Create `claims` and `customizations` tables | Everything reads/writes claims | Nothing |
-| 1b | `lib/razorpay.ts` -- SDK wrapper (create order, verify signature) | Payment flow needs this | Razorpay API keys in env |
-| 1c | `lib/claims.ts` -- CRUD operations for claims | All routes use this | 1a |
-| 1d | `lib/geo.ts` -- geo-detection for INR/USD pricing | Pricing cards need this | Nothing |
-
-### Phase 2: Payment Flow -- The Critical Path
-
-**What:** Order creation, checkout, webhook handling.
-
-| Step | What | Why Second | Depends On |
-|------|------|-----------|------------|
-| 2a | `POST /api/claims/create-order` -- creates Razorpay order | Starts payment flow | 1b, 1c |
-| 2b | `POST /api/webhooks/razorpay` -- webhook handler | Completes payment flow | 1b, 1c |
-| 2c | Client-side Razorpay checkout integration (Script tag + open modal) | Connects creation to webhook | 2a |
-
-### Phase 3: Claim Landing Page -- The Public Face
-
-**What:** The SSR claim page that prospects see.
-
-| Step | What | Why Third | Depends On |
-|------|------|-----------|------------|
-| 3a | Route group restructure: `(admin)/` and `(client)/` | Layout separation | Nothing (can be done in phase 1) |
-| 3b | `(client)/layout.tsx` -- mobile-first minimal layout | Claim pages need their own layout | 3a |
-| 3c | `/claim/[slug]/page.tsx` -- claim landing page | The main prospect-facing page | 2a, 2c, 1d |
-| 3d | Components: `pricing-card.tsx`, `domain-picker.tsx`, preview iframe | UI for the claim page | 3c |
-
-### Phase 4: CTA Bar Injection
-
-**What:** The sticky bar on generated websites that links to the claim page.
-
-| Step | What | Why Fourth | Depends On |
-|------|------|-----------|------------|
-| 4a | `lib/cta-injector.ts` -- HTML injection utility | Produces the CTA | 3c (needs claim URL to link to) |
-| 4b | Modify `constructHtmlBoilerplate()` to accept CTA config | Integration point | 4a |
-| 4c | Modify static export to include CTA when project has active claim window | Export integration | 4a, 4b |
-
-### Phase 5: Post-Payment -- Customization + Confirmation
-
-**What:** The post-payment experience.
-
-| Step | What | Why Fifth | Depends On |
-|------|------|-----------|------------|
-| 5a | `POST /api/uploads/signed-url` -- signed URL generation | File uploads need this | 1a (claim-uploads bucket) |
-| 5b | `/claim/[slug]/customize/page.tsx` -- customization form | Post-payment form | 2b (claim must be paid), 5a |
-| 5c | Components: `customize-form.tsx`, `upload-zone.tsx`, `color-picker.tsx` | Form UI | 5b |
-| 5d | `POST /api/claims/[claimId]/customize` -- save customization | Persists form data | 5b |
-| 5e | `/claim/[slug]/confirmed/page.tsx` -- confirmation page | End of flow | 5d |
-
-### Phase 6: Analytics + Polish
-
-**What:** Conversion tracking, expired claim handling, admin visibility.
-
-| Step | What | Why Last | Depends On |
-|------|------|---------|------------|
-| 6a | `lib/tracking.ts` + `/api/tracking/event` -- funnel events | Observability | All claim pages (3-5) |
-| 6b | Expired claim handling (cron or check-on-access) | Grace period UX | 1c |
-| 6c | Admin dashboard: claim status column on project cards | Operator visibility | 1c, existing dashboard |
-| 6d | Strategy call upsell on confirmation page | Revenue optimization | 5e |
-
-### Dependency Graph (Visual)
+### Phase 1: Auth Infrastructure + proxy.ts
+**Must come first.** Everything else depends on auth.
 
 ```
-Phase 1: Schema + Core Logic
-    |
-    v
-Phase 2: Payment Flow (Razorpay)    Phase 3a: Route Groups (independent)
-    |                                     |
-    v                                     v
-Phase 3: Claim Landing Page  <------  Phase 3b: Client Layout
-    |
-    v
-Phase 4: CTA Injection
-    |
-    v
-Phase 5: Customization + Confirmation
-    |
-    v
-Phase 6: Analytics + Polish
+1. Create proxy.ts with Supabase session refresh
+2. Create lib/supabase/proxy.ts (updateSession utility)
+3. Run db:types to add client_requests table type
+4. SQL migration: client_requests table, claims.auth_user_id column
+5. Update types/database.ts
 ```
 
----
+### Phase 2: Updated Claim Flow (Payment-First)
+**Depends on Phase 1** for account creation after payment.
 
-## Patterns to Follow
-
-### Pattern 1: Server Component Data Fetching for Claim Pages
-
-Claim pages should be Server Components (not client-side) for fast mobile loads and SEO:
-
-```typescript
-// Server component -- data fetched at request time, HTML sent to client
-export default async function ClaimPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params
-    const supabase = createAdminClient()
-
-    const { data: project } = await supabase
-        .from('projects')
-        .select('id, business_data, generated_code, screenshot_url')
-        .eq('id', slug)
-        .single()
-
-    if (!project) notFound()
-
-    // Check for active claim
-    const { data: claim } = await supabase
-        .from('claims')
-        .select('id, status, expires_at, plan')
-        .eq('project_id', project.id)
-        .not('status', 'in', '("expired","cancelled")')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-    return <ClaimLanding project={project} existingClaim={claim} />
-}
+```
+1. Simplify claim-page-client.tsx (remove domain, simplify CTA)
+2. Update claim-actions.ts (remove domain from order creation)
+3. Update pricing-section.tsx (USD-only, Premium card)
+4. Update confirmed/page.tsx (account creation form)
+5. Create auth server action (createPortalAccount)
+6. Razorpay test mode support (key switching)
 ```
 
-### Pattern 2: Client Component Islands for Interactive Elements
+### Phase 3: Portal Shell
+**Depends on Phase 1** for auth, **Phase 2** for user accounts.
 
-The checkout button and countdown timer are interactive. Use client components within the server page:
-
-```typescript
-// components/claim/checkout-button.tsx
-'use client'
-
-export function CheckoutButton({ orderId, amount, currency, ...props }) {
-    const handlePayment = async () => {
-        // 1. Create order via API
-        const res = await fetch('/api/claims/create-order', {
-            method: 'POST',
-            body: JSON.stringify({ projectId: props.projectId, plan: props.plan }),
-        })
-        const { orderId } = await res.json()
-
-        // 2. Open Razorpay checkout
-        const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-            amount,
-            currency,
-            order_id: orderId,
-            handler: (response) => {
-                // Redirect to customize page on success
-                window.location.href = `/claim/${props.slug}/customize`
-            },
-        }
-        const razorpay = new window.Razorpay(options)
-        razorpay.open()
-    }
-
-    return <button onClick={handlePayment}>Claim Now</button>
-}
+```
+1. Create (portal)/portal/layout.tsx with auth guard
+2. Create portal dashboard page (site preview, plan info)
+3. Create portal nav component
+4. Wire up /portal routes in proxy.ts matcher
 ```
 
-### Pattern 3: Consistent Error Handling in Claim Routes
+### Phase 4: Portal Features
+**Depends on Phase 3** for portal shell.
 
-All claim API routes should follow the same error pattern for client consumption:
+```
+1. Change request form + /api/portal/requests
+2. Domain management (subdomain assignment, DNS verification, Domainr)
+3. Logo upload with Gemini Vision bg removal
+4. Booking setup (Cal.com embed slug, Pro only)
+5. Agent support payment ($49 Razorpay order)
+```
 
-```typescript
-// Standard claim API response format
-type ClaimApiResponse<T = unknown> =
-    | { success: true; data: T }
-    | { success: false; error: string; code?: string }
+### Phase 5: Admin Fulfillment
+**Depends on Phase 4** for client_requests data.
+
+```
+1. Sidebar nav: add "Clients" link
+2. /dashboard/clients page (client list with filters)
+3. /dashboard/clients/[claimId] detail page
+4. Request queue UI with status transitions
+5. Redeploy button (editor integration)
 ```
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Adding Auth Just for Claims
+### Anti-Pattern 1: RLS on Existing Tables
+**What:** Enabling Row Level Security on the 12 existing tables.
+**Why bad:** All existing code uses `createAdminClient()` which bypasses RLS. But `lib/supabase/client.ts` (browser client with anon key) is used for real-time subscriptions and would suddenly lose access. Also, writing correct RLS policies for 12 tables with complex joins is error-prone.
+**Instead:** RLS on `client_requests` only. Application-level auth checks in API routes. Service role key for all admin operations.
 
-**What:** Introducing NextAuth/Clerk for the claim flow.
-**Why bad:** Massive scope increase. The claim flow is a single-visit funnel (prospect clicks link, pays, fills form, done). There is no "account" concept. Adding auth would require login UI, session management, password reset, and retrofitting the admin side.
-**Instead:** Use UUID-based access (unguessable URLs) + claim status checks + Razorpay webhook signatures.
+### Anti-Pattern 2: Auth in proxy.ts for Admin Routes
+**What:** Adding auth checks for `/dashboard/*` routes in proxy.ts.
+**Why bad:** Single operator, no admin auth exists, adding it blocks the operator. Also, proxy.ts security warning from CVE-2025-29927 shows middleware/proxy-only auth can be bypassed.
+**Instead:** Admin routes stay open. If admin auth is ever needed (multi-user), add it as a separate effort with server-component-level checks.
 
-### Anti-Pattern 2: Modifying Generated React Code for CTA
+### Anti-Pattern 3: Shared Layout Between (client) and (portal)
+**What:** Putting portal routes under (client)/ route group to share the Inter font layout.
+**Why bad:** Portal routes need auth guard in layout, client routes are public. Mixing them creates conditional layout logic and confusing auth boundaries.
+**Instead:** Separate (portal)/ route group with its own layout. Duplicate the Inter font import (trivial cost).
 
-**What:** Inserting a React component into the AI-generated code string.
-**Why bad:** The generated code structure varies (different component names, different export patterns). AST manipulation on AI-generated code is fragile. Any injection error breaks the entire website render.
-**Instead:** Inject the CTA as raw HTML at the document level (outside the React root), using the HTML boilerplate as the injection point.
+### Anti-Pattern 4: Customization Page Migration Instead of Replacement
+**What:** Trying to migrate the existing `/claim/[slug]/customize` flow into the portal.
+**Why bad:** The customize flow is tightly coupled to claim-actions.ts server actions and the pre-portal flow. Porting it introduces legacy baggage.
+**Instead:** Build the portal change request form from scratch. It's simpler (single textarea + file uploads) and uses the new client_requests table. The old customize flow can remain for any in-flight v2.0 claims.
 
-### Anti-Pattern 3: Proxying File Uploads Through Next.js API
-
-**What:** Having the client upload to `/api/uploads`, which then streams to Supabase Storage.
-**Why bad:** Doubles bandwidth, hits Vercel function body size limits (4.5MB on free plan), and keeps the function running for the entire upload duration.
-**Instead:** Generate signed upload URLs server-side, let the client upload directly to Supabase Storage.
-
-### Anti-Pattern 4: Polling for Payment Status
-
-**What:** After opening Razorpay checkout, polling `/api/claims/status` every second to check if payment succeeded.
-**Why bad:** Wastes function invocations, adds latency, and is unreliable if the webhook hasn't arrived yet.
-**Instead:** Use the Razorpay checkout `handler` callback (fires on client-side success) for immediate redirect. The webhook updates the database asynchronously. The customize page checks claim status on load -- if the webhook hasn't arrived yet, show a "verifying payment" state and use Supabase realtime subscription or a short retry.
-
-### Anti-Pattern 5: Storing Prices in Code
-
-**What:** Hardcoding `4999` and `9999` in component files.
-**Why bad:** Prices will change. Having them in code requires a deployment to update.
-**Instead:** Store pricing in the `configurations` table (existing) as a JSON config. Read at request time. Cache aggressively.
-
----
-
-## Scalability Considerations
-
-| Concern | At 10 claims/month | At 100 claims/month | At 1000 claims/month |
-|---------|--------------------|--------------------|---------------------|
-| Database queries | Direct queries, no caching needed | Add index on `claims.project_id` (already specified) | Consider read replicas for claim landing page |
-| File uploads | Direct to Supabase Storage | Same | May need to move to Vercel Blob for CDN performance |
-| Webhook processing | Inline in function | Same | Consider queue-based processing with Supabase Edge Functions |
-| Claim page rendering | SSR per request | Same | Add ISR with revalidation for non-dynamic content |
-| CTA injection | Per-request in boilerplate | Same | Cache injected HTML per project version |
-
-For v2.0 MVP (targeting tens of claims/month), none of these optimizations are needed. The architecture supports them as drop-in improvements later.
-
----
-
-## New vs Modified Files Summary
-
-### New Files (create from scratch)
-
-| File | Purpose |
-|------|---------|
-| `app/(client)/layout.tsx` | Mobile-first layout for claim pages |
-| `app/(client)/claim/[slug]/page.tsx` | Claim landing page (SSR) |
-| `app/(client)/claim/[slug]/customize/page.tsx` | Post-payment customization form |
-| `app/(client)/claim/[slug]/confirmed/page.tsx` | Confirmation + upsell |
-| `app/api/claims/create-order/route.ts` | Create Razorpay order |
-| `app/api/claims/[claimId]/route.ts` | Claim status CRUD |
-| `app/api/claims/[claimId]/customize/route.ts` | Save customization data |
-| `app/api/webhooks/razorpay/route.ts` | Razorpay webhook handler |
-| `app/api/uploads/signed-url/route.ts` | Generate signed upload URLs |
-| `app/api/tracking/event/route.ts` | Conversion funnel events |
-| `lib/claims.ts` | Claim business logic (CRUD, state transitions) |
-| `lib/razorpay.ts` | Razorpay SDK wrapper |
-| `lib/cta-injector.ts` | CTA bar HTML injection |
-| `lib/geo.ts` | Geo-detection for currency |
-| `lib/tracking.ts` | Analytics event recording |
-| `components/claim/claim-landing.tsx` | Main claim page component |
-| `components/claim/pricing-card.tsx` | Plan pricing display |
-| `components/claim/domain-picker.tsx` | Domain option selector |
-| `components/claim/checkout-button.tsx` | Razorpay checkout trigger |
-| `components/claim/customize-form.tsx` | Post-payment form |
-| `components/claim/upload-zone.tsx` | File upload with signed URLs |
-| `components/claim/countdown-timer.tsx` | CTA countdown component |
-| `components/claim/cta-bar.tsx` | Sticky CTA bar (static HTML version) |
-
-### Modified Files (touch existing code)
-
-| File | Change |
-|------|--------|
-| `lib/utils/html-boilerplate.ts` | Add optional `ctaConfig` param to `constructHtmlBoilerplate()` |
-| `lib/export/static-export.ts` | Pass CTA config through `buildStaticExport()` |
-| `app/api/export/[projectId]/route.ts` | Look up claim window, pass CTA config |
-| `app/(admin)/layout.tsx` | Moved from `app/dashboard/layout.tsx` (route group) |
-| `app/layout.tsx` | Add Razorpay `<Script>` tag |
-| Database schema | Add `claims`, `customizations` tables; optionally add `slug`, `screenshot_url` to `projects` |
-
-### Files NOT Modified (existing pipeline untouched)
-
-| File | Why Unchanged |
-|------|---------------|
-| `lib/ai/generator.ts` | Generation pipeline has no knowledge of claims |
-| `lib/queue.ts` | Queue system is unaffected |
-| `lib/discovery.ts` | Discovery pipeline is unaffected |
-| `lib/autopilot.ts` | Autopilot is unaffected |
-| `app/dashboard/actions.ts` | Admin actions don't change (may add claim status display later) |
-| `components/workbench/live-preview.tsx` | Preview is read-only; CTA injection happens at boilerplate level |
+### Anti-Pattern 5: Direct Supabase Client in Portal Components
+**What:** Using `createBrowserClient` directly in portal components to query data.
+**Why bad:** No RLS on most tables means the browser client (anon key) could access data it shouldn't. The service role key can't be used in browser code.
+**Instead:** All portal data flows through API routes: browser -> /api/portal/* -> auth check -> admin client -> scoped query -> response.
 
 ---
 
 ## Sources
 
-- [Razorpay Webhooks Validation](https://razorpay.com/docs/webhooks/validate-test/) -- Signature verification with HMAC-SHA256
-- [Razorpay Create Order API](https://razorpay.com/docs/api/orders/create/) -- Order creation with paise amounts
-- [Supabase createSignedUploadUrl](https://supabase.com/docs/reference/javascript/storage-from-createsigneduploadurl) -- Signed URL for direct client uploads
-- [Razorpay Node.js SDK Issue #29](https://github.com/razorpay/razorpay-node/issues/29) -- Webhook signature verification patterns
-- [Next.js App Router Authentication Guide](https://nextjs.org/docs/app/guides/authentication) -- Server-side access control patterns
-- [Razorpay Integration with Next.js](https://www.akkhil.dev/blogs/razorpay-integration-with-nextjs) -- Complete App Router integration guide
-
----
-
-*Research complete: 2026-03-18*
+- [Supabase Auth Server-Side Next.js](https://supabase.com/docs/guides/auth/server-side/nextjs) — HIGH confidence
+- [Supabase SSR Package](https://supabase.com/docs/guides/auth/server-side/creating-a-client) — HIGH confidence
+- [Supabase admin.createUser](https://supabase.com/docs/reference/javascript/auth-admin-createuser) — HIGH confidence
+- [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security) — HIGH confidence
+- [Next.js 16 proxy.ts Convention](https://nextjs.org/docs/app/api-reference/file-conventions/proxy) — HIGH confidence
+- [Next.js 16 Proxy Getting Started](https://nextjs.org/docs/app/getting-started/proxy) — HIGH confidence
+- [Supabase Password Auth](https://supabase.com/docs/guides/auth/passwords) — HIGH confidence
+- [Domainr API (Deprecated, now Fastly)](https://domainr.com/docs/api) — MEDIUM confidence (API deprecated, Fastly replacement unclear)
+- [Gemini Vision Background Removal](https://medium.com/google-cloud/background-removal-on-the-fly-with-gemini-and-code-execution-48621565fa9f) — MEDIUM confidence
+- [Route Protection Discussion](https://github.com/orgs/supabase/discussions/21468) — MEDIUM confidence
