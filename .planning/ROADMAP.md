@@ -117,7 +117,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The `claims` table has a nullable `auth_user_id` UUID column with foreign key to `auth.users`, and the `projects` table has a nullable `cal_embed_slug` TEXT column
   3. `proxy.ts` at the project root refreshes Supabase auth session cookies and redirects unauthenticated requests from `/portal/*` to the login page -- visiting `/portal/` without a session redirects to `/portal/login`
   4. The Razorpay webhook at `/api/webhooks/razorpay` still returns 200 after proxy.ts is added (body is not consumed by middleware), the admin dashboard loads without auth prompts, and public claim pages load without redirects
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 11-01: DB migrations (client_requests table, claims.auth_user_id, projects.cal_embed_slug) and TypeScript types
