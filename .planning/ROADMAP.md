@@ -101,7 +101,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Milestone Goal:** Add Supabase Auth for client accounts, simplify the claim flow to payment-first (no pre-payment forms), build an authenticated client portal for domain management/customization/requests, and give the admin a fulfillment dashboard to process client work.
 
 - [x] **Phase 11: Auth Infrastructure & Schema** - proxy.ts session middleware, Supabase Auth clients, DB migrations for client_requests table and new columns (completed 2026-03-24)
-- [ ] **Phase 12: Payment-First Claim Flow** - Harden webhook with dual verification, simplify claim page, USD-only pricing, test/live mode, server-side account creation
+- [x] **Phase 12: Payment-First Claim Flow** - Harden webhook with dual verification, simplify claim page, USD-only pricing, test/live mode, server-side account creation (completed 2026-03-24)
 - [ ] **Phase 13: Portal Shell** - Auth-guarded portal layout, dashboard with site preview, login page, password setup on confirmation
 - [ ] **Phase 14: Portal Features** - Change requests, domain management, logo upload with AI bg removal, booking setup, agent support payment
 - [ ] **Phase 15: Admin Fulfillment** - Purchased clients list, customer requests queue, status transitions, redeploy button
@@ -208,7 +208,7 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 9. Customization and Upsell | v2.0 | 3/3 | Complete | 2026-03-19 |
 | 10. Claim Analytics | v2.0 | 2/2 | Complete | 2026-03-18 |
 | 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
-| 12. Payment-First Claim Flow | 2/3 | In Progress|  | - |
+| 12. Payment-First Claim Flow | 3/3 | Complete   | 2026-03-24 | - |
 | 13. Portal Shell | v3.0 | 0/2 | Not started | - |
 | 14. Portal Features | v3.0 | 0/4 | Not started | - |
 | 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
