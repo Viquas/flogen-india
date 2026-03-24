@@ -3,7 +3,8 @@
 ## Milestones
 
 - [x] **v1.0 Internal Generation Engine** - Phases 1-5 (shipped 2026-03-18)
-- [ ] **v2.0 Client Claim Flow** - Phases 6-10 (in progress)
+- [x] **v2.0 Client Claim Flow** - Phases 6-10 (shipped 2026-03-19)
+- [ ] **v3.0 Client Portal & Updated Funnel** - Phases 11-15 (in progress)
 
 ## Phases
 
@@ -54,104 +55,144 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 </details>
 
-### v2.0 Client Claim Flow
+<details>
+<summary>v2.0 Client Claim Flow (Phases 6-10) -- SHIPPED 2026-03-19</summary>
 
-**Milestone Goal:** Turn every generated website into a revenue opportunity with a 6-step client-facing claim flow: CTA injection, claim landing page, Razorpay payment, customization form, upsell, and confirmation with delivery timeline.
-
-- [ ] **Phase 6: Foundation and CTA Injection** - Database schema, storage buckets, route groups, CTA bar on generated sites, geo-detection, pricing utility
-- [ ] **Phase 7: Claim Landing Page** - Conversion-critical claim page with preview, pricing, domain options, trust elements, expired state
-- [ ] **Phase 8: Payment and Confirmation** - Razorpay checkout, webhook verification, payment status polling, confirmation page with timeline
-- [ ] **Phase 9: Customization and Upsell** - Post-payment customization form with file uploads, booking setup, strategy call upsell
+- [x] **Phase 6: Foundation and CTA Injection** - Database schema, storage buckets, route groups, CTA bar on generated sites, geo-detection, pricing utility (completed 2026-03-18)
+- [x] **Phase 7: Claim Landing Page** - Conversion-critical claim page with preview, pricing, domain options, trust elements, expired state (completed 2026-03-19)
+- [x] **Phase 8: Payment and Confirmation** - Razorpay checkout, webhook verification, payment status polling, confirmation page with timeline (completed 2026-03-19)
+- [x] **Phase 9: Customization and Upsell** - Post-payment customization form with file uploads, booking setup, strategy call upsell (completed 2026-03-19)
 - [x] **Phase 10: Claim Analytics** - Funnel event tracking, claim_events table instrumentation, admin conversion dashboard (completed 2026-03-18)
-
-## Phase Details
 
 ### Phase 6: Foundation and CTA Injection
 **Goal**: The infrastructure for the entire claim flow exists (tables, buckets, routes, utilities), and every generated website displays a working CTA bar that drives prospects to the claim page
 **Depends on**: Phase 5 (v1.0 complete)
 **Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, CTA-01, CTA-02, CTA-03, CTA-04
-**Success Criteria** (what must be TRUE):
-  1. The `claims` and `customizations` tables exist in Supabase with proper foreign keys to `projects`, and `site-screenshots` and `claim-uploads` Storage buckets are configured with appropriate access policies
-  2. The admin dashboard and editor continue to function identically under the `(admin)/` route group, and a `(client)/` route group exists with a separate mobile-first layout and no admin navigation chrome
-  3. Every newly generated website displays a sticky bottom CTA bar showing the business name and a "Claim This Website" button that links to `/claim/{site_slug}`, with a countdown showing days remaining until claim expiry
-  4. The CTA bar never visually breaks or conflicts with the generated site's styles regardless of the site's CSS -- it is fully style-isolated with inline styles and unique IDs
-  5. When a site's claim period has expired, the CTA bar displays "This offer has expired" with a "Request a new website" link instead of the claim button
-**Plans**: 3 plans
-
-Plans:
-- [ ] 06-01-PLAN.md -- Database schema, storage buckets, TypeScript types, geo-detection and pricing utilities
-- [ ] 06-02-PLAN.md -- Route group restructuring: (admin)/ and (client)/ with layout separation
-- [ ] 06-03-PLAN.md -- CTA bar injector and screenshot generator
+**Plans**: 3/3 complete
 
 ### Phase 7: Claim Landing Page
 **Goal**: Prospects who click the CTA arrive at a high-converting, mobile-first claim page that presents the site preview, pricing plans, domain options, and trust elements -- everything needed to reach the "Pay" button
 **Depends on**: Phase 6
 **Requirements**: CLAIM-01, CLAIM-02, CLAIM-03, CLAIM-04, CLAIM-05, CLAIM-06, CLAIM-07, CLAIM-08, CLAIM-09, CLAIM-10
-**Success Criteria** (what must be TRUE):
-  1. Visiting `/claim/{site_slug}` on a mobile device shows a server-rendered page with the site screenshot hero, business name, countdown timer (days/hours/minutes/seconds), "What's Included" feature grid, and pricing cards -- all above the fold or within one scroll, loading under 2.5 seconds
-  2. The pricing section displays Standard and Pro plans side-by-side with correct INR or USD amounts based on the visitor's detected country, and the visitor can manually toggle between INR and USD
-  3. After selecting a plan, domain options appear (connect existing domain, buy new domain with availability search, or free subdomain) and a final CTA summarizes selections with the total price
-  4. The page includes trust elements (business count, testimonials section, FAQ accordion) and OG meta tags that produce a rich preview when shared via WhatsApp or email
-  5. Expired claims show an "Offer expired" state with a "Request a new website" form collecting name, email, and phone -- not a dead page or 404
-**Plans**: 3 plans
-
-Plans:
-- [x] 07-01-PLAN.md -- Layout font setup, hosting pricing, server-rendered sections (hero, features, trust, FAQ), expired form with server action
-- [x] 07-02-PLAN.md -- Interactive client components (countdown timer, pricing with currency toggle, domain selection, summary CTA)
-- [ ] 07-03-PLAN.md -- Page assembly: client orchestrator, server page with generateMetadata and SSR data fetching
+**Plans**: 3/3 complete
 
 ### Phase 8: Payment and Confirmation
 **Goal**: Prospects can pay via Razorpay directly from the claim page and arrive at a confirmation page with their order summary and delivery timeline -- the minimum viable revenue path is complete
 **Depends on**: Phase 7
 **Requirements**: PAY-01, PAY-02, PAY-03, PAY-04, PAY-05, PAY-06, PAY-07, CONF-01, CONF-02, CONF-03
-**Success Criteria** (what must be TRUE):
-  1. Clicking "Pay" on the claim page opens a Razorpay checkout modal with the correct plan price (in paise/cents), and after successful payment the user is redirected to the confirmation page -- even if the webhook arrives before or after the redirect
-  2. The Razorpay webhook at `/api/webhooks/razorpay` verifies the HMAC-SHA256 signature using the raw request body, processes payments idempotently (duplicate webhook deliveries do not corrupt state), and updates the claim record to `payment_status = 'completed'`
-  3. Failed or cancelled payments return the user to the claim page with a visible error message and the ability to retry payment without re-entering selections
-  4. The confirmation page at `/claim/{site_slug}/confirmed` shows a vertical timeline (payment confirmed, customization pending, updating site, preview email, go live), support contact info with WhatsApp link, and actionable next steps
-  5. The confirmation page polls for payment status on load, resolving the webhook-before-redirect race condition within 30 seconds
-**Plans**: 3 plans
-
-Plans:
-- [ ] 08-01-PLAN.md -- Razorpay SDK singleton, GST pricing update, createRazorpayOrder server action
-- [ ] 08-02-PLAN.md -- Razorpay webhook handler with HMAC verification, claim status polling endpoint
-- [ ] 08-03-PLAN.md -- Client-side checkout.js integration, summary CTA with GST line items, confirmation page with polling and timeline
+**Plans**: 3/3 complete
 
 ### Phase 9: Customization and Upsell
 **Goal**: After paying, clients submit their customization details (logo, colors, contacts, photos, text changes) and optionally book a strategy call -- the operator has everything needed to deliver the final site
 **Depends on**: Phase 8
 **Requirements**: CUST-01, CUST-02, CUST-03, CUST-04, CUST-05, CUST-06, CUST-07, CUST-08, CUST-09, UPSELL-01, UPSELL-02, UPSELL-03, UPSELL-04
-**Success Criteria** (what must be TRUE):
-  1. The customization form at `/claim/{site_slug}/customize` is only accessible after verified payment (server-side check rejects unpaid visitors) and displays a progress indicator showing Payment (done) -> Customize (current) -> Go Live
-  2. The client can upload a logo (drag-and-drop, 5MB max, PNG/JPG, with thumbnail preview) and up to 10 photos (5MB each, with thumbnails and remove buttons) via Supabase Storage -- all uploads validated server-side for file type
-  3. Contact info fields are pre-filled from the business's Google Maps data (phone, email, address, hours, WhatsApp) and the client can edit them, set brand colors, and submit text change requests (1000 char limit)
-  4. Pro plan clients see a booking system setup section (service types, available days/hours, buffer time) that Standard plan clients do not see
-  5. After customization submission, a strategy call upsell appears with a Cal.com scheduling embed (free for Pro, paid for Standard), and a clearly visible "No thanks, continue" skip link that proceeds to confirmation
-**Plans**: 3 plans
-
-Plans:
-- [ ] 09-01-PLAN.md -- Upload API with magic byte validation, payment-gated customize page scaffold, progress indicator
-- [ ] 09-02-PLAN.md -- Customization form components (logo, photos, colors, contact, text, booking) and form orchestrator with submission action
-- [ ] 09-03-PLAN.md -- Strategy call upsell page with Cal.com iframe, conditional Standard plan payment, skip link
+**Plans**: 3/3 complete
 
 ### Phase 10: Claim Analytics
 **Goal**: The operator can see exactly where prospects drop off in the claim funnel and which sites convert best, enabling data-driven optimization of the claim flow
-**Depends on**: Phase 8 (funnel must be live to produce data; can run in parallel with Phase 9)
+**Depends on**: Phase 8
 **Requirements**: ANAL-01, ANAL-02, ANAL-03
+**Plans**: 2/2 complete
+
+</details>
+
+### v3.0 Client Portal & Updated Funnel
+
+**Milestone Goal:** Add Supabase Auth for client accounts, simplify the claim flow to payment-first (no pre-payment forms), build an authenticated client portal for domain management/customization/requests, and give the admin a fulfillment dashboard to process client work.
+
+- [ ] **Phase 11: Auth Infrastructure & Schema** - proxy.ts session middleware, Supabase Auth clients, DB migrations for client_requests table and new columns
+- [ ] **Phase 12: Payment-First Claim Flow** - Harden webhook with dual verification, simplify claim page, USD-only pricing, test/live mode, server-side account creation
+- [ ] **Phase 13: Portal Shell** - Auth-guarded portal layout, dashboard with site preview, login page, password setup on confirmation
+- [ ] **Phase 14: Portal Features** - Change requests, domain management, logo upload with AI bg removal, booking setup, agent support payment
+- [ ] **Phase 15: Admin Fulfillment** - Purchased clients list, customer requests queue, status transitions, redeploy button
+
+## Phase Details
+
+### Phase 11: Auth Infrastructure & Schema
+**Goal**: The authentication layer and database schema required by all subsequent phases exist and are verified working -- proxy.ts protects portal routes without breaking webhooks, admin, or public pages
+**Depends on**: Phase 10 (v2.0 complete)
+**Requirements**: SCHEMA-01, SCHEMA-02, SCHEMA-03, AUTH-03, AUTH-05
 **Success Criteria** (what must be TRUE):
-  1. Every step of the claim funnel (preview view, claim page view, CTA click, plan selected, payment initiated, payment completed, customization submitted) is tracked as an event in the `claim_events` table with timestamp, IP, user agent, and site_slug
-  2. The admin dashboard shows a conversion funnel visualization with counts at each step and drop-off percentages between steps, filterable by date range
-  3. The analytics data includes revenue totals by plan type and conversion rates from generated site to paid claim
-**Plans**: 2 plans
+  1. The `client_requests` table exists in Supabase with columns (id, claim_id, project_id, auth_user_id, type, status, content JSONB, created_at, updated_at), RLS enabled, and policies scoped to auth_user_id
+  2. The `claims` table has a nullable `auth_user_id` UUID column with foreign key to `auth.users`, and the `projects` table has a nullable `cal_embed_slug` TEXT column
+  3. `proxy.ts` at the project root refreshes Supabase auth session cookies and redirects unauthenticated requests from `/portal/*` to the login page -- visiting `/portal/` without a session redirects to `/portal/login`
+  4. The Razorpay webhook at `/api/webhooks/razorpay` still returns 200 after proxy.ts is added (body is not consumed by middleware), the admin dashboard loads without auth prompts, and public claim pages load without redirects
+**Plans**: TBD
 
 Plans:
-- [ ] 10-01-PLAN.md -- claim_events table DDL, TypeScript types, tracking utility, API endpoint, instrument all claim flow pages
-- [ ] 10-02-PLAN.md -- Admin funnel dashboard page with Recharts funnel visualization, date filter, revenue totals
+- [ ] 11-01: DB migrations (client_requests table, claims.auth_user_id, projects.cal_embed_slug) and TypeScript types
+- [ ] 11-02: proxy.ts with whitelist matcher, Supabase proxy client, portal anon-key client
+
+### Phase 12: Payment-First Claim Flow
+**Goal**: The claim page is simplified to plan selection and a single "Get Started" button -- Razorpay collects contact info during checkout, the webhook creates Supabase Auth accounts, and dual verification eliminates the race condition
+**Depends on**: Phase 11
+**Requirements**: FUNNEL-01, FUNNEL-02, FUNNEL-03, FUNNEL-04, FUNNEL-05, FUNNEL-06, FUNNEL-07, FUNNEL-08, AUTH-01, AUTH-06
+**Success Criteria** (what must be TRUE):
+  1. The claim page at `/claim/{slug}` shows only the site preview, pricing cards ($499 Standard, $1,299 Pro, Premium "Contact Us"), and a "Get Started" button per plan -- no domain selection section, no pre-payment contact forms, no INR pricing or currency toggle
+  2. Clicking "Get Started" calls `createRazorpayOrder()` which creates a claim record with only project_id, plan, and amount -- Razorpay's checkout modal collects the client's name, email, and phone
+  3. After successful payment, the webhook handler creates a Supabase Auth user with the email from the Razorpay payload using `auth.admin.createUser()`, links it to the claim via `auth_user_id`, and stores contact info from the Razorpay payload
+  4. The confirmation page uses dual verification (checks DB for webhook result, falls back to Razorpay Orders API) to resolve the race condition -- payment is confirmed within 30 seconds regardless of webhook timing
+  5. Setting `RAZORPAY_MODE=test` in env switches to test API keys, and the claim page displays a visible "Test Mode" badge
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: Webhook hardening (dual verification endpoint, account creation in webhook, error logging)
+- [ ] 12-02: Claim page simplification (remove forms/domain section, USD-only pricing, Premium card, test mode badge)
+- [ ] 12-03: Confirmation page update (dual verification polling, portal login link, password setup prompt)
+
+### Phase 13: Portal Shell
+**Goal**: Paying clients can log in to an authenticated portal at `/portal` and see their site preview, live URL, and plan details -- the minimum viable portal proves the auth flow end-to-end
+**Depends on**: Phase 12
+**Requirements**: AUTH-02, AUTH-04, PORTAL-01, PORTAL-02, PORTAL-03, PORTAL-06
+**Success Criteria** (what must be TRUE):
+  1. The confirmation page presents a password field where first-time clients set their portal password -- submitting it creates their auth session and the account is linked to their claim and project
+  2. Returning clients can log in at `/portal/login` with email and password and are redirected to `/portal`
+  3. The portal dashboard at `/portal` displays a full-width iframe preview of the client's generated site, their live URL (subdomain or custom domain) with a copy-to-clipboard button, a plan badge (Standard/Pro), and a site status indicator (Active, Customization Pending, Update in Progress)
+  4. The portal layout is mobile-responsive and works at 375px width -- navigation, preview, and all information cards are usable on a phone screen
+**Plans**: TBD
+
+Plans:
+- [ ] 13-01: Portal login page and confirmation page password setup flow
+- [ ] 13-02: Auth-guarded portal layout and dashboard (preview iframe, URL card, plan badge, status indicator)
+
+### Phase 14: Portal Features
+**Goal**: Clients can manage their domain, upload a logo with AI background removal, submit change requests, set up booking (Pro), and pay for agent support -- all from the portal
+**Depends on**: Phase 13
+**Requirements**: PORTAL-04, PORTAL-05, PORTAL-07, DOMAIN-01, DOMAIN-02, DOMAIN-03, DOMAIN-04, DOMAIN-05, DOMAIN-06, LOGO-01, LOGO-02, LOGO-03, LOGO-04
+**Success Criteria** (what must be TRUE):
+  1. A client can type a change request into a single textarea, optionally attach a file, submit it, and see it appear in their request history with a "pending" status badge -- subsequent requests also appear in chronological order with status badges (pending, in-progress, completed)
+  2. On payment, a free subdomain ({business-slug}.flogen.com) is auto-provisioned and displayed in the portal -- the client can also enter an existing domain, receive a TXT record to add at their registrar, and the portal polls DNS until verification succeeds (with step-by-step instructions and status display)
+  3. A client can search for domain availability via Domainr, see external registrar links for available domains, and if their desired domain is unavailable, AI generates alternative suggestions that are batch-checked and only available options are shown
+  4. A client can upload a logo (drag-and-drop, PNG/JPEG, max 5MB), Gemini Vision detects non-transparent backgrounds and offers removal with a before/after preview, and the client approves or reverts the result before saving
+  5. Pro plan clients see a Cal.com booking setup field (embed slug input stored in `projects.cal_embed_slug`) that Standard clients do not see, and any client can pay $49 for agent support (domain setup or other assistance) via Razorpay
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: Change request form, portal requests API, request history page
+- [ ] 14-02: Domain management (subdomain auto-provision, DNS verification flow, Domainr search, AI suggestions)
+- [ ] 14-03: Logo upload with Gemini Vision background removal and approval flow
+- [ ] 14-04: Booking setup (Pro only) and $49 agent support payment
+
+### Phase 15: Admin Fulfillment
+**Goal**: The operator can see all purchased clients, view and process their change requests, and redeploy updated sites -- completing the client-to-admin feedback loop
+**Depends on**: Phase 14
+**Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04, ADMIN-05
+**Success Criteria** (what must be TRUE):
+  1. The admin dashboard has a "Clients" view listing all purchased clients with business name, client name/email, plan, purchase date, status badge, and open request count -- sortable and filterable
+  2. Clicking a client in the list opens the editor with a "Customer Requests" tab in the sidebar showing all `client_requests` for that project with type, content preview, status badge, and timestamp
+  3. The admin can transition a request through pending -> in_progress -> completed from the Customer Requests tab, and each transition updates the timestamp
+  4. The admin can click a "Redeploy" button that saves updated generated_code, increments the project version, creates a revision record in project_revisions, and marks relevant in-progress requests as completed
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: Purchased clients list view with filters and request count badges
+- [ ] 15-02: Customer Requests tab in editor sidebar with status transitions
+- [ ] 15-03: Redeploy button (code save, version bump, revision record, request completion)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
+Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -161,11 +202,16 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10
 | 4. Batch Autopilot | v1.0 | 2/2 | Complete | 2026-03-18 |
 | 5. UX Acceleration | v1.0 | 4/4 | Complete | 2026-03-18 |
 | 6. Foundation and CTA Injection | v2.0 | 3/3 | Complete | 2026-03-18 |
-| 7. Claim Landing Page | v2.0 | 2/3 | In progress | - |
-| 8. Payment and Confirmation | v2.0 | 0/3 | Not started | - |
-| 9. Customization and Upsell | v2.0 | 0/3 | Not started | - |
-| 10. Claim Analytics | 2/2 | Complete    | 2026-03-18 | - |
+| 7. Claim Landing Page | v2.0 | 3/3 | Complete | 2026-03-19 |
+| 8. Payment and Confirmation | v2.0 | 3/3 | Complete | 2026-03-19 |
+| 9. Customization and Upsell | v2.0 | 3/3 | Complete | 2026-03-19 |
+| 10. Claim Analytics | v2.0 | 2/2 | Complete | 2026-03-18 |
+| 11. Auth Infrastructure & Schema | v3.0 | 0/2 | Not started | - |
+| 12. Payment-First Claim Flow | v3.0 | 0/3 | Not started | - |
+| 13. Portal Shell | v3.0 | 0/2 | Not started | - |
+| 14. Portal Features | v3.0 | 0/4 | Not started | - |
+| 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-19 -- Phase 10 planned (2 plans)*
+*Last updated: 2026-03-25 -- v3.0 milestone roadmapped (5 phases, 14 plans)*

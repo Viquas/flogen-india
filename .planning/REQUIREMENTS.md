@@ -113,51 +113,51 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FUNNEL-01 | — | Pending |
-| FUNNEL-02 | — | Pending |
-| FUNNEL-03 | — | Pending |
-| FUNNEL-04 | — | Pending |
-| FUNNEL-05 | — | Pending |
-| FUNNEL-06 | — | Pending |
-| FUNNEL-07 | — | Pending |
-| FUNNEL-08 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| PORTAL-01 | — | Pending |
-| PORTAL-02 | — | Pending |
-| PORTAL-03 | — | Pending |
-| PORTAL-04 | — | Pending |
-| PORTAL-05 | — | Pending |
-| PORTAL-06 | — | Pending |
-| PORTAL-07 | — | Pending |
-| DOMAIN-01 | — | Pending |
-| DOMAIN-02 | — | Pending |
-| DOMAIN-03 | — | Pending |
-| DOMAIN-04 | — | Pending |
-| DOMAIN-05 | — | Pending |
-| DOMAIN-06 | — | Pending |
-| LOGO-01 | — | Pending |
-| LOGO-02 | — | Pending |
-| LOGO-03 | — | Pending |
-| LOGO-04 | — | Pending |
-| ADMIN-01 | — | Pending |
-| ADMIN-02 | — | Pending |
-| ADMIN-03 | — | Pending |
-| ADMIN-04 | — | Pending |
-| ADMIN-05 | — | Pending |
-| SCHEMA-01 | — | Pending |
-| SCHEMA-02 | — | Pending |
-| SCHEMA-03 | — | Pending |
+| FUNNEL-01 | Phase 12 | Pending |
+| FUNNEL-02 | Phase 12 | Pending |
+| FUNNEL-03 | Phase 12 | Pending |
+| FUNNEL-04 | Phase 12 | Pending |
+| FUNNEL-05 | Phase 12 | Pending |
+| FUNNEL-06 | Phase 12 | Pending |
+| FUNNEL-07 | Phase 12 | Pending |
+| FUNNEL-08 | Phase 12 | Pending |
+| AUTH-01 | Phase 12 | Pending |
+| AUTH-02 | Phase 13 | Pending |
+| AUTH-03 | Phase 11 | Pending |
+| AUTH-04 | Phase 13 | Pending |
+| AUTH-05 | Phase 11 | Pending |
+| AUTH-06 | Phase 12 | Pending |
+| PORTAL-01 | Phase 13 | Pending |
+| PORTAL-02 | Phase 13 | Pending |
+| PORTAL-03 | Phase 13 | Pending |
+| PORTAL-04 | Phase 14 | Pending |
+| PORTAL-05 | Phase 14 | Pending |
+| PORTAL-06 | Phase 13 | Pending |
+| PORTAL-07 | Phase 14 | Pending |
+| DOMAIN-01 | Phase 14 | Pending |
+| DOMAIN-02 | Phase 14 | Pending |
+| DOMAIN-03 | Phase 14 | Pending |
+| DOMAIN-04 | Phase 14 | Pending |
+| DOMAIN-05 | Phase 14 | Pending |
+| DOMAIN-06 | Phase 14 | Pending |
+| LOGO-01 | Phase 14 | Pending |
+| LOGO-02 | Phase 14 | Pending |
+| LOGO-03 | Phase 14 | Pending |
+| LOGO-04 | Phase 14 | Pending |
+| ADMIN-01 | Phase 15 | Pending |
+| ADMIN-02 | Phase 15 | Pending |
+| ADMIN-03 | Phase 15 | Pending |
+| ADMIN-04 | Phase 15 | Pending |
+| ADMIN-05 | Phase 15 | Pending |
+| SCHEMA-01 | Phase 11 | Pending |
+| SCHEMA-02 | Phase 11 | Pending |
+| SCHEMA-03 | Phase 11 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39 ⚠️
+- Mapped to phases: 39
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 after roadmap creation*
