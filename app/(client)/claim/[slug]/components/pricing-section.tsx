@@ -1,20 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { ArrowRight, Crown } from 'lucide-react'
 import {
     DISPLAY_PRICING,
     CURRENCY_SYMBOL,
     HOSTING_PRICING,
-    type Currency,
     type PlanType,
 } from '@/lib/claim-pricing'
 
 interface PricingSectionProps {
-    initialCurrency: Currency
     selectedPlan: PlanType | null
     onPlanSelect: (plan: PlanType) => void
-    onCurrencyChange: (currency: Currency) => void
 }
 
 const STANDARD_FEATURES = [
@@ -35,71 +31,54 @@ const PRO_FEATURES = [
     'Premium hosting',
 ]
 
+const PREMIUM_FEATURES = [
+    'Fully custom design',
+    'Award-winning aesthetics',
+    'High-end SEO strategy',
+    'Conversion optimization',
+    'Dedicated project manager',
+    'Unlimited revisions',
+]
+
+function Dot({ className }: { className?: string }) {
+    return <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${className}`} />
+}
+
 export function PricingSection({
-    initialCurrency,
     selectedPlan,
     onPlanSelect,
-    onCurrencyChange,
 }: PricingSectionProps) {
-    const [currency, setCurrency] = useState<Currency>(initialCurrency)
-
-    function handleCurrencyChange(newCurrency: Currency) {
-        setCurrency(newCurrency)
-        onCurrencyChange(newCurrency)
-    }
-
     return (
-        <section>
-            <h2 className="text-xl font-bold text-[#0F172A] text-center mb-2">
-                Choose Your Plan
+        <section className="max-w-4xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-[family-name:var(--font-signifier)] font-light text-[#050304] text-center mb-10">
+                Choose your plan
             </h2>
 
-            {/* Currency toggle */}
-            <div className="flex justify-center mt-4">
-                <div className="inline-flex rounded-lg bg-gray-100 p-1">
-                    {(['INR', 'USD'] as const).map((c) => (
-                        <button
-                            key={c}
-                            type="button"
-                            onClick={() => handleCurrencyChange(c)}
-                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                currency === c
-                                    ? 'bg-[#2563EB] text-white'
-                                    : 'bg-gray-100 text-gray-600'
-                            }`}
-                        >
-                            {CURRENCY_SYMBOL[c]} {c}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Pricing cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                {/* Standard card */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Standard */}
                 <div
-                    className={`border rounded-2xl p-6 cursor-pointer transition-all ${
+                    className={`rounded-2xl p-6 cursor-pointer transition-all bg-white border flex flex-col ${
                         selectedPlan === 'standard'
-                            ? 'border-[#2563EB] ring-2 ring-[#2563EB]/20'
-                            : 'border-gray-200'
+                            ? 'border-[#050304] shadow-[0_2px_20px_rgba(0,0,0,0.08)]'
+                            : 'border-[#050304]/8 hover:border-[#050304]/20'
                     }`}
                     onClick={() => onPlanSelect('standard')}
                 >
-                    <h3 className="text-lg font-bold text-[#0F172A]">Standard</h3>
+                    <h3 className="text-lg font-bold text-[#050304]">Standard</h3>
                     <div className="mt-3">
-                        <span className="text-3xl sm:text-4xl font-bold text-[#0F172A]">
-                            {CURRENCY_SYMBOL[currency]}{DISPLAY_PRICING.standard[currency]}
+                        <span className="text-3xl font-bold text-[#050304]">
+                            {CURRENCY_SYMBOL}{DISPLAY_PRICING.standard}
                         </span>
-                        <span className="text-sm text-gray-500 ml-2">one-time</span>
+                        <span className="text-sm text-[#050304]/40 ml-1">one-time</span>
                     </div>
-                    <p className="text-sm text-gray-400 mt-1">
-                        + {CURRENCY_SYMBOL[currency]}{HOSTING_PRICING[currency].display}/mo hosting
+                    <p className="text-xs text-[#050304]/25 mt-1">
+                        + {CURRENCY_SYMBOL}{HOSTING_PRICING.display}/mo hosting
                     </p>
 
-                    <ul className="mt-5 space-y-3">
+                    <ul className="mt-6 space-y-3 flex-1">
                         {STANDARD_FEATURES.map((feature) => (
-                            <li key={feature} className="flex items-center gap-2 text-sm text-gray-600">
-                                <Check className="text-[#2563EB] w-4 h-4 flex-shrink-0" />
+                            <li key={feature} className="flex items-center gap-3 text-sm text-[#050304]/70">
+                                <Dot className="bg-[#050304]/20" />
                                 {feature}
                             </li>
                         ))}
@@ -108,42 +87,42 @@ export function PricingSection({
                     <button
                         type="button"
                         onClick={() => onPlanSelect('standard')}
-                        className={`w-full py-3 rounded-lg font-semibold transition-colors mt-6 ${
+                        className={`w-full py-3 rounded-full font-semibold transition-all mt-6 text-sm ${
                             selectedPlan === 'standard'
-                                ? 'bg-[#2563EB] text-white'
-                                : 'bg-gray-100 text-[#0F172A] hover:bg-gray-200'
+                                ? 'bg-[#050304] text-white'
+                                : 'bg-[#050304]/5 text-[#050304] hover:bg-[#050304]/10'
                         }`}
                     >
                         {selectedPlan === 'standard' ? 'Selected' : 'Select Standard'}
                     </button>
                 </div>
 
-                {/* Pro card */}
+                {/* Pro */}
                 <div
-                    className={`relative border-2 border-[#2563EB] rounded-2xl p-6 cursor-pointer transition-all ${
-                        selectedPlan === 'pro' ? 'ring-2 ring-[#2563EB]/20' : ''
+                    className={`relative rounded-2xl p-6 cursor-pointer transition-all bg-[#050304] border border-[#050304] flex flex-col ${
+                        selectedPlan === 'pro' ? 'shadow-[0_4px_32px_rgba(0,0,0,0.2)]' : ''
                     }`}
                     onClick={() => onPlanSelect('pro')}
                 >
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2563EB] text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#AF92FF] text-[#050304] text-xs font-semibold px-4 py-1 rounded-full">
                         Recommended
                     </span>
 
-                    <h3 className="text-lg font-bold text-[#0F172A]">Pro</h3>
+                    <h3 className="text-lg font-bold text-white">Pro</h3>
                     <div className="mt-3">
-                        <span className="text-3xl sm:text-4xl font-bold text-[#0F172A]">
-                            {CURRENCY_SYMBOL[currency]}{DISPLAY_PRICING.pro[currency]}
+                        <span className="text-3xl font-bold text-white">
+                            {CURRENCY_SYMBOL}{DISPLAY_PRICING.pro}
                         </span>
-                        <span className="text-sm text-gray-500 ml-2">one-time</span>
+                        <span className="text-sm text-white/35 ml-1">one-time</span>
                     </div>
-                    <p className="text-sm text-gray-400 mt-1">
-                        + {CURRENCY_SYMBOL[currency]}{HOSTING_PRICING[currency].display}/mo hosting
+                    <p className="text-xs text-white/20 mt-1">
+                        + {CURRENCY_SYMBOL}{HOSTING_PRICING.display}/mo hosting
                     </p>
 
-                    <ul className="mt-5 space-y-3">
+                    <ul className="mt-6 space-y-3 flex-1">
                         {PRO_FEATURES.map((feature) => (
-                            <li key={feature} className="flex items-center gap-2 text-sm text-gray-600">
-                                <Check className="text-[#2563EB] w-4 h-4 flex-shrink-0" />
+                            <li key={feature} className="flex items-center gap-3 text-sm text-white/70">
+                                <Dot className="bg-[#AF92FF]" />
                                 {feature}
                             </li>
                         ))}
@@ -152,14 +131,47 @@ export function PricingSection({
                     <button
                         type="button"
                         onClick={() => onPlanSelect('pro')}
-                        className={`w-full py-3 rounded-lg font-semibold transition-colors mt-6 ${
+                        className={`w-full py-3 rounded-full font-semibold transition-all mt-6 text-sm ${
                             selectedPlan === 'pro'
-                                ? 'bg-[#2563EB] text-white'
-                                : 'bg-gray-100 text-[#0F172A] hover:bg-gray-200'
+                                ? 'bg-[#AF92FF] text-[#050304]'
+                                : 'bg-white/10 text-white hover:bg-white/15'
                         }`}
                     >
                         {selectedPlan === 'pro' ? 'Selected' : 'Select Pro'}
                     </button>
+                </div>
+
+                {/* Premium -- contact us */}
+                <div className="rounded-2xl p-6 bg-white border border-[#050304]/8 flex flex-col">
+                    <h3 className="text-lg font-bold text-[#050304] flex items-center gap-2">
+                        Premium
+                        <Crown className="w-4 h-4 text-[#AF92FF]" strokeWidth={1.5} />
+                    </h3>
+                    <div className="mt-3">
+                        <span className="text-3xl font-bold text-[#050304]">
+                            From $3,000
+                        </span>
+                    </div>
+                    <p className="text-xs text-[#050304]/25 mt-1">
+                        Custom quote based on scope
+                    </p>
+
+                    <ul className="mt-6 space-y-3 flex-1">
+                        {PREMIUM_FEATURES.map((feature) => (
+                            <li key={feature} className="flex items-center gap-3 text-sm text-[#050304]/70">
+                                <Dot className="bg-[#AF92FF]" />
+                                {feature}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <a
+                        href="mailto:hello@essodigital.com?subject=Premium Website Inquiry"
+                        className="w-full py-3 rounded-full font-semibold transition-all mt-6 text-sm bg-[#050304]/5 text-[#050304] hover:bg-[#050304]/10 flex items-center justify-center gap-2"
+                    >
+                        Contact Us
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
                 </div>
             </div>
         </section>

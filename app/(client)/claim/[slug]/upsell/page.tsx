@@ -1,8 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Metadata } from 'next'
-import type { Currency } from '@/lib/claim-pricing'
 import { ProgressSteps } from '../customize/components/progress-steps'
 import UpsellClient from './upsell-client'
 
@@ -58,13 +56,8 @@ export default async function UpsellPage({ params }: UpsellPageProps) {
         redirect(`/claim/${slug}/customize`)
     }
 
-    // Determine currency: prefer claim.currency (user already chose during payment), fallback to geo
-    let currency: Currency = (claim.currency as Currency) || 'INR'
-    if (!claim.currency) {
-        const headersList = await headers()
-        const country = headersList.get('x-vercel-ip-country') || ''
-        currency = country === 'IN' ? 'INR' : 'USD'
-    }
+    // Currency is always USD
+    const currency = 'USD' as const
 
     // Extract client info for Cal.com prefill
     const clientName = (claim.client_name as string) || ''

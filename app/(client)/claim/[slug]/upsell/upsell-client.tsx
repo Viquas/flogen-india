@@ -7,14 +7,13 @@ import { Phone } from 'lucide-react'
 import {
     CURRENCY_SYMBOL,
     UPSELL_DISPLAY,
-    type Currency,
 } from '@/lib/claim-pricing'
 import { createUpsellOrder, updateStrategyCallPreference } from '../claim-actions'
 
 interface UpsellClientProps {
     claimId: string
     plan: 'standard' | 'pro'
-    currency: Currency
+    currency: string
     clientName: string
     clientEmail: string
     slug: string
@@ -46,7 +45,7 @@ export default function UpsellClient({
         setPaymentError(null)
 
         try {
-            const result = await createUpsellOrder({ claimId, currency })
+            const result = await createUpsellOrder({ claimId })
 
             if (!result.success) {
                 setPaymentError(result.error)
@@ -157,14 +156,9 @@ export default function UpsellClient({
                                 className="text-2xl font-bold"
                                 style={{ color: '#0F172A' }}
                             >
-                                {CURRENCY_SYMBOL[currency]}
-                                {UPSELL_DISPLAY.strategy_call[currency]}
+                                {CURRENCY_SYMBOL}
+                                {UPSELL_DISPLAY.strategy_call}
                             </span>
-                            {currency === 'INR' && (
-                                <span className="text-xs" style={{ color: '#94A3B8' }}>
-                                    + GST
-                                </span>
-                            )}
                         </div>
 
                         {!hasPaidUpsell && (

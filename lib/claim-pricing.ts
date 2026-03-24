@@ -1,91 +1,50 @@
-export type Currency = 'INR' | 'USD'
-
 export const PRICING = {
-    standard: { INR: 499900, USD: 49900 },   // paise / cents
-    pro:      { INR: 999900, USD: 129900 },
+    standard: 49900,   // $499 in cents
+    pro: 129900,       // $1,299 in cents
 } as const
 
 export const DISPLAY_PRICING = {
-    standard: { INR: '4,999', USD: '499' },
-    pro:      { INR: '9,999', USD: '1,299' },
+    standard: '499',
+    pro: '1,299',
 } as const
 
 export const HOSTING_PRICING = {
-    INR: { amount: 49900, display: '499' },
-    USD: { amount: 1000, display: '10' },
+    amount: 1000,      // $10 in cents
+    display: '10',
 } as const
 
-export const CURRENCY_SYMBOL = { INR: '\u20B9', USD: '$' } as const
+export const CURRENCY_SYMBOL = '$'
 
 export const CLAIM_WINDOW_DAYS = 5
 
 export type PlanType = 'standard' | 'pro'
 
-export function getPricing(plan: PlanType, currency: Currency) {
+export function getPricing(plan: PlanType) {
     return {
-        amountPaise: PRICING[plan][currency],
-        display: `${CURRENCY_SYMBOL[currency]}${DISPLAY_PRICING[plan][currency]}`,
-        currency,
-        plan,
+        amount: PRICING[plan],
+        display: `${CURRENCY_SYMBOL}${DISPLAY_PRICING[plan]}`,
+        hosting: HOSTING_PRICING.amount,
+        hostingDisplay: `${CURRENCY_SYMBOL}${HOSTING_PRICING.display}`,
     }
 }
 
-// --- GST and total amount computation (added for Phase 8 payment flow) ---
-
-export const GST_RATE = 0.18 // 18% GST for India
-
-/** Calculate GST amount in paise. Returns 0 for non-INR currencies. */
-export function calculateGST(planPaise: number, currency: Currency): number {
-    if (currency !== 'INR') return 0
-    return Math.round(planPaise * GST_RATE)
+/** Calculate total order amount in cents (plan + hosting). */
+export function calculateTotalCents(plan: PlanType): number {
+    return PRICING[plan] + HOSTING_PRICING.amount
 }
 
-/** GST display strings for INR (e.g. '900', '1,800'). Returns null for USD. */
-export const GST_DISPLAY = {
-    standard: { INR: '900', USD: null },
-    pro:      { INR: '1,800', USD: null },
-} as const
-
-/**
- * Calculate total order amount in paise/cents.
- * INR: plan + hosting + GST(18% on plan)
- * USD: plan + hosting
- * This is the amount sent to Razorpay.
- */
-export function calculateTotalPaise(plan: PlanType, currency: Currency): number {
-    const planAmount = PRICING[plan][currency]
-    const hostingAmount = HOSTING_PRICING[currency].amount
-    const gst = calculateGST(planAmount, currency)
-    return planAmount + hostingAmount + gst
+/** Display-friendly total for summary (e.g. "$509", "$1,309"). */
+export function getDisplayTotal(plan: PlanType): string {
+    const total = calculateTotalCents(plan) / 100
+    return `$${total.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
 }
 
-/** Display-friendly total for summary. */
-export function getDisplayTotal(plan: PlanType, currency: Currency): string {
-    const total = calculateTotalPaise(plan, currency)
-    // Convert from paise/cents to display: divide by 100, format with commas
-    const amount = total / 100
-    return amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })
-}
-
-// --- Upsell Pricing (Phase 9) ---
+// --- Upsell Pricing ---
 
 export const UPSELL_PRICING = {
-    strategy_call: {
-        INR: 199900,   // 1,999 INR in paise
-        USD: 4900,     // $49 in cents
-    },
+    strategy_call: 4900,   // $49 in cents
 } as const
 
 export const UPSELL_DISPLAY = {
-    strategy_call: {
-        INR: '1,999',
-        USD: '49',
-    },
+    strategy_call: '49',
 } as const
-
-/** Calculate upsell total with GST for INR. */
-export function calculateUpsellTotal(currency: Currency): number {
-    const base = UPSELL_PRICING.strategy_call[currency]
-    const gst = calculateGST(base, currency)
-    return base + gst
-}

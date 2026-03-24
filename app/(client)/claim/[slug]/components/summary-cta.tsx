@@ -6,15 +6,12 @@ import {
     DISPLAY_PRICING,
     CURRENCY_SYMBOL,
     HOSTING_PRICING,
-    GST_DISPLAY,
     getDisplayTotal,
-    type Currency,
     type PlanType,
 } from '@/lib/claim-pricing'
 
 interface SummaryCTAProps {
     selectedPlan: PlanType | null
-    currency: Currency
     domainOption: DomainOption
     domainValue: string
     onProceedToPayment: () => void
@@ -35,7 +32,6 @@ function getDomainLabel(option: DomainOption, value: string): string {
 
 export function SummaryCTA({
     selectedPlan,
-    currency,
     domainOption,
     domainValue,
     onProceedToPayment,
@@ -47,9 +43,7 @@ export function SummaryCTA({
     }
 
     const planLabel = selectedPlan === 'standard' ? 'Standard' : 'Pro'
-    const planPrice = DISPLAY_PRICING[selectedPlan][currency]
-    const symbol = CURRENCY_SYMBOL[currency]
-    const hostingDisplay = HOSTING_PRICING[currency].display
+    const planPrice = DISPLAY_PRICING[selectedPlan]
 
     return (
         <section className="px-4 py-6 bg-white border-t border-gray-100">
@@ -58,7 +52,7 @@ export function SummaryCTA({
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">{planLabel} Plan</span>
                     <span className="text-sm font-semibold text-[#0F172A]">
-                        {symbol}{planPrice}
+                        {CURRENCY_SYMBOL}{planPrice}
                     </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -70,28 +64,18 @@ export function SummaryCTA({
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Hosting</span>
                     <span className="text-sm text-gray-500">
-                        {symbol}{hostingDisplay}/month
+                        {CURRENCY_SYMBOL}{HOSTING_PRICING.display}/month
                     </span>
                 </div>
 
-                {/* GST line item -- INR only */}
-                {currency === 'INR' && GST_DISPLAY[selectedPlan].INR && (
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">GST (18%)</span>
-                        <span className="text-sm text-gray-500">
-                            {symbol}{GST_DISPLAY[selectedPlan].INR}
-                        </span>
-                    </div>
-                )}
-
                 <hr className="border-gray-100" />
 
-                {/* Total -- includes plan + hosting + GST(INR) */}
+                {/* Total -- plan + hosting */}
                 <div className="flex items-end justify-between">
                     <span className="text-sm font-semibold text-gray-600">Total</span>
                     <div className="text-right">
                         <span className="text-2xl font-bold text-[#0F172A]">
-                            {symbol}{getDisplayTotal(selectedPlan, currency)}
+                            {getDisplayTotal(selectedPlan)}
                         </span>
                     </div>
                 </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
-import type { Currency, PlanType } from '@/lib/claim-pricing'
+import type { PlanType } from '@/lib/claim-pricing'
 import { CountdownTimer } from './components/countdown-timer'
 import { PricingSection } from './components/pricing-section'
 import { DomainSection, type DomainOption } from './components/domain-section'
@@ -12,7 +12,6 @@ import { createRazorpayOrder } from './claim-actions'
 
 interface ClaimPageClientProps {
     projectId: string
-    initialCurrency: Currency
     expiresAt: string
     businessName: string
     slug: string
@@ -20,7 +19,6 @@ interface ClaimPageClientProps {
 
 export default function ClaimPageClient({
     projectId,
-    initialCurrency,
     expiresAt,
     businessName,
     slug,
@@ -29,13 +27,11 @@ export default function ClaimPageClient({
     const searchParams = useSearchParams()
 
     const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null)
-    const [currency, setCurrency] = useState<Currency>(initialCurrency)
     const [domainOption, setDomainOption] = useState<DomainOption>('subdomain')
     const [domainValue, setDomainValue] = useState('')
     const [isProcessing, setIsProcessing] = useState(false)
     const [paymentError, setPaymentError] = useState<string | null>(null)
 
-    // Check for payment=failed query param (user returning from failed attempt)
     useEffect(() => {
         if (searchParams.get('payment') === 'failed') {
             setPaymentError('Your previous payment was not completed. You can try again.')
@@ -51,7 +47,7 @@ export default function ClaimPageClient({
             const result = await createRazorpayOrder({
                 projectId,
                 plan: selectedPlan,
-                currency,
+                currency: 'USD',
                 domainOption,
                 domainValue,
             })
@@ -69,12 +65,10 @@ export default function ClaimPageClient({
                 description: `${selectedPlan === 'pro' ? 'Pro' : 'Standard'} Website Plan`,
                 prefill: { name: businessName },
                 handler: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-                    // Redirect to confirmation -- webhook handles DB update
                     router.push(`/claim/${slug}/confirmed?claimId=${result.claimId}`)
                 },
                 modal: {
                     ondismiss: () => {
-                        // User closed modal without paying
                         setIsProcessing(false)
                     },
                 },
@@ -96,45 +90,45 @@ export default function ClaimPageClient({
     return (
         <div className="space-y-0">
             {/* Countdown timer */}
-            <section className="px-4 py-6 text-center">
+            <section className="px-4 py-8">
                 <CountdownTimer expiresAt={expiresAt} />
             </section>
 
-            {/* Pricing section with currency toggle */}
-            <section className="px-4 py-8">
+            {/* Pricing section */}
+            <section id="pricing" className="px-4 py-10 scroll-mt-4">
                 <PricingSection
-                    initialCurrency={initialCurrency}
                     selectedPlan={selectedPlan}
                     onPlanSelect={setSelectedPlan}
-                    onCurrencyChange={setCurrency}
                 />
             </section>
 
-            {/* Domain section -- only visible after plan selection */}
+            {/* Domain section — only visible after plan selection */}
             {selectedPlan && (
-                <section className="px-4 py-8 bg-[#F8FAFC]">
-                    <DomainSection
-                        businessName={businessName}
-                        selectedOption={domainOption}
-                        domainValue={domainValue}
-                        onOptionChange={setDomainOption}
-                        onDomainValueChange={setDomainValue}
-                    />
+                <section className="px-4 py-10">
+                    <div className="max-w-2xl mx-auto">
+                        <DomainSection
+                            businessName={businessName}
+                            selectedOption={domainOption}
+                            domainValue={domainValue}
+                            onOptionChange={setDomainOption}
+                            onDomainValueChange={setDomainValue}
+                        />
+                    </div>
                 </section>
             )}
 
-            {/* Summary CTA -- only visible after plan selection */}
-            <SummaryCTA
-                selectedPlan={selectedPlan}
-                currency={currency}
-                domainOption={domainOption}
-                domainValue={domainValue}
-                onProceedToPayment={handleProceedToPayment}
-                isProcessing={isProcessing}
-                paymentError={paymentError}
-            />
+            {/* Summary CTA — only visible after plan selection */}
+            <div className="max-w-2xl mx-auto">
+                <SummaryCTA
+                    selectedPlan={selectedPlan}
+                    domainOption={domainOption}
+                    domainValue={domainValue}
+                    onProceedToPayment={handleProceedToPayment}
+                    isProcessing={isProcessing}
+                    paymentError={paymentError}
+                />
+            </div>
 
-            {/* Razorpay checkout.js */}
             <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         </div>
     )

@@ -6,7 +6,7 @@ import {
     MessageCircle, Loader2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { CURRENCY_SYMBOL, DISPLAY_PRICING, type Currency, type PlanType } from '@/lib/claim-pricing'
+import { CURRENCY_SYMBOL, DISPLAY_PRICING, type PlanType } from '@/lib/claim-pricing'
 
 interface ConfirmationClientProps {
     claimId: string
@@ -74,9 +74,9 @@ export function ConfirmationClient({
         return () => clearTimeout(timer)
     }, [claimId, isConfirmed, pollCount])
 
-    const symbol = CURRENCY_SYMBOL[currency as Currency] || currency
+    const symbol = CURRENCY_SYMBOL
     const planType = plan as PlanType
-    const planDisplay = DISPLAY_PRICING[planType]?.[currency as Currency] || ''
+    const planDisplay = DISPLAY_PRICING[planType] || ''
 
     // --- Verifying state ---
     if (isPolling) {
