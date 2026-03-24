@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Metadata } from 'next'
 import { ConfirmationClient } from './confirmation-client'
+import { TestModeBanner } from '../components/test-mode-banner'
 
 interface ConfirmedPageProps {
     params: Promise<{ slug: string }>
@@ -42,7 +43,7 @@ export default async function ConfirmedPage({ params, searchParams }: ConfirmedP
     if (claimIdParam) {
         const { data } = await supabase
             .from('claims')
-            .select('id, status, plan, amount_paise, currency, paid_at, domain_option, domain_value')
+            .select('id, status, plan, amount_paise, paid_at, client_email')
             .eq('id', claimIdParam)
             .eq('project_id', project.id)
             .single()
@@ -53,7 +54,7 @@ export default async function ConfirmedPage({ params, searchParams }: ConfirmedP
         // Fallback: find most recent non-expired claim
         const { data } = await supabase
             .from('claims')
-            .select('id, status, plan, amount_paise, currency, paid_at, domain_option, domain_value')
+            .select('id, status, plan, amount_paise, paid_at, client_email')
             .eq('project_id', project.id)
             .in('status', ['order_created', 'paid', 'customizing', 'completed'])
             .order('created_at', { ascending: false })
@@ -69,15 +70,16 @@ export default async function ConfirmedPage({ params, searchParams }: ConfirmedP
 
     return (
         <main className="max-w-lg mx-auto px-4 py-8">
+            <TestModeBanner />
             <ConfirmationClient
                 claimId={claim.id}
                 initialStatus={claim.status}
                 businessName={businessName}
                 plan={claim.plan}
                 amountPaise={claim.amount_paise}
-                currency={claim.currency}
                 paidAt={claim.paid_at}
                 slug={slug}
+                email={claim.client_email}
             />
         </main>
     )
