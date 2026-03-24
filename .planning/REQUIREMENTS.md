@@ -22,9 +22,9 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 - [ ] **AUTH-01**: Supabase Auth account created server-side in webhook handler after payment.captured using auth.admin.createUser() with email from Razorpay payload
 - [ ] **AUTH-02**: Confirmation page presents password field for first-time portal access — creates account linked to claim and project
-- [ ] **AUTH-03**: proxy.ts protects /portal/* routes with Supabase session validation — whitelist matcher to avoid breaking webhooks, admin, and public routes
+- [x] **AUTH-03**: proxy.ts protects /portal/* routes with Supabase session validation — whitelist matcher to avoid breaking webhooks, admin, and public routes
 - [ ] **AUTH-04**: Portal login page with email + password for returning clients
-- [ ] **AUTH-05**: claims table gains auth_user_id column linking to Supabase Auth user
+- [x] **AUTH-05**: claims table gains auth_user_id column linking to Supabase Auth user
 - [ ] **AUTH-06**: Dual payment verification on confirmation page — webhook push + Razorpay API pull to handle race condition
 
 ### Client Portal
@@ -63,9 +63,9 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 ### Schema Changes
 
-- [ ] **SCHEMA-01**: New client_requests table with RLS policies scoped to auth_user_id
-- [ ] **SCHEMA-02**: claims.auth_user_id column (nullable UUID, FK to auth.users)
-- [ ] **SCHEMA-03**: projects.cal_embed_slug column (nullable TEXT)
+- [x] **SCHEMA-01**: New client_requests table with RLS policies scoped to auth_user_id
+- [x] **SCHEMA-02**: claims.auth_user_id column (nullable UUID, FK to auth.users)
+- [x] **SCHEMA-03**: projects.cal_embed_slug column (nullable TEXT)
 
 ## v4.0 Requirements
 
@@ -123,9 +123,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FUNNEL-08 | Phase 12 | Pending |
 | AUTH-01 | Phase 12 | Pending |
 | AUTH-02 | Phase 13 | Pending |
-| AUTH-03 | Phase 11 | Pending |
+| AUTH-03 | Phase 11 | Complete |
 | AUTH-04 | Phase 13 | Pending |
-| AUTH-05 | Phase 11 | Pending |
+| AUTH-05 | Phase 11 | Complete |
 | AUTH-06 | Phase 12 | Pending |
 | PORTAL-01 | Phase 13 | Pending |
 | PORTAL-02 | Phase 13 | Pending |
@@ -149,9 +149,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADMIN-03 | Phase 15 | Pending |
 | ADMIN-04 | Phase 15 | Pending |
 | ADMIN-05 | Phase 15 | Pending |
-| SCHEMA-01 | Phase 11 | Pending |
-| SCHEMA-02 | Phase 11 | Pending |
-| SCHEMA-03 | Phase 11 | Pending |
+| SCHEMA-01 | Phase 11 | Complete |
+| SCHEMA-02 | Phase 11 | Complete |
+| SCHEMA-03 | Phase 11 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 39 total
