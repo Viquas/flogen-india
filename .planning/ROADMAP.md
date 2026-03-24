@@ -120,7 +120,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: DB migrations (client_requests table, claims.auth_user_id, projects.cal_embed_slug) and TypeScript types
+- [x] 11-01: DB migrations (client_requests table, claims.auth_user_id, projects.cal_embed_slug) and TypeScript types
 - [ ] 11-02: proxy.ts with whitelist matcher, Supabase proxy client, portal anon-key client
 
 ### Phase 12: Payment-First Claim Flow
