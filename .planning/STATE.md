@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
 status: in-progress
-last_updated: "2026-03-24T23:14:54.000Z"
+last_updated: "2026-03-24T23:21:38.000Z"
 progress:
   total_phases: 12
   completed_phases: 12
-  total_plans: 35
-  completed_plans: 35
+  total_plans: 37
+  completed_plans: 37
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 13 of 15 (Portal Shell)
-Plan: 1 of 2 in current phase (13-01 complete)
-Status: Phase 13 in progress
-Last activity: 2026-03-25 -- Completed 13-01 (portal login and password reset)
+Plan: 2 of 2 in current phase (13-02 complete)
+Status: Phase 13 complete
+Last activity: 2026-03-25 -- Completed 13-02 (portal dashboard layout and page)
 
-Progress: [*********] 97%
+Progress: [**********] 100%
 
 ## Performance Metrics
 
@@ -40,8 +40,8 @@ Progress: [*********] 97%
 - Phases: 5/5 complete (phases 6-10)
 
 **v3.0:**
-- Total plans completed: 6
-- Phases: 2/5 complete (phases 11-15)
+- Total plans completed: 7
+- Phases: 3/5 complete (phases 11-15)
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
@@ -51,6 +51,7 @@ Progress: [*********] 97%
 | Phase 12 P02 | 3min | 2 tasks | 5 files |
 | 12-03 | 3min | 2 | 4 |
 | 13-01 | 3min | 2 | 8 |
+| 13-02 | 4min | 2 | 11 |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Relevant to current work:
 - [13-01]: (auth) route group for layout boundary -- separates public portal pages from auth-guarded dashboard
 - [13-01]: isPublicPortalPage array in proxy.ts -- extensible pattern replacing single isLoginPage boolean
 - [13-01]: Authenticated users NOT redirected from /portal/reset -- needed for password update after email callback
+- [13-02]: (dashboard) route group separates auth-guarded pages from (auth) public pages
+- [13-02]: Layout fetches claim/project for chrome only; page re-fetches for content (simpler than context provider)
+- [13-02]: Preview URL uses /preview/{project.id} until Phase 14 subdomain provisioning
 
 ### Pending Todos
 
@@ -103,5 +107,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 13-01-PLAN.md (portal login and password reset)
+Stopped at: Completed 13-02-PLAN.md (portal dashboard layout and page)
 Resume file: None

@@ -29,12 +29,12 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 ### Client Portal
 
-- [ ] **PORTAL-01**: Authenticated portal dashboard at /portal with full-width iframe preview of client's live site
-- [ ] **PORTAL-02**: Live site URL display (subdomain or custom domain) with copy-to-clipboard button
-- [ ] **PORTAL-03**: Plan badge and site status indicator (Active, Customization Pending, Update in Progress)
+- [x] **PORTAL-01**: Authenticated portal dashboard at /portal with full-width iframe preview of client's live site
+- [x] **PORTAL-02**: Live site URL display (subdomain or custom domain) with copy-to-clipboard button
+- [x] **PORTAL-03**: Plan badge and site status indicator (Active, Customization Pending, Update in Progress)
 - [ ] **PORTAL-04**: Change request submission via single textarea ("Tell us what you'd like to change") with optional file upload
 - [ ] **PORTAL-05**: Request history showing all submitted requests with status badges (pending, in-progress, completed)
-- [ ] **PORTAL-06**: Mobile-responsive portal layout (works at 375px, mobile-first)
+- [x] **PORTAL-06**: Mobile-responsive portal layout (works at 375px, mobile-first)
 - [ ] **PORTAL-07**: $49 agent support payment via Razorpay — creates agent_call request in client_requests table
 
 ### Domain Management
@@ -127,12 +127,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-04 | Phase 13 | Complete |
 | AUTH-05 | Phase 11 | Complete |
 | AUTH-06 | Phase 12 | Complete |
-| PORTAL-01 | Phase 13 | Pending |
-| PORTAL-02 | Phase 13 | Pending |
-| PORTAL-03 | Phase 13 | Pending |
+| PORTAL-01 | Phase 13 | Complete |
+| PORTAL-02 | Phase 13 | Complete |
+| PORTAL-03 | Phase 13 | Complete |
 | PORTAL-04 | Phase 14 | Pending |
 | PORTAL-05 | Phase 14 | Pending |
-| PORTAL-06 | Phase 13 | Pending |
+| PORTAL-06 | Phase 13 | Complete |
 | PORTAL-07 | Phase 14 | Pending |
 | DOMAIN-01 | Phase 14 | Pending |
 | DOMAIN-02 | Phase 14 | Pending |

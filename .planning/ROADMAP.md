@@ -102,7 +102,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 11: Auth Infrastructure & Schema** - proxy.ts session middleware, Supabase Auth clients, DB migrations for client_requests table and new columns (completed 2026-03-24)
 - [x] **Phase 12: Payment-First Claim Flow** - Harden webhook with dual verification, simplify claim page, USD-only pricing, test/live mode, server-side account creation (completed 2026-03-24)
-- [ ] **Phase 13: Portal Shell** - Auth-guarded portal layout, dashboard with site preview, login page, password setup on confirmation
+- [x] **Phase 13: Portal Shell** - Auth-guarded portal layout, dashboard with site preview, login page, password setup on confirmation (completed 2026-03-24)
 - [ ] **Phase 14: Portal Features** - Change requests, domain management, logo upload with AI bg removal, booking setup, agent support payment
 - [ ] **Phase 15: Admin Fulfillment** - Purchased clients list, customer requests queue, status transitions, redeploy button
 
@@ -209,7 +209,7 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 10. Claim Analytics | v2.0 | 2/2 | Complete | 2026-03-18 |
 | 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
-| 13. Portal Shell | 1/2 | In Progress|  | - |
+| 13. Portal Shell | 2/2 | Complete   | 2026-03-24 | - |
 | 14. Portal Features | v3.0 | 0/4 | Not started | - |
 | 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
 
