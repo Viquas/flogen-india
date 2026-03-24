@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { razorpay } from '@/lib/razorpay'
-import { calculateTotalPaise, calculateUpsellTotal, type Currency, type PlanType } from '@/lib/claim-pricing'
+import { calculateTotalCents, UPSELL_PRICING, type PlanType } from '@/lib/claim-pricing'
 import { z } from 'zod'
 
 const expiredFormSchema = z.object({
@@ -34,7 +34,7 @@ export async function submitExpiredClaimRequest(formData: FormData) {
             status: 'expired',
             plan: 'standard',
             amount_paise: 0,
-            currency: 'INR',
+            currency: 'USD',
             client_name: parsed.data.name,
             client_email: parsed.data.email,
             client_phone: parsed.data.phone,
@@ -58,17 +58,11 @@ export async function submitExpiredClaimRequest(formData: FormData) {
 const orderSchema = z.object({
     projectId: z.string().uuid(),
     plan: z.enum(['standard', 'pro']),
-    currency: z.enum(['INR', 'USD']),
-    domainOption: z.enum(['subdomain', 'existing', 'new']),
-    domainValue: z.string().max(253).optional().default(''),
 })
 
 export async function createRazorpayOrder(input: {
     projectId: string
     plan: PlanType
-    currency: Currency
-    domainOption: string
-    domainValue: string
 }): Promise<
     | { success: true; orderId: string; claimId: string }
     | { success: false; error: string }
@@ -79,8 +73,8 @@ export async function createRazorpayOrder(input: {
         return { success: false, error: 'Invalid input. Please check your selections.' }
     }
 
-    const { projectId, plan, currency, domainOption, domainValue } = parsed.data
-    const amountPaise = calculateTotalPaise(plan, currency)
+    const { projectId, plan } = parsed.data
+    const amountCents = calculateTotalCents(plan)
 
     try {
         const supabase = createAdminClient()
@@ -113,10 +107,8 @@ export async function createRazorpayOrder(input: {
                 .from('claims')
                 .update({
                     plan,
-                    currency,
-                    amount_paise: amountPaise,
-                    domain_option: domainOption,
-                    domain_value: domainValue,
+                    currency: 'USD',
+                    amount_paise: amountCents,
                 })
                 .eq('id', claimId)
         } else {
@@ -126,11 +118,9 @@ export async function createRazorpayOrder(input: {
                 .insert({
                     project_id: projectId,
                     plan,
-                    currency,
-                    amount_paise: amountPaise,
+                    currency: 'USD',
+                    amount_paise: amountCents,
                     status: 'pending',
-                    domain_option: domainOption,
-                    domain_value: domainValue,
                     expires_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
                 })
                 .select('id')
@@ -146,8 +136,8 @@ export async function createRazorpayOrder(input: {
 
         // Create Razorpay order
         const order = await razorpay.orders.create({
-            amount: amountPaise,
-            currency,
+            amount: amountCents,
+            currency: 'USD',
             receipt: claimId,
             notes: {
                 claimId,
@@ -210,7 +200,7 @@ export async function submitCustomization(
     const parsed = customizationSchema.safeParse(input)
 
     if (!parsed.success) {
-        const firstError = parsed.error.issues?.[0]?.message || parsed.error.message || 'Invalid input'
+        const firstError = parsed.error.issues?.[0]?.message || 'Invalid input'
         return { success: false, error: firstError }
     }
 
@@ -317,12 +307,10 @@ export async function submitCustomization(
 
 const upsellOrderSchema = z.object({
     claimId: z.string().uuid(),
-    currency: z.enum(['INR', 'USD']),
 })
 
 export async function createUpsellOrder(input: {
     claimId: string
-    currency: Currency
 }): Promise<
     | { success: true; orderId: string }
     | { success: false; error: string }
@@ -333,7 +321,7 @@ export async function createUpsellOrder(input: {
         return { success: false, error: 'Invalid input.' }
     }
 
-    const { claimId, currency } = parsed.data
+    const { claimId } = parsed.data
 
     try {
         const supabase = createAdminClient()
@@ -350,12 +338,12 @@ export async function createUpsellOrder(input: {
             return { success: false, error: 'Claim not found or not eligible for upsell.' }
         }
 
-        const amount = calculateUpsellTotal(currency)
+        const amount = UPSELL_PRICING.strategy_call
 
         // Create Razorpay order for upsell
         const order = await razorpay.orders.create({
             amount,
-            currency,
+            currency: 'USD',
             receipt: `upsell-${claimId}`,
             notes: {
                 claimId,

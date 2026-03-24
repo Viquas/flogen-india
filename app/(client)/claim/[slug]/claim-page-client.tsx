@@ -47,9 +47,6 @@ export default function ClaimPageClient({
             const result = await createRazorpayOrder({
                 projectId,
                 plan: selectedPlan,
-                currency: 'USD',
-                domainOption,
-                domainValue,
             })
 
             if (!result.success) {

@@ -1,11 +1,12 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { razorpayWebhookSecret } from '@/lib/razorpay'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
 export async function POST(request: Request) {
-    // 1. Read raw body FIRST — never call request.json() before this
+    // 1. Read raw body FIRST -- never call request.json() before this
     const rawBody = await request.text()
 
     // 2. Extract signature
@@ -16,14 +17,13 @@ export async function POST(request: Request) {
     }
 
     // 3. Verify HMAC-SHA256 with timing-safe comparison
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
-    if (!webhookSecret) {
-        console.error('[Webhook] RAZORPAY_WEBHOOK_SECRET not configured')
+    if (!razorpayWebhookSecret) {
+        console.error('[Webhook] Webhook secret not configured for current mode')
         return new Response('Server configuration error', { status: 500 })
     }
 
     const expected = crypto
-        .createHmac('sha256', webhookSecret)
+        .createHmac('sha256', razorpayWebhookSecret)
         .update(rawBody)
         .digest('hex')
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     // 5. Extract event ID for deduplication
     const eventId = request.headers.get('x-razorpay-event-id')
 
-    // 6. Idempotency check — skip if already processed
+    // 6. Idempotency check -- skip if already processed
     if (eventId) {
         const supabase = createAdminClient()
         const { data: existing } = await supabase
@@ -70,16 +70,23 @@ export async function POST(request: Request) {
         return Response.json({ status: 'invalid_payload' }, { status: 400 })
     }
 
-    if (eventType === 'payment.captured') {
-        await handlePaymentCaptured(payment, eventId)
-    } else if (eventType === 'payment.failed') {
-        await handlePaymentFailed(payment, eventId)
-    } else {
-        console.log('[Webhook] Ignoring event type:', eventType)
-        return Response.json({ status: 'ignored' })
+    // 8. Handle event with error wrapping -- return 500 on failure so Razorpay retries
+    try {
+        if (eventType === 'payment.captured') {
+            await handlePaymentCaptured(payment, eventId)
+        } else if (eventType === 'payment.failed') {
+            await handlePaymentFailed(payment, eventId)
+        } else {
+            console.log('[Webhook] Ignoring event type:', eventType)
+            return Response.json({ status: 'ignored' })
+        }
+    } catch (error) {
+        console.error('[Webhook] Handler failed:', error)
+        console.error('[Webhook] Payment object for manual reconciliation:', JSON.stringify(payment))
+        return Response.json({ status: 'handler_error' }, { status: 500 })
     }
 
-    // 8. Return success
+    // 9. Return success
     return Response.json({ status: 'ok' })
 }
 
@@ -106,8 +113,7 @@ async function handlePaymentCaptured(
         .single()
 
     if (!claim) {
-        console.error('[Webhook] No claim found for order:', payment.order_id)
-        return
+        throw new Error('No claim found for order: ' + payment.order_id)
     }
 
     // Status guard: only transition from order_created -> paid
@@ -116,7 +122,11 @@ async function handlePaymentCaptured(
         return
     }
 
-    // Update claim to paid
+    // Derive client_name from payment notes or email prefix
+    const clientName = payment.notes?.name
+        || (payment.email ? payment.email.split('@')[0] : null)
+
+    // Update claim to paid with contact info from Razorpay payload
     await supabase
         .from('claims')
         .update({
@@ -124,6 +134,7 @@ async function handlePaymentCaptured(
             razorpay_payment_id: payment.id,
             paid_at: new Date().toISOString(),
             webhook_event_id: eventId,
+            client_name: clientName || null,
             client_email: payment.email || null,
             client_phone: payment.contact || null,
         })
@@ -150,8 +161,7 @@ async function handlePaymentFailed(
         .single()
 
     if (!claim) {
-        console.error('[Webhook] No claim found for failed payment, order:', payment.order_id)
-        return
+        throw new Error('No claim found for failed payment, order: ' + payment.order_id)
     }
 
     // Only update if still in order_created state
