@@ -1,6 +1,8 @@
 "use server"
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { updateProjectWithCode } from '@/lib/ai/project-persistence'
+import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 
 // ---- Shared types ----
@@ -198,4 +200,140 @@ export async function getClientDetail(claimId: string): Promise<{
     }
 
     return { success: true, data: { client, requests } }
+}
+
+// ---- Plan 02: Editor Integration Actions ----
+
+export interface ProjectClaimResult {
+    isPurchased: boolean
+    claimId?: string
+    clientName?: string
+    businessName?: string
+    requests?: ClientRequestItem[]
+}
+
+export async function getProjectClaimAndRequests(
+    projectId: string
+): Promise<ProjectClaimResult> {
+    const supabase = createAdminClient()
+
+    // Check for a paid/customizing/completed claim on this project
+    const { data: claim } = await supabase
+        .from('claims')
+        .select('id, client_name, project_id')
+        .eq('project_id', projectId)
+        .in('status', ['paid', 'customizing', 'completed'])
+        .limit(1)
+        .single()
+
+    if (!claim) {
+        return { isPurchased: false }
+    }
+
+    // Fetch project for businessName
+    const { data: project } = await supabase
+        .from('projects')
+        .select('business_data')
+        .eq('id', projectId)
+        .single()
+
+    const bd = (project?.business_data ?? {}) as Record<string, unknown>
+    const businessName = (bd.businessName as string) ?? 'Unknown Business'
+
+    // Fetch all client_requests for this project
+    const { data: rawRequests } = await supabase
+        .from('client_requests')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false })
+
+    const requests: ClientRequestItem[] = (rawRequests ?? []).map(r => ({
+        id: r.id,
+        claimId: r.claim_id,
+        projectId: r.project_id,
+        authUserId: r.auth_user_id,
+        type: r.type,
+        status: r.status,
+        content: (r.content ?? {}) as ClientRequestItem['content'],
+        adminNotes: r.admin_notes,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+    }))
+
+    return {
+        isPurchased: true,
+        claimId: claim.id,
+        clientName: claim.client_name ?? undefined,
+        businessName,
+        requests,
+    }
+}
+
+export async function updateRequestStatus(
+    requestId: string,
+    newStatus: 'in_progress' | 'completed',
+    adminNotes?: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = createAdminClient()
+
+    const payload: Record<string, unknown> = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+    }
+
+    if (newStatus === 'completed' && adminNotes && adminNotes.trim().length > 0) {
+        payload.admin_notes = adminNotes
+    }
+
+    const { error } = await supabase
+        .from('client_requests')
+        .update(payload)
+        .eq('id', requestId)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/clients')
+    return { success: true }
+}
+
+export async function redeployProject(
+    projectId: string,
+    generatedCode: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = createAdminClient()
+
+    // Step 1: Save code, create revision snapshot, increment version
+    const saveResult = await updateProjectWithCode(projectId, generatedCode)
+    if (!saveResult.success) {
+        return { success: false, error: saveResult.error ?? 'Failed to save project code' }
+    }
+
+    // CRITICAL: updateProjectWithCode sets status to 'review' -- override to 'deployed'
+    const { error: statusError } = await supabase
+        .from('projects')
+        .update({ status: 'deployed', updated_at: new Date().toISOString() })
+        .eq('id', projectId)
+
+    if (statusError) {
+        return { success: false, error: statusError.message }
+    }
+
+    // Step 2: Auto-complete all in-progress requests for this project
+    await supabase
+        .from('client_requests')
+        .update({
+            status: 'completed',
+            admin_notes: 'Completed via redeploy',
+            updated_at: new Date().toISOString(),
+        })
+        .eq('project_id', projectId)
+        .eq('status', 'in_progress')
+
+    // Step 3: Revalidate paths
+    revalidatePath('/dashboard/clients')
+    revalidatePath('/editor')
+
+    return { success: true }
 }
