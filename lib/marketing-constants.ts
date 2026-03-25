@@ -155,6 +155,10 @@ const PRICING = {
   sectionTitle: "Simple, Transparent Pricing",
   sectionSubtitle:
     "One-time investment. No subscriptions, no surprise fees. Your site, fully owned by you.",
+  anchoring:
+    "Traditional web design agencies charge $3,000\u2013$10,000 and take 8\u201312 weeks. We eliminated the overhead \u2014 not the quality.",
+  guarantee: "30-Day Satisfaction Guarantee",
+  noHiddenFees: "No hidden fees. One-time payment. You own everything.",
   tiers: [
     {
       name: "Standard",
@@ -163,12 +167,12 @@ const PRICING = {
       description:
         "Perfect for small businesses that need a clean, professional online presence.",
       features: [
-        "Custom 5-page website",
+        "Custom website built from your business data",
         "Mobile-responsive design",
-        "Contact form integration",
-        "Basic SEO setup",
-        "48-hour delivery",
-        "1 round of revisions",
+        "SEO-ready structure",
+        "Free subdomain (yourname.somosite.com)",
+        "Custom domain setup support",
+        "30-day satisfaction guarantee",
       ],
       cta: "Get Started",
       ctaHref: "#contact",
@@ -181,13 +185,11 @@ const PRICING = {
       description:
         "For businesses ready to stand out with a premium, conversion-optimized site.",
       features: [
-        "Custom 10-page website",
-        "Advanced animations & interactions",
-        "SEO optimization & analytics",
-        "Blog or portfolio section",
-        "Priority 48-hour delivery",
-        "3 rounds of revisions",
-        "90 days of free support",
+        "Everything in Standard",
+        "Online booking system integration",
+        "Priority delivery",
+        "Onboarding call with our team",
+        "Advanced customization support",
       ],
       cta: "Get Started",
       ctaHref: "#contact",
@@ -201,13 +203,9 @@ const PRICING = {
       description:
         "Enterprise-grade solutions for businesses with complex requirements.",
       features: [
-        "Unlimited pages",
-        "Custom functionality & integrations",
-        "E-commerce capabilities",
-        "Advanced SEO & performance",
-        "Dedicated project manager",
-        "Unlimited revisions",
-        "6 months of priority support",
+        "Enterprise-level websites",
+        "Custom integrations",
+        "Dedicated support",
       ],
       cta: "Contact Us",
       ctaHref: "#contact",
@@ -220,51 +218,52 @@ const FAQ = {
   sectionTitle: "Frequently Asked Questions",
   items: [
     {
-      question: "How fast can I get my website?",
+      question: "How is this different from Wix or Squarespace?",
       answer:
-        "Most websites are designed, built, and delivered within 48 hours of receiving your business details. Complex projects may take 3-5 business days.",
+        "Those are DIY tools where you build from templates. We research your business and build a custom site for you. The result looks like a $5,000 agency site, not a template.",
     },
     {
-      question: "What if I want changes after delivery?",
+      question: "What if I don\u2019t like the design?",
       answer:
-        "Standard plans include 1 round of revisions, Pro includes 3 rounds, and Premium includes unlimited revisions. Additional revision rounds are available at a flat fee.",
+        "Request changes before going live. We offer a 30-day satisfaction guarantee.",
     },
     {
-      question: "What is included in the price?",
+      question: "Do I own my website?",
       answer:
-        "Design, development, mobile optimization, basic SEO, contact form setup, and deployment. You receive a fully functional, live website ready to accept visitors.",
+        "Yes. 100% ownership. Your code, your domain, your content. No lock-in.",
     },
     {
-      question: "Do you offer refunds?",
+      question: "Are there recurring costs?",
       answer:
-        "If you are not satisfied with the initial design concept, we offer a full refund before development begins. Once development starts, we work with you until you are happy with the result.",
+        "It\u2019s a one-time purchase. The only recurring cost is domain registration (~$10\u201315/year) if you want a custom domain.",
     },
     {
-      question: "What technologies do you use?",
+      question: "How do you know about my business?",
       answer:
-        "We use modern web technologies including React, Next.js, and Tailwind CSS. Every site is custom-coded — never dragged and dropped from a generic builder.",
+        "We research using publicly available information \u2014 your services, location, reviews, and photos. Your website reflects your actual business, not generic content.",
     },
     {
-      question: "Do I need my own domain and hosting?",
+      question: "How long does it take?",
       answer:
-        "We can work with your existing domain or help you purchase one. Hosting is included for the first year with Pro and Premium plans, or we can deploy to your preferred provider.",
+        "Your preview is ready within a few days. Go live within 48 hours after approval.",
     },
     {
-      question: "Do you offer ongoing maintenance?",
+      question: "Can I upgrade later?",
       answer:
-        "Yes. We offer optional maintenance plans starting at $49/month that cover content updates, security patches, performance monitoring, and priority support.",
+        "Yes. Standard clients can upgrade to Pro anytime. We apply the difference.",
     },
   ],
 } as const
 
 const FINAL_CTA = {
-  headline: "Ready to Stand Out Online?",
+  headline: "Ready to see what we can build for your business?",
   subheadline:
-    "Join 50+ businesses that transformed their online presence. Your new website is 48 hours away.",
-  primaryCta: "Start Your Project",
-  secondaryCta: "View Portfolio",
+    "Join hundreds of businesses that went from invisible to professional in days.",
+  primaryCta: "Get Your Website",
+  secondaryCta: "Or contact us to discuss your project",
   primaryCtaHref: "#contact",
-  secondaryCtaHref: "#portfolio",
+  secondaryCtaHref: "#contact",
+  scarcity: "We take on a limited number of clients each month.",
 } as const
 
 const CONTACT = {
