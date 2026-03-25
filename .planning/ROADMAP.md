@@ -210,7 +210,7 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
-| 14. Portal Features | v3.0 | 0/4 | Not started | - |
+| 14. Portal Features | 1/4 | In Progress|  | - |
 | 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
 
 ---

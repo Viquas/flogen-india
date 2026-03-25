@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
-status: unknown
-last_updated: "2026-03-24T23:27:12.476Z"
+status: in-progress
+last_updated: "2026-03-25T00:39:03Z"
 progress:
-  total_phases: 13
+  total_phases: 15
   completed_phases: 13
-  total_plans: 36
-  completed_plans: 36
+  total_plans: 40
+  completed_plans: 37
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-**Current focus:** Phase 13 - Portal Shell
+**Current focus:** Phase 14 - Portal Features
 
 ## Current Position
 
-Phase: 13 of 15 (Portal Shell)
-Plan: 2 of 2 in current phase (13-02 complete)
-Status: Phase 13 complete
-Last activity: 2026-03-25 -- Completed 13-02 (portal dashboard layout and page)
+Phase: 14 of 15 (Portal Features)
+Plan: 1 of 4 in current phase (14-01 complete)
+Status: Phase 14 in progress
+Last activity: 2026-03-25 -- Completed 14-01 (customize page with change requests)
 
-Progress: [**********] 100%
+Progress: [*********-] 92%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [**********] 100%
 | 12-03 | 3min | 2 | 4 |
 | 13-01 | 3min | 2 | 8 |
 | 13-02 | 4min | 2 | 11 |
+| 14-01 | 4min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -91,6 +92,10 @@ Relevant to current work:
 - [13-02]: (dashboard) route group separates auth-guarded pages from (auth) public pages
 - [13-02]: Layout fetches claim/project for chrome only; page re-fetches for content (simpler than context provider)
 - [13-02]: Preview URL uses /preview/{project.id} until Phase 14 subdomain provisioning
+- [14-01]: FormData (not JSON) for POST /api/portal/requests to support file uploads alongside text
+- [14-01]: Magic bytes validation includes PDF (0x25504446) in addition to images
+- [14-01]: Admin client for storage uploads to bypass RLS/CORS
+- [14-01]: Optimistic UI prepend on submit rather than refetch
 
 ### Pending Todos
 
@@ -107,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 13-02-PLAN.md (portal dashboard layout and page)
+Stopped at: Completed 14-01-PLAN.md (customize page with change requests)
 Resume file: None

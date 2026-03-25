@@ -32,8 +32,8 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 - [x] **PORTAL-01**: Authenticated portal dashboard at /portal with full-width iframe preview of client's live site
 - [x] **PORTAL-02**: Live site URL display (subdomain or custom domain) with copy-to-clipboard button
 - [x] **PORTAL-03**: Plan badge and site status indicator (Active, Customization Pending, Update in Progress)
-- [ ] **PORTAL-04**: Change request submission via single textarea ("Tell us what you'd like to change") with optional file upload
-- [ ] **PORTAL-05**: Request history showing all submitted requests with status badges (pending, in-progress, completed)
+- [x] **PORTAL-04**: Change request submission via single textarea ("Tell us what you'd like to change") with optional file upload
+- [x] **PORTAL-05**: Request history showing all submitted requests with status badges (pending, in-progress, completed)
 - [x] **PORTAL-06**: Mobile-responsive portal layout (works at 375px, mobile-first)
 - [ ] **PORTAL-07**: $49 agent support payment via Razorpay — creates agent_call request in client_requests table
 
@@ -51,7 +51,7 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 - [ ] **LOGO-01**: Logo upload in portal with drag-and-drop (PNG/JPEG, max 5MB)
 - [ ] **LOGO-02**: AI background removal via Gemini Vision — detects non-transparent background, prompts user, processes with before/after preview
 - [ ] **LOGO-03**: Client approves or reverts background removal result before saving
-- [ ] **LOGO-04**: Cal.com booking setup field visible only for Pro plan — text input for embed slug stored in projects.cal_embed_slug
+- [x] **LOGO-04**: Cal.com booking setup field visible only for Pro plan — text input for embed slug stored in projects.cal_embed_slug
 
 ### Admin Fulfillment
 
@@ -130,8 +130,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORTAL-01 | Phase 13 | Complete |
 | PORTAL-02 | Phase 13 | Complete |
 | PORTAL-03 | Phase 13 | Complete |
-| PORTAL-04 | Phase 14 | Pending |
-| PORTAL-05 | Phase 14 | Pending |
+| PORTAL-04 | Phase 14 | Complete |
+| PORTAL-05 | Phase 14 | Complete |
 | PORTAL-06 | Phase 13 | Complete |
 | PORTAL-07 | Phase 14 | Pending |
 | DOMAIN-01 | Phase 14 | Pending |
@@ -143,7 +143,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOGO-01 | Phase 14 | Pending |
 | LOGO-02 | Phase 14 | Pending |
 | LOGO-03 | Phase 14 | Pending |
-| LOGO-04 | Phase 14 | Pending |
+| LOGO-04 | Phase 14 | Complete |
 | ADMIN-01 | Phase 15 | Pending |
 | ADMIN-02 | Phase 15 | Pending |
 | ADMIN-03 | Phase 15 | Pending |
