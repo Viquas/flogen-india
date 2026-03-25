@@ -6,9 +6,9 @@ import { LayoutDashboard, Globe, Palette, HeadphonesIcon } from 'lucide-react'
 
 const NAV_ITEMS = [
     { href: '/portal', label: 'Dashboard', icon: LayoutDashboard, enabled: true },
-    { href: '/portal/domain', label: 'Domain', icon: Globe, enabled: false },
-    { href: '/portal/customize', label: 'Customize', icon: Palette, enabled: false },
-    { href: '/portal/support', label: 'Support', icon: HeadphonesIcon, enabled: false },
+    { href: '/portal/domain', label: 'Domain', icon: Globe, enabled: true },
+    { href: '/portal/customize', label: 'Customize', icon: Palette, enabled: true },
+    { href: '/portal/support', label: 'Support', icon: HeadphonesIcon, enabled: true },
 ]
 
 interface PortalNavProps {
