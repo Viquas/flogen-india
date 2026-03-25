@@ -215,8 +215,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md -- Update marketing constants to PRD copy, create HowItWorks and Benefits components
-- [ ] 18-02-PLAN.md -- Portfolio component with browser mockup cards and quality badges, wire all 3 into page.tsx
+- [x] 18-01-PLAN.md -- Update marketing constants to PRD copy, create HowItWorks and Benefits components
+- [x] 18-02-PLAN.md -- Portfolio component with browser mockup cards and quality badges, wire all 3 into page.tsx
 
 ### Phase 19: Pricing, FAQ & Final CTA
 **Goal**: The conversion sections are complete -- visitors can compare pricing tiers, get objections answered, and encounter a final urgency-driven call to action that pushes them to reach out
@@ -229,7 +229,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 19-01-PLAN.md -- Update constants to PRD copy, create Pricing (3-tier cards with Pro elevation), FAQ (hand-coded accordion), FinalCTA (urgency section), wire into page.tsx
+- [x] 19-01-PLAN.md -- Update constants to PRD copy, create Pricing (3-tier cards with Pro elevation), FAQ (hand-coded accordion), FinalCTA (urgency section), wire into page.tsx
 
 ### Phase 20: Contact, Footer, Legal & Polish
 **Goal**: The landing page is complete and production-ready -- visitors can submit a contact form that sends an email, browse legal pages, accept/decline cookies, and the page scores 95+ on PageSpeed with full SEO metadata
@@ -241,12 +241,11 @@ Plans:
   3. Privacy policy (/privacy), terms of service (/terms), and refund policy (/refund) pages exist within the (marketing) route group, each with properly formatted legal content and consistent dark styling
   4. A cookie consent banner appears on first visit with Accept/Decline buttons, persists the preference in localStorage, and does not reappear after a choice is made
   5. The landing page has meta title, description, OG image, and canonical URL set in the (marketing) layout, and scores 95+ on both mobile and desktop PageSpeed (optimized images, minimal JS, proper next/image usage)
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
-- [ ] 20-01: TBD
-- [ ] 20-02: TBD
-- [ ] 20-03: TBD
+- [ ] 20-01-PLAN.md -- Contact form component + /api/contact email route + footer component + constants update + page wiring
+- [ ] 20-02-PLAN.md -- 3 legal pages (privacy, terms, refund) + cookie consent banner + SEO metadata + layout update
 
 ## Progress
 
@@ -272,10 +271,10 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
 | 16. Marketing Foundation | v4.0 | 1/1 | Complete | 2026-03-25 |
 | 17. Hero, Trust & Problem | v4.0 | 2/2 | Complete | 2026-03-25 |
-| 18. How It Works, Portfolio & Benefits | 2/2 | Complete    | 2026-03-25 | - |
-| 19. Pricing, FAQ & Final CTA | 1/1 | Complete    | 2026-03-25 | - |
-| 20. Contact, Footer, Legal & Polish | v4.0 | 0/TBD | Not started | - |
+| 18. How It Works, Portfolio & Benefits | v4.0 | 2/2 | Complete | 2026-03-25 |
+| 19. Pricing, FAQ & Final CTA | v4.0 | 1/1 | Complete | 2026-03-25 |
+| 20. Contact, Footer, Legal & Polish | v4.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- Phase 19 planned (1 plan, wave 1)*
+*Last updated: 2026-03-26 -- Phase 20 planned (2 plans, wave 1)*
