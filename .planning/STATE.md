@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Somosite Agency Landing Page
-status: unknown
-last_updated: "2026-03-25T18:54:54.599Z"
+status: in-progress
+last_updated: "2026-03-25T19:14:55.000Z"
 progress:
-  total_phases: 16
+  total_phases: 17
   completed_phases: 16
-  total_plans: 43
-  completed_plans: 43
+  total_plans: 44
+  completed_plans: 44
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Convince cold email recipients that Somosite is a real, professional agency worth paying $499-$1,299 for a website. Satisfy Razorpay verification requirements.
-**Current focus:** Phase 16 - Marketing Foundation
+**Current focus:** Phase 17 - Hero, Trust & Problem
 
 ## Current Position
 
-Phase: 16 of 20 (Marketing Foundation)
-Plan: 1 of 1 complete
-Status: Phase 16 complete
-Last activity: 2026-03-25 -- completed 16-01 Marketing Foundation
+Phase: 17 of 20 (Hero, Trust & Problem)
+Plan: 1 of 2 complete
+Status: 17-01 complete, 17-02 pending
+Last activity: 2026-03-26 -- completed 17-01 Scroll Animation Hook + Sticky Navbar
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -35,11 +35,12 @@ Progress: [██░░░░░░░░] 20%
 **v2.0 Summary:** 5/5 phases, 14 plans
 **v3.0 Summary:** 5/5 phases, 13 plans
 
-**v4.0:** 1/5 phases, 1 plan completed
+**v4.0:** 1/5 phases, 2 plans completed
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 16-01 | Marketing Foundation | 5min | 3 | 4 |
+| 17-01 | Scroll Animation + Navbar | 5min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -57,6 +58,9 @@ Recent decisions affecting current work:
 - 16-01: Scoped design tokens via .marketing CSS class + inline style tag (not globals.css)
 - 16-01: Deleted app/page.tsx -- marketing route group claims / route
 - 16-01: Grain texture via inline SVG data URI in ::before pseudo-element
+- 17-01: Scroll animation uses CSS class toggle (animate-on-scroll + animate-in) via IntersectionObserver
+- 17-01: Navbar uses separate IntersectionObserver per section for active highlighting
+- 17-01: scroll-margin-top: 80px on all [id] elements for fixed nav offset
 
 ### Pending Todos
 
@@ -70,6 +74,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: Completed 16-01-PLAN.md -- ready for Phase 17
+Last session: 2026-03-26
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None

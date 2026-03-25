@@ -15,13 +15,13 @@
 
 - [x] **DLS-01**: Linear-inspired dark design: #0A0A0A primary bg, #FAFAFA alternating sections, #AF92FF accent
 - [x] **DLS-02**: Premium serif heading font (DM Serif Display or Outfit) + Inter 16px body via next/font
-- [ ] **DLS-03**: Scroll-triggered fade-in/slide-up animations via IntersectionObserver (CSS only, 600-800ms ease-out)
+- [x] **DLS-03**: Scroll-triggered fade-in/slide-up animations via IntersectionObserver (CSS only, 600-800ms ease-out)
 - [x] **DLS-04**: Hand-coded components -- no shadcn/ui, Radix, or new UI library imports
 - [x] **DLS-05**: All marketing copy centralized in lib/marketing-constants.ts
 
 ### Page Sections
 
-- [ ] **PAGE-01**: Navigation bar -- sticky, transparent-to-solid on scroll, smooth anchor links, mobile hamburger
+- [x] **PAGE-01**: Navigation bar -- sticky, transparent-to-solid on scroll, smooth anchor links, mobile hamburger
 - [ ] **PAGE-02**: Hero section -- headline, subheadline, dual CTAs, browser mockup visual with float effect
 - [ ] **PAGE-03**: Trust bar -- 4 credibility signals with Lucide icons
 - [ ] **PAGE-04**: Problem section -- empathetic copy, centered, generous whitespace
@@ -78,10 +78,10 @@
 | ROUTE-03 | Phase 16 | Complete |
 | DLS-01 | Phase 16 | Complete |
 | DLS-02 | Phase 16 | Complete |
-| DLS-03 | Phase 17 | Pending |
+| DLS-03 | Phase 17 | Complete |
 | DLS-04 | Phase 16 | Complete |
 | DLS-05 | Phase 16 | Complete |
-| PAGE-01 | Phase 17 | Pending |
+| PAGE-01 | Phase 17 | Complete |
 | PAGE-02 | Phase 17 | Pending |
 | PAGE-03 | Phase 17 | Pending |
 | PAGE-04 | Phase 17 | Pending |
