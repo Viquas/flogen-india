@@ -1,7 +1,8 @@
+import Navbar from "@/components/marketing/navbar"
+import Hero from "@/components/marketing/hero"
+import TrustBar from "@/components/marketing/trust-bar"
+import Problem from "@/components/marketing/problem"
 import {
-  HERO,
-  TRUST_SIGNALS,
-  PROBLEM,
   HOW_IT_WORKS,
   PORTFOLIO,
   BENEFITS,
@@ -15,69 +16,15 @@ import {
 export default function MarketingPage() {
   return (
     <>
-      {/* Hero */}
-      <section id="hero" className="relative py-24 sm:py-32 lg:py-40">
-        <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-          <h1 className="text-[32px] sm:text-[48px] lg:text-[64px] leading-tight">
-            {HERO.headline}
-          </h1>
-          <p className="mt-6 text-lg sm:text-xl text-[var(--mkt-text-secondary)] max-w-2xl">
-            {HERO.subheadline}
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4">
-            <a
-              href={HERO.primaryCtaHref}
-              className="inline-flex items-center justify-center px-8 py-4 bg-[var(--mkt-accent)] text-white font-medium rounded-[var(--mkt-radius)] hover:opacity-90 transition-opacity w-full sm:w-auto"
-            >
-              {HERO.primaryCta}
-            </a>
-            <a
-              href={HERO.secondaryCtaHref}
-              className="inline-flex items-center justify-center px-8 py-4 border border-[var(--mkt-border)] text-white font-medium rounded-[var(--mkt-radius)] hover:bg-[var(--mkt-surface-hover)] transition-colors w-full sm:w-auto"
-            >
-              {HERO.secondaryCta}
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Signals */}
-      <section
-        id="trust"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)]"
-      >
-        <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {TRUST_SIGNALS.map((signal) => (
-              <div key={signal.label} className="text-center">
-                <p className="text-sm sm:text-base font-medium">
-                  {signal.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Problem */}
-      <section id="problem" className="py-16 sm:py-24">
-        <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8 max-w-3xl">
-          <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight">
-            {PROBLEM.headline}
-          </h2>
-          <p className="mt-6 text-lg text-[var(--mkt-text-secondary)] leading-relaxed">
-            {PROBLEM.body}
-          </p>
-          <p className="mt-6 text-xl font-medium text-[var(--mkt-accent)]">
-            {PROBLEM.emphasis}
-          </p>
-        </div>
-      </section>
+      <Navbar />
+      <Hero />
+      <TrustBar />
+      <Problem />
 
       {/* How It Works */}
       <section
         id="how-it-works"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)]"
+        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)] scroll-mt-20"
       >
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
@@ -101,7 +48,7 @@ export default function MarketingPage() {
       </section>
 
       {/* Portfolio */}
-      <section id="portfolio" className="py-16 sm:py-24">
+      <section id="portfolio" className="py-16 sm:py-24 scroll-mt-20">
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
             {PORTFOLIO.sectionTitle}
@@ -131,7 +78,7 @@ export default function MarketingPage() {
       {/* Benefits */}
       <section
         id="benefits"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)]"
+        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)] scroll-mt-20"
       >
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
@@ -149,7 +96,7 @@ export default function MarketingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-16 sm:py-24">
+      <section id="pricing" className="py-16 sm:py-24 scroll-mt-20">
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
             {PRICING.sectionTitle}
@@ -213,7 +160,7 @@ export default function MarketingPage() {
       {/* FAQ */}
       <section
         id="faq"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)]"
+        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)] scroll-mt-20"
       >
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8 max-w-3xl">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
@@ -231,7 +178,7 @@ export default function MarketingPage() {
       </section>
 
       {/* Final CTA */}
-      <section id="final-cta" className="py-24 sm:py-32">
+      <section id="final-cta" className="py-24 sm:py-32 scroll-mt-20">
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[56px] leading-tight">
             {FINAL_CTA.headline}
@@ -259,7 +206,7 @@ export default function MarketingPage() {
       {/* Contact */}
       <section
         id="contact"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)]"
+        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)] scroll-mt-20"
       >
         <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8 max-w-2xl text-center">
           <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { DM_Serif_Display, Inter } from "next/font/google"
+import { SCROLL_ANIMATION_STYLES } from "@/hooks/use-scroll-animation"
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -68,6 +69,12 @@ export default function MarketingLayout({
             .marketing h3 {
               font-family: var(--font-dm-serif);
             }
+
+            .marketing section {
+              scroll-margin-top: 80px;
+            }
+
+            ${SCROLL_ANIMATION_STYLES}
           `,
         }}
       />
