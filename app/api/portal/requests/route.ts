@@ -81,6 +81,9 @@ export async function GET() {
     }
 }
 
+const VALID_REQUEST_TYPES = ['logo_upload', 'text_change', 'domain_setup', 'agent_call', 'booking_setup'] as const
+type RequestType = typeof VALID_REQUEST_TYPES[number]
+
 // POST: Create a new change request with optional file attachments
 export async function POST(request: Request) {
     try {
@@ -108,6 +111,23 @@ export async function POST(request: Request) {
                 { error: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less` },
                 { status: 400 }
             )
+        }
+
+        // Optional type field (default: text_change)
+        const rawType = formData.get('type')
+        const requestType: RequestType = rawType && typeof rawType === 'string' && VALID_REQUEST_TYPES.includes(rawType as RequestType)
+            ? (rawType as RequestType)
+            : 'text_change'
+
+        // Optional metadata field (JSON string)
+        const rawMetadata = formData.get('metadata')
+        let parsedMetadata: Record<string, unknown> = {}
+        if (rawMetadata && typeof rawMetadata === 'string') {
+            try {
+                parsedMetadata = JSON.parse(rawMetadata)
+            } catch {
+                return NextResponse.json({ error: 'Invalid metadata JSON' }, { status: 400 })
+            }
         }
 
         // Extract files from FormData
@@ -186,11 +206,12 @@ export async function POST(request: Request) {
                 claim_id: claim.id,
                 project_id: claim.project_id,
                 auth_user_id: user.id,
-                type: 'text_change',
+                type: requestType,
                 status: 'pending',
                 content: {
                     description: description.trim(),
                     file_urls: fileUrls,
+                    ...parsedMetadata,
                 },
             })
             .select()

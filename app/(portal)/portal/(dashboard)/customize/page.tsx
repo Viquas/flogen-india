@@ -52,10 +52,18 @@ export default async function CustomizePage() {
         content: (r.content ?? { description: '' }) as { description: string; file_urls?: string[] },
     }))
 
+    // Find the most recent logo_upload request to get existing logo URL
+    const logoRequest = (requests ?? []).find((r) => r.type === 'logo_upload')
+    const logoContent = logoRequest?.content as { logo_url?: string } | null
+    const existingLogoUrl = logoContent?.logo_url ?? null
+
     return (
         <CustomizeClient
             claimId={claim.id}
+            projectId={claim.project_id}
+            userId={user.id}
             businessName={businessName}
+            existingLogoUrl={existingLogoUrl}
             requests={mappedRequests}
         />
     )

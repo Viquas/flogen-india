@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Send, Upload, X, MessageSquare, Loader2 } from 'lucide-react'
 import { RequestCard } from '@/components/portal/request-card'
+import { LogoUpload } from '@/components/portal/logo-upload'
 
 interface RequestContent {
     description: string
@@ -21,7 +22,10 @@ interface ClientRequest {
 
 interface CustomizeClientProps {
     claimId: string
+    projectId: string
+    userId: string
     businessName: string
+    existingLogoUrl: string | null
     requests: ClientRequest[]
 }
 
@@ -40,7 +44,7 @@ function validateFile(file: File): string | null {
     return null
 }
 
-export function CustomizeClient({ claimId: _claimId, businessName: _businessName, requests: initialRequests }: CustomizeClientProps) {
+export function CustomizeClient({ claimId, projectId, userId, businessName: _businessName, existingLogoUrl, requests: initialRequests }: CustomizeClientProps) {
     const [requests, setRequests] = useState<ClientRequest[]>(initialRequests)
     const [description, setDescription] = useState('')
     const [files, setFiles] = useState<File[]>([])
@@ -133,7 +137,13 @@ export function CustomizeClient({ claimId: _claimId, businessName: _businessName
 
     return (
         <div className="space-y-8">
-            {/* Logo upload section -- added in Plan 03 */}
+            {/* Logo upload section */}
+            <LogoUpload
+                claimId={claimId}
+                projectId={projectId}
+                authUserId={userId}
+                currentLogoUrl={existingLogoUrl}
+            />
 
             {/* Section A: Request a Change */}
             <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 md:p-6">
