@@ -153,8 +153,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 13-01-PLAN.md -- Portal login page with split layout, password reset flow, proxy.ts update for /portal/reset
-- [ ] 13-02-PLAN.md -- Auth-guarded portal layout and dashboard (preview iframe, URL card, plan badge, status indicator, responsive nav)
+- [x] 13-01-PLAN.md -- Portal login page with split layout, password reset flow, proxy.ts update for /portal/reset
+- [x] 13-02-PLAN.md -- Auth-guarded portal layout and dashboard (preview iframe, URL card, plan badge, status indicator, responsive nav)
 
 ### Phase 14: Portal Features
 **Goal**: Clients can manage their domain, upload a logo with AI background removal, submit change requests, set up booking (Pro), and pay for agent support -- all from the portal
@@ -166,13 +166,13 @@ Plans:
   3. A client can search for domain availability via Domainr, see external registrar links for available domains, and if their desired domain is unavailable, AI generates alternative suggestions that are batch-checked and only available options are shown
   4. A client can upload a logo (drag-and-drop, PNG/JPEG, max 5MB), Gemini Vision detects non-transparent backgrounds and offers removal with a before/after preview, and the client approves or reverts the result before saving
   5. Pro plan clients see a Cal.com booking setup field (embed slug input stored in `projects.cal_embed_slug`) that Standard clients do not see, and any client can pay $49 for agent support (domain setup or other assistance) via Razorpay
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 14-01: Change request form, portal requests API, request history page
-- [ ] 14-02: Domain management (subdomain auto-provision, DNS verification flow, Domainr search, AI suggestions)
-- [ ] 14-03: Logo upload with Gemini Vision background removal and approval flow
-- [ ] 14-04: Booking setup (Pro only) and $49 agent support payment
+- [ ] 14-01-PLAN.md -- Customize page with change request form, request history, portal requests API, nav enablement
+- [ ] 14-02-PLAN.md -- Domain page with 3-card grid, free subdomain, DNS verification, Domainr search, AI suggestions
+- [ ] 14-03-PLAN.md -- Logo upload with Gemini Vision green-screen background removal and approval flow
+- [ ] 14-04-PLAN.md -- Support page with $49 agent payment, webhook differentiation, floating help button
 
 ### Phase 15: Admin Fulfillment
 **Goal**: The operator can see all purchased clients, view and process their change requests, and redeploy updated sites -- completing the client-to-admin feedback loop
@@ -209,10 +209,10 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 10. Claim Analytics | v2.0 | 2/2 | Complete | 2026-03-18 |
 | 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
-| 13. Portal Shell | 2/2 | Complete    | 2026-03-24 | - |
+| 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 0/4 | Not started | - |
 | 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-25 -- Phase 13 plans finalized (2 plans, 2 waves)*
+*Last updated: 2026-03-25 -- Phase 14 plans finalized (4 plans, 2 waves)*
