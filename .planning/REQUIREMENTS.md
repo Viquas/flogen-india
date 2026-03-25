@@ -28,9 +28,9 @@
 - [x] **PAGE-05**: How It Works -- 3-step cards with icons, connecting lines, vertical timeline on mobile
 - [x] **PAGE-06**: Portfolio -- 6 demo site placeholder screenshots in browser mockup frames with "View Demo" links
 - [x] **PAGE-07**: Benefits -- outcome-focused differentiators, alternating left-right or 2-column grid
-- [ ] **PAGE-08**: Pricing -- 3-tier cards (Standard $499, Pro $1,299, Premium custom), Pro highlighted as "Most Popular"
-- [ ] **PAGE-09**: FAQ -- accordion with 7 objection-handling questions
-- [ ] **PAGE-10**: Final CTA -- dark background, urgency copy, primary + secondary CTAs
+- [x] **PAGE-08**: Pricing -- 3-tier cards (Standard $499, Pro $1,299, Premium custom), Pro highlighted as "Most Popular"
+- [x] **PAGE-09**: FAQ -- accordion with 7 objection-handling questions
+- [x] **PAGE-10**: Final CTA -- dark background, urgency copy, primary + secondary CTAs
 - [ ] **PAGE-11**: Contact form -- name, email, business name (optional), message; POST /api/contact sends email
 - [ ] **PAGE-12**: Footer -- 4 columns (Company, Product, Legal, Trust), payment badges, copyright
 
@@ -88,9 +88,9 @@
 | PAGE-05 | Phase 18 | Complete |
 | PAGE-06 | Phase 18 | Complete |
 | PAGE-07 | Phase 18 | Complete |
-| PAGE-08 | Phase 19 | Pending |
-| PAGE-09 | Phase 19 | Pending |
-| PAGE-10 | Phase 19 | Pending |
+| PAGE-08 | Phase 19 | Complete |
+| PAGE-09 | Phase 19 | Complete |
+| PAGE-10 | Phase 19 | Complete |
 | PAGE-11 | Phase 20 | Pending |
 | PAGE-12 | Phase 20 | Pending |
 | LEGAL-01 | Phase 20 | Pending |

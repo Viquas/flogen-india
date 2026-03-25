@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Somosite Agency Landing Page
-status: unknown
-last_updated: "2026-03-25T19:59:50.229Z"
+status: in-progress
+last_updated: "2026-03-25T20:15:22Z"
 progress:
-  total_phases: 18
-  completed_phases: 18
-  total_plans: 47
-  completed_plans: 47
+  total_phases: 20
+  completed_phases: 19
+  total_plans: 48
+  completed_plans: 48
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Convince cold email recipients that Somosite is a real, professional agency worth paying $499-$1,299 for a website. Satisfy Razorpay verification requirements.
-**Current focus:** Phase 18 - How It Works, Portfolio & Benefits
+**Current focus:** Phase 19 - Pricing, FAQ & Final CTA
 
 ## Current Position
 
-Phase: 18 of 20 (How It Works, Portfolio & Benefits)
-Plan: 2 of 2 complete
-Status: Phase 18 complete
-Last activity: 2026-03-26 -- completed 18-02 Portfolio & Page Wiring
+Phase: 19 of 20 (Pricing, FAQ & Final CTA)
+Plan: 1 of 1 complete
+Status: Phase 19 complete
+Last activity: 2026-03-26 -- completed 19-01 Pricing, FAQ & Final CTA
 
-Progress: [██████████] 100%
+Progress: [█████████░] 95%
 
 ## Performance Metrics
 
@@ -35,7 +35,7 @@ Progress: [██████████] 100%
 **v2.0 Summary:** 5/5 phases, 14 plans
 **v3.0 Summary:** 5/5 phases, 13 plans
 
-**v4.0:** 3/5 phases, 5 plans completed
+**v4.0:** 4/5 phases, 6 plans completed
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -44,6 +44,7 @@ Progress: [██████████] 100%
 | 17-02 | Hero, Trust Bar & Problem | 4min | 2 | 5 |
 | 18-01 | How It Works & Benefits | 4min | 2 | 3 |
 | 18-02 | Portfolio & Page Wiring | 3min | 2 | 2 |
+| 19-01 | Pricing, FAQ & Final CTA | 4min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -73,6 +74,10 @@ Recent decisions affecting current work:
 - 18-02: Inline browser mockup per card (not imported from hero) -- simpler version without mobile frame or float
 - 18-02: Industry-specific gradients via indexed CARD_GRADIENTS array keyed to item position
 - 18-02: Replaced 3 inline sections in page.tsx with HowItWorks, Portfolio, Benefits component imports
+- 19-01: Pro card uses order-first on mobile for mobile-first reordering
+- 19-01: FAQ accordion uses CSS max-height transition (not JS height measurement)
+- 19-01: Final CTA secondary button as text link, not bordered button
+- 19-01: Payment badges as text (Visa, Mastercard, UPI), not SVG icons
 
 ### Pending Todos
 
@@ -87,5 +92,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 18-02-PLAN.md
+Stopped at: Completed 19-01-PLAN.md
 Resume file: None
