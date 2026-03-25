@@ -226,10 +226,10 @@ Plans:
   1. The Pricing section shows 3 cards: Standard ($499), Pro ($1,299, highlighted as "Most Popular" with a visual badge), and Premium ("Custom pricing", "Contact Us" CTA) -- each card lists included features, and "Get Started" buttons scroll to the contact form
   2. The FAQ section is an accordion with 7 objection-handling questions (e.g., turnaround time, revision policy, what's included, refund policy) -- clicking a question expands/collapses the answer with smooth animation, only one open at a time
   3. The Final CTA section has a dark background contrasting with the page, urgency-focused copy, and primary + secondary CTA buttons that scroll to the contact form
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 19-01: TBD
+- [ ] 19-01-PLAN.md -- Update constants to PRD copy, create Pricing (3-tier cards with Pro elevation), FAQ (hand-coded accordion), FinalCTA (urgency section), wire into page.tsx
 
 ### Phase 20: Contact, Footer, Legal & Polish
 **Goal**: The landing page is complete and production-ready -- visitors can submit a contact form that sends an email, browse legal pages, accept/decline cookies, and the page scores 95+ on PageSpeed with full SEO metadata
@@ -241,7 +241,7 @@ Plans:
   3. Privacy policy (/privacy), terms of service (/terms), and refund policy (/refund) pages exist within the (marketing) route group, each with properly formatted legal content and consistent dark styling
   4. A cookie consent banner appears on first visit with Accept/Decline buttons, persists the preference in localStorage, and does not reappear after a choice is made
   5. The landing page has meta title, description, OG image, and canonical URL set in the (marketing) layout, and scores 95+ on both mobile and desktop PageSpeed (optimized images, minimal JS, proper next/image usage)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 20-01: TBD
@@ -273,9 +273,9 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 16. Marketing Foundation | v4.0 | 1/1 | Complete | 2026-03-25 |
 | 17. Hero, Trust & Problem | v4.0 | 2/2 | Complete | 2026-03-25 |
 | 18. How It Works, Portfolio & Benefits | 2/2 | Complete    | 2026-03-25 | - |
-| 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
+| 19. Pricing, FAQ & Final CTA | v4.0 | 0/1 | Planned | - |
 | 20. Contact, Footer, Legal & Polish | v4.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- Phase 18 planned (2 plans, waves 1-2)*
+*Last updated: 2026-03-26 -- Phase 19 planned (1 plan, wave 1)*
