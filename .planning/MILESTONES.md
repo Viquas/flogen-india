@@ -32,8 +32,13 @@
 
 ## v4.0 Somosite Agency Landing Page (In Progress)
 
-**Target:** TBD phases (16+), TBD plans
+**Target:** 5 phases (16-20), 28 requirements
 
-**Phase structure:** Pending roadmap creation
+**Phase structure:**
+- Phase 16: Marketing Foundation -- route group, layout, fonts, design tokens, constants, root route
+- Phase 17: Hero, Trust & Problem -- nav bar, hero, trust bar, problem section, scroll animations
+- Phase 18: How It Works, Portfolio & Benefits -- 3-step process, 6-site portfolio, differentiators
+- Phase 19: Pricing, FAQ & Final CTA -- pricing cards, accordion FAQ, urgency CTA
+- Phase 20: Contact, Footer, Legal & Polish -- contact form + API, footer, legal pages, cookies, SEO, PageSpeed
 
 ---

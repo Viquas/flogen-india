@@ -4,7 +4,8 @@
 
 - [x] **v1.0 Internal Generation Engine** - Phases 1-5 (shipped 2026-03-18)
 - [x] **v2.0 Client Claim Flow** - Phases 6-10 (shipped 2026-03-19)
-- [ ] **v3.0 Client Portal & Updated Funnel** - Phases 11-15 (in progress)
+- [x] **v3.0 Client Portal & Updated Funnel** - Phases 11-15 (shipped 2026-03-25)
+- [ ] **v4.0 Somosite Agency Landing Page** - Phases 16-20 (in progress)
 
 ## Phases
 
@@ -96,9 +97,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 </details>
 
-### v3.0 Client Portal & Updated Funnel
-
-**Milestone Goal:** Add Supabase Auth for client accounts, simplify the claim flow to payment-first (no pre-payment forms), build an authenticated client portal for domain management/customization/requests, and give the admin a fulfillment dashboard to process client work.
+<details>
+<summary>v3.0 Client Portal & Updated Funnel (Phases 11-15) -- SHIPPED 2026-03-25</summary>
 
 - [x] **Phase 11: Auth Infrastructure & Schema** - proxy.ts session middleware, Supabase Auth clients, DB migrations for client_requests table and new columns (completed 2026-03-24)
 - [x] **Phase 12: Payment-First Claim Flow** - Harden webhook with dual verification, simplify claim page, USD-only pricing, test/live mode, server-side account creation (completed 2026-03-24)
@@ -106,18 +106,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 14: Portal Features** - Change requests, domain management, logo upload with AI bg removal, booking setup, agent support payment (completed 2026-03-25)
 - [x] **Phase 15: Admin Fulfillment** - Purchased clients list, customer requests queue, status transitions, redeploy button (completed 2026-03-25)
 
-## Phase Details
-
 ### Phase 11: Auth Infrastructure & Schema
 **Goal**: The authentication layer and database schema required by all subsequent phases exist and are verified working -- proxy.ts protects portal routes without breaking webhooks, admin, or public pages
 **Depends on**: Phase 10 (v2.0 complete)
 **Requirements**: SCHEMA-01, SCHEMA-02, SCHEMA-03, AUTH-03, AUTH-05
-**Success Criteria** (what must be TRUE):
-  1. The `client_requests` table exists in Supabase with columns (id, claim_id, project_id, auth_user_id, type, status, content JSONB, created_at, updated_at), RLS enabled, and policies scoped to auth_user_id
-  2. The `claims` table has a nullable `auth_user_id` UUID column with foreign key to `auth.users`, and the `projects` table has a nullable `cal_embed_slug` TEXT column
-  3. `proxy.ts` at the project root refreshes Supabase auth session cookies and redirects unauthenticated requests from `/portal/*` to the login page -- visiting `/portal/` without a session redirects to `/portal/login`
-  4. The Razorpay webhook at `/api/webhooks/razorpay` still returns 200 after proxy.ts is added (body is not consumed by middleware), the admin dashboard loads without auth prompts, and public claim pages load without redirects
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 11-01: DB migrations (client_requests table, claims.auth_user_id, projects.cal_embed_slug) and TypeScript types
@@ -127,14 +120,7 @@ Plans:
 **Goal**: The claim page is simplified to payment-first with a confirmation step before Razorpay checkout -- the webhook updates claim status and contact info, dual verification eliminates the race condition, and the confirmation page creates Supabase Auth accounts when clients set their password
 **Depends on**: Phase 11
 **Requirements**: FUNNEL-01, FUNNEL-02, FUNNEL-03, FUNNEL-04, FUNNEL-05, FUNNEL-06, FUNNEL-07, FUNNEL-08, AUTH-01, AUTH-06
-**Success Criteria** (what must be TRUE):
-  1. The claim page at `/claim/{slug}` shows the site preview, pricing cards ($499 Standard, $1,299 Pro, Premium "Contact Us"), and a "Get Started" button per plan -- no domain selection section, no pre-payment contact forms, no INR pricing or currency toggle
-  2. Clicking "Get Started" shows a confirmation step (plan + price + "Confirm & Pay" button), then opens the Razorpay checkout modal -- `createRazorpayOrder()` creates a claim with only project_id, plan, and amount
-  3. The webhook handler updates the claim to 'paid' and populates client_name, client_email, client_phone from the Razorpay payload -- the webhook does NOT create auth accounts
-  4. The confirmation page uses dual verification (checks DB for webhook result, falls back to Razorpay Orders API) to resolve the race condition -- payment is confirmed within seconds
-  5. After payment verification, the confirmation page prominently presents a password setup form with pre-filled read-only email -- setting the password creates a Supabase Auth account via `auth.admin.createUser()` and auto-logs the client in with redirect to /portal
-  6. Setting `RAZORPAY_MODE=test` in env switches to test API keys, and all payment pages display a visible "Test Mode" banner
-**Plans**: 3 plans
+**Plans**: 3/3 complete
 
 Plans:
 - [x] 12-01-PLAN.md -- Backend hardening: USD-only pricing, Razorpay test/live mode, webhook error handling, dual verification endpoint, simplified server action
@@ -145,12 +131,7 @@ Plans:
 **Goal**: Paying clients can log in to an authenticated portal at `/portal` and see their site preview, live URL, and plan details -- the minimum viable portal proves the auth flow end-to-end
 **Depends on**: Phase 12
 **Requirements**: AUTH-02, AUTH-04, PORTAL-01, PORTAL-02, PORTAL-03, PORTAL-06
-**Success Criteria** (what must be TRUE):
-  1. The confirmation page presents a password field where first-time clients set their portal password -- submitting it creates their auth session and the account is linked to their claim and project
-  2. Returning clients can log in at `/portal/login` with email and password and are redirected to `/portal`
-  3. The portal dashboard at `/portal` displays a full-width iframe preview of the client's generated site, their live URL (subdomain or custom domain) with a copy-to-clipboard button, a plan badge (Standard/Pro), and a site status indicator (Active, Customization Pending, Update in Progress)
-  4. The portal layout is mobile-responsive and works at 375px width -- navigation, preview, and all information cards are usable on a phone screen
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 13-01-PLAN.md -- Portal login page with split layout, password reset flow, proxy.ts update for /portal/reset
@@ -160,13 +141,7 @@ Plans:
 **Goal**: Clients can manage their domain, upload a logo with AI background removal, submit change requests, set up booking (Pro), and pay for agent support -- all from the portal
 **Depends on**: Phase 13
 **Requirements**: PORTAL-04, PORTAL-05, PORTAL-07, DOMAIN-01, DOMAIN-02, DOMAIN-03, DOMAIN-04, DOMAIN-05, DOMAIN-06, LOGO-01, LOGO-02, LOGO-03, LOGO-04
-**Success Criteria** (what must be TRUE):
-  1. A client can type a change request into a single textarea, optionally attach a file, submit it, and see it appear in their request history with a "pending" status badge -- subsequent requests also appear in chronological order with status badges (pending, in-progress, completed)
-  2. On payment, a free subdomain ({business-slug}.flogen.com) is auto-provisioned and displayed in the portal -- the client can also enter an existing domain, receive a TXT record to add at their registrar, and the portal polls DNS until verification succeeds (with step-by-step instructions and status display)
-  3. A client can search for domain availability via Domainr, see external registrar links for available domains, and if their desired domain is unavailable, AI generates alternative suggestions that are batch-checked and only available options are shown
-  4. A client can upload a logo (drag-and-drop, PNG/JPEG, max 5MB), Gemini Vision detects non-transparent backgrounds and offers removal with a before/after preview, and the client approves or reverts the result before saving
-  5. Pro plan clients see a Cal.com booking setup field (embed slug input stored in `projects.cal_embed_slug`) that Standard clients do not see, and any client can pay $49 for agent support (domain setup or other assistance) via Razorpay
-**Plans**: 4 plans
+**Plans**: 4/4 complete
 
 Plans:
 - [x] 14-01-PLAN.md -- Customize page with change request form, request history, portal requests API, nav enablement
@@ -178,21 +153,106 @@ Plans:
 **Goal**: The operator can see all purchased clients, view and process their change requests, and redeploy updated sites -- completing the client-to-admin feedback loop
 **Depends on**: Phase 14
 **Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04, ADMIN-05
-**Success Criteria** (what must be TRUE):
-  1. The admin dashboard has a "Clients" view listing all purchased clients with business name, client name/email, plan, purchase date, status badge, and open request count -- sortable and filterable
-  2. Clicking a client opens a detail page showing client summary and full request list, with an "Edit Site" button to open the editor
-  3. The editor shows a "Customer Requests" tab in the left panel for purchased projects, with status transitions (Start/Complete) and optional completion notes
-  4. The admin can click a "Redeploy" button (replaces Approve for purchased projects) that saves updated generated_code, increments the project version, creates a revision record in project_revisions, and marks in-progress requests as completed
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 15-01-PLAN.md -- Clients list page, client detail page, server actions, sidebar nav update
-- [ ] 15-02-PLAN.md -- Editor: Customer Requests tab, status transitions, Redeploy button replacing Approve
+- [x] 15-01-PLAN.md -- Clients list page, client detail page, server actions, sidebar nav update
+- [x] 15-02-PLAN.md -- Editor: Customer Requests tab, status transitions, Redeploy button replacing Approve
+
+</details>
+
+### v4.0 Somosite Agency Landing Page
+
+**Milestone Goal:** Build a premium agency landing page at somosite.com root that convinces cold email recipients the company is real, professional, and worth paying $499-$1,299 for a website. Also satisfies Razorpay verification requirements.
+
+- [ ] **Phase 16: Marketing Foundation** - (marketing) route group, layout, font loading, design tokens, marketing-constants.ts, root route change, responsive baseline
+- [ ] **Phase 17: Hero, Trust & Problem** - Navigation bar, hero section, trust bar, problem section, scroll-triggered animations
+- [ ] **Phase 18: How It Works, Portfolio & Benefits** - Three-step process, 6-site portfolio showcase, outcome-focused differentiators
+- [ ] **Phase 19: Pricing, FAQ & Final CTA** - Three-tier pricing cards, objection-handling accordion, urgency-driven final CTA
+- [ ] **Phase 20: Contact, Footer, Legal & Polish** - Contact form with email handler, footer, 3 legal pages, cookie consent, SEO metadata, PageSpeed optimization
+
+## Phase Details
+
+### Phase 16: Marketing Foundation
+**Goal**: The (marketing) route group exists with its own layout, dark design system tokens, premium font stack, and centralized copy -- visiting / renders the landing page shell instead of redirecting to /dashboard, and all existing routes continue working
+**Depends on**: Phase 15 (v3.0 complete)
+**Requirements**: ROUTE-01, ROUTE-02, ROUTE-03, DLS-01, DLS-02, DLS-04, DLS-05, INFRA-04
+**Success Criteria** (what must be TRUE):
+  1. Visiting `/` in a browser renders the marketing landing page layout (dark background, correct fonts) instead of redirecting to `/dashboard`
+  2. The (marketing) route group has its own layout.tsx that loads DM Serif Display (or chosen serif) for headings and Inter for body via next/font, completely isolated from admin (Geist) and client (Inter) font stacks
+  3. A `lib/marketing-constants.ts` file exports all marketing copy (headlines, subheadlines, CTAs, feature descriptions, FAQ content, pricing data) and every text string on the landing page reads from this file -- no hardcoded copy in components
+  4. Design tokens (#0A0A0A background, #AF92FF accent, grain texture, translucent layers) are applied to the layout and all marketing components use them consistently
+  5. All existing routes (/dashboard, /claim/*, /preview/*, /portal/*) load and function exactly as before -- no regressions from the root route change or new route group
+**Plans**: TBD
+
+Plans:
+- [ ] 16-01: TBD
+- [ ] 16-02: TBD
+
+### Phase 17: Hero, Trust & Problem
+**Goal**: The top three sections of the landing page are complete -- visitors see a sticky navigation bar, a compelling hero with browser mockup visual, trust signals, and an empathetic problem statement that creates emotional resonance
+**Depends on**: Phase 16
+**Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04, DLS-03
+**Success Criteria** (what must be TRUE):
+  1. The navigation bar is sticky at the top, transitions from transparent to solid background on scroll, contains smooth-scrolling anchor links to each section, and collapses into a hamburger menu on mobile (below 640px)
+  2. The hero section displays a headline, subheadline, two CTA buttons ("Get Started" scrolling to contact, "View Portfolio" scrolling to portfolio), and a browser mockup visual with a subtle float animation
+  3. The trust bar shows 4 credibility signals (e.g., sites delivered count, turnaround time, satisfaction rate, technologies used) with Lucide icons in a horizontal row
+  4. The problem section presents empathetic copy about the pain of having a bad website, centered with generous whitespace, readable and impactful
+  5. All sections animate in on scroll (fade-in/slide-up, 600-800ms ease-out) using IntersectionObserver with CSS transitions only -- no JavaScript animation libraries
+**Plans**: TBD
+
+Plans:
+- [ ] 17-01: TBD
+- [ ] 17-02: TBD
+
+### Phase 18: How It Works, Portfolio & Benefits
+**Goal**: The middle sections of the landing page demonstrate competence -- visitors see a clear 3-step process, browse 6 demo site screenshots in polished browser mockups, and read outcome-focused differentiators that build purchase intent
+**Depends on**: Phase 17
+**Requirements**: PAGE-05, PAGE-06, PAGE-07
+**Success Criteria** (what must be TRUE):
+  1. The How It Works section shows 3 numbered step cards (e.g., "Tell us about your business", "We design your site", "Go live") with icons and connecting visual lines between steps on desktop, collapsing to a vertical timeline on mobile
+  2. The Portfolio section displays 6 demo site screenshots inside browser mockup frames, each with a business name, category label, and a "View Demo" link -- placeholder images are used until real screenshots are generated in a future milestone
+  3. The Benefits section presents outcome-focused differentiators (e.g., "Launch in 48 hours", "Mobile-first design", "Built to convert") in an alternating left-right layout on desktop or a clean grid, with each benefit having an icon, heading, and short description
+**Plans**: TBD
+
+Plans:
+- [ ] 18-01: TBD
+- [ ] 18-02: TBD
+
+### Phase 19: Pricing, FAQ & Final CTA
+**Goal**: The conversion sections are complete -- visitors can compare pricing tiers, get objections answered, and encounter a final urgency-driven call to action that pushes them to reach out
+**Depends on**: Phase 18
+**Requirements**: PAGE-08, PAGE-09, PAGE-10
+**Success Criteria** (what must be TRUE):
+  1. The Pricing section shows 3 cards: Standard ($499), Pro ($1,299, highlighted as "Most Popular" with a visual badge), and Premium ("Custom pricing", "Contact Us" CTA) -- each card lists included features, and "Get Started" buttons scroll to the contact form
+  2. The FAQ section is an accordion with 7 objection-handling questions (e.g., turnaround time, revision policy, what's included, refund policy) -- clicking a question expands/collapses the answer with smooth animation, only one open at a time
+  3. The Final CTA section has a dark background contrasting with the page, urgency-focused copy, and primary + secondary CTA buttons that scroll to the contact form
+**Plans**: TBD
+
+Plans:
+- [ ] 19-01: TBD
+
+### Phase 20: Contact, Footer, Legal & Polish
+**Goal**: The landing page is complete and production-ready -- visitors can submit a contact form that sends an email, browse legal pages, accept/decline cookies, and the page scores 95+ on PageSpeed with full SEO metadata
+**Depends on**: Phase 19
+**Requirements**: PAGE-11, PAGE-12, LEGAL-01, LEGAL-02, LEGAL-03, LEGAL-04, INFRA-01, INFRA-02, INFRA-03
+**Success Criteria** (what must be TRUE):
+  1. The contact form collects name, email, business name (optional), and message -- submitting it sends an email to the operator via POST /api/contact using the existing nodemailer/Gmail SMTP setup, shows a success confirmation, and handles errors gracefully
+  2. The footer displays 4 columns (Company, Product, Legal, Trust) with relevant links, payment method badges, and copyright -- legal links navigate to /privacy, /terms, and /refund
+  3. Privacy policy (/privacy), terms of service (/terms), and refund policy (/refund) pages exist within the (marketing) route group, each with properly formatted legal content and consistent dark styling
+  4. A cookie consent banner appears on first visit with Accept/Decline buttons, persists the preference in localStorage, and does not reappear after a choice is made
+  5. The landing page has meta title, description, OG image, and canonical URL set in the (marketing) layout, and scores 95+ on both mobile and desktop PageSpeed (optimized images, minimal JS, proper next/image usage)
+**Plans**: TBD
+
+Plans:
+- [ ] 20-01: TBD
+- [ ] 20-02: TBD
+- [ ] 20-03: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
+Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -210,8 +270,13 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
-| 15. Admin Fulfillment | 2/2 | Complete    | 2026-03-25 | - |
+| 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
+| 16. Marketing Foundation | v4.0 | 0/TBD | Not started | - |
+| 17. Hero, Trust & Problem | v4.0 | 0/TBD | Not started | - |
+| 18. How It Works, Portfolio & Benefits | v4.0 | 0/TBD | Not started | - |
+| 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
+| 20. Contact, Footer, Legal & Polish | v4.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-25 -- Phase 15 plans finalized (2 plans, 2 waves)*
+*Last updated: 2026-03-25 -- v4.0 roadmap created (5 phases, 28 requirements mapped)*
