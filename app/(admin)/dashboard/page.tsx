@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { CalendarNav } from '@/components/dashboard/calendar-nav'
 import { ProjectGrid } from '@/components/dashboard/project-grid'
 import { StatsCards } from '@/components/dashboard/stats-cards'

@@ -1,6 +1,8 @@
 import { getClients } from './actions'
 import { ClientsList } from './clients-list'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ClientsPage() {
     const result = await getClients()
     const clients = result.success ? (result.data ?? []) : []
