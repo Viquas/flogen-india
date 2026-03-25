@@ -2,7 +2,7 @@ import { createAdminClient } from './admin'
 
 export async function isAdmin(userId: string): Promise<boolean> {
     const supabase = createAdminClient()
-    const { data } = await supabase
+    const { data } = await (supabase as any)
         .from('user_roles')
         .select('role')
         .eq('id', userId)

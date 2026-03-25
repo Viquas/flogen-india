@@ -69,7 +69,7 @@ export async function updateSession(request: NextRequest) {
   // Authenticated user on /login → check if admin and redirect
   if (isAdminLoginPage && user) {
     const admin = createAdminClientForMiddleware()
-    const { data } = await admin
+    const { data } = await (admin as any)
       .from('user_roles')
       .select('role')
       .eq('id', user.id)
