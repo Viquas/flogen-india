@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings } from "lucide-react"
+import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users } from "lucide-react"
 
 const sections = [
     {
@@ -20,6 +20,12 @@ const sections = [
             { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
             { title: "Funnel", href: "/dashboard/funnel", icon: TrendingDown },
             { title: "Config", href: "/dashboard/config", icon: Settings },
+        ],
+    },
+    {
+        label: "Fulfillment",
+        items: [
+            { title: "Clients", href: "/dashboard/clients", icon: Users },
         ],
     },
 ]
