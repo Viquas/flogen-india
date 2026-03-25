@@ -169,10 +169,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 14-01-PLAN.md -- Customize page with change request form, request history, portal requests API, nav enablement
-- [ ] 14-02-PLAN.md -- Domain page with 3-card grid, free subdomain, DNS verification, Domainr search, AI suggestions
-- [ ] 14-03-PLAN.md -- Logo upload with Gemini Vision green-screen background removal and approval flow
-- [ ] 14-04-PLAN.md -- Support page with $49 agent payment, webhook differentiation, floating help button
+- [x] 14-01-PLAN.md -- Customize page with change request form, request history, portal requests API, nav enablement
+- [x] 14-02-PLAN.md -- Domain page with 3-card grid, free subdomain, DNS verification, Domainr search, AI suggestions
+- [x] 14-03-PLAN.md -- Logo upload with Gemini Vision green-screen background removal and approval flow
+- [x] 14-04-PLAN.md -- Support page with $49 agent payment, webhook differentiation, floating help button
 
 ### Phase 15: Admin Fulfillment
 **Goal**: The operator can see all purchased clients, view and process their change requests, and redeploy updated sites -- completing the client-to-admin feedback loop
@@ -180,15 +180,14 @@ Plans:
 **Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04, ADMIN-05
 **Success Criteria** (what must be TRUE):
   1. The admin dashboard has a "Clients" view listing all purchased clients with business name, client name/email, plan, purchase date, status badge, and open request count -- sortable and filterable
-  2. Clicking a client in the list opens the editor with a "Customer Requests" tab in the sidebar showing all `client_requests` for that project with type, content preview, status badge, and timestamp
-  3. The admin can transition a request through pending -> in_progress -> completed from the Customer Requests tab, and each transition updates the timestamp
-  4. The admin can click a "Redeploy" button that saves updated generated_code, increments the project version, creates a revision record in project_revisions, and marks relevant in-progress requests as completed
-**Plans**: TBD
+  2. Clicking a client opens a detail page showing client summary and full request list, with an "Edit Site" button to open the editor
+  3. The editor shows a "Customer Requests" tab in the left panel for purchased projects, with status transitions (Start/Complete) and optional completion notes
+  4. The admin can click a "Redeploy" button (replaces Approve for purchased projects) that saves updated generated_code, increments the project version, creates a revision record in project_revisions, and marks in-progress requests as completed
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: Purchased clients list view with filters and request count badges
-- [ ] 15-02: Customer Requests tab in editor sidebar with status transitions
-- [ ] 15-03: Redeploy button (code save, version bump, revision record, request completion)
+- [ ] 15-01-PLAN.md -- Clients list page, client detail page, server actions, sidebar nav update
+- [ ] 15-02-PLAN.md -- Editor: Customer Requests tab, status transitions, Redeploy button replacing Approve
 
 ## Progress
 
@@ -210,9 +209,9 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 11. Auth Infrastructure & Schema | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
-| 14. Portal Features | 4/4 | Complete    | 2026-03-25 | - |
-| 15. Admin Fulfillment | v3.0 | 0/3 | Not started | - |
+| 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
+| 15. Admin Fulfillment | v3.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-25 -- Phase 14 plans finalized (4 plans, 2 waves)*
+*Last updated: 2026-03-25 -- Phase 15 plans finalized (2 plans, 2 waves)*
