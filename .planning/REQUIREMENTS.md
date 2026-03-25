@@ -1,163 +1,112 @@
-# Requirements: Flogen
+# Requirements: Flogen — Somosite Agency Landing Page
 
 **Defined:** 2026-03-25
-**Core Value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-
-## v3.0 Requirements
-
-Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap phases.
-
-### Payment-First Funnel
-
-- [x] **FUNNEL-01**: Claim page removes all pre-payment forms — only interaction is plan selection and "Get Started" button
-- [x] **FUNNEL-02**: Claim page removes domain selection section — domain management moves to portal post-payment
-- [x] **FUNNEL-03**: Pricing switches to USD-only ($499 Standard, $1,299 Pro) — remove INR pricing, GST calculations, and geo-detection
-- [x] **FUNNEL-04**: Razorpay test/live mode toggle via RAZORPAY_MODE env var with separate test/live key pairs
-- [x] **FUNNEL-05**: Claim page shows "Test Mode" badge when RAZORPAY_MODE=test
-- [x] **FUNNEL-06**: Premium plan card displays "Contact Us" CTA linking to WhatsApp/email (no payment flow)
-- [x] **FUNNEL-07**: Analytics tracks premium_contact event when user clicks Premium "Contact Us"
-- [x] **FUNNEL-08**: createRazorpayOrder() creates claim with only project_id, plan, amount — no contact info fields
-
-### Authentication
-
-- [x] **AUTH-01**: Supabase Auth account created server-side in webhook handler after payment.captured using auth.admin.createUser() with email from Razorpay payload
-- [ ] **AUTH-02**: Confirmation page presents password field for first-time portal access — creates account linked to claim and project
-- [x] **AUTH-03**: proxy.ts protects /portal/* routes with Supabase session validation — whitelist matcher to avoid breaking webhooks, admin, and public routes
-- [x] **AUTH-04**: Portal login page with email + password for returning clients
-- [x] **AUTH-05**: claims table gains auth_user_id column linking to Supabase Auth user
-- [x] **AUTH-06**: Dual payment verification on confirmation page — webhook push + Razorpay API pull to handle race condition
-
-### Client Portal
-
-- [x] **PORTAL-01**: Authenticated portal dashboard at /portal with full-width iframe preview of client's live site
-- [x] **PORTAL-02**: Live site URL display (subdomain or custom domain) with copy-to-clipboard button
-- [x] **PORTAL-03**: Plan badge and site status indicator (Active, Customization Pending, Update in Progress)
-- [x] **PORTAL-04**: Change request submission via single textarea ("Tell us what you'd like to change") with optional file upload
-- [x] **PORTAL-05**: Request history showing all submitted requests with status badges (pending, in-progress, completed)
-- [x] **PORTAL-06**: Mobile-responsive portal layout (works at 375px, mobile-first)
-- [x] **PORTAL-07**: $49 agent support payment via Razorpay — creates agent_call request in client_requests table
-
-### Domain Management
-
-- [x] **DOMAIN-01**: Free subdomain auto-provisioned on payment ({business-slug}.flogen.com) — displayed immediately in portal
-- [x] **DOMAIN-02**: Connect existing domain flow — client enters domain, receives TXT record to add, portal polls DNS for verification
-- [x] **DOMAIN-03**: DNS verification status display (pending, verifying, verified, failed) with step-by-step text instructions
-- [x] **DOMAIN-04**: Domain availability search via Domainr API — client types desired domain, sees availability + external registrar links
-- [x] **DOMAIN-05**: AI domain suggestions — if desired domain unavailable, Gemini generates 15-20 alternatives, batch-checked against Domainr, only available domains shown
-- [x] **DOMAIN-06**: $49 agent domain setup payment — creates domain_setup request in client_requests table
-
-### Logo & Customization
-
-- [x] **LOGO-01**: Logo upload in portal with drag-and-drop (PNG/JPEG, max 5MB)
-- [x] **LOGO-02**: AI background removal via Gemini Vision — detects non-transparent background, prompts user, processes with before/after preview
-- [x] **LOGO-03**: Client approves or reverts background removal result before saving
-- [x] **LOGO-04**: Cal.com booking setup field visible only for Pro plan — text input for embed slug stored in projects.cal_embed_slug
-
-### Admin Fulfillment
-
-- [x] **ADMIN-01**: Purchased clients list view in admin dashboard — shows business name, client name/email, plan, purchase date, status badge, open request count
-- [x] **ADMIN-02**: Customer Requests tab in editor sidebar — lists all client_requests for a project with type, content, status, timestamp
-- [x] **ADMIN-03**: Request status transitions: admin toggles pending → in_progress → completed from Customer Requests tab
-- [x] **ADMIN-04**: Redeploy button — updates generated_code, increments version, saves revision to project_revisions, marks relevant requests as completed
-- [x] **ADMIN-05**: client_requests table with id, claim_id, project_id, auth_user_id, type enum, status enum, content JSONB, created_at, updated_at
-
-### Schema Changes
-
-- [x] **SCHEMA-01**: New client_requests table with RLS policies scoped to auth_user_id
-- [x] **SCHEMA-02**: claims.auth_user_id column (nullable UUID, FK to auth.users)
-- [x] **SCHEMA-03**: projects.cal_embed_slug column (nullable TEXT)
+**Core Value:** Convince cold email recipients that Somosite is a real, professional agency worth paying $499-$1,299 for a website. Satisfy Razorpay verification requirements.
 
 ## v4.0 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+### Routing & Layout
 
-### Email & Notifications
-- **NOTIF-01**: Email notification to client on redeploy (via Instantly AI)
-- **NOTIF-02**: Admin notification on new customization request submission
-- **NOTIF-03**: WhatsApp magic link delivery for portal access
+- [ ] **ROUTE-01**: Root route (/) serves agency landing page instead of /dashboard redirect
+- [ ] **ROUTE-02**: (marketing) route group with isolated layout, own font stack, own styles
+- [ ] **ROUTE-03**: All existing routes (/dashboard, /claim/*, /preview/*, /portal/*) continue working unchanged
 
-### Advanced Portal
-- **ADV-01**: Real-time site preview updates via Supabase subscription when admin redeploys
-- **ADV-02**: Version history visible to client with change notes
-- **ADV-03**: Site health monitoring and uptime status
-- **ADV-04**: Multi-site dashboard for clients with multiple purchased sites
+### Design System
 
-### Advanced Domain
-- **ADVDOM-01**: Registrar-specific DNS instructions with deep links
-- **ADVDOM-02**: PDF DNS setup guides per registrar
+- [ ] **DLS-01**: Linear-inspired dark design: #0A0A0A primary bg, #FAFAFA alternating sections, #AF92FF accent
+- [ ] **DLS-02**: Premium serif heading font (DM Serif Display or Outfit) + Inter 16px body via next/font
+- [ ] **DLS-03**: Scroll-triggered fade-in/slide-up animations via IntersectionObserver (CSS only, 600-800ms ease-out)
+- [ ] **DLS-04**: Hand-coded components — no shadcn/ui, Radix, or new UI library imports
+- [ ] **DLS-05**: All marketing copy centralized in lib/marketing-constants.ts
 
-### Advanced Logo
-- **ADVLOGO-01**: Manual logo crop and reposition tool
-- **ADVLOGO-02**: Multi-logo support (horizontal, square, icon variants)
+### Page Sections
+
+- [ ] **PAGE-01**: Navigation bar — sticky, transparent-to-solid on scroll, smooth anchor links, mobile hamburger
+- [ ] **PAGE-02**: Hero section — headline, subheadline, dual CTAs, browser mockup visual with float effect
+- [ ] **PAGE-03**: Trust bar — 4 credibility signals with Lucide icons
+- [ ] **PAGE-04**: Problem section — empathetic copy, centered, generous whitespace
+- [ ] **PAGE-05**: How It Works — 3-step cards with icons, connecting lines, vertical timeline on mobile
+- [ ] **PAGE-06**: Portfolio — 6 demo site placeholder screenshots in browser mockup frames with "View Demo" links
+- [ ] **PAGE-07**: Benefits — outcome-focused differentiators, alternating left-right or 2-column grid
+- [ ] **PAGE-08**: Pricing — 3-tier cards (Standard $499, Pro $1,299, Premium custom), Pro highlighted as "Most Popular"
+- [ ] **PAGE-09**: FAQ — accordion with 7 objection-handling questions
+- [ ] **PAGE-10**: Final CTA — dark background, urgency copy, primary + secondary CTAs
+- [ ] **PAGE-11**: Contact form — name, email, business name (optional), message; POST /api/contact sends email
+- [ ] **PAGE-12**: Footer — 4 columns (Company, Product, Legal, Trust), payment badges, copyright
+
+### Legal & Compliance
+
+- [ ] **LEGAL-01**: Privacy policy page at /privacy with data collection, GDPR, cookies
+- [ ] **LEGAL-02**: Terms of service page at /terms
+- [ ] **LEGAL-03**: Refund policy page at /refund with 30-day guarantee terms
+- [ ] **LEGAL-04**: Cookie consent banner with Accept/Decline, localStorage persistence
+
+### Infrastructure
+
+- [ ] **INFRA-01**: POST /api/contact route using existing nodemailer/Gmail SMTP setup
+- [ ] **INFRA-02**: SEO metadata: title, description, OG image, canonical URL in (marketing) layout
+- [ ] **INFRA-03**: PageSpeed 95+ on mobile and desktop (optimized images, minimal JS, next/image)
+- [ ] **INFRA-04**: Mobile-first responsive at 375px, 640px, 1024px breakpoints
+
+## Future Requirements
+
+### Outreach Integration
+- **OUT-01**: Demo portfolio sites generated from Flogen (6 fictional businesses with real screenshots)
+- **OUT-02**: Mobile sticky CTA bar after scrolling past hero
+- **OUT-03**: Blog/resource center
+- **OUT-04**: Chat widget
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| INR pricing / multi-currency | USD-only for v3.0, simplifies testing surface |
-| Email notifications | Deferred to v4.0 — will use Instantly AI |
-| PDF DNS guides | Static text instructions instead — simpler to maintain |
-| Social login (Google/GitHub) | Target users are business owners, not developers |
-| Client-side code editor | Business owners can't edit code — textarea + admin fulfillment |
-| Drag-and-drop page builder | Massive engineering effort for static HTML sites |
-| Real-time chat with admin | WhatsApp handles real-time; change requests for async |
-| In-app domain purchase | Clients buy externally, connect via DNS |
-| Custom scheduling infrastructure | Cal.com handles all booking logic |
-| Auto-deployment to custom domains | Manual DNS + hosting for now |
-| RLS on existing tables | Application-level auth_user_id filtering — lower migration risk |
-| Duplicate email handling | Edge case — handle manually if it arises |
+| Payment processing on landing page | Payments happen on /claim/[slug], not agency page |
+| CMS for landing page content | Copy lives in marketing-constants.ts, operator edits code |
+| Dark mode toggle | Single dark theme, no toggle needed |
+| New UI component library (shadcn/Radix) | Hand-coded for minimal bundle; landing page is isolated |
+| Modifications to existing Flogen components | Landing page is isolated in (marketing) route group |
+| Real client testimonials | No clients at launch; demo portfolio serves as proof |
+| Animation libraries (GSAP/Framer Motion/Lottie) | CSS transitions only for performance |
+| Saying "AI" anywhere on the page | 44% negative brand perception — premium positioning collapses |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FUNNEL-01 | Phase 12 | Complete |
-| FUNNEL-02 | Phase 12 | Complete |
-| FUNNEL-03 | Phase 12 | Complete |
-| FUNNEL-04 | Phase 12 | Complete |
-| FUNNEL-05 | Phase 12 | Complete |
-| FUNNEL-06 | Phase 12 | Complete |
-| FUNNEL-07 | Phase 12 | Complete |
-| FUNNEL-08 | Phase 12 | Complete |
-| AUTH-01 | Phase 12 | Complete |
-| AUTH-02 | Phase 13 | Pending |
-| AUTH-03 | Phase 11 | Complete |
-| AUTH-04 | Phase 13 | Complete |
-| AUTH-05 | Phase 11 | Complete |
-| AUTH-06 | Phase 12 | Complete |
-| PORTAL-01 | Phase 13 | Complete |
-| PORTAL-02 | Phase 13 | Complete |
-| PORTAL-03 | Phase 13 | Complete |
-| PORTAL-04 | Phase 14 | Complete |
-| PORTAL-05 | Phase 14 | Complete |
-| PORTAL-06 | Phase 13 | Complete |
-| PORTAL-07 | Phase 14 | Complete |
-| DOMAIN-01 | Phase 14 | Complete |
-| DOMAIN-02 | Phase 14 | Complete |
-| DOMAIN-03 | Phase 14 | Complete |
-| DOMAIN-04 | Phase 14 | Complete |
-| DOMAIN-05 | Phase 14 | Complete |
-| DOMAIN-06 | Phase 14 | Complete |
-| LOGO-01 | Phase 14 | Complete |
-| LOGO-02 | Phase 14 | Complete |
-| LOGO-03 | Phase 14 | Complete |
-| LOGO-04 | Phase 14 | Complete |
-| ADMIN-01 | Phase 15 | Complete |
-| ADMIN-02 | Phase 15 | Complete |
-| ADMIN-03 | Phase 15 | Complete |
-| ADMIN-04 | Phase 15 | Complete |
-| ADMIN-05 | Phase 15 | Complete |
-| SCHEMA-01 | Phase 11 | Complete |
-| SCHEMA-02 | Phase 11 | Complete |
-| SCHEMA-03 | Phase 11 | Complete |
+| ROUTE-01 | TBD | Pending |
+| ROUTE-02 | TBD | Pending |
+| ROUTE-03 | TBD | Pending |
+| DLS-01 | TBD | Pending |
+| DLS-02 | TBD | Pending |
+| DLS-03 | TBD | Pending |
+| DLS-04 | TBD | Pending |
+| DLS-05 | TBD | Pending |
+| PAGE-01 | TBD | Pending |
+| PAGE-02 | TBD | Pending |
+| PAGE-03 | TBD | Pending |
+| PAGE-04 | TBD | Pending |
+| PAGE-05 | TBD | Pending |
+| PAGE-06 | TBD | Pending |
+| PAGE-07 | TBD | Pending |
+| PAGE-08 | TBD | Pending |
+| PAGE-09 | TBD | Pending |
+| PAGE-10 | TBD | Pending |
+| PAGE-11 | TBD | Pending |
+| PAGE-12 | TBD | Pending |
+| LEGAL-01 | TBD | Pending |
+| LEGAL-02 | TBD | Pending |
+| LEGAL-03 | TBD | Pending |
+| LEGAL-04 | TBD | Pending |
+| INFRA-01 | TBD | Pending |
+| INFRA-02 | TBD | Pending |
+| INFRA-03 | TBD | Pending |
+| INFRA-04 | TBD | Pending |
 
 **Coverage:**
-- v3.0 requirements: 39 total
-- Mapped to phases: 39
-- Unmapped: 0
+- v4.0 requirements: 26 total
+- Mapped to phases: 0
+- Unmapped: 26
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after roadmap creation*
+*Last updated: 2026-03-25 after initial definition*
