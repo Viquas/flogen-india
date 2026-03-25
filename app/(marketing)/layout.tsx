@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { DM_Serif_Display, Inter } from "next/font/google"
 import { SCROLL_ANIMATION_STYLES } from "@/hooks/use-scroll-animation"
+import CookieConsent from "@/components/marketing/cookie-consent"
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -16,9 +17,31 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Somosite — Custom Websites That Convert",
+  title: "Somosite — Custom Websites Built From Your Real Business Data",
   description:
-    "Precision-built websites for small businesses. Custom design, 48-hour delivery, mobile-first. Get a site that turns visitors into customers.",
+    "Professional websites for small businesses. Built from your actual business data — no templates, no stock content. Starting at $499. Ready in days.",
+  metadataBase: new URL("https://somosite.com"),
+  alternates: {
+    canonical: "https://somosite.com",
+  },
+  openGraph: {
+    title: "Somosite — Custom Websites Built From Your Real Business Data",
+    description:
+      "Professional websites for small businesses. Built from your actual business data — no templates, no stock content. Starting at $499. Ready in days.",
+    url: "https://somosite.com",
+    siteName: "Somosite",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Somosite — Custom Websites Built From Your Real Business Data",
+    description:
+      "Professional websites for small businesses. Built from your actual business data — no templates, no stock content. Starting at $499. Ready in days.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function MarketingLayout({
@@ -79,6 +102,7 @@ export default function MarketingLayout({
         }}
       />
       <main className="relative z-10">{children}</main>
+      <CookieConsent />
     </div>
   )
 }
