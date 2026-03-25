@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users } from "lucide-react"
+import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users, LogOut } from "lucide-react"
+import { logoutAdmin } from "@/app/login/login-actions"
 
 const sections = [
     {
@@ -67,6 +68,18 @@ export function SidebarNav() {
                     ))}
                 </div>
             ))}
+
+            <div className="mt-auto pt-4 border-t border-gray-100">
+                <form action={logoutAdmin}>
+                    <button
+                        type="submit"
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full"
+                    >
+                        <LogOut className="h-4 w-4 text-gray-400" />
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
         </nav>
     )
 }

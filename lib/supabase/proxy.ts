@@ -1,6 +1,15 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
+
+function createAdminClientForMiddleware() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -31,20 +40,43 @@ export async function updateSession(request: NextRequest) {
   // Refresh session -- getUser() validates with auth server (not getSession)
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isPortalRoute = request.nextUrl.pathname.startsWith('/portal')
-  const isPublicPortalPage = ['/portal/login', '/portal/reset'].includes(request.nextUrl.pathname)
+  const pathname = request.nextUrl.pathname
+
+  // ---- Portal route protection ----
+  const isPortalRoute = pathname.startsWith('/portal')
+  const isPublicPortalPage = ['/portal/login', '/portal/reset'].includes(pathname)
 
   // Redirect unauthenticated portal requests to login (except public pages)
   if (isPortalRoute && !isPublicPortalPage && !user) {
-    const loginUrl = new URL('/portal/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/portal/login', request.url))
   }
 
   // Redirect authenticated users away from login page to portal
   // (but NOT from /portal/reset -- they need that to set a new password after email callback)
-  if (request.nextUrl.pathname === '/portal/login' && user) {
-    const portalUrl = new URL('/portal', request.url)
-    return NextResponse.redirect(portalUrl)
+  if (pathname === '/portal/login' && user) {
+    return NextResponse.redirect(new URL('/portal', request.url))
+  }
+
+  // ---- Admin route protection ----
+  const isAdminRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/editor')
+  const isAdminLoginPage = pathname === '/login'
+
+  // Unauthenticated admin requests → redirect to /login
+  if (isAdminRoute && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Authenticated user on /login → check if admin and redirect
+  if (isAdminLoginPage && user) {
+    const admin = createAdminClientForMiddleware()
+    const { data } = await admin
+      .from('user_roles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (data?.role === 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   return response

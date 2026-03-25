@@ -10,5 +10,8 @@ export const config = {
   matcher: [
     '/portal/:path*',
     '/auth/callback',
+    '/dashboard/:path*',
+    '/editor/:path*',
+    '/login',
   ],
 }
