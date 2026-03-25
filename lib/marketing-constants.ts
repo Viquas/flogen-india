@@ -44,23 +44,23 @@ const HOW_IT_WORKS = {
   steps: [
     {
       number: 1,
-      title: "Tell Us About Your Business",
+      title: "We Research Your Business",
       description:
-        "Share your goals, brand, and what makes your business unique. We handle the rest — no technical knowledge required.",
-      icon: "MessageSquare",
+        "We study your services, reviews, location, and market. No questionnaires. No back-and-forth. We use real data about your actual business.",
+      icon: "Search",
     },
     {
       number: 2,
-      title: "We Design Your Site",
+      title: "We Build Your Custom Website",
       description:
-        "Our team crafts a custom, data-driven design tailored to your industry, audience, and conversion goals.",
+        "Our design system creates a professional, mobile-optimized website using your real business information. No templates. No stock content.",
       icon: "Palette",
     },
     {
       number: 3,
-      title: "Go Live in 48 Hours",
+      title: "You Review and Go Live",
       description:
-        "Review your site, request revisions, and launch. We handle hosting, speed optimization, and ongoing support.",
+        "Preview your website, request any changes, and go live on your own domain. Full support included. Ready in days, not weeks.",
       icon: "Rocket",
     },
   ],
@@ -72,41 +72,46 @@ const PORTFOLIO = {
     "Precision-crafted websites across industries — each one built to convert.",
   items: [
     {
-      name: "Saffron & Thyme",
-      category: "Restaurant",
+      name: "The Olive Table",
+      category: "Italian Restaurant",
       image: "/marketing/portfolio/restaurant.jpg",
-      demoUrl: "#",
-    },
-    {
-      name: "The Gentlemen's Cut",
-      category: "Barbershop",
-      image: "/marketing/portfolio/barbershop.jpg",
-      demoUrl: "#",
+      demoUrl: "/preview/the-olive-table",
     },
     {
       name: "Bright Smile Dental",
-      category: "Dental Clinic",
+      category: "Family Dental Practice",
       image: "/marketing/portfolio/dental.jpg",
-      demoUrl: "#",
+      demoUrl: "/preview/bright-smile-dental",
     },
     {
-      name: "Peak Performance Gym",
-      category: "Fitness Studio",
-      image: "/marketing/portfolio/fitness.jpg",
-      demoUrl: "#",
+      name: "Morrison & Associates",
+      category: "Personal Injury Law",
+      image: "/marketing/portfolio/law.jpg",
+      demoUrl: "/preview/morrison-associates",
     },
     {
-      name: "Keystone Realty",
-      category: "Real Estate",
-      image: "/marketing/portfolio/realestate.jpg",
-      demoUrl: "#",
+      name: "Elite Auto Detailing",
+      category: "Mobile Car Detailing",
+      image: "/marketing/portfolio/auto.jpg",
+      demoUrl: "/preview/elite-auto-detailing",
     },
     {
-      name: "Ember Roasters",
-      category: "Coffee Shop",
-      image: "/marketing/portfolio/coffeeshop.jpg",
-      demoUrl: "#",
+      name: "Flow Yoga Studio",
+      category: "Yoga & Wellness",
+      image: "/marketing/portfolio/yoga.jpg",
+      demoUrl: "/preview/flow-yoga-studio",
     },
+    {
+      name: "The Gentleman's Cut",
+      category: "Barbershop",
+      image: "/marketing/portfolio/barbershop.jpg",
+      demoUrl: "/preview/the-gentlemans-cut",
+    },
+  ],
+  qualityBadges: [
+    { icon: "Gauge", label: "PageSpeed 95+" },
+    { icon: "Smartphone", label: "Mobile Responsive" },
+    { icon: "Database", label: "Built From Real Data" },
   ],
 } as const
 
@@ -114,40 +119,34 @@ const BENEFITS = {
   sectionTitle: "Why Choose Somosite",
   items: [
     {
-      icon: "Zap",
-      title: "Launch in 48 Hours",
+      icon: "Database",
+      title: "Built From Your Real Data",
       description:
-        "No months of back-and-forth. Your professionally designed site goes live in two business days.",
+        "We research your business using the same data your customers see. The result feels like it was written by someone who knows your business.",
+    },
+    {
+      icon: "Fingerprint",
+      title: "Looks Custom, Not Cookie-Cutter",
+      description:
+        "Every website is designed individually. Different colors, layouts, and content. No two sites look the same.",
     },
     {
       icon: "Smartphone",
-      title: "Mobile-First Design",
+      title: "Mobile-First, SEO-Ready",
       description:
-        "Over 60% of your visitors are on mobile. Every site we build looks flawless on every screen size.",
+        "Every site loads fast, looks great on phones, and is structured for search engines.",
     },
     {
-      icon: "Target",
-      title: "Built to Convert",
+      icon: "Zap",
+      title: "Ready in Days, Not Weeks",
       description:
-        "Strategic layouts, clear calls-to-action, and data-driven design decisions that turn visitors into paying customers.",
+        "Traditional agencies take 4-8 weeks. We deliver a preview within days.",
     },
     {
-      icon: "Search",
-      title: "SEO-Ready From Day One",
+      icon: "ShieldCheck",
+      title: "You Own Everything",
       description:
-        "Proper meta tags, fast load times, semantic markup, and structured data so search engines find you quickly.",
-    },
-    {
-      icon: "Headphones",
-      title: "Dedicated Support",
-      description:
-        "Real people, not chatbots. Get responsive support from the same team that built your site.",
-    },
-    {
-      icon: "BadgeCheck",
-      title: "No Hidden Fees",
-      description:
-        "One transparent price. No surprise charges, no recurring fees unless you opt into a maintenance plan.",
+        "Your website, your domain, your content. No monthly subscriptions. One price, full ownership.",
     },
   ],
 } as const
