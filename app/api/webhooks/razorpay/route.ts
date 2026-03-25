@@ -90,6 +90,50 @@ export async function POST(request: Request) {
     return Response.json({ status: 'ok' })
 }
 
+async function handleAgentPayment(
+    payment: {
+        id: string
+        order_id: string
+        amount: number
+        notes: Record<string, string>
+    },
+    eventId: string | null
+) {
+    const supabase = createAdminClient()
+
+    const claimId = payment.notes?.claim_id
+    const projectId = payment.notes?.project_id
+    const authUserId = payment.notes?.auth_user_id
+    const paymentType = payment.notes?.type
+
+    if (!claimId || !projectId || !authUserId) {
+        throw new Error(
+            `Agent payment missing required notes: claim_id=${claimId}, project_id=${projectId}, auth_user_id=${authUserId}`
+        )
+    }
+
+    // Determine request type based on payment type
+    const requestType = paymentType === 'domain_setup' ? 'domain_setup' : 'agent_call'
+
+    await supabase
+        .from('client_requests')
+        .insert({
+            claim_id: claimId,
+            project_id: projectId,
+            auth_user_id: authUserId,
+            type: requestType,
+            status: 'pending',
+            content: {
+                description: 'Agent support requested via $49 payment',
+                payment_id: payment.id,
+                payment_amount: payment.amount,
+                payment_type: paymentType,
+            },
+        })
+
+    console.log('[Webhook] Agent payment processed:', payment.id, 'type:', paymentType)
+}
+
 async function handlePaymentCaptured(
     payment: {
         id: string
@@ -103,6 +147,13 @@ async function handlePaymentCaptured(
     },
     eventId: string | null
 ) {
+    // Check if this is an agent payment -- handle separately and return early
+    const paymentType = payment.notes?.type
+    if (paymentType === 'agent_support' || paymentType === 'domain_setup') {
+        await handleAgentPayment(payment, eventId)
+        return
+    }
+
     const supabase = createAdminClient()
 
     // Find claim by razorpay_order_id

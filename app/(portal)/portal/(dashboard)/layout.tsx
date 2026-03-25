@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PortalHeader } from '@/components/portal/portal-header'
 import { PortalNav } from '@/components/portal/portal-nav'
+import { NeedHelpButton } from '@/components/portal/need-help-button'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -63,6 +64,7 @@ export default async function PortalDashboardLayout({ children }: { children: Re
             <main className="pb-20 md:pb-0 px-4 md:px-6 max-w-5xl mx-auto pt-4">
                 {children}
             </main>
+            <NeedHelpButton />
         </div>
     )
 }
