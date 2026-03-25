@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { NAV } from "@/lib/marketing-constants"
 
 const SECTION_IDS = ["hero", "how-it-works", "portfolio", "pricing", "faq", "contact"]
@@ -10,7 +11,6 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState("")
   const [isOpen, setIsOpen] = useState(false)
 
-  // Scroll-based background transition
   useEffect(() => {
     let ticking = false
     const onScroll = () => {
@@ -26,7 +26,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // Active section highlighting via IntersectionObserver
   useEffect(() => {
     const observers: IntersectionObserver[] = []
     SECTION_IDS.forEach((id) => {
@@ -36,7 +35,7 @@ export default function Navbar() {
         ([entry]) => {
           if (entry.isIntersecting) setActiveSection(id)
         },
-        { threshold: 0.3, rootMargin: "-80px 0px -50% 0px" }
+        { threshold: 0.3, rootMargin: "-72px 0px -50% 0px" }
       )
       observer.observe(el)
       observers.push(observer)
@@ -44,7 +43,6 @@ export default function Navbar() {
     return () => observers.forEach((o) => o.disconnect())
   }, [])
 
-  // Close mobile menu on ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false)
@@ -53,7 +51,6 @@ export default function Navbar() {
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
-  // Lock body scroll when mobile menu open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : ""
     return () => { document.body.style.overflow = "" }
@@ -65,43 +62,44 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-[#0A0A0A]/95 backdrop-blur-[16px] shadow-[0_1px_0_rgba(255,255,255,0.06)]"
+          ? "bg-[#08090A]/80 backdrop-blur-xl border-b border-[var(--mkt-border)]"
           : "bg-transparent"
       }`}
     >
-      <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-        {/* Logo */}
-        <a href="#hero" className="text-xl font-bold text-white">
-          {NAV.logo}
+      <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+        <a href="#hero" className="flex items-center">
+          <Image
+            src="/sumosite-logo.svg"
+            alt="Somosite"
+            width={140}
+            height={24}
+            className="h-6 w-auto"
+            priority
+          />
         </a>
 
-        {/* Desktop nav links */}
-        <div className="hidden sm:flex items-center gap-8">
+        <div className="hidden sm:flex items-center gap-6">
           {NAV.links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className={`text-sm transition-colors duration-150 ${
+              className={`text-[13px] transition-colors duration-150 ${
                 isActive(link.href)
-                  ? "text-white"
-                  : "text-[var(--mkt-text-secondary)] hover:text-white"
+                  ? "text-[var(--mkt-text)]"
+                  : "text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)]"
               }`}
             >
               {link.label}
-              {isActive(link.href) && (
-                <span className="block h-px bg-[var(--mkt-accent)] mt-0.5" />
-              )}
             </a>
           ))}
           <a
             href={NAV.cta.href}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium bg-[var(--mkt-accent)] text-white rounded-[var(--mkt-radius)] hover:opacity-90 transition-opacity"
+            className="inline-flex items-center px-3.5 py-1.5 text-[13px] font-medium text-[var(--mkt-text)] bg-white/10 rounded-md hover:bg-white/15 transition-colors"
           >
             {NAV.cta.label}
           </a>
         </div>
 
-        {/* Mobile hamburger */}
         <button
           type="button"
           className="sm:hidden flex flex-col justify-center items-center w-8 h-8 gap-[6px]"
@@ -110,21 +108,20 @@ export default function Navbar() {
           aria-expanded={isOpen}
         >
           <span
-            className={`block w-5 h-[2px] bg-white transition-transform duration-300 origin-center ${
-              isOpen ? "rotate-45 translate-y-[4px]" : ""
+            className={`block w-5 h-[1.5px] bg-[var(--mkt-text-secondary)] transition-transform duration-300 origin-center ${
+              isOpen ? "rotate-45 translate-y-[3.75px]" : ""
             }`}
           />
           <span
-            className={`block w-5 h-[2px] bg-white transition-transform duration-300 origin-center ${
-              isOpen ? "-rotate-45 -translate-y-[4px]" : ""
+            className={`block w-5 h-[1.5px] bg-[var(--mkt-text-secondary)] transition-transform duration-300 origin-center ${
+              isOpen ? "-rotate-45 -translate-y-[3.75px]" : ""
             }`}
           />
         </button>
       </div>
 
-      {/* Mobile slide-out panel */}
       <div
-        className={`sm:hidden overflow-hidden transition-[max-height] duration-300 bg-[#0A0A0A] ${
+        className={`sm:hidden overflow-hidden transition-[max-height] duration-300 bg-[#08090A]/95 backdrop-blur-xl ${
           isOpen ? "max-h-[400px]" : "max-h-0"
         }`}
       >
@@ -134,10 +131,10 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
-              className={`block py-4 text-base transition-colors duration-150 border-b border-[var(--mkt-border)] ${
+              className={`block py-3.5 text-[15px] transition-colors duration-150 border-b border-[var(--mkt-border)] ${
                 isActive(link.href)
-                  ? "text-[var(--mkt-accent)]"
-                  : "text-[var(--mkt-text-secondary)] hover:text-white"
+                  ? "text-[var(--mkt-text)]"
+                  : "text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)]"
               }`}
             >
               {link.label}
@@ -146,7 +143,7 @@ export default function Navbar() {
           <a
             href={NAV.cta.href}
             onClick={() => setIsOpen(false)}
-            className="mt-4 inline-flex items-center justify-center px-6 py-3 text-base font-medium bg-[var(--mkt-accent)] text-white rounded-[var(--mkt-radius)] hover:opacity-90 transition-opacity"
+            className="mt-4 inline-flex items-center justify-center px-5 py-2.5 text-[14px] font-medium text-[var(--mkt-text)] bg-white/10 rounded-lg hover:bg-white/15 transition-colors"
           >
             {NAV.cta.label}
           </a>

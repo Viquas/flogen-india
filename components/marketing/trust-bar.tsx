@@ -13,16 +13,16 @@ export default function TrustBar() {
     <section
       id="trust"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      className="py-12 sm:py-16 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)]"
+      className="py-6 sm:py-8 border-y border-[var(--mkt-border)]"
     >
       <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
           {TRUST_SIGNALS.map((signal) => {
             const Icon = ICON_MAP[signal.icon as keyof typeof ICON_MAP]
             return (
-              <div key={signal.label} className="flex flex-col items-center text-center">
-                {Icon && <Icon className="w-6 h-6 text-[var(--mkt-accent)] mb-3" />}
-                <p className="text-sm sm:text-base font-medium">{signal.label}</p>
+              <div key={signal.label} className="flex flex-col items-center text-center gap-2">
+                {Icon && <Icon className="w-4 h-4 text-[var(--mkt-text-tertiary)]" />}
+                <p className="text-[13px] text-[var(--mkt-text-secondary)]">{signal.label}</p>
               </div>
             )
           })}

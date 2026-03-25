@@ -2,19 +2,61 @@
 
 import { PORTFOLIO } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { Gauge, Smartphone, Database } from "lucide-react"
+import Image from "next/image"
 
-const ICON_MAP = { Gauge, Smartphone, Database } as const
-
-/** Industry-specific gradient pairs for each portfolio card screenshot area. */
+/** Industry-specific subtle gradient pairs for each portfolio card. */
 const CARD_GRADIENTS = [
-  "from-[#1a0f0a] to-[#2a1a10]", // Restaurant — warm
-  "from-[#0a1a1a] to-[#102a2a]", // Dental — teal
-  "from-[#0f0a1a] to-[#1a102a]", // Law — deep purple
-  "from-[#1a1a0a] to-[#2a2a10]", // Auto — gold
-  "from-[#0a1a0f] to-[#102a1a]", // Yoga — green
-  "from-[#1a0a0a] to-[#2a1010]", // Barbershop — red
+  "from-[#1a120a]/80 via-[#0c0c14] to-[#0c0c14]", // Restaurant — warm amber
+  "from-[#0a1a1a]/80 via-[#0c0c14] to-[#0c0c14]", // Dental — teal
+  "from-[#0f0a1a]/80 via-[#0c0c14] to-[#0c0c14]", // Law — deep indigo
+  "from-[#1a1a0a]/80 via-[#0c0c14] to-[#0c0c14]", // Auto — gold
+  "from-[#0a1a0f]/80 via-[#0c0c14] to-[#0c0c14]", // Yoga — sage
+  "from-[#1a0a0f]/80 via-[#0c0c14] to-[#0c0c14]", // Barbershop — muted rose
 ] as const
+
+/** Map portfolio slugs to screenshot filenames (when available) */
+const SCREENSHOT_MAP: Record<string, string> = {
+  "/preview/the-olive-table": "/portfolio/the-olive-table.png",
+  "/preview/bright-smile-dental": "/portfolio/bright-smile-dental.png",
+  "/preview/morrison-associates": "/portfolio/morrison-associates.png",
+  "/preview/elite-auto-detailing": "/portfolio/elite-auto-detailing.png",
+  "/preview/flow-yoga-studio": "/portfolio/flow-yoga-studio.png",
+  "/preview/the-gentlemans-cut": "/portfolio/the-gentlemans-cut.png",
+}
+
+function PlaceholderSite({ gradient }: { gradient: string }) {
+  return (
+    <div className={`absolute inset-0 bg-gradient-to-b ${gradient} p-5 flex flex-col justify-between`}>
+      {/* Nav hint */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-white/6" />
+          <div className="h-1.5 w-16 rounded-full bg-white/8" />
+        </div>
+        <div className="flex gap-3">
+          <div className="h-1.5 w-8 rounded-full bg-white/5" />
+          <div className="h-1.5 w-8 rounded-full bg-white/5" />
+          <div className="h-6 w-14 rounded bg-white/6" />
+        </div>
+      </div>
+      {/* Hero hint */}
+      <div className="flex-1 flex items-center">
+        <div className="space-y-2.5 max-w-[60%]">
+          <div className="h-3 w-32 rounded-full bg-white/10" />
+          <div className="h-2 w-24 rounded-full bg-white/6" />
+          <div className="h-2 w-28 rounded-full bg-white/4" />
+          <div className="mt-3 h-7 w-20 rounded bg-white/8" />
+        </div>
+      </div>
+      {/* Cards hint */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="h-10 rounded bg-white/3" />
+        <div className="h-10 rounded bg-white/3" />
+        <div className="h-10 rounded bg-white/3" />
+      </div>
+    </div>
+  )
+}
 
 export default function Portfolio() {
   const sectionRef = useScrollAnimation()
@@ -23,98 +65,66 @@ export default function Portfolio() {
     <section
       id="portfolio"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      className="py-16 sm:py-24 scroll-mt-20"
+      className="py-24 sm:py-32 scroll-mt-20"
     >
       <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-        <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
+        <h2 className="leading-tight text-center" style={{ fontSize: "clamp(1.75rem, 2.5vw + 0.5rem, 3rem)" }}>
           {PORTFOLIO.sectionTitle}
         </h2>
-        <p className="mt-4 text-lg text-center text-[var(--mkt-text-secondary)] max-w-2xl mx-auto">
+        <p className="mt-4 text-[17px] text-center text-[var(--mkt-text-secondary)] max-w-2xl mx-auto">
           {PORTFOLIO.sectionSubtitle}
         </p>
 
-        {/* Portfolio grid */}
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PORTFOLIO.items.map((item, i) => (
-            <div
-              key={item.name}
-              className="group hover:translate-y-[-2px] transition-transform"
-            >
-              {/* Browser mockup frame */}
-              <div className="rounded-xl border border-[var(--mkt-border)] bg-[#111] overflow-hidden group-hover:border-[var(--mkt-accent)]/30 transition-colors">
-                {/* Title bar */}
-                <div className="h-7 flex items-center gap-1.5 px-3 bg-[#1A1A1A] border-b border-[var(--mkt-border)]">
-                  <span className="w-2 h-2 rounded-full bg-[#FF5F57]" />
-                  <span className="w-2 h-2 rounded-full bg-[#FFBD2E]" />
-                  <span className="w-2 h-2 rounded-full bg-[#28C840]" />
-                </div>
+        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PORTFOLIO.items.map((item, i) => {
+            const screenshot = SCREENSHOT_MAP[item.demoUrl]
+            const hasScreenshot = false // Set to true once screenshots are captured
+            return (
+              <a
+                key={item.name}
+                href={item.demoUrl}
+                className="group block"
+              >
+                {/* Browser frame */}
+                <div className="rounded-xl border border-[var(--mkt-border)] bg-[var(--mkt-bg-elevated)] overflow-hidden hover:border-[var(--mkt-border-strong)] transition-colors">
+                  {/* Minimal URL bar */}
+                  <div className="h-8 flex items-center justify-center bg-[var(--mkt-bg-elevated)] border-b border-[var(--mkt-border)]">
+                    <span className="text-[10px] text-[var(--mkt-text-tertiary)]">
+                      {item.name.toLowerCase().replace(/[^a-z0-9]+/g, "")}.com
+                    </span>
+                  </div>
 
-                {/* Screenshot area with industry gradient */}
-                <div
-                  className={`aspect-video bg-gradient-to-br ${CARD_GRADIENTS[i] ?? CARD_GRADIENTS[0]}`}
-                >
-                  {/* Placeholder website layout lines */}
-                  <div className="p-4 space-y-3 h-full flex flex-col justify-between">
-                    {/* Nav bar */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded bg-[var(--mkt-accent)]/20" />
-                      <div className="h-1.5 w-16 rounded bg-white/10" />
-                      <div className="ml-auto flex gap-2">
-                        <div className="h-1.5 w-8 rounded bg-white/8" />
-                        <div className="h-1.5 w-8 rounded bg-white/8" />
-                        <div className="h-1.5 w-8 rounded bg-white/8" />
-                      </div>
-                    </div>
-
-                    {/* Headline block */}
-                    <div className="flex-1 flex items-center px-2">
-                      <div className="space-y-2 max-w-[65%]">
-                        <div className="h-3 w-32 rounded bg-white/12" />
-                        <div className="h-2 w-24 rounded bg-white/8" />
-                        <div className="h-2 w-28 rounded bg-white/6" />
-                        <div className="mt-3 h-6 w-20 rounded-md bg-[var(--mkt-accent)]/30" />
-                      </div>
-                    </div>
-
-                    {/* Content blocks */}
-                    <div className="flex gap-2 px-2">
-                      <div className="h-10 flex-1 rounded-lg bg-white/4" />
-                      <div className="h-10 flex-1 rounded-lg bg-white/4" />
-                      <div className="h-10 flex-1 rounded-lg bg-white/4" />
-                    </div>
+                  {/* Screenshot / Placeholder */}
+                  <div className="aspect-video relative overflow-hidden">
+                    {hasScreenshot && screenshot ? (
+                      <Image
+                        src={screenshot}
+                        alt={`${item.name} website preview`}
+                        fill
+                        className="object-cover object-top group-hover:scale-[1.02] transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <PlaceholderSite gradient={CARD_GRADIENTS[i] ?? CARD_GRADIENTS[0]} />
+                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Card info */}
-              <div className="mt-4">
-                <h3 className="text-lg font-medium">{item.name}</h3>
-                <p className="text-sm text-[var(--mkt-text-tertiary)]">
-                  {item.category}
-                </p>
-                <a
-                  href={item.demoUrl}
-                  className="text-sm text-[var(--mkt-accent)] hover:underline mt-1 inline-block"
-                >
-                  View Demo
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Quality badges */}
-        <div className="mt-12 flex flex-wrap justify-center gap-6">
-          {PORTFOLIO.qualityBadges.map((badge) => {
-            const Icon = ICON_MAP[badge.icon as keyof typeof ICON_MAP]
-            return (
-              <span
-                key={badge.label}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--mkt-border)] text-sm text-[var(--mkt-text-secondary)]"
-              >
-                {Icon && <Icon className="w-4 h-4" />}
-                {badge.label}
-              </span>
+                {/* Card info */}
+                <div className="mt-3 flex items-baseline justify-between">
+                  <div>
+                    <h3 className="text-[15px] font-medium text-[var(--mkt-text)]">
+                      {item.name}
+                    </h3>
+                    <p className="text-[13px] text-[var(--mkt-text-tertiary)]">
+                      {item.category}
+                    </p>
+                  </div>
+                  <span className="text-[13px] text-[var(--mkt-text-tertiary)] group-hover:text-[var(--mkt-text-secondary)] transition-colors">
+                    View →
+                  </span>
+                </div>
+              </a>
             )
           })}
         </div>

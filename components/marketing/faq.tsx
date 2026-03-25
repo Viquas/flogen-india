@@ -13,14 +13,14 @@ export default function Faq() {
     <section
       id="faq"
       ref={sectionRef as React.RefObject<HTMLElement>}
-      className="py-16 sm:py-24 scroll-mt-20"
+      className="py-24 sm:py-32 scroll-mt-20"
     >
       <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-        <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
+        <h2 className="leading-tight text-center" style={{ fontSize: "clamp(1.75rem, 2.5vw + 0.5rem, 3rem)" }}>
           {FAQ.sectionTitle}
         </h2>
 
-        <div className="mt-12 max-w-3xl mx-auto">
+        <div className="mt-12 max-w-2xl mx-auto">
           {FAQ.items.map((item, i) => {
             const isOpen = openIndex === i
             return (
@@ -34,11 +34,11 @@ export default function Faq() {
                   className="flex w-full items-center justify-between py-5 text-left"
                   aria-expanded={isOpen}
                 >
-                  <span className="text-base sm:text-lg font-medium pr-4">
+                  <span className="text-[15px] font-medium text-[var(--mkt-text)] pr-4">
                     {item.question}
                   </span>
                   <ChevronDown
-                    className={`w-5 h-5 shrink-0 text-[var(--mkt-text-secondary)] transition-transform duration-300 ${
+                    className={`w-4 h-4 shrink-0 text-[var(--mkt-text-tertiary)] transition-transform duration-300 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -51,7 +51,7 @@ export default function Faq() {
                       : "max-h-0 opacity-0"
                   }`}
                 >
-                  <p className="pb-5 pt-1 text-[var(--mkt-text-secondary)] leading-relaxed">
+                  <p className="pb-5 pt-1 text-[14px] text-[var(--mkt-text-secondary)] leading-relaxed">
                     {item.answer}
                   </p>
                 </div>
