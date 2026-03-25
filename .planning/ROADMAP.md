@@ -186,7 +186,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 16-01-PLAN.md -- Marketing constants, (marketing) route group layout with dark design tokens + fonts, landing page shell, root route change
+- [x] 16-01-PLAN.md -- Marketing constants, (marketing) route group layout with dark design tokens + fonts, landing page shell, root route change
 
 ### Phase 17: Hero, Trust & Problem
 **Goal**: The top three sections of the landing page are complete -- visitors see a sticky navigation bar, a compelling hero with browser mockup visual, trust signals, and an empathetic problem statement that creates emotional resonance
@@ -194,15 +194,15 @@ Plans:
 **Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04, DLS-03
 **Success Criteria** (what must be TRUE):
   1. The navigation bar is sticky at the top, transitions from transparent to solid background on scroll, contains smooth-scrolling anchor links to each section, and collapses into a hamburger menu on mobile (below 640px)
-  2. The hero section displays a headline, subheadline, two CTA buttons ("Get Started" scrolling to contact, "View Portfolio" scrolling to portfolio), and a browser mockup visual with a subtle float animation
-  3. The trust bar shows 4 credibility signals (e.g., sites delivered count, turnaround time, satisfaction rate, technologies used) with Lucide icons in a horizontal row
+  2. The hero section displays a headline, subheadline, two CTA buttons ("See Our Work" scrolling to portfolio, "View Pricing" scrolling to pricing), and a browser mockup visual with a subtle float animation
+  3. The trust bar shows 4 credibility signals (sites delivered count, turnaround time, satisfaction rate, technologies used) with Lucide icons in a horizontal row
   4. The problem section presents empathetic copy about the pain of having a bad website, centered with generous whitespace, readable and impactful
   5. All sections animate in on scroll (fade-in/slide-up, 600-800ms ease-out) using IntersectionObserver with CSS transitions only -- no JavaScript animation libraries
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: TBD
-- [ ] 17-02: TBD
+- [ ] 17-01-PLAN.md -- Scroll animation hook, marketing constants update (nav/hero copy), sticky navbar with mobile hamburger
+- [ ] 17-02-PLAN.md -- Hero section with browser mockup + float animation, trust bar with Lucide icons, problem section, page.tsx wiring
 
 ### Phase 18: How It Works, Portfolio & Benefits
 **Goal**: The middle sections of the landing page demonstrate competence -- visitors see a clear 3-step process, browse 6 demo site screenshots in polished browser mockups, and read outcome-focused differentiators that build purchase intent
@@ -270,12 +270,12 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
-| 16. Marketing Foundation | 1/1 | Complete    | 2026-03-25 | - |
-| 17. Hero, Trust & Problem | v4.0 | 0/TBD | Not started | - |
+| 16. Marketing Foundation | v4.0 | 1/1 | Complete | 2026-03-25 |
+| 17. Hero, Trust & Problem | v4.0 | 0/2 | Not started | - |
 | 18. How It Works, Portfolio & Benefits | v4.0 | 0/TBD | Not started | - |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
 | 20. Contact, Footer, Legal & Polish | v4.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- Phase 16 planned (1 plan, wave 1)*
+*Last updated: 2026-03-26 -- Phase 17 planned (2 plans, waves 1-2)*
