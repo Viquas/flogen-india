@@ -201,8 +201,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md -- Scroll animation hook, marketing constants update (nav/hero copy), sticky navbar with mobile hamburger
-- [ ] 17-02-PLAN.md -- Hero section with browser mockup + float animation, trust bar with Lucide icons, problem section, page.tsx wiring
+- [x] 17-01-PLAN.md -- Scroll animation hook, marketing constants update (nav/hero copy), sticky navbar with mobile hamburger
+- [x] 17-02-PLAN.md -- Hero section with browser mockup + float animation, trust bar with Lucide icons, problem section, page.tsx wiring
 
 ### Phase 18: How It Works, Portfolio & Benefits
 **Goal**: The middle sections of the landing page demonstrate competence -- visitors see a clear 3-step process, browse 6 demo site screenshots in polished browser mockups, and read outcome-focused differentiators that build purchase intent
@@ -212,11 +212,11 @@ Plans:
   1. The How It Works section shows 3 numbered step cards (e.g., "Tell us about your business", "We design your site", "Go live") with icons and connecting visual lines between steps on desktop, collapsing to a vertical timeline on mobile
   2. The Portfolio section displays 6 demo site screenshots inside browser mockup frames, each with a business name, category label, and a "View Demo" link -- placeholder images are used until real screenshots are generated in a future milestone
   3. The Benefits section presents outcome-focused differentiators (e.g., "Launch in 48 hours", "Mobile-first design", "Built to convert") in an alternating left-right layout on desktop or a clean grid, with each benefit having an icon, heading, and short description
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 18-01: TBD
-- [ ] 18-02: TBD
+- [ ] 18-01-PLAN.md -- Update marketing constants to PRD copy, create HowItWorks and Benefits components
+- [ ] 18-02-PLAN.md -- Portfolio component with browser mockup cards and quality badges, wire all 3 into page.tsx
 
 ### Phase 19: Pricing, FAQ & Final CTA
 **Goal**: The conversion sections are complete -- visitors can compare pricing tiers, get objections answered, and encounter a final urgency-driven call to action that pushes them to reach out
@@ -271,11 +271,11 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
 | 16. Marketing Foundation | v4.0 | 1/1 | Complete | 2026-03-25 |
-| 17. Hero, Trust & Problem | 2/2 | Complete    | 2026-03-25 | - |
-| 18. How It Works, Portfolio & Benefits | v4.0 | 0/TBD | Not started | - |
+| 17. Hero, Trust & Problem | v4.0 | 2/2 | Complete | 2026-03-25 |
+| 18. How It Works, Portfolio & Benefits | v4.0 | 0/2 | Not started | - |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
 | 20. Contact, Footer, Legal & Polish | v4.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- Phase 17 planned (2 plans, waves 1-2)*
+*Last updated: 2026-03-26 -- Phase 18 planned (2 plans, waves 1-2)*
