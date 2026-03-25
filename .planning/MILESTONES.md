@@ -14,15 +14,26 @@
 
 ---
 
-## v3.0 Client Portal & Updated Funnel (In Progress)
+## v3.0 Client Portal & Updated Funnel (Shipped: 2026-03-25)
 
-**Target:** 5 phases (11-15), 14 plans
+**Phases completed:** 5 phases (11-15), 13 plans
 
-**Phase structure:**
-- Phase 11: Auth Infrastructure & Schema (2 plans)
-- Phase 12: Payment-First Claim Flow (3 plans)
-- Phase 13: Portal Shell (2 plans)
-- Phase 14: Portal Features (4 plans)
-- Phase 15: Admin Fulfillment (3 plans)
+**Key accomplishments:**
+- Supabase Auth with proxy.ts middleware for client portal
+- Payment-first Razorpay flow with test/live mode switching
+- Client portal: dashboard, site preview, domain management, logo upload
+- Gemini Vision AI background removal for logos
+- Change request system with file uploads
+- $49 agent support payment via Razorpay
+- Admin purchased clients view with request queue
+- Editor fulfillment integration with redeploy
+
+---
+
+## v4.0 Somosite Agency Landing Page (In Progress)
+
+**Target:** TBD phases (16+), TBD plans
+
+**Phase structure:** Pending roadmap creation
 
 ---

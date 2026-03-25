@@ -52,26 +52,53 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - ✓ Supabase Storage file uploads (logos, photos) via server-proxy — v2.0
 - ✓ Claim funnel analytics with 7 tracked events and admin dashboard — v2.0
 - ✓ Expired offer handling with re-request form — v2.0
+<!-- v3.0: Client Portal & Updated Funnel (completed 2026-03-25) -->
+- ✓ Payment-first Razorpay flow (no pre-payment forms, contact info from webhook) — v3.0
+- ✓ Razorpay test mode with test/live key switching — v3.0
+- ✓ Supabase Auth account creation on confirmation page (post-payment) — v3.0
+- ✓ Client portal with authenticated dashboard, site preview iframe, live URL — v3.0
+- ✓ Domain management: free subdomain, connect existing (DNS verification), buy new (Domainr + AI suggestions) — v3.0
+- ✓ Logo upload with Gemini Vision AI background removal — v3.0
+- ✓ Single textarea for all change requests (text, colors, images, anything) — v3.0
+- ✓ Booking setup for Pro plan clients (Cal.com embed slug) — v3.0
+- ✓ $49 agent support payment (domain setup, logo fixes, minor edits) — v3.0
+- ✓ client_requests table and CRUD API for all client submissions — v3.0
+- ✓ Admin purchased clients view with customer request queue — v3.0
+- ✓ Admin redeploy button (update code, increment version, save revision) — v3.0
+- ✓ USD-only pricing ($499 Standard, $1,299 Pro, Premium "Contact Us") — v3.0
+- ✓ Premium plan display-only card with "Contact Us" CTA — v3.0
+- ✓ Updated claim page (remove domain selection, remove pre-payment forms) — v3.0
+- ✓ Analytics: premium_contact event tracking — v3.0
 
 ### Active
 
-<!-- v3.0: Client Portal & Updated Funnel -->
-- [ ] Payment-first Razorpay flow (no pre-payment forms, contact info from webhook)
-- [ ] Razorpay test mode with test/live key switching
-- [ ] Supabase Auth account creation on confirmation page (post-payment)
-- [ ] Client portal with authenticated dashboard, site preview iframe, live URL
-- [ ] Domain management: free subdomain, connect existing (DNS verification), buy new (Domainr + AI suggestions)
-- [ ] Logo upload with Gemini Vision AI background removal
-- [ ] Single textarea for all change requests (text, colors, images, anything)
-- [ ] Booking setup for Pro plan clients (Cal.com embed slug)
-- [ ] $49 agent support payment (domain setup, logo fixes, minor edits)
-- [ ] client_requests table and CRUD API for all client submissions
-- [ ] Admin purchased clients view with customer request queue
-- [ ] Admin redeploy button (update code, increment version, save revision)
-- [ ] USD-only pricing ($499 Standard, $1,299 Pro, Premium "Contact Us")
-- [ ] Premium plan display-only card with "Contact Us" CTA
-- [ ] Updated claim page (remove domain selection, remove pre-payment forms)
-- [ ] Analytics: premium_contact event tracking
+<!-- v4.0: Somosite Agency Landing Page -->
+- [ ] (marketing) route group with isolated layout, fonts, and styles
+- [ ] Root route (/) serves agency landing page instead of dashboard redirect
+- [ ] Navigation bar: sticky, transparent-to-solid on scroll, smooth anchor links, mobile hamburger
+- [ ] Hero section: headline, subheadline, CTAs, browser mockup visual
+- [ ] Trust bar: 4 credibility signals with Lucide icons
+- [ ] Problem section: empathetic copy, centered, generous whitespace
+- [ ] How It Works: 3-step cards with connecting visual, vertical timeline mobile
+- [ ] Portfolio section: 6 demo site screenshots in browser mockup frames with "View Demo" links
+- [ ] Benefits/differentiators section: outcome-focused, alternating layout
+- [ ] Pricing section: 3-tier cards (Standard $499, Pro $1,299, Premium custom), Pro highlighted
+- [ ] FAQ accordion: 7 objection-handling questions
+- [ ] Final CTA section: dark background, urgency copy
+- [ ] Contact form with email handler (POST /api/contact, reuse existing SMTP)
+- [ ] Footer: 4 columns (Company, Product, Legal, Trust)
+- [ ] Privacy policy page (/privacy)
+- [ ] Terms of service page (/terms)
+- [ ] Refund policy page (/refund)
+- [ ] Cookie consent banner (localStorage preference)
+- [ ] Linear-inspired dark DLS: #0A0A0A bg, #AF92FF accent, grain textures, translucent layers
+- [ ] Typography: premium serif headings + Inter body, loaded via next/font
+- [ ] Scroll-triggered animations (IntersectionObserver, CSS only, 600-800ms ease-out)
+- [ ] SEO: meta title, description, OG image, canonical URL
+- [ ] PageSpeed 95+ mobile and desktop
+- [ ] All marketing copy centralized in lib/marketing-constants.ts
+- [ ] Mobile-first responsive (375px, 640px, 1024px breakpoints)
+- [ ] Demo portfolio sites generated and screenshotted for portfolio section
 
 ### Out of Scope
 
@@ -88,25 +115,37 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - Custom scheduling infrastructure — Cal.com handles all booking logic
 - Auto-deployment to custom domains — manual DNS + hosting setup for now
 
+## Current Milestone: v4.0 Somosite Agency Landing Page
+
+**Goal:** Build a premium agency landing page at somosite.com root that convinces cold email recipients the company is real, professional, and worth paying $499-$1,299 for a website. Also satisfies Razorpay verification requirements.
+
+**Target features:**
+- Full agency landing page with 12 sections in (marketing) route group
+- Legal pages (privacy, terms, refund)
+- Contact form email handler
+- Cookie consent banner
+- Linear-inspired dark DLS with #AF92FF brand purple accent
+- Demo portfolio with 6 generated site screenshots
+- 95+ PageSpeed, mobile-first, SEO-optimized
+
 ## Context
 
 - Next.js App Router + Supabase + AI SDK stack
 - v1.0 shipped generation engine (5 phases, 15 plans) — 2026-03-18
 - v2.0 shipped client claim flow (5 phases, 14 plans) — 2026-03-19
-- v3.0 target: client portal, payment-first funnel, Supabase Auth, domain management, admin fulfillment
-- Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow, `(portal)/` for client portal (new)
-- Tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs, claims, customizations, claim_events
-- New tables needed: client_requests (central request queue)
-- New column needed: projects.cal_embed_slug (Cal.com booking slug for Pro)
+- v3.0 shipped client portal & updated funnel (5 phases, 13 plans) — 2026-03-25
+- v4.0 target: agency landing page at root URL for credibility + Razorpay verification
+- Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow, `(portal)/` for client portal, `(marketing)/` for landing page + legal pages (new)
+- Tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs, claims, customizations, claim_events, client_requests
 - Supabase Storage: site-screenshots (public), claim-uploads (private)
-- Supabase Auth: new dependency for client portal authentication
-- Razorpay for payments (USD-only for v3.0)
+- Supabase Auth: client portal authentication
+- Razorpay for payments (USD-only), registered with somosite.com domain
 - Client pages are mobile-first, SSR, Inter font
 - Admin pages use Geist font, desktop-optimized
+- Marketing pages: own font stack (premium serif headings + Inter body), dark DLS, isolated from admin/client
 - No test suite — relies on TypeScript safety and manual testing
-- CTA bar uses sendBeacon for cross-origin analytics tracking
-- Domainr API for domain availability checking
-- Gemini Vision for logo background removal
+- Existing SMTP setup (nodemailer/Gmail) for preview emails — reusable for contact form
+- CRITICAL: Never say "AI" on landing page — 44% negative brand perception when AI-generated is disclosed
 
 ## Constraints
 
@@ -135,14 +174,23 @@ Maximize the number of high-quality websites generated per hour with minimal man
 | SVG uploads rejected | Security risk (XSS vector), accept PNG/JPG/WebP only | ✓ Good |
 | CTA beacon tracking via sendBeacon + GET pixel | Cross-origin analytics from injected CTA bar | ✓ Good |
 
-| USD-only pricing for v3.0 | Simplify payment flow, target international market | — Pending |
-| Payment-first (no pre-payment forms) | Reduce friction, Razorpay collects contact info | — Pending |
-| Supabase Auth for client portal | Native to existing stack, row-level security | — Pending |
-| Gemini Vision for bg removal | Reuse existing AI provider, no new service dependency | — Pending |
-| Domainr for domain availability | Free tier, simple API, sufficient for availability checks | — Pending |
-| Single textarea for change requests | Admin interprets and executes, preserves design quality | — Pending |
-| Email notifications deferred | Will use Instantly AI later, not blocking v3.0 | — Pending |
-| Static DNS instructions (no PDFs) | Simpler implementation, update-friendly text format | — Pending |
+| USD-only pricing for v3.0 | Simplify payment flow, target international market | ✓ Good |
+| Payment-first (no pre-payment forms) | Reduce friction, Razorpay collects contact info | ✓ Good |
+| Supabase Auth for client portal | Native to existing stack, row-level security | ✓ Good |
+| Gemini Vision for bg removal | Reuse existing AI provider, no new service dependency | ✓ Good |
+| Domainr for domain availability | Free tier, simple API, sufficient for availability checks | ✓ Good |
+| Single textarea for change requests | Admin interprets and executes, preserves design quality | ✓ Good |
+| Email notifications deferred | Will use Instantly AI later, not blocking v3.0 | ✓ Good |
+| Static DNS instructions (no PDFs) | Simpler implementation, update-friendly text format | ✓ Good |
+
+| (marketing) route group isolation | Landing page has own fonts/styles, no admin/client imports | — Pending |
+| Linear-inspired DLS with #AF92FF accent | Premium dark aesthetic matching reference export | — Pending |
+| Hand-coded components (no shadcn/Radix) | Minimal bundle size for landing page, no new UI library deps | — Pending |
+| CSS-only animations (no GSAP/Framer) | Performance + simplicity, IntersectionObserver for scroll triggers | — Pending |
+| Premium serif headings (DM Serif Display/Outfit) | Contrast with Inter body, agency premium positioning | — Pending |
+| Never say "AI" on landing page | 44% negative brand perception when AI-generated disclosed | — Pending |
+| Demo sites as portfolio (not real clients) | No client testimonials at launch, fictional businesses for quality proof | — Pending |
+| "Get Started" buttons scroll to contact (not payment) | Payment happens on /claim/[slug], not agency page | — Pending |
 
 ---
-*Last updated: 2026-03-25 after v3.0 milestone start*
+*Last updated: 2026-03-25 after v4.0 milestone start*
