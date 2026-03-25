@@ -13,7 +13,7 @@ export function HeroSection({ businessName, screenshotUrl, previewUrl, previewHt
 
     return (
         <section className="bg-[#050304] rounded-b-[2rem] sm:rounded-b-[2.5rem] px-4 pt-12 pb-14">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                 {/* Eyebrow */}
                 <p className="text-center text-sm font-medium tracking-wide text-white/30 mb-4">
                     Your website is ready

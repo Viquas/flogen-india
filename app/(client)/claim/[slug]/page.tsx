@@ -119,6 +119,17 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         return (
             <main>
                 <TestModeBanner />
+                <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+                        <img src="/sumosite-logo-dark.svg" alt="Sumosite" className="h-5" />
+                        <a
+                            href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sumosite.com'}`}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
+                        >
+                            Contact Us
+                        </a>
+                    </div>
+                </header>
                 <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} previewHtml={previewHtml} />
                 <div className="max-w-lg mx-auto">
                     <ExpiredForm projectId={project.id} businessName={businessName} />
@@ -131,6 +142,17 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     return (
         <main className="pb-8">
             <TestModeBanner />
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+                    <img src="/sumosite-logo-dark.svg" alt="Sumosite" className="h-5" />
+                    <a
+                        href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sumosite.com'}`}
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
+                    >
+                        Contact Us
+                    </a>
+                </div>
+            </header>
             <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} previewHtml={previewHtml} />
 
             <ClaimPageClient
