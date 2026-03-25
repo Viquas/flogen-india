@@ -118,14 +118,12 @@ export default function ClaimPageClient({
 
             {/* Confirmation step -- visible after clicking "Get Started" */}
             {showConfirmation && selectedPlan && (
-                <section className="px-4 py-6">
-                    <ConfirmationStep
-                        plan={selectedPlan}
-                        onConfirm={handleProceedToPayment}
-                        onCancel={() => setShowConfirmation(false)}
-                        isProcessing={isProcessing}
-                    />
-                </section>
+                <ConfirmationStep
+                    plan={selectedPlan}
+                    onConfirm={handleProceedToPayment}
+                    onCancel={() => setShowConfirmation(false)}
+                    isProcessing={isProcessing}
+                />
             )}
 
             {/* Payment error */}
