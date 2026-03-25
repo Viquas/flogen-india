@@ -47,7 +47,7 @@ export function HeroSection({ businessName, screenshotUrl, previewUrl, previewHt
                         </div>
                     </div>
                     {/* Live Preview */}
-                    <div className="aspect-[16/10] overflow-hidden bg-[#1a1a1a]">
+                    <div className="aspect-[16/7] overflow-hidden bg-[#1a1a1a]">
                         {previewHtml ? (
                             <iframe
                                 srcDoc={previewHtml}
