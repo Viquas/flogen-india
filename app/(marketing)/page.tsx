@@ -2,10 +2,10 @@ import Navbar from "@/components/marketing/navbar"
 import Hero from "@/components/marketing/hero"
 import TrustBar from "@/components/marketing/trust-bar"
 import Problem from "@/components/marketing/problem"
+import HowItWorks from "@/components/marketing/how-it-works"
+import Portfolio from "@/components/marketing/portfolio"
+import Benefits from "@/components/marketing/benefits"
 import {
-  HOW_IT_WORKS,
-  PORTFOLIO,
-  BENEFITS,
   PRICING,
   FAQ,
   FINAL_CTA,
@@ -21,79 +21,9 @@ export default function MarketingPage() {
       <TrustBar />
       <Problem />
 
-      {/* How It Works */}
-      <section
-        id="how-it-works"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)] scroll-mt-20"
-      >
-        <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-          <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
-            {HOW_IT_WORKS.sectionTitle}
-          </h2>
-          <p className="mt-4 text-lg text-center opacity-70 max-w-2xl mx-auto">
-            {HOW_IT_WORKS.sectionSubtitle}
-          </p>
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-12">
-            {HOW_IT_WORKS.steps.map((step) => (
-              <div key={step.number} className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--mkt-accent)] text-white font-bold text-lg">
-                  {step.number}
-                </div>
-                <h3 className="mt-6 text-xl">{step.title}</h3>
-                <p className="mt-3 opacity-70">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Portfolio */}
-      <section id="portfolio" className="py-16 sm:py-24 scroll-mt-20">
-        <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-          <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
-            {PORTFOLIO.sectionTitle}
-          </h2>
-          <p className="mt-4 text-lg text-center text-[var(--mkt-text-secondary)] max-w-2xl mx-auto">
-            {PORTFOLIO.sectionSubtitle}
-          </p>
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {PORTFOLIO.items.map((item) => (
-              <div
-                key={item.name}
-                className="group rounded-[var(--mkt-radius)] border border-[var(--mkt-border)] bg-[var(--mkt-surface)] overflow-hidden hover:bg-[var(--mkt-surface-hover)] transition-colors"
-              >
-                <div className="aspect-video bg-[var(--mkt-surface)]" />
-                <div className="p-6">
-                  <p className="text-sm text-[var(--mkt-text-tertiary)]">
-                    {item.category}
-                  </p>
-                  <h3 className="mt-1 text-lg">{item.name}</h3>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section
-        id="benefits"
-        className="py-16 sm:py-24 bg-[var(--mkt-bg-alt)] text-[var(--mkt-text-dark)] scroll-mt-20"
-      >
-        <div className="mx-auto max-w-[var(--mkt-max-width)] px-4 sm:px-6 lg:px-8">
-          <h2 className="text-[28px] sm:text-[40px] lg:text-[48px] leading-tight text-center">
-            {BENEFITS.sectionTitle}
-          </h2>
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {BENEFITS.items.map((item) => (
-              <div key={item.title}>
-                <h3 className="text-xl">{item.title}</h3>
-                <p className="mt-3 opacity-70">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HowItWorks />
+      <Portfolio />
+      <Benefits />
 
       {/* Pricing */}
       <section id="pricing" className="py-16 sm:py-24 scroll-mt-20">
