@@ -165,7 +165,7 @@ Plans:
 
 **Milestone Goal:** Build a premium agency landing page at somosite.com root that convinces cold email recipients the company is real, professional, and worth paying $499-$1,299 for a website. Also satisfies Razorpay verification requirements.
 
-- [ ] **Phase 16: Marketing Foundation** - (marketing) route group, layout, font loading, design tokens, marketing-constants.ts, root route change, responsive baseline
+- [x] **Phase 16: Marketing Foundation** - (marketing) route group, layout, font loading, design tokens, marketing-constants.ts, root route change, responsive baseline (completed 2026-03-25)
 - [ ] **Phase 17: Hero, Trust & Problem** - Navigation bar, hero section, trust bar, problem section, scroll-triggered animations
 - [ ] **Phase 18: How It Works, Portfolio & Benefits** - Three-step process, 6-site portfolio showcase, outcome-focused differentiators
 - [ ] **Phase 19: Pricing, FAQ & Final CTA** - Three-tier pricing cards, objection-handling accordion, urgency-driven final CTA
@@ -270,7 +270,7 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
-| 16. Marketing Foundation | v4.0 | 0/1 | Planning complete | - |
+| 16. Marketing Foundation | 1/1 | Complete   | 2026-03-25 | - |
 | 17. Hero, Trust & Problem | v4.0 | 0/TBD | Not started | - |
 | 18. How It Works, Portfolio & Benefits | v4.0 | 0/TBD | Not started | - |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |

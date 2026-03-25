@@ -7,17 +7,17 @@
 
 ### Routing & Layout
 
-- [ ] **ROUTE-01**: Root route (/) serves agency landing page instead of /dashboard redirect
-- [ ] **ROUTE-02**: (marketing) route group with isolated layout, own font stack, own styles
-- [ ] **ROUTE-03**: All existing routes (/dashboard, /claim/*, /preview/*, /portal/*) continue working unchanged
+- [x] **ROUTE-01**: Root route (/) serves agency landing page instead of /dashboard redirect
+- [x] **ROUTE-02**: (marketing) route group with isolated layout, own font stack, own styles
+- [x] **ROUTE-03**: All existing routes (/dashboard, /claim/*, /preview/*, /portal/*) continue working unchanged
 
 ### Design System
 
-- [ ] **DLS-01**: Linear-inspired dark design: #0A0A0A primary bg, #FAFAFA alternating sections, #AF92FF accent
-- [ ] **DLS-02**: Premium serif heading font (DM Serif Display or Outfit) + Inter 16px body via next/font
+- [x] **DLS-01**: Linear-inspired dark design: #0A0A0A primary bg, #FAFAFA alternating sections, #AF92FF accent
+- [x] **DLS-02**: Premium serif heading font (DM Serif Display or Outfit) + Inter 16px body via next/font
 - [ ] **DLS-03**: Scroll-triggered fade-in/slide-up animations via IntersectionObserver (CSS only, 600-800ms ease-out)
-- [ ] **DLS-04**: Hand-coded components -- no shadcn/ui, Radix, or new UI library imports
-- [ ] **DLS-05**: All marketing copy centralized in lib/marketing-constants.ts
+- [x] **DLS-04**: Hand-coded components -- no shadcn/ui, Radix, or new UI library imports
+- [x] **DLS-05**: All marketing copy centralized in lib/marketing-constants.ts
 
 ### Page Sections
 
@@ -46,7 +46,7 @@
 - [ ] **INFRA-01**: POST /api/contact route using existing nodemailer/Gmail SMTP setup
 - [ ] **INFRA-02**: SEO metadata: title, description, OG image, canonical URL in (marketing) layout
 - [ ] **INFRA-03**: PageSpeed 95+ on mobile and desktop (optimized images, minimal JS, next/image)
-- [ ] **INFRA-04**: Mobile-first responsive at 375px, 640px, 1024px breakpoints
+- [x] **INFRA-04**: Mobile-first responsive at 375px, 640px, 1024px breakpoints
 
 ## Future Requirements
 
@@ -73,14 +73,14 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ROUTE-01 | Phase 16 | Pending |
-| ROUTE-02 | Phase 16 | Pending |
-| ROUTE-03 | Phase 16 | Pending |
-| DLS-01 | Phase 16 | Pending |
-| DLS-02 | Phase 16 | Pending |
+| ROUTE-01 | Phase 16 | Complete |
+| ROUTE-02 | Phase 16 | Complete |
+| ROUTE-03 | Phase 16 | Complete |
+| DLS-01 | Phase 16 | Complete |
+| DLS-02 | Phase 16 | Complete |
 | DLS-03 | Phase 17 | Pending |
-| DLS-04 | Phase 16 | Pending |
-| DLS-05 | Phase 16 | Pending |
+| DLS-04 | Phase 16 | Complete |
+| DLS-05 | Phase 16 | Complete |
 | PAGE-01 | Phase 17 | Pending |
 | PAGE-02 | Phase 17 | Pending |
 | PAGE-03 | Phase 17 | Pending |
@@ -100,7 +100,7 @@
 | INFRA-01 | Phase 20 | Pending |
 | INFRA-02 | Phase 20 | Pending |
 | INFRA-03 | Phase 20 | Pending |
-| INFRA-04 | Phase 16 | Pending |
+| INFRA-04 | Phase 16 | Complete |
 
 **Coverage:**
 - v4.0 requirements: 28 total
