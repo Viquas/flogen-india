@@ -270,7 +270,7 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
-| 16. Marketing Foundation | 1/1 | Complete   | 2026-03-25 | - |
+| 16. Marketing Foundation | 1/1 | Complete    | 2026-03-25 | - |
 | 17. Hero, Trust & Problem | v4.0 | 0/TBD | Not started | - |
 | 18. How It Works, Portfolio & Benefits | v4.0 | 0/TBD | Not started | - |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
