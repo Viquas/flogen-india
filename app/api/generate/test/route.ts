@@ -84,6 +84,13 @@ export async function POST(req: NextRequest) {
                 // Save to local disk as requested
                 const { saveCodeToDisk } = await import('@/lib/file-utils')
                 await saveCodeToDisk(projectId, code)
+
+                // Generate screenshot in the background
+                import('@/lib/screenshot').then(({ generateScreenshot }) => {
+                    generateScreenshot(projectId!, code).catch((err) => {
+                        console.error('[API/Generate/Test] Screenshot error (non-fatal):', err)
+                    })
+                })
             }
 
             if (batch && !projectError && projectId) {

@@ -1,4 +1,6 @@
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 export interface ExportOptions {
   businessName: string
@@ -6,9 +8,6 @@ export interface ExportOptions {
   description?: string
 }
 
-/**
- * Escapes special HTML characters for safe embedding in attributes and content.
- */
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -19,14 +18,28 @@ function escapeHtml(str: string): string {
 }
 
 /**
+ * Read the preview runtime script and cache it in memory.
+ * Inlined into exported HTML so it works as a standalone file.
+ */
+let cachedRuntime: string | null = null
+function getRuntime(): string {
+  if (!cachedRuntime) {
+    cachedRuntime = readFileSync(
+      join(process.cwd(), 'public', 'preview-runtime.js'),
+      'utf-8'
+    )
+  }
+  return cachedRuntime
+}
+
+/**
  * Builds a self-contained static HTML export from generated React code.
  *
- * Uses constructHtmlBoilerplate as the base (same as preview) to preserve
- * full React interactivity -- navigation toggles, scroll animations, form
- * handlers, modals, etc. Enhances with proper metadata for standalone use.
+ * Inlines the preview runtime so the file works when opened locally
+ * (no server needed). Adds metadata for standalone use.
  */
 export function buildStaticExport(generatedCode: string, options: ExportOptions): string {
-  // Get the base HTML from the existing boilerplate (identical to preview)
+  // Use a dummy runtime URL — we'll replace the loader script with inlined code
   let html = constructHtmlBoilerplate(generatedCode)
 
   // 1. Add generated-by comment after DOCTYPE
@@ -62,6 +75,14 @@ export function buildStaticExport(generatedCode: string, options: ExportOptions)
   html = html.replace(
     /try\s*\{[^}]*window\.parent\.postMessage[^}]*\}\s*catch\s*\([^)]*\)\s*\{[^}]*\}/g,
     '/* standalone mode */'
+  )
+
+  // 6. Replace the dynamic runtime loader with inlined runtime script
+  //    The loader is: (function() { var url = '...'; ... document.body.appendChild(s); })();
+  const runtime = getRuntime()
+  html = html.replace(
+    /<script>\s*\/\/ Resolve runtime URL[\s\S]*?<\/script>/,
+    `<script>\n${runtime}\n<\/script>`
   )
 
   return html

@@ -12,13 +12,13 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 const signifier = localFont({
     src: [
-        { path: '../../../../../public/fonts/Signifier-Light.otf', weight: '300', style: 'normal' },
-        { path: '../../../../../public/fonts/Signifier-LightItalic.otf', weight: '300', style: 'italic' },
-        { path: '../../../../../public/fonts/Signifier-Regular.otf', weight: '400', style: 'normal' },
-        { path: '../../../../../public/fonts/Signifier-RegularItalic.otf', weight: '400', style: 'italic' },
-        { path: '../../../../../public/fonts/Signifier-Medium.otf', weight: '500', style: 'normal' },
-        { path: '../../../../../public/fonts/Signifier-Bold.otf', weight: '700', style: 'normal' },
-        { path: '../../../../../public/fonts/Signifier-BoldItalic.otf', weight: '700', style: 'italic' },
+        { path: '../../../../public/fonts/Signifier-Light.otf', weight: '300', style: 'normal' },
+        { path: '../../../../public/fonts/Signifier-LightItalic.otf', weight: '300', style: 'italic' },
+        { path: '../../../../public/fonts/Signifier-Regular.otf', weight: '400', style: 'normal' },
+        { path: '../../../../public/fonts/Signifier-RegularItalic.otf', weight: '400', style: 'italic' },
+        { path: '../../../../public/fonts/Signifier-Medium.otf', weight: '500', style: 'normal' },
+        { path: '../../../../public/fonts/Signifier-Bold.otf', weight: '700', style: 'normal' },
+        { path: '../../../../public/fonts/Signifier-BoldItalic.otf', weight: '700', style: 'italic' },
     ],
     variable: '--font-signifier',
     display: 'swap',
@@ -61,7 +61,7 @@ export default async function PortalDashboardLayout({ children }: { children: Re
             <Toaster position="top-center" />
             <PortalHeader businessName={businessName} userEmail={user.email || ''} />
             <PortalNav currentPlan={claim.plan} />
-            <main className="pb-20 md:pb-0 px-4 md:px-6 max-w-5xl mx-auto pt-4">
+            <main className="pb-20 md:pb-0 px-4 md:px-8 max-w-7xl mx-auto pt-4">
                 {children}
             </main>
             <NeedHelpButton />

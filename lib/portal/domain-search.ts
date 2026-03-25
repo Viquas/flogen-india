@@ -24,10 +24,11 @@ export const AVAILABILITY_DISCLAIMER =
 
 const RAPIDAPI_HOST = 'domainr.p.rapidapi.com'
 
-function getHeaders(): HeadersInit {
+function getHeaders(): HeadersInit | null {
     const key = process.env.RAPIDAPI_KEY
     if (!key) {
-        throw new Error('RAPIDAPI_KEY environment variable is required for domain search')
+        console.warn('[Portal/Domain] RAPIDAPI_KEY not set — domain search unavailable')
+        return null
     }
     return {
         'x-rapidapi-key': key,
@@ -41,9 +42,12 @@ function getHeaders(): HeadersInit {
 export async function checkDomainAvailability(
     domain: string
 ): Promise<DomainStatus[]> {
+    const headers = getHeaders()
+    if (!headers) return [{ domain, zone: domain.split('.').pop() || '', status: 'unknown', summary: 'unknown' }]
+
     const url = `https://${RAPIDAPI_HOST}/v2/status?domain=${encodeURIComponent(domain)}`
 
-    const response = await fetch(url, { headers: getHeaders() })
+    const response = await fetch(url, { headers })
 
     if (!response.ok) {
         console.error(`[Portal/Domain] Domainr status failed: ${response.status}`)
@@ -60,9 +64,12 @@ export async function checkDomainAvailability(
 export async function searchDomains(
     query: string
 ): Promise<DomainrSearchResult[]> {
+    const headers = getHeaders()
+    if (!headers) return []
+
     const url = `https://${RAPIDAPI_HOST}/v2/search?query=${encodeURIComponent(query)}`
 
-    const response = await fetch(url, { headers: getHeaders() })
+    const response = await fetch(url, { headers })
 
     if (!response.ok) {
         console.error(`[Portal/Domain] Domainr search failed: ${response.status}`)

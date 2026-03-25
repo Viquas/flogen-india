@@ -27,41 +27,33 @@ export function DashboardClient({
     updatedAt,
 }: DashboardClientProps) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-4 md:gap-6">
-            {/* Preview */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4 md:gap-5">
+            {/* Preview with browser chrome */}
             <div className="min-w-0">
                 <SitePreview html={previewHtml} businessName={businessName} />
             </div>
 
-            {/* Info sidebar */}
+            {/* Sidebar — refined dark cards */}
             <div className="flex flex-col gap-4">
                 <UrlCard url={displayUrl} previewUrl={previewUrl} />
 
-                {/* Plan + Status card */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                {/* Plan + Status */}
+                <div className="bg-[#18181b] rounded-2xl border border-white/10 p-5 shadow-xl shadow-black/10">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-500 mb-1">Your plan</p>
+                            <p className="text-[10px] text-white/40 mb-2 font-semibold uppercase tracking-widest">Plan</p>
                             <PlanBadge plan={plan} />
                         </div>
-                        <div>
-                            <p className="text-xs text-gray-500 mb-1">Status</p>
+                        <div className="text-right">
+                            <p className="text-[10px] text-white/40 mb-2 font-semibold uppercase tracking-widest">Status</p>
                             <StatusIndicator status={status} />
                         </div>
                     </div>
                     {updatedAt && (
-                        <p className="text-[11px] text-gray-400 mt-3 pt-3 border-t border-gray-100">
+                        <p className="text-[11px] text-white/25 mt-4 pt-3 border-t border-white/6">
                             Last updated {formatDistanceToNow(new Date(updatedAt), { addSuffix: true })}
                         </p>
                     )}
-                </div>
-
-                {/* Quick links placeholder */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                    <p className="text-xs text-gray-500 mb-1">Quick links</p>
-                    <p className="text-sm text-gray-400">
-                        More features coming soon
-                    </p>
                 </div>
             </div>
         </div>

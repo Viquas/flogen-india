@@ -136,21 +136,23 @@ export function CustomizeClient({ claimId, projectId, userId, businessName: _bus
     const isValid = description.trim().length >= 10 && descriptionLength <= 2000
 
     return (
-        <div className="space-y-8">
-            {/* Logo upload section */}
-            <LogoUpload
-                claimId={claimId}
-                projectId={projectId}
-                authUserId={userId}
-                currentLogoUrl={existingLogoUrl}
-            />
+        <div className="space-y-6 pb-32">
+            {/* Top row: Logo + Request form side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Logo upload — compact card */}
+                <LogoUpload
+                    claimId={claimId}
+                    projectId={projectId}
+                    authUserId={userId}
+                    currentLogoUrl={existingLogoUrl}
+                />
 
-            {/* Section A: Request a Change */}
-            <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 md:p-6">
-                <h2 className="text-lg font-semibold text-gray-900">Request a Change</h2>
-                <p className="text-sm text-gray-500 mt-1 mb-4">
-                    Tell us what you&apos;d like to change on your website
-                </p>
+                {/* Request a Change — same height card */}
+                <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 md:p-6 flex flex-col">
+                    <h2 className="text-lg font-semibold text-gray-900">Request a Change</h2>
+                    <p className="text-sm text-gray-500 mt-1 mb-4">
+                        Tell us what you&apos;d like to change on your website
+                    </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Description textarea */}
@@ -262,8 +264,9 @@ export function CustomizeClient({ claimId, projectId, userId, businessName: _bus
                     </div>
                 </form>
             </section>
+            </div>
 
-            {/* Section B: Request History */}
+            {/* Request History — full width below */}
             <section>
                 <div className="flex items-center gap-2 mb-3">
                     <h2 className="text-lg font-semibold text-gray-900">Request History</h2>

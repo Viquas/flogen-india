@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { Filter, Users, ChevronDown } from 'lucide-react'
+import { Filter, Users, ChevronDown, Search } from 'lucide-react'
 import { getClients, type ClientListItem, type FulfillmentStatus } from './actions'
 import {
     DropdownMenu,
@@ -39,8 +39,26 @@ const PLAN_OPTIONS: Array<{ value: ClientListItem['plan']; label: string }> = [
     { value: 'pro', label: 'Pro' },
 ]
 
+function groupByMonth(clients: ClientListItem[]): Array<{ label: string; count: number; items: ClientListItem[] }> {
+    const groups: Record<string, ClientListItem[]> = {}
+
+    for (const client of clients) {
+        const date = client.paidAt ? new Date(client.paidAt) : new Date(client.projectUpdatedAt)
+        const key = format(date, "MMMM ''yy") // e.g. "March '26"
+        if (!groups[key]) groups[key] = []
+        groups[key].push(client)
+    }
+
+    return Object.entries(groups).map(([label, items]) => ({
+        label,
+        count: items.length,
+        items,
+    }))
+}
+
 export function ClientsList({ initialClients }: ClientsListProps) {
     const [clients, setClients] = useState(initialClients)
+    const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState<FulfillmentStatus | null>(null)
     const [planFilter, setPlanFilter] = useState<ClientListItem['plan'] | null>(null)
     const [isPending, startTransition] = useTransition()
@@ -61,13 +79,34 @@ export function ClientsList({ initialClients }: ClientsListProps) {
 
     const activeFilterCount = (statusFilter ? 1 : 0) + (planFilter ? 1 : 0)
 
+    const filteredClients = searchQuery.trim()
+        ? clients.filter(c => {
+            const q = searchQuery.toLowerCase()
+            return (
+                c.businessName.toLowerCase().includes(q) ||
+                (c.clientName?.toLowerCase().includes(q) ?? false) ||
+                (c.clientEmail?.toLowerCase().includes(q) ?? false)
+            )
+        })
+        : clients
+
     return (
         <div className="space-y-4">
             {/* Header bar with count + filters */}
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search clients..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="pl-8 pr-3 py-1.5 text-sm rounded-md border border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-300 w-56 transition-colors"
+                        />
+                    </div>
                     <span className="text-sm text-gray-500">
-                        {clients.length} {clients.length === 1 ? 'client' : 'clients'}
+                        {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
                     </span>
                     {isPending && (
                         <span className="text-xs text-gray-400 animate-pulse">Updating...</span>
@@ -150,8 +189,8 @@ export function ClientsList({ initialClients }: ClientsListProps) {
                 </div>
             </div>
 
-            {/* Card grid */}
-            {clients.length === 0 ? (
+            {/* Clients grouped by month */}
+            {filteredClients.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                         <Users className="h-6 w-6 text-gray-400" />
@@ -162,66 +201,71 @@ export function ClientsList({ initialClients }: ClientsListProps) {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {clients.map(client => {
-                        const statusStyle = FULFILLMENT_STYLES[client.fulfillmentStatus]
-                        const planStyle = PLAN_STYLES[client.plan]
+                <div className="space-y-8">
+                    {groupByMonth(filteredClients).map(({ label, count, items }) => (
+                        <section key={label}>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-semibold text-gray-900">{label}</h3>
+                                <span className="text-xs text-gray-400">{count} {count === 1 ? 'client' : 'clients'}</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {items.map(client => {
+                                    const statusStyle = FULFILLMENT_STYLES[client.fulfillmentStatus]
+                                    const planStyle = PLAN_STYLES[client.plan]
 
-                        return (
-                            <Link
-                                key={client.claimId}
-                                href={`/dashboard/clients/${client.claimId}`}
-                                className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all"
-                            >
-                                {/* Top row: business name + plan badge */}
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                    <h3 className="text-sm font-semibold text-gray-900 truncate flex-1">
-                                        {client.businessName}
-                                    </h3>
-                                    <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full ${planStyle.bg} ${planStyle.text}`}>
-                                        {planStyle.label}
-                                    </span>
-                                </div>
-
-                                {/* Client info */}
-                                <div className="text-xs text-gray-500 mb-3 space-y-0.5">
-                                    {client.clientName && (
-                                        <p className="truncate">{client.clientName}</p>
-                                    )}
-                                    {client.clientEmail && (
-                                        <p className="truncate text-gray-400">{client.clientEmail}</p>
-                                    )}
-                                </div>
-
-                                {/* Bottom row: date, request count, status */}
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[11px] text-gray-400">
-                                        {client.paidAt
-                                            ? format(new Date(client.paidAt), 'MMM d, yyyy')
-                                            : 'No date'}
-                                    </span>
-
-                                    <div className="flex items-center gap-2">
-                                        {/* Open request count */}
-                                        <span
-                                            className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-md ${
-                                                client.openRequestCount > 0
-                                                    ? 'bg-red-50 text-red-600'
-                                                    : 'bg-gray-50 text-gray-400'
-                                            }`}
+                                    return (
+                                        <Link
+                                            key={client.claimId}
+                                            href={`/dashboard/clients/${client.claimId}`}
+                                            className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all"
                                         >
-                                            {client.openRequestCount} open
-                                        </span>
+                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                                <h3 className="text-sm font-semibold text-gray-900 truncate flex-1">
+                                                    {client.businessName}
+                                                </h3>
+                                                <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full ${planStyle.bg} ${planStyle.text}`}>
+                                                    {planStyle.label}
+                                                </span>
+                                            </div>
 
-                                        {/* Fulfillment status */}
-                                        <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-md ${statusStyle.bg} ${statusStyle.text}`}>
-                                            {statusStyle.label}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Link>
-                        )
-                    })}
+                                            <div className="text-xs text-gray-500 mb-3 space-y-0.5">
+                                                {client.clientName && (
+                                                    <p className="truncate">{client.clientName}</p>
+                                                )}
+                                                {client.clientEmail && (
+                                                    <p className="truncate text-gray-400">{client.clientEmail}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-[11px] text-gray-400">
+                                                    {client.paidAt
+                                                        ? format(new Date(client.paidAt), 'MMM d, yyyy')
+                                                        : 'No date'}
+                                                </span>
+
+                                                <div className="flex items-center gap-2">
+                                                    <span
+                                                        className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-md ${
+                                                            client.openRequestCount > 0
+                                                                ? 'bg-red-50 text-red-600'
+                                                                : 'bg-gray-50 text-gray-400'
+                                                        }`}
+                                                    >
+                                                        {client.openRequestCount} open
+                                                    </span>
+
+                                                    <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-md ${statusStyle.bg} ${statusStyle.text}`}>
+                                                        {statusStyle.label}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    )
+                                })}
+                            </div>
+                        </section>
+                    ))}
                 </div>
             )}
         </div>

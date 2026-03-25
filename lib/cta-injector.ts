@@ -39,62 +39,81 @@ function buildCtaBarHtml(config: CtaConfig): string {
 
     return `
 <!-- Flogen CTA Bar -->
+<style>
+@keyframes flogen-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(175, 146, 255, 0.4); }
+    50% { box-shadow: 0 0 16px 4px rgba(175, 146, 255, 0.3); }
+}
+#flogen-cta-button {
+    background-size: 100% 200% !important;
+    background-image: linear-gradient(180deg, #C4B0FF 0%, #8B6FE0 50%, #C4B0FF 100%) !important;
+    background-position: 0% 0%;
+    transition: background-position 0.2s ease, transform 0.2s ease !important;
+}
+#flogen-cta-button:hover {
+    background-position: 0% 100% !important;
+    transform: scale(1.05);
+}
+</style>
 <div id="flogen-cta-root" style="
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 2147483647;
-    background: rgba(17, 17, 17, 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 12px 20px;
+    background: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 10px 10px 10px 20px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 16px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     box-sizing: border-box;
-    min-height: 56px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 90vw;
 ">
-    <div style="display: flex; flex-direction: column; min-width: 0; flex: 1; margin-right: 16px;">
+    <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
         <span id="flogen-cta-name" style="
             color: #ffffff;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 500;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.3;
-        ">Made for ${safeName}</span>
+            line-height: 1;
+        ">Make this website yours</span>
+        <span style="color: rgba(255,255,255,0.15); font-size: 14px;">|</span>
         <span id="flogen-cta-countdown" style="
-            color: #a1a1aa;
+            color: rgba(255, 255, 255, 0.4);
             font-size: 12px;
-            line-height: 1.3;
-            margin-top: 2px;
+            white-space: nowrap;
+            line-height: 1;
         "></span>
     </div>
     <a id="flogen-cta-button" href="${safeUrl}" style="
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: #2563eb;
         color: #ffffff;
-        font-size: 14px;
-        font-weight: 600;
-        padding: 8px 20px;
-        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        padding: 10px 24px;
+        border-radius: 999px;
         text-decoration: none;
         white-space: nowrap;
         cursor: pointer;
         transition: background 0.15s ease;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         flex-shrink: 0;
+        animation: flogen-pulse 2s ease-in-out infinite;
     ">Claim This Website</a>
 </div>
 <script>
 (function() {
-    // Add bottom padding to body so page content is not hidden behind the bar
-    document.body.style.paddingBottom = "64px";
+    // Add bottom padding to body so page content is not hidden behind the floating bar
+    document.body.style.paddingBottom = "80px";
 
     var expiresAt = new Date("${safeExpires}").getTime();
     var countdownEl = document.getElementById("flogen-cta-countdown");
@@ -113,7 +132,8 @@ function buildCtaBarHtml(config: CtaConfig): string {
             }
             if (buttonEl) {
                 buttonEl.textContent = "Request a New Website";
-                buttonEl.style.background = "#6b7280";
+                buttonEl.style.background = "rgba(255,255,255,0.15)";
+                buttonEl.style.color = "#ffffff";
                 buttonEl.href = "${safeUrl}?expired=true";
             }
             if (intervalId) {

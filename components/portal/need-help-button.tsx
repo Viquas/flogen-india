@@ -7,7 +7,6 @@ export function NeedHelpButton() {
     const pathname = usePathname()
     const router = useRouter()
 
-    // Hide on the support page itself
     if (pathname === '/portal/support') {
         return null
     }
@@ -16,11 +15,11 @@ export function NeedHelpButton() {
         <button
             type="button"
             onClick={() => router.push('/portal/support')}
-            className="fixed bottom-24 md:bottom-8 right-4 z-40 bg-[#0F172A] text-white rounded-full p-3 shadow-lg hover:bg-[#1e293b] transition-all hover:scale-105 group"
+            className="fixed bottom-24 md:bottom-8 right-4 z-40 bg-[#AF92FF] text-[#050304] rounded-full p-3.5 shadow-lg shadow-[#AF92FF]/20 hover:bg-[#c4b0ff] transition-all hover:scale-105 group"
             aria-label="Need help? Talk to our agents"
         >
             <Headphones className="w-5 h-5" />
-            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-gray-900 text-white text-xs px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block">
+            <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap bg-[#18181b] text-white text-xs px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden md:block shadow-lg">
                 Need help? Talk to our agents
             </span>
         </button>

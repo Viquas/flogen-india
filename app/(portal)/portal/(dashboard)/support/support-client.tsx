@@ -232,6 +232,23 @@ export function SupportClient({ claimId, clientEmail, razorpayKeyId, isTestMode 
                     ))}
                 </div>
             </div>
+
+            {/* Custom Website CTA */}
+            <div className="bg-[#18181b] rounded-2xl border border-white/10 p-6 shadow-xl shadow-black/10">
+                <h2 className="text-lg font-semibold text-white mb-2">Need a fully custom website?</h2>
+                <p className="text-sm text-white/60 mb-5">
+                    We design and build custom websites tailored to your business — from scratch, exactly how you want it.
+                </p>
+                <a
+                    href={`https://wa.me/${SUPPORT_WHATSAPP.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hi, I\'m interested in a custom website for my business.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#AF92FF] text-[#050304] text-sm font-semibold rounded-full hover:bg-[#c4b0ff] transition-colors"
+                >
+                    <MessageCircle className="w-4 h-4" />
+                    Get in Touch
+                </a>
+            </div>
         </div>
     )
 }

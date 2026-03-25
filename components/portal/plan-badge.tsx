@@ -7,14 +7,14 @@ export function PlanBadge({ plan }: PlanBadgeProps) {
 
     if (isPro) {
         return (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#AF92FF]/10 text-[#7C5AE2]">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#AF92FF]/15 text-[#AF92FF] border border-[#AF92FF]/20">
                 Pro
             </span>
         )
     }
 
     return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white/70 border border-white/10">
             Standard
         </span>
     )

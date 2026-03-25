@@ -1,89 +1,49 @@
-import {
-    Globe,
-    Smartphone,
-    Search,
-    Zap,
-    Shield,
-    Palette,
-    MessageSquare,
-    Clock,
-    type LucideIcon,
-} from 'lucide-react'
+import { Smartphone, Search, Zap, Shield, MessageSquare, Clock } from 'lucide-react'
 
 interface Feature {
-    icon: LucideIcon
+    icon: typeof Smartphone
     title: string
     description: string
 }
 
 const FEATURES: Feature[] = [
-    {
-        icon: Globe,
-        title: 'Custom Domain',
-        description: 'Connect your own domain or use a free subdomain',
-    },
-    {
-        icon: Smartphone,
-        title: 'Mobile Responsive',
-        description: 'Looks perfect on every device and screen size',
-    },
-    {
-        icon: Search,
-        title: 'SEO Optimized',
-        description: 'Built to rank well on Google from day one',
-    },
-    {
-        icon: Zap,
-        title: 'Lightning Fast',
-        description: 'Optimized for speed with modern web standards',
-    },
-    {
-        icon: Shield,
-        title: 'SSL Secured',
-        description: 'Free HTTPS security certificate included',
-    },
-    {
-        icon: Palette,
-        title: 'Custom Design',
-        description: 'Tailored to match your brand identity',
-    },
-    {
-        icon: MessageSquare,
-        title: 'Contact Forms',
-        description: 'Built-in ways for customers to reach you',
-    },
-    {
-        icon: Clock,
-        title: '24/7 Online',
-        description: 'Your website is always available to customers',
-    },
+    { icon: Smartphone, title: 'Mobile Responsive', description: 'Looks perfect on every device' },
+    { icon: Search, title: 'SEO Optimized', description: 'Built to rank on Google' },
+    { icon: Zap, title: 'Lightning Fast', description: 'Sub-2 second load times' },
+    { icon: Shield, title: 'SSL Secured', description: 'Free HTTPS certificate' },
+    { icon: MessageSquare, title: 'Contact Forms', description: 'Built-in lead capture' },
+    { icon: Clock, title: '99.9% Uptime', description: 'Always online, always available' },
 ]
 
 export function FeaturesGrid() {
     return (
-        <section className="px-4 py-8 bg-[#F8FAFC]">
-            <h2 className="text-xl font-bold text-[#0F172A] text-center mb-6">
-                What&apos;s Included
-            </h2>
+        <section className="px-4 py-14">
+            <div className="max-w-2xl mx-auto">
+                {/* Lime pill label */}
+                <div className="flex justify-center mb-6">
+                    <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#AF92FF] text-[#050304] text-xs font-semibold tracking-wide">
+                        What&apos;s Included
+                    </span>
+                </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {FEATURES.map((feature) => (
-                    <div
-                        key={feature.title}
-                        className="bg-white rounded-lg p-4 text-center"
-                    >
-                        <feature.icon
-                            className="text-[#2563EB] mx-auto mb-2"
-                            size={24}
-                        />
-                        <h3 className="text-sm font-semibold text-[#0F172A]">
-                            {feature.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                            {feature.description}
-                        </p>
-                    </div>
-                ))}
+                <h2 className="text-2xl sm:text-3xl font-[family-name:var(--font-signifier)] font-light text-[#050304] text-center mb-10">
+                    Everything you need
+                </h2>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {FEATURES.map((feature) => (
+                        <div
+                            key={feature.title}
+                            className="flex flex-col gap-2 p-5 bg-white rounded-2xl border border-[#050304]/5"
+                        >
+                            <feature.icon className="text-[#050304]/50 w-5 h-5" strokeWidth={1.5} />
+                            <div>
+                                <h3 className="text-sm font-semibold text-[#050304]">{feature.title}</h3>
+                                <p className="text-xs text-[#050304]/40 mt-0.5 leading-relaxed">{feature.description}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </section>
     )

@@ -9,7 +9,8 @@ import { useSearchParams } from "next/navigation"
 import { getProjectById, getRecentProjects, getBatches, approveProject } from "@/app/(admin)/dashboard/actions"
 import { createClient } from "@/lib/supabase/client"
 import { uploadProjectAssets } from "@/lib/supabase/storage"
-import { OutreachModal } from "@/components/dashboard/outreach-modal"
+import dynamic from 'next/dynamic'
+const MonacoEditor = dynamic(() => import('@monaco-editor/react').then(m => m.default), { ssr: false })
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -82,6 +83,8 @@ function EditorContent() {
     const [isDragOver, setIsDragOver] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [generatedCode, setGeneratedCode] = useState<string | null>(null)
+    const [savedCode, setSavedCode] = useState<string | null>(null) // last saved/loaded code for undo
+    const [codeDirty, setCodeDirty] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [viewMode, setViewMode] = useState<'preview' | 'code' | 'diff' | 'rjson' | 'sjson' | 'md' | 'schema'>('preview')
     const [projectVersion, setProjectVersion] = useState<number>(1)
@@ -248,6 +251,8 @@ function EditorContent() {
                                 const { data: fresh } = await supabase.from('projects').select('generated_code').eq('id', activeProjectId).single();
                                 if (fresh?.generated_code) {
                                     setGeneratedCode(fresh.generated_code);
+                                    setSavedCode(fresh.generated_code);
+                                    setCodeDirty(false);
                                 }
                                 setIsStreaming(false);
                             }
@@ -303,6 +308,8 @@ function EditorContent() {
         }
         setMarkdownContext(jsonToMarkdown(jsonStr))
         setGeneratedCode(project.generated_code || null)
+        setSavedCode(project.generated_code || null)
+        setCodeDirty(false)
         setProjectVersion(project.version || 1)
         setActiveProjectId(project.id)
         setIsJsonLoading(false)
@@ -717,6 +724,8 @@ function EditorContent() {
 
         setMarkdownContext(jsonToMarkdown(jsonStr))
         setGeneratedCode(project.generated_code || null)
+        setSavedCode(project.generated_code || null)
+        setCodeDirty(false)
         setError(null)
         setCurrentRating(0)
 
@@ -810,15 +819,24 @@ function EditorContent() {
         }
     }
 
-    const handleOutreachApprove = async () => {
+    const handleSendPreview = async () => {
         if (!activeProjectId) return
         setIsApproving(true)
         try {
-            await approveProject(activeProjectId)
-            await saveProjectLocally()
+            const previewUrl = `/preview/${activeProjectId}`
+            const recipientEmail = 'lifeofpixels0707@gmail.com'
+            const res = await fetch('/api/admin/send-preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId: activeProjectId, recipientEmail, previewUrl }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Send failed')
+            toast.success(`Preview sent to ${recipientEmail}`)
+            setIsApproveDialogOpen(false)
         } catch (e) {
-            console.error("Approval failed:", e)
-            setError("Failed to approve project")
+            console.error("Send preview failed:", e)
+            toast.error(e instanceof Error ? e.message : "Failed to send preview email")
         } finally {
             setIsApproving(false)
         }
@@ -848,7 +866,7 @@ function EditorContent() {
                 <div className="max-w-[1800px] mx-auto px-6 py-3 flex items-center justify-between">
                     <Link href="/dashboard" className="flex items-center gap-2 group">
                         <Image
-                            src="/flogen-logo.svg"
+                            src="/flogen-logo-dark.svg"
                             alt="Flogen"
                             width={110}
                             height={20}
@@ -1316,8 +1334,8 @@ function EditorContent() {
                                         size="sm"
                                         className="h-8 text-[10px] uppercase tracking-wider gap-2 px-3 transition-all bg-green-600 hover:bg-green-700 text-white font-bold border-none shadow-md shadow-green-100"
                                     >
-                                        <Check className="h-3 w-3" />
-                                        Approve
+                                        <Send className="h-3 w-3" />
+                                        Send Preview
                                     </Button>
                                 )}
                                 <div className="h-5 w-px bg-zinc-200" />
@@ -1408,14 +1426,78 @@ function EditorContent() {
                                 </div>
                             )
                         ) : (
-                            <div className="w-full h-full overflow-auto bg-[#18181B] selection:bg-purple-500/30">
+                            <div className="w-full h-full bg-[#1e1e1e]">
                                 {generatedCode ? (
-                                    <pre className="text-[13px] p-8 text-zinc-300 font-mono leading-relaxed whitespace-pre-wrap">
-                                        {generatedCode}
-                                        {isStreaming && (
-                                            <span className="inline-block w-2 h-4 bg-green-400 animate-pulse ml-0.5" />
-                                        )}
-                                    </pre>
+                                    isStreaming ? (
+                                        <div className="w-full h-full overflow-auto bg-[#18181B]">
+                                            <pre className="text-[13px] p-8 text-zinc-300 font-mono leading-relaxed whitespace-pre-wrap">
+                                                {generatedCode}
+                                                <span className="inline-block w-2 h-4 bg-green-400 animate-pulse ml-0.5" />
+                                            </pre>
+                                        </div>
+                                    ) : (
+                                        <div className="relative w-full h-full flex flex-col">
+                                            {codeDirty && (
+                                                <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
+                                                    <span className="text-xs font-medium text-amber-700">Unsaved changes</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                if (savedCode) {
+                                                                    setGeneratedCode(savedCode)
+                                                                    setCodeDirty(false)
+                                                                }
+                                                            }}
+                                                            disabled={!savedCode}
+                                                            className="px-3 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                                        >
+                                                            Undo
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!activeProjectId || !generatedCode) return
+                                                                try {
+                                                                    await saveEditModeChanges(activeProjectId, generatedCode)
+                                                                    setSavedCode(generatedCode)
+                                                                    setCodeDirty(false)
+                                                                    toast.success('Code saved')
+                                                                } catch {
+                                                                    toast.error('Failed to save code')
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                                                        >
+                                                            Apply Edits
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex-1 min-h-0">
+                                                <MonacoEditor
+                                                    height="100%"
+                                                    language="typescriptreact"
+                                                    theme="vs-dark"
+                                                    value={generatedCode}
+                                                    onChange={(value) => {
+                                                        if (value !== undefined) {
+                                                            setGeneratedCode(value)
+                                                            setCodeDirty(value !== savedCode)
+                                                        }
+                                                    }}
+                                                    options={{
+                                                        minimap: { enabled: false },
+                                                        fontSize: 13,
+                                                        lineNumbers: 'on',
+                                                        scrollBeyondLastLine: false,
+                                                        wordWrap: 'on',
+                                                        tabSize: 2,
+                                                        automaticLayout: true,
+                                                        padding: { top: 16 },
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center">
@@ -1462,24 +1544,39 @@ function EditorContent() {
                 />
             )}
 
-            {/* Outreach Modal */}
-            {activeProjectId && (
-                <OutreachModal
-                    open={isApproveDialogOpen}
-                    onOpenChange={setIsApproveDialogOpen}
-                    project={{
-                        id: activeProjectId,
-                        business_data: (() => {
-                            try {
-                                return JSON.parse(structuredJsonContext || rawJsonContext)
-                            } catch {
-                                return {}
-                            }
-                        })()
-                    }}
-                    onApprove={handleOutreachApprove}
-                />
-            )}
+            {/* Send Preview Confirmation Dialog */}
+            <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+                <DialogContent className="sm:max-w-[480px]">
+                    <DialogHeader>
+                        <DialogTitle>Send Preview Email</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to send the preview link to the client?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="text-zinc-500 font-medium w-20">Preview:</span>
+                            <code className="text-xs bg-zinc-100 px-2 py-1 rounded font-mono">
+                                {activeProjectId ? `/preview/${activeProjectId}` : '—'}
+                            </code>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="text-zinc-500 font-medium w-20">Email to:</span>
+                            <span className="font-medium text-zinc-900">lifeofpixels0707@gmail.com</span>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="ghost" onClick={() => setIsApproveDialogOpen(false)}>Cancel</Button>
+                        <Button
+                            onClick={handleSendPreview}
+                            disabled={isApproving}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                            {isApproving ? 'Sending...' : 'Send Preview'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Template Save Sheet */}
             {generatedCode && (

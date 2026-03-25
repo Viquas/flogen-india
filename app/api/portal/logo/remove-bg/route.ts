@@ -39,8 +39,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'logoUrl is required' }, { status: 400 })
         }
 
-        // Download the logo from the URL
-        const logoResponse = await fetch(logoUrl)
+        // Download the logo — handle both signed URLs and storage paths
+        let logoResponse: Response
+        if (logoUrl.startsWith('http')) {
+            logoResponse = await fetch(logoUrl)
+        } else {
+            // It's a storage path, download via admin client
+            const { data: fileData, error: dlErr } = await admin.storage
+                .from('claim-uploads')
+                .download(logoUrl)
+            if (dlErr || !fileData) {
+                return NextResponse.json({ error: 'Failed to download logo from storage' }, { status: 400 })
+            }
+            logoResponse = new Response(fileData)
+        }
         if (!logoResponse.ok) {
             return NextResponse.json({ error: 'Failed to download logo' }, { status: 400 })
         }
@@ -91,14 +103,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to save processed image' }, { status: 500 })
         }
 
-        // Get public URL
-        const { data: urlData } = admin.storage
+        // Get signed URL (private bucket)
+        const { data: signedData, error: signedError } = await admin.storage
             .from('claim-uploads')
-            .getPublicUrl(storagePath)
+            .createSignedUrl(storagePath, 60 * 60) // 1 hour expiry
+
+        if (signedError || !signedData?.signedUrl) {
+            return NextResponse.json({ error: 'Failed to generate preview URL' }, { status: 500 })
+        }
 
         return NextResponse.json({
             success: true,
-            processedUrl: urlData.publicUrl,
+            processedUrl: signedData.signedUrl,
             originalUrl: logoUrl,
         })
     } catch (error) {

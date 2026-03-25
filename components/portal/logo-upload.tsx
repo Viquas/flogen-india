@@ -172,7 +172,7 @@ export function LogoUpload({ currentLogoUrl }: LogoUploadProps) {
     }, [handleUpload])
 
     return (
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 md:p-6">
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 md:p-6">
             <h2 className="text-lg font-semibold text-gray-900">Your Logo</h2>
             <p className="text-sm text-gray-500 mt-1 mb-4">
                 Upload your business logo for your website
@@ -285,13 +285,13 @@ export function LogoUpload({ currentLogoUrl }: LogoUploadProps) {
                     )}
 
                     {/* Inline $49 agent CTA */}
-                    <p className="text-sm text-muted-foreground">
-                        Need help with your logo?{' '}
+                    <p className="text-sm text-gray-500">
+                        Our agents can handle this and more customisations for $49*{' '}
                         <Link
                             href="/portal/support"
-                            className="text-primary underline underline-offset-2"
+                            className="text-purple-600 hover:text-purple-700 transition-colors"
                         >
-                            Our agents can handle this for you for $49
+                            Learn more
                         </Link>
                     </p>
                 </div>

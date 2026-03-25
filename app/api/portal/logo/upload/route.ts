@@ -116,16 +116,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
         }
 
-        // Get public URL
-        const { data: urlData } = admin.storage
+        // Get signed URL (claim-uploads is a private bucket)
+        const { data: signedData, error: signedError } = await admin.storage
             .from('claim-uploads')
-            .getPublicUrl(storagePath)
+            .createSignedUrl(storagePath, 60 * 60) // 1 hour expiry
+
+        if (signedError || !signedData?.signedUrl) {
+            console.error('[Portal/Logo/Upload] Signed URL failed:', signedError?.message)
+            return NextResponse.json({ error: 'Failed to generate preview URL' }, { status: 500 })
+        }
 
         // Detect alpha channel for PNGs
         const hasAlpha = detectedType === 'png' ? pngHasAlpha(bytes) : false
 
         return NextResponse.json({
-            url: urlData.publicUrl,
+            url: signedData.signedUrl,
             hasAlpha,
             path: storagePath,
         })

@@ -16,9 +16,9 @@ export function deriveSiteStatus(input: {
         return {
             status: 'update_in_progress',
             label: 'Update in Progress',
-            dotColor: 'bg-amber-500',
-            textColor: 'text-amber-600',
-            bgColor: 'bg-amber-50',
+            dotColor: 'bg-[#AF92FF]',
+            textColor: 'text-[#AF92FF]',
+            bgColor: 'bg-[#AF92FF]/10',
         }
     }
 
@@ -26,17 +26,17 @@ export function deriveSiteStatus(input: {
         return {
             status: 'customization_pending',
             label: 'Customization Pending',
-            dotColor: 'bg-blue-500',
-            textColor: 'text-blue-600',
-            bgColor: 'bg-blue-50',
+            dotColor: 'bg-amber-400',
+            textColor: 'text-amber-400',
+            bgColor: 'bg-amber-400/10',
         }
     }
 
     return {
         status: 'active',
         label: 'Active',
-        dotColor: 'bg-green-500',
-        textColor: 'text-green-600',
-        bgColor: 'bg-green-50',
+        dotColor: 'bg-green-400',
+        textColor: 'text-green-400',
+        bgColor: 'bg-green-400/10',
     }
 }

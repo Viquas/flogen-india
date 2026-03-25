@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
 import type { Metadata } from 'next'
 import { HeroSection } from './components/hero-section'
 import { CustomizationSection } from './components/customization-section'
@@ -95,6 +96,11 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         redirect(`/claim/${slug}/customize`)
     }
 
+    // Build preview HTML for the hero iframe
+    const previewHtml = project.generated_code
+        ? constructHtmlBoilerplate(project.generated_code)
+        : null
+
     // Check if claim has expired
     const isExpired = project.claim_expires_at
         ? new Date(project.claim_expires_at) < new Date()
@@ -111,7 +117,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         return (
             <main>
                 <TestModeBanner />
-                <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} />
+                <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} previewHtml={previewHtml} />
                 <div className="max-w-lg mx-auto">
                     <ExpiredForm projectId={project.id} businessName={businessName} />
                 </div>
@@ -123,7 +129,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     return (
         <main className="pb-8">
             <TestModeBanner />
-            <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} />
+            <HeroSection businessName={businessName} screenshotUrl={project.screenshot_url} previewUrl={`/preview/${slug}`} previewHtml={previewHtml} />
 
             <ClaimPageClient
                 projectId={project.id}

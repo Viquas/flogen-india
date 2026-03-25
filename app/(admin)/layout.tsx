@@ -13,7 +13,7 @@ export default function DashboardLayout({
             <aside className="fixed left-0 top-0 z-40 h-screen w-[220px] bg-sidebar border-r border-sidebar-border">
                 <div className="flex flex-col h-full p-4">
                     <Link href="/dashboard" className="mb-6 px-2 block">
-                        <img src="/flogen-logo.svg" alt="Flogen" className="h-6" />
+                        <img src="/flogen-logo-dark.svg" alt="Flogen" className="h-6" />
                     </Link>
                     <SidebarNav />
                 </div>

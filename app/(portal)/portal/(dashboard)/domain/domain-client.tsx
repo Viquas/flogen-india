@@ -395,35 +395,42 @@ export function DomainClient({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Card 1: Free Subdomain */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mb-3">
-                        <Globe className="w-5 h-5 text-blue-600" />
+                <div className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col ${domainOption === 'subdomain' ? 'border-[#18181b]/20 ring-1 ring-[#18181b]/10' : 'border-gray-200'}`}>
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+                        <Globe className="w-5 h-5 text-gray-600" />
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-1">Free Subdomain</h3>
-                    <p className="text-sm text-gray-600 mb-1">{projectSlug}.flogen.com</p>
+                    <p className="text-sm text-gray-500 mb-1">{projectSlug}.flogen.com</p>
                     <p className="text-xs text-gray-400 mb-4">Included with your plan</p>
                     <div className="mt-auto">
-                        <button
-                            onClick={() => setView('subdomain')}
-                            className="w-full px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                        >
-                            Activate
-                        </button>
+                        {domainOption === 'subdomain' ? (
+                            <div className="w-full px-4 py-2 text-sm font-medium text-[#18181b] bg-gray-100 rounded-xl text-center flex items-center justify-center gap-1.5">
+                                <Check className="w-4 h-4" />
+                                Active
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setView('subdomain')}
+                                className="w-full px-4 py-2 text-sm font-medium text-white bg-[#18181b] hover:bg-[#27272a] rounded-xl transition-colors"
+                            >
+                                Activate
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* Card 2: Connect Existing */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-                    <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
-                        <Link className="w-5 h-5 text-purple-600" />
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+                        <Link className="w-5 h-5 text-gray-600" />
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-1">Connect Existing Domain</h3>
-                    <p className="text-sm text-gray-600 mb-1">Use a domain you already own</p>
+                    <p className="text-sm text-gray-500 mb-1">Use a domain you already own</p>
                     <p className="text-xs text-gray-400 mb-4">DNS verification required</p>
                     <div className="mt-auto">
                         <button
                             onClick={() => setView('connect')}
-                            className="w-full px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#18181b] hover:bg-[#27272a] rounded-xl transition-colors"
                         >
                             Connect
                         </button>
@@ -431,17 +438,17 @@ export function DomainClient({
                 </div>
 
                 {/* Card 3: Buy New */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-3">
-                        <Search className="w-5 h-5 text-emerald-600" />
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+                        <Search className="w-5 h-5 text-gray-600" />
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-1">Buy New Domain</h3>
-                    <p className="text-sm text-gray-600 mb-1">Find and register a new domain</p>
+                    <p className="text-sm text-gray-500 mb-1">Find and register a new domain</p>
                     <p className="text-xs text-gray-400 mb-4">Via external registrar</p>
                     <div className="mt-auto">
                         <button
                             onClick={() => setView('buy')}
-                            className="w-full px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#18181b] hover:bg-[#27272a] rounded-xl transition-colors"
                         >
                             Search
                         </button>
@@ -456,9 +463,9 @@ export function DomainClient({
     const renderSubdomain = () => (
         <div>
             <BackButton onClick={resetToGrid} />
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm max-w-lg">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mb-4">
-                    <Globe className="w-5 h-5 text-blue-600" />
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm max-w-lg mx-auto">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
+                    <Globe className="w-5 h-5 text-gray-600" />
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-1">Free Subdomain</h2>
                 <p className="text-sm text-gray-500 mb-4">Your website will be available at:</p>
@@ -558,13 +565,37 @@ export function DomainClient({
                             ))}
                         </div>
 
-                        {/* Verification token */}
-                        <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">TXT Record Value</span>
-                                <CopyButton text={verifyToken} />
+                        {/* DNS Record Table (Vercel-style) */}
+                        <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+                            <div className="text-xs text-gray-500 px-4 py-2 bg-gray-50 border-b border-gray-200">
+                                The DNS records at your provider must match the following records to verify your domain.
                             </div>
-                            <code className="text-sm font-mono font-semibold text-gray-900 break-all">{verifyToken}</code>
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-gray-100">
+                                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-2.5 w-16">Type</th>
+                                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-2.5 w-20">Name</th>
+                                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-2.5">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="px-4 py-3 text-sm font-mono font-medium text-gray-900">TXT</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-sm font-mono font-medium text-gray-900">@</span>
+                                                <CopyButton text="@" />
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-1.5">
+                                                <code className="text-sm font-mono font-medium text-gray-900 break-all">{verifyToken}</code>
+                                                <CopyButton text={verifyToken} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
                         {/* Instructions */}
@@ -635,12 +666,16 @@ export function DomainClient({
 
                 {/* $49 Agent CTA */}
                 {connectStep !== 3 && (
-                    <div className="mt-6 pt-4 border-t border-gray-100">
+                    <div className="mt-6 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-medium text-gray-900">Need help with setup?</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Our agents can handle the DNS configuration for you</p>
+                        </div>
                         <a
                             href="/portal/support"
-                            className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                            className="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors whitespace-nowrap shadow-sm"
                         >
-                            Need help? Our agents can set this up for you for $49
+                            Get Help — $49
                         </a>
                     </div>
                 )}
@@ -786,12 +821,16 @@ export function DomainClient({
                     )}
 
                     {/* $49 Agent CTA */}
-                    <div className="mt-6 pt-4 border-t border-gray-100">
+                    <div className="mt-6 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-medium text-gray-900">Need help with setup?</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Our agents can handle domain registration for you</p>
+                        </div>
                         <a
                             href="/portal/support"
-                            className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                            className="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors whitespace-nowrap shadow-sm"
                         >
-                            Need help? Our agents can set this up for you for $49
+                            Get Help — $49
                         </a>
                     </div>
                 </div>

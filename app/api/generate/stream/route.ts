@@ -110,6 +110,13 @@ export async function POST(req: NextRequest) {
                             projectId = project.id
                             const { saveCodeToDisk } = await import('@/lib/file-utils')
                             await saveCodeToDisk(projectId, fullCode)
+
+                            // Generate screenshot in the background
+                            import('@/lib/screenshot').then(({ generateScreenshot }) => {
+                                generateScreenshot(projectId!, fullCode).catch((err) => {
+                                    console.error('[Stream] Screenshot generation error (non-fatal):', err)
+                                })
+                            })
                         }
 
                         if (batch && !projectError && projectId) {
