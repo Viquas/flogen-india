@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Somosite Agency Landing Page
-status: in-progress
-last_updated: "2026-03-25T20:15:22Z"
+status: unknown
+last_updated: "2026-03-25T20:22:11.877Z"
 progress:
-  total_phases: 20
+  total_phases: 19
   completed_phases: 19
   total_plans: 48
   completed_plans: 48
