@@ -31,8 +31,8 @@
 - [x] **PAGE-08**: Pricing -- 3-tier cards (Standard $499, Pro $1,299, Premium custom), Pro highlighted as "Most Popular"
 - [x] **PAGE-09**: FAQ -- accordion with 7 objection-handling questions
 - [x] **PAGE-10**: Final CTA -- dark background, urgency copy, primary + secondary CTAs
-- [ ] **PAGE-11**: Contact form -- name, email, business name (optional), message; POST /api/contact sends email
-- [ ] **PAGE-12**: Footer -- 4 columns (Company, Product, Legal, Trust), payment badges, copyright
+- [x] **PAGE-11**: Contact form -- name, email, business name (optional), message; POST /api/contact sends email
+- [x] **PAGE-12**: Footer -- 4 columns (Company, Product, Legal, Trust), payment badges, copyright
 
 ### Legal & Compliance
 
@@ -43,7 +43,7 @@
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: POST /api/contact route using existing nodemailer/Gmail SMTP setup
+- [x] **INFRA-01**: POST /api/contact route using existing nodemailer/Gmail SMTP setup
 - [ ] **INFRA-02**: SEO metadata: title, description, OG image, canonical URL in (marketing) layout
 - [ ] **INFRA-03**: PageSpeed 95+ on mobile and desktop (optimized images, minimal JS, next/image)
 - [x] **INFRA-04**: Mobile-first responsive at 375px, 640px, 1024px breakpoints
@@ -91,13 +91,13 @@
 | PAGE-08 | Phase 19 | Complete |
 | PAGE-09 | Phase 19 | Complete |
 | PAGE-10 | Phase 19 | Complete |
-| PAGE-11 | Phase 20 | Pending |
-| PAGE-12 | Phase 20 | Pending |
+| PAGE-11 | Phase 20 | Complete |
+| PAGE-12 | Phase 20 | Complete |
 | LEGAL-01 | Phase 20 | Pending |
 | LEGAL-02 | Phase 20 | Pending |
 | LEGAL-03 | Phase 20 | Pending |
 | LEGAL-04 | Phase 20 | Pending |
-| INFRA-01 | Phase 20 | Pending |
+| INFRA-01 | Phase 20 | Complete |
 | INFRA-02 | Phase 20 | Pending |
 | INFRA-03 | Phase 20 | Pending |
 | INFRA-04 | Phase 16 | Complete |
