@@ -6,7 +6,7 @@
  * When the claim window expires, the bar switches to an expired state.
  *
  * All styles are inline to avoid conflicts with the generated site's CSS.
- * All element IDs are prefixed with `flogen-cta-` to avoid collisions.
+ * All element IDs are prefixed with `sumosite-cta-` to avoid collisions.
  */
 
 export interface CtaConfig {
@@ -38,24 +38,24 @@ function buildCtaBarHtml(config: CtaConfig): string {
     const safeSlug = escapeHtml(config.siteSlug)
 
     return `
-<!-- Flogen CTA Bar -->
+<!-- Sumosite CTA Bar -->
 <style>
-@keyframes flogen-pulse {
+@keyframes sumosite-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(175, 146, 255, 0.4); }
     50% { box-shadow: 0 0 16px 4px rgba(175, 146, 255, 0.3); }
 }
-#flogen-cta-button {
+#sumosite-cta-button {
     background-size: 100% 200% !important;
     background-image: linear-gradient(180deg, #C4B0FF 0%, #8B6FE0 50%, #C4B0FF 100%) !important;
     background-position: 0% 0%;
     transition: background-position 0.2s ease, transform 0.2s ease !important;
 }
-#flogen-cta-button:hover {
+#sumosite-cta-button:hover {
     background-position: 0% 100% !important;
     transform: scale(1.05);
 }
 </style>
-<div id="flogen-cta-root" style="
+<div id="sumosite-cta-root" style="
     position: fixed;
     bottom: 20px;
     left: 50%;
@@ -76,7 +76,7 @@ function buildCtaBarHtml(config: CtaConfig): string {
     max-width: 90vw;
 ">
     <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-        <span id="flogen-cta-name" style="
+        <span id="sumosite-cta-name" style="
             color: #ffffff;
             font-size: 13px;
             font-weight: 500;
@@ -84,14 +84,14 @@ function buildCtaBarHtml(config: CtaConfig): string {
             line-height: 1;
         ">Make this website yours</span>
         <span style="color: rgba(255,255,255,0.15); font-size: 14px;">|</span>
-        <span id="flogen-cta-countdown" style="
+        <span id="sumosite-cta-countdown" style="
             color: rgba(255, 255, 255, 0.4);
             font-size: 12px;
             white-space: nowrap;
             line-height: 1;
         "></span>
     </div>
-    <a id="flogen-cta-button" href="${safeUrl}" style="
+    <a id="sumosite-cta-button" href="${safeUrl}" style="
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -107,7 +107,7 @@ function buildCtaBarHtml(config: CtaConfig): string {
         transition: background 0.15s ease;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         flex-shrink: 0;
-        animation: flogen-pulse 2s ease-in-out infinite;
+        animation: sumosite-pulse 2s ease-in-out infinite;
     ">Claim This Website</a>
 </div>
 <script>
@@ -116,8 +116,8 @@ function buildCtaBarHtml(config: CtaConfig): string {
     document.body.style.paddingBottom = "80px";
 
     var expiresAt = new Date("${safeExpires}").getTime();
-    var countdownEl = document.getElementById("flogen-cta-countdown");
-    var buttonEl = document.getElementById("flogen-cta-button");
+    var countdownEl = document.getElementById("sumosite-cta-countdown");
+    var buttonEl = document.getElementById("sumosite-cta-button");
     var intervalId = null;
 
     function updateCountdown() {
@@ -160,7 +160,7 @@ function buildCtaBarHtml(config: CtaConfig): string {
     var slug = "${safeSlug}";
     var analyticsUrl = "";
     try {
-        var btnHref = document.getElementById("flogen-cta-button").href;
+        var btnHref = document.getElementById("sumosite-cta-button").href;
         if (btnHref && btnHref.indexOf("http") === 0) {
             analyticsUrl = btnHref.split("/claim")[0];
         }
@@ -169,7 +169,7 @@ function buildCtaBarHtml(config: CtaConfig): string {
         try { analyticsUrl = window.location.origin; } catch(e) {}
     }
 
-    function flogenTrack(evtType) {
+    function sumositeTrack(evtType) {
         if (!analyticsUrl || !slug) return;
         var url = analyticsUrl + "/api/analytics/claim-event?slug=" + encodeURIComponent(slug) + "&event=" + encodeURIComponent(evtType);
         try {
@@ -181,17 +181,17 @@ function buildCtaBarHtml(config: CtaConfig): string {
         } catch(e) {}
     }
 
-    flogenTrack("preview_view");
+    sumositeTrack("preview_view");
 
-    var ctaBtn = document.getElementById("flogen-cta-button");
+    var ctaBtn = document.getElementById("sumosite-cta-button");
     if (ctaBtn) {
         ctaBtn.addEventListener("click", function() {
-            flogenTrack("cta_click");
+            sumositeTrack("cta_click");
         });
     }
 })();
 </script>
-<!-- /Flogen CTA Bar -->
+<!-- /Sumosite CTA Bar -->
 `
 }
 

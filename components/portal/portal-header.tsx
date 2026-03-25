@@ -28,7 +28,7 @@ export function PortalHeader({ businessName, userEmail }: PortalHeaderProps) {
         <header className="bg-[#f5f0ea] px-4 md:px-8 py-4">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                    <img src="/flogen-logo-dark.svg" alt="Flogen" className="h-6 shrink-0" />
+                    <img src="/sumosite-logo-dark.svg" alt="Sumosite" className="h-6 shrink-0" />
                     <span className="text-[#0F172A]/15 shrink-0">|</span>
                     <h1 className="font-[family-name:var(--font-signifier)] text-xl md:text-2xl font-light text-[#0F172A] truncate">
                         {businessName}

@@ -7,7 +7,7 @@ import { deriveSiteStatus } from '@/lib/portal/status'
 import { DashboardClient } from './dashboard-client'
 
 export const metadata: Metadata = {
-    title: 'Dashboard - Flogen Portal',
+    title: 'Dashboard - Sumosite Portal',
 }
 
 export default async function PortalDashboardPage() {

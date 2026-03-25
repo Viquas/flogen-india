@@ -268,11 +268,11 @@ function SupportSection() {
           <span>Chat on WhatsApp</span>
         </a>
         <a
-          href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@flogen.ai'}`}
+          href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sumosite.com'}`}
           className="flex items-center gap-3 text-sm text-[#2563EB] hover:text-blue-700"
         >
           <Mail className="w-5 h-5" />
-          <span>{process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@flogen.ai'}</span>
+          <span>{process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sumosite.com'}</span>
         </a>
       </div>
     </div>

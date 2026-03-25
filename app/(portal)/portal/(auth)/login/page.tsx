@@ -27,8 +27,8 @@ export default function PortalLoginPage() {
             <div className="hidden md:flex md:w-1/2 lg:w-[45%] bg-[#ebe5db] flex-col justify-center items-center px-12 lg:px-16">
                 <div className="max-w-sm w-full">
                     <Image
-                        src="/flogen-logo.svg"
-                        alt="Flogen"
+                        src="/sumosite-logo.svg"
+                        alt="Sumosite"
                         width={120}
                         height={40}
                         className="mb-12"
@@ -63,8 +63,8 @@ export default function PortalLoginPage() {
                 {/* Mobile logo -- visible only on mobile */}
                 <div className="md:hidden mb-8">
                     <Image
-                        src="/flogen-logo.svg"
-                        alt="Flogen"
+                        src="/sumosite-logo.svg"
+                        alt="Sumosite"
                         width={100}
                         height={34}
                         priority

@@ -400,7 +400,7 @@ export function DomainClient({
                         <Globe className="w-5 h-5 text-gray-600" />
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-1">Free Subdomain</h3>
-                    <p className="text-sm text-gray-500 mb-1">{projectSlug}.flogen.com</p>
+                    <p className="text-sm text-gray-500 mb-1">{projectSlug}.sumosite.com</p>
                     <p className="text-xs text-gray-400 mb-4">Included with your plan</p>
                     <div className="mt-auto">
                         {domainOption === 'subdomain' ? (
@@ -471,8 +471,8 @@ export function DomainClient({
                 <p className="text-sm text-gray-500 mb-4">Your website will be available at:</p>
 
                 <div className="bg-gray-50 rounded-lg p-4 mb-4 flex items-center justify-between">
-                    <span className="text-base font-mono font-medium text-gray-900">{projectSlug}.flogen.com</span>
-                    <CopyButton text={`${projectSlug}.flogen.com`} />
+                    <span className="text-base font-mono font-medium text-gray-900">{projectSlug}.sumosite.com</span>
+                    <CopyButton text={`${projectSlug}.sumosite.com`} />
                 </div>
 
                 {domainOption === 'subdomain' && domainValue ? (

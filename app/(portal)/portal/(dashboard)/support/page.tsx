@@ -6,7 +6,7 @@ import { getRazorpayPublicKey, isRazorpayTestMode } from '@/lib/razorpay'
 import { SupportClient } from './support-client'
 
 export const metadata: Metadata = {
-    title: 'Support - Flogen Portal',
+    title: 'Support - Sumosite Portal',
 }
 
 export default async function PortalSupportPage() {

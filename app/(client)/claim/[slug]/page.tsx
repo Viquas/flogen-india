@@ -147,7 +147,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
             <FaqAccordion />
 
             <footer className="max-w-2xl mx-auto px-4 py-8 text-center text-xs text-[#050304]/20">
-                <p>Made with care by Flogen</p>
+                <p>Made with care by Sumosite</p>
             </footer>
         </main>
     )

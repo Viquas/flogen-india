@@ -7,8 +7,8 @@ export default function PortalResetPage() {
         <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
             <div className="mb-8">
                 <Image
-                    src="/flogen-logo.svg"
-                    alt="Flogen"
+                    src="/sumosite-logo.svg"
+                    alt="Sumosite"
                     width={100}
                     height={34}
                     priority

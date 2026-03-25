@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { DomainClient } from './domain-client'
 
 export const metadata: Metadata = {
-    title: 'Domain - Flogen Portal',
+    title: 'Domain - Sumosite Portal',
 }
 
 export default async function PortalDomainPage() {

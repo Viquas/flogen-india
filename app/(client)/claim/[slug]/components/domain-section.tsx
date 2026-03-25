@@ -103,7 +103,7 @@ export function DomainSection({
                                     {/* Conditional inputs based on selection */}
                                     {isSelected && option.id === 'subdomain' && (
                                         <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-600 font-mono mt-3">
-                                            {subdomainSlug}.flogen.site
+                                            {subdomainSlug}.sumosite.com
                                         </div>
                                     )}
 

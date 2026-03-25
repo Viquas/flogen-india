@@ -19,7 +19,7 @@ const signifier = localFont({
 })
 
 export const metadata: Metadata = {
-    title: "Portal Login - Flogen",
+    title: "Portal Login - Sumosite",
     description: "Log in to your client portal",
 }
 

@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { CustomizeClient } from './customize-client'
 
 export const metadata: Metadata = {
-    title: 'Customize - Flogen Portal',
+    title: 'Customize - Sumosite Portal',
 }
 
 export default async function CustomizePage() {

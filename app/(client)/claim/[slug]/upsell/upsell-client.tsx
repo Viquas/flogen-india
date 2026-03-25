@@ -56,7 +56,7 @@ export default function UpsellClient({
             const options = {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
                 order_id: result.orderId,
-                name: 'Flogen',
+                name: 'Sumosite',
                 description: 'Strategy Call',
                 prefill: {
                     name: clientName,

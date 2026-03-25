@@ -67,7 +67,7 @@ export default function ClaimPageClient({
             const options = {
                 key: razorpayKey,
                 order_id: result.orderId,
-                name: 'Flogen',
+                name: 'Sumosite',
                 description: `${selectedPlan === 'pro' ? 'Pro' : 'Standard'} Website Plan`,
                 prefill: { name: businessName },
                 handler: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
