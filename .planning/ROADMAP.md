@@ -183,11 +183,10 @@ Plans:
   3. A `lib/marketing-constants.ts` file exports all marketing copy (headlines, subheadlines, CTAs, feature descriptions, FAQ content, pricing data) and every text string on the landing page reads from this file -- no hardcoded copy in components
   4. Design tokens (#0A0A0A background, #AF92FF accent, grain texture, translucent layers) are applied to the layout and all marketing components use them consistently
   5. All existing routes (/dashboard, /claim/*, /preview/*, /portal/*) load and function exactly as before -- no regressions from the root route change or new route group
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md -- Marketing constants, (marketing) route group layout with dark design tokens + fonts, landing page shell, root route change
 
 ### Phase 17: Hero, Trust & Problem
 **Goal**: The top three sections of the landing page are complete -- visitors see a sticky navigation bar, a compelling hero with browser mockup visual, trust signals, and an empathetic problem statement that creates emotional resonance
@@ -271,7 +270,7 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
-| 16. Marketing Foundation | v4.0 | 0/TBD | Not started | - |
+| 16. Marketing Foundation | v4.0 | 0/1 | Planning complete | - |
 | 17. Hero, Trust & Problem | v4.0 | 0/TBD | Not started | - |
 | 18. How It Works, Portfolio & Benefits | v4.0 | 0/TBD | Not started | - |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
@@ -279,4 +278,4 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-25 -- v4.0 roadmap created (5 phases, 28 requirements mapped)*
+*Last updated: 2026-03-26 -- Phase 16 planned (1 plan, wave 1)*
