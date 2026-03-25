@@ -39,11 +39,11 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 ### Domain Management
 
-- [ ] **DOMAIN-01**: Free subdomain auto-provisioned on payment ({business-slug}.flogen.com) — displayed immediately in portal
-- [ ] **DOMAIN-02**: Connect existing domain flow — client enters domain, receives TXT record to add, portal polls DNS for verification
-- [ ] **DOMAIN-03**: DNS verification status display (pending, verifying, verified, failed) with step-by-step text instructions
-- [ ] **DOMAIN-04**: Domain availability search via Domainr API — client types desired domain, sees availability + external registrar links
-- [ ] **DOMAIN-05**: AI domain suggestions — if desired domain unavailable, Gemini generates 15-20 alternatives, batch-checked against Domainr, only available domains shown
+- [x] **DOMAIN-01**: Free subdomain auto-provisioned on payment ({business-slug}.flogen.com) — displayed immediately in portal
+- [x] **DOMAIN-02**: Connect existing domain flow — client enters domain, receives TXT record to add, portal polls DNS for verification
+- [x] **DOMAIN-03**: DNS verification status display (pending, verifying, verified, failed) with step-by-step text instructions
+- [x] **DOMAIN-04**: Domain availability search via Domainr API — client types desired domain, sees availability + external registrar links
+- [x] **DOMAIN-05**: AI domain suggestions — if desired domain unavailable, Gemini generates 15-20 alternatives, batch-checked against Domainr, only available domains shown
 - [ ] **DOMAIN-06**: $49 agent domain setup payment — creates domain_setup request in client_requests table
 
 ### Logo & Customization
@@ -134,11 +134,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORTAL-05 | Phase 14 | Complete |
 | PORTAL-06 | Phase 13 | Complete |
 | PORTAL-07 | Phase 14 | Pending |
-| DOMAIN-01 | Phase 14 | Pending |
-| DOMAIN-02 | Phase 14 | Pending |
-| DOMAIN-03 | Phase 14 | Pending |
-| DOMAIN-04 | Phase 14 | Pending |
-| DOMAIN-05 | Phase 14 | Pending |
+| DOMAIN-01 | Phase 14 | Complete |
+| DOMAIN-02 | Phase 14 | Complete |
+| DOMAIN-03 | Phase 14 | Complete |
+| DOMAIN-04 | Phase 14 | Complete |
+| DOMAIN-05 | Phase 14 | Complete |
 | DOMAIN-06 | Phase 14 | Pending |
 | LOGO-01 | Phase 14 | Pending |
 | LOGO-02 | Phase 14 | Pending |
