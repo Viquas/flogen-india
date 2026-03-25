@@ -48,9 +48,9 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 ### Logo & Customization
 
-- [ ] **LOGO-01**: Logo upload in portal with drag-and-drop (PNG/JPEG, max 5MB)
-- [ ] **LOGO-02**: AI background removal via Gemini Vision — detects non-transparent background, prompts user, processes with before/after preview
-- [ ] **LOGO-03**: Client approves or reverts background removal result before saving
+- [x] **LOGO-01**: Logo upload in portal with drag-and-drop (PNG/JPEG, max 5MB)
+- [x] **LOGO-02**: AI background removal via Gemini Vision — detects non-transparent background, prompts user, processes with before/after preview
+- [x] **LOGO-03**: Client approves or reverts background removal result before saving
 - [x] **LOGO-04**: Cal.com booking setup field visible only for Pro plan — text input for embed slug stored in projects.cal_embed_slug
 
 ### Admin Fulfillment
@@ -140,9 +140,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOMAIN-04 | Phase 14 | Complete |
 | DOMAIN-05 | Phase 14 | Complete |
 | DOMAIN-06 | Phase 14 | Complete |
-| LOGO-01 | Phase 14 | Pending |
-| LOGO-02 | Phase 14 | Pending |
-| LOGO-03 | Phase 14 | Pending |
+| LOGO-01 | Phase 14 | Complete |
+| LOGO-02 | Phase 14 | Complete |
+| LOGO-03 | Phase 14 | Complete |
 | LOGO-04 | Phase 14 | Complete |
 | ADMIN-01 | Phase 15 | Pending |
 | ADMIN-02 | Phase 15 | Pending |

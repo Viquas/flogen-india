@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 14 of 15 (Portal Features)
-Plan: 4 of 4 in current phase (14-04 complete)
+Plan: 4 of 4 in current phase (14-03 complete, all plans done)
 Status: Phase 14 complete
-Last activity: 2026-03-25 -- Completed 14-04 (agent support and help button)
+Last activity: 2026-03-25 -- Completed 14-03 (logo upload with AI bg removal)
 
 Progress: [**********] 100%
 
@@ -54,6 +54,7 @@ Progress: [**********] 100%
 | 13-02 | 4min | 2 | 11 |
 | 14-01 | 4min | 2 | 5 |
 | 14-02 | 5min | 2 | 9 |
+| 14-03 | 6min | 2 | 8 |
 | 14-04 | 4min | 2 | 6 |
 
 ## Accumulated Context
@@ -102,6 +103,10 @@ Relevant to current work:
 - [14-02]: Single domain-client.tsx with view state machine (grid/subdomain/connect/buy) rather than separate routes
 - [14-02]: 6 registrar instruction sets: GoDaddy, Namecheap, Cloudflare, Google Domains, Hostinger, Other
 - [14-02]: Verification token format: flogen-verify-{first8CharsOfClaimId} -- deterministic, no DB storage
+- [14-03]: mediaType (not mimeType) for AI SDK ImagePart -- matches current @ai-sdk/provider-utils type definition
+- [14-03]: Extended existing POST /api/portal/requests with optional type+metadata instead of separate logo save endpoint
+- [14-03]: Transparent PNGs auto-save without bg removal prompt -- detected via IHDR byte 25 color type
+- [14-03]: gemini-2.0-flash-exp model for bg removal -- green-screen approach with sharp pixel replacement
 - [14-04]: Webhook early return pattern: check payment.notes.type before claim lookup to avoid unnecessary DB queries for agent payments
 - [14-04]: Floating button uses usePathname() to self-hide on /portal/support rather than conditional rendering in layout
 
@@ -120,5 +125,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 14-04-PLAN.md (agent support and help button)
+Stopped at: Completed 14-03-PLAN.md (logo upload with AI bg removal)
 Resume file: None
