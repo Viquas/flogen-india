@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
-status: unknown
-last_updated: "2026-03-25T01:26:45.000Z"
+status: complete
+last_updated: "2026-03-25T01:36:10.000Z"
 progress:
   total_phases: 15
-  completed_phases: 14
+  completed_phases: 15
   total_plans: 42
-  completed_plans: 41
+  completed_plans: 42
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 15 of 15 (Admin Fulfillment)
-Plan: 1 of 2 in current phase (15-01 complete)
-Status: In progress
-Last activity: 2026-03-25 -- Completed 15-01 (clients list and detail pages)
+Plan: 2 of 2 in current phase (15-02 complete)
+Status: Complete
+Last activity: 2026-03-25 -- Completed 15-02 (editor fulfillment integration)
 
-Progress: [*********-] 98%
+Progress: [**********] 100%
 
 ## Performance Metrics
 
@@ -40,8 +40,8 @@ Progress: [*********-] 98%
 - Phases: 5/5 complete (phases 6-10)
 
 **v3.0:**
-- Total plans completed: 8
-- Phases: 3/5 complete (phases 11-15), Phase 15 in progress
+- Total plans completed: 9
+- Phases: 5/5 complete (phases 11-15)
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
@@ -57,6 +57,7 @@ Progress: [*********-] 98%
 | 14-03 | 6min | 2 | 8 |
 | 14-04 | 4min | 2 | 6 |
 | 15-01 | 4min | 2 | 6 |
+| 15-02 | 6min | 2 | 6 |
 
 ## Accumulated Context
 
@@ -113,6 +114,9 @@ Relevant to current work:
 - [15-01]: Derived fulfillment status from request states (pending_customization/in_progress/delivered) -- not from claim status
 - [15-01]: Separate client_requests query for count aggregation -- Supabase PostgREST count limitation
 - [15-01]: Requests grouped by status on detail page: In Progress first, Pending second, Completed collapsed
+- [15-02]: checkPurchaseStatus as reusable callback -- avoids duplicating claim check across cache-hit, fresh-load, and sidebar-select paths
+- [15-02]: Optimistic UI for request status transitions with server-action revert on failure
+- [15-02]: Left panel tab switcher only rendered for purchased projects -- zero visual change for normal editor workflow
 
 ### Pending Todos
 
@@ -129,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 15-01-PLAN.md (clients list and detail pages)
+Stopped at: Completed 15-02-PLAN.md (editor fulfillment integration) -- ALL PLANS COMPLETE
 Resume file: None

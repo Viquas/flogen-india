@@ -104,7 +104,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 12: Payment-First Claim Flow** - Harden webhook with dual verification, simplify claim page, USD-only pricing, test/live mode, server-side account creation (completed 2026-03-24)
 - [x] **Phase 13: Portal Shell** - Auth-guarded portal layout, dashboard with site preview, login page, password setup on confirmation (completed 2026-03-24)
 - [x] **Phase 14: Portal Features** - Change requests, domain management, logo upload with AI bg removal, booking setup, agent support payment (completed 2026-03-25)
-- [ ] **Phase 15: Admin Fulfillment** - Purchased clients list, customer requests queue, status transitions, redeploy button
+- [x] **Phase 15: Admin Fulfillment** - Purchased clients list, customer requests queue, status transitions, redeploy button (completed 2026-03-25)
 
 ## Phase Details
 
@@ -210,7 +210,7 @@ Phases execute in numeric order: 11 -> 12 -> 13 -> 14 -> 15
 | 12. Payment-First Claim Flow | v3.0 | 3/3 | Complete | 2026-03-24 |
 | 13. Portal Shell | v3.0 | 2/2 | Complete | 2026-03-24 |
 | 14. Portal Features | v3.0 | 4/4 | Complete | 2026-03-25 |
-| 15. Admin Fulfillment | 1/2 | In Progress|  | - |
+| 15. Admin Fulfillment | 2/2 | Complete   | 2026-03-25 | - |
 
 ---
 *Roadmap created: 2026-03-18*
