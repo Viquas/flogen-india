@@ -50,10 +50,9 @@ export default function MarketingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {TRUST_SIGNALS.map((signal) => (
               <div key={signal.label} className="text-center">
-                <p className="text-2xl sm:text-3xl font-bold">
-                  {signal.value}
+                <p className="text-sm sm:text-base font-medium">
+                  {signal.label}
                 </p>
-                <p className="mt-1 text-sm opacity-70">{signal.label}</p>
               </div>
             ))}
           </div>

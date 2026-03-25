@@ -4,28 +4,30 @@
 const NAV = {
   logo: "Somosite",
   links: [
-    { label: "Portfolio", href: "#portfolio" },
     { label: "How It Works", href: "#how-it-works" },
+    { label: "Our Work", href: "#portfolio" },
     { label: "Pricing", href: "#pricing" },
-    { label: "Contact", href: "#contact" },
+    { label: "FAQ", href: "#faq" },
   ],
+  cta: { label: "Contact Us", href: "#contact" },
 } as const
 
 const HERO = {
-  headline: "Precision-Built Websites That Convert Visitors Into Customers",
+  headline: "A professional website built from your real business data",
   subheadline:
-    "We design and develop custom websites for small businesses — fast, mobile-first, and built to drive real results from day one.",
-  primaryCta: "Get Started",
-  secondaryCta: "View Portfolio",
-  primaryCtaHref: "#contact",
-  secondaryCtaHref: "#portfolio",
+    "We research your actual business — your services, reviews, and market — then build a custom website designed to convert visitors into customers. No templates. No stock content. Ready in days.",
+  primaryCta: "See Our Work",
+  secondaryCta: "View Pricing",
+  primaryCtaHref: "#portfolio",
+  secondaryCtaHref: "#pricing",
+  trustSignal: "500+ Websites Delivered",
 } as const
 
 const TRUST_SIGNALS = [
-  { icon: "CheckCircle", value: "50+", label: "Sites Delivered" },
-  { icon: "Zap", value: "48hr", label: "Turnaround" },
-  { icon: "Shield", value: "100%", label: "Satisfaction Guarantee" },
-  { icon: "Code", value: "Modern", label: "Tech Stack" },
+  { icon: "CheckCircle", label: "500+ Websites Delivered" },
+  { icon: "Shield", label: "30-Day Satisfaction Guarantee" },
+  { icon: "BarChart", label: "Built From Real Business Data" },
+  { icon: "Clock", label: "Live in 48 Hours" },
 ] as const
 
 const PROBLEM = {
