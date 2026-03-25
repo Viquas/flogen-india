@@ -270,22 +270,22 @@ const CONTACT = {
   sectionTitle: "Get In Touch",
   sectionSubtitle:
     "Tell us about your business and we will get back to you within 24 hours with a free proposal.",
-  fields: [
-    "name",
-    "email",
-    "phone",
-    "business_name",
-    "website_url",
-    "message",
-  ],
+  submitButton: "Send Message",
+  successMessage: "Thanks! We'll get back to you within 24 hours.",
+  microcopy: "No spam, ever. We typically respond within a few hours.",
 } as const
 
 const FOOTER = {
+  company: {
+    name: "Somosite",
+    description: "Custom websites built from real business data.",
+    email: "hello@somosite.com",
+    location: "Bangalore, India",
+  },
   columns: [
     {
       title: "Company",
       links: [
-        { label: "About", href: "#" },
         { label: "Portfolio", href: "#portfolio" },
         { label: "Contact", href: "#contact" },
       ],
@@ -294,8 +294,10 @@ const FOOTER = {
       title: "Product",
       links: [
         { label: "How It Works", href: "#how-it-works" },
+        { label: "Our Work", href: "#portfolio" },
         { label: "Pricing", href: "#pricing" },
         { label: "FAQ", href: "#faq" },
+        { label: "Client Portal", href: "/portal" },
       ],
     },
     {
@@ -315,6 +317,8 @@ const FOOTER = {
       ],
     },
   ],
+  guarantee: "30-Day Satisfaction Guarantee",
+  ssl: "SSL Protected",
   copyright: `\u00A9 ${new Date().getFullYear()} Somosite. All rights reserved.`,
   paymentMethods: ["Visa", "Mastercard", "UPI"],
 } as const
