@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 17 of 20 (Hero, Trust & Problem) -- COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 17 complete, ready for Phase 18
-Last activity: 2026-03-26 -- completed 17-02 Hero, Trust Bar & Problem sections
+Phase: 18 of 20 (How It Works, Portfolio & Benefits)
+Plan: 1 of 2 complete
+Status: Executing Phase 18
+Last activity: 2026-03-26 -- completed 18-01 How It Works & Benefits
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [████░░░░░░] 40%
 | 16-01 | Marketing Foundation | 5min | 3 | 4 |
 | 17-01 | Scroll Animation + Navbar | 5min | 2 | 4 |
 | 17-02 | Hero, Trust Bar & Problem | 4min | 2 | 5 |
+| 18-01 | How It Works & Benefits | 4min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - 17-02: Adapted TrustBar to actual TRUST_SIGNALS data shape (icon + label, no value field)
 - 17-02: Inline <style> for float keyframe scoped to Hero component
 - 17-02: Lucide icon map pattern for dynamic icon rendering from string names
+- 18-01: Desktop connecting lines via dashed border-top between step circles (CSS-only)
+- 18-01: Dual-layout pattern: separate markup for desktop (hidden sm:grid) and mobile (sm:hidden)
+- 18-01: Benefits subtitle added for visual balance (pattern consistency, not in PRD)
 
 ### Pending Todos
 
@@ -79,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 17-02-PLAN.md
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None

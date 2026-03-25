@@ -272,7 +272,7 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 15. Admin Fulfillment | v3.0 | 2/2 | Complete | 2026-03-25 |
 | 16. Marketing Foundation | v4.0 | 1/1 | Complete | 2026-03-25 |
 | 17. Hero, Trust & Problem | v4.0 | 2/2 | Complete | 2026-03-25 |
-| 18. How It Works, Portfolio & Benefits | v4.0 | 0/2 | Not started | - |
+| 18. How It Works, Portfolio & Benefits | 1/2 | In Progress|  | - |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 0/TBD | Not started | - |
 | 20. Contact, Footer, Legal & Polish | v4.0 | 0/TBD | Not started | - |
 
