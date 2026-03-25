@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
-status: in-progress
-last_updated: "2026-03-25T00:47:32Z"
+status: unknown
+last_updated: "2026-03-25T00:57:12.763Z"
 progress:
-  total_phases: 15
-  completed_phases: 13
+  total_phases: 14
+  completed_phases: 14
   total_plans: 40
   completed_plans: 40
 ---
