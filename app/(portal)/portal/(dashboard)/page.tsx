@@ -35,7 +35,7 @@ export default async function PortalDashboardPage() {
 
     const { data: project } = await admin
         .from('projects')
-        .select('id, business_data, generated_code, slug, version')
+        .select('id, business_data, generated_code, slug, version, updated_at')
         .eq('id', claim.project_id)
         .single()
 
@@ -75,6 +75,7 @@ export default async function PortalDashboardPage() {
             displayUrl={displayUrl}
             plan={claim.plan}
             status={status}
+            updatedAt={project?.updated_at ?? null}
         />
     )
 }

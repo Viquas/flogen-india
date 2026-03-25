@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDistanceToNow } from 'date-fns'
 import type { StatusResult } from '@/lib/portal/status'
 import { SitePreview } from '@/components/portal/site-preview'
 import { UrlCard } from '@/components/portal/url-card'
@@ -13,6 +14,7 @@ interface DashboardClientProps {
     displayUrl: string
     plan: string
     status: StatusResult
+    updatedAt: string | null
 }
 
 export function DashboardClient({
@@ -22,6 +24,7 @@ export function DashboardClient({
     displayUrl,
     plan,
     status,
+    updatedAt,
 }: DashboardClientProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-4 md:gap-6">
@@ -46,6 +49,11 @@ export function DashboardClient({
                             <StatusIndicator status={status} />
                         </div>
                     </div>
+                    {updatedAt && (
+                        <p className="text-[11px] text-gray-400 mt-3 pt-3 border-t border-gray-100">
+                            Last updated {formatDistanceToNow(new Date(updatedAt), { addSuffix: true })}
+                        </p>
+                    )}
                 </div>
 
                 {/* Quick links placeholder */}

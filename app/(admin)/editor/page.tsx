@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, LayoutDashboard, Code2, Eye, Send, ChevronDown, Monitor, Tablet, Smartphone, AlertCircle, FileText, MoreHorizontal, Pencil, Trash2, Check, X, PanelLeftClose, PanelLeftOpen, Star, GitCompare, LayoutGrid, ExternalLink, Paperclip, ImageIcon } from "lucide-react"
+import { Loader2, LayoutDashboard, Code2, Eye, Send, ChevronDown, Monitor, Tablet, Smartphone, AlertCircle, FileText, MoreHorizontal, Pencil, Trash2, Check, X, PanelLeftClose, PanelLeftOpen, Star, GitCompare, LayoutGrid, ExternalLink, Paperclip, ImageIcon, Rocket } from "lucide-react"
 import { LivePreview, StreamLogEntry } from "@/components/workbench/live-preview"
 import { useSearchParams } from "next/navigation"
 import { getProjectById, getRecentProjects, getBatches, approveProject } from "@/app/(admin)/dashboard/actions"
@@ -37,6 +37,11 @@ import { DiffView } from "@/components/editor/diff-view"
 import { EditModeOverlay } from "@/components/editor/edit-mode-overlay"
 import { usePrefetchCache } from "@/hooks/use-prefetch-cache"
 import { saveEditModeChanges } from "@/app/(admin)/dashboard/actions"
+import { getProjectClaimAndRequests, updateRequestStatus, redeployProject } from "@/app/(admin)/dashboard/clients/actions"
+import type { ClientRequestItem } from "@/app/(admin)/dashboard/clients/actions"
+import { CustomerRequestsTab } from "@/components/admin/customer-requests-tab"
+import { RedeployDialog } from "@/components/admin/redeploy-dialog"
+import { toast } from "sonner"
 
 const testBusinessData = {
     businessName: "TechVentures Inc",
@@ -141,6 +146,14 @@ function EditorContent() {
     const [currentRating, setCurrentRating] = useState<number>(0)
     const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
     const [isApproving, setIsApproving] = useState(false)
+
+    // Purchase/fulfillment state
+    const [isPurchasedProject, setIsPurchasedProject] = useState(false)
+    const [purchaseInfo, setPurchaseInfo] = useState<{ claimId: string; clientName: string; businessName: string } | null>(null)
+    const [clientRequests, setClientRequests] = useState<ClientRequestItem[]>([])
+    const [isRedeployDialogOpen, setIsRedeployDialogOpen] = useState(false)
+    const [isRedeploying, setIsRedeploying] = useState(false)
+    const [leftPanelTab, setLeftPanelTab] = useState<'chat' | 'requests'>('chat')
 
     // Prefetch cache for instant project loading
     const { getCached, prefetchNext, addToCache } = usePrefetchCache(5)
@@ -303,6 +316,34 @@ function EditorContent() {
         }
     }, [])
 
+    /** Check if a project is a purchased project and load claim/request data */
+    const checkPurchaseStatus = useCallback(async (projectIdToCheck: string) => {
+        try {
+            const claimResult = await getProjectClaimAndRequests(projectIdToCheck)
+            if (claimResult.isPurchased) {
+                setIsPurchasedProject(true)
+                setPurchaseInfo({
+                    claimId: claimResult.claimId!,
+                    clientName: claimResult.clientName ?? '',
+                    businessName: claimResult.businessName ?? 'Unknown Business',
+                })
+                setClientRequests(claimResult.requests ?? [])
+                setLeftPanelTab('requests')
+            } else {
+                setIsPurchasedProject(false)
+                setPurchaseInfo(null)
+                setClientRequests([])
+                setLeftPanelTab('chat')
+            }
+        } catch (e) {
+            console.error('[Editor] Failed to check purchase status:', e)
+            setIsPurchasedProject(false)
+            setPurchaseInfo(null)
+            setClientRequests([])
+            setLeftPanelTab('chat')
+        }
+    }, [])
+
     /** Trigger background prefetch of the next projects in the list */
     const triggerPrefetch = useCallback((currentId: string) => {
         let projectIds = projectHistory.map((p: any) => p.id)
@@ -327,6 +368,7 @@ function EditorContent() {
         if (cached) {
             console.log('[Editor] Loaded from prefetch cache:', id)
             applyProjectData(cached)
+            checkPurchaseStatus(id)
             triggerPrefetch(id)
             return
         }
@@ -339,6 +381,7 @@ function EditorContent() {
                 console.log('[Editor] Project loaded successfully:', result.data.id)
                 const project = result.data
                 applyProjectData(project)
+                checkPurchaseStatus(id)
                 // Add to cache for potential back-navigation
                 addToCache({ ...(project as any), cachedAt: Date.now() })
                 // Trigger prefetch for next projects
@@ -684,11 +727,54 @@ function EditorContent() {
         } catch {
             setChatMessages([])
         }
+
+        // Check if this is a purchased project
+        checkPurchaseStatus(project.id)
     }
 
     const handleApprove = () => {
         if (!generatedCode) return
         setIsApproveDialogOpen(true)
+    }
+
+    const handleRequestUpdate = async (requestId: string, newStatus: 'in_progress' | 'completed', adminNotes?: string) => {
+        // Optimistic update
+        setClientRequests(prev => prev.map(r =>
+            r.id === requestId
+                ? { ...r, status: newStatus, adminNotes: adminNotes || r.adminNotes, updatedAt: new Date().toISOString() }
+                : r
+        ))
+        const result = await updateRequestStatus(requestId, newStatus, adminNotes)
+        if (!result.success) {
+            // Revert on error -- refetch
+            if (activeProjectId) {
+                const fresh = await getProjectClaimAndRequests(activeProjectId)
+                if (fresh.isPurchased) setClientRequests(fresh.requests ?? [])
+            }
+            toast.error('Failed to update request status')
+        }
+    }
+
+    const handleRedeploy = async () => {
+        if (!activeProjectId || !generatedCode) return
+        setIsRedeploying(true)
+        try {
+            const result = await redeployProject(activeProjectId, generatedCode)
+            if (result.success) {
+                toast.success('Site deployed successfully')
+                setIsRedeployDialogOpen(false)
+                // Refresh requests to show auto-completed status
+                const fresh = await getProjectClaimAndRequests(activeProjectId)
+                if (fresh.isPurchased) setClientRequests(fresh.requests ?? [])
+            } else {
+                toast.error(result.error || 'Redeploy failed')
+            }
+        } catch (e) {
+            console.error('[Editor] Redeploy failed:', e)
+            toast.error('Redeploy failed')
+        } finally {
+            setIsRedeploying(false)
+        }
     }
 
     const saveProjectLocally = async () => {
@@ -859,7 +945,37 @@ function EditorContent() {
                             >
                                 {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
                             </Button>
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Chat</span>
+                            {isPurchasedProject ? (
+                                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                                    <button
+                                        onClick={() => setLeftPanelTab('chat')}
+                                        className={`px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                                            leftPanelTab === 'chat'
+                                                ? 'bg-white text-gray-700 shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                    >
+                                        Chat
+                                    </button>
+                                    <button
+                                        onClick={() => setLeftPanelTab('requests')}
+                                        className={`px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                                            leftPanelTab === 'requests'
+                                                ? 'bg-white text-gray-700 shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                    >
+                                        Requests
+                                        {clientRequests.filter(r => r.status !== 'completed').length > 0 && (
+                                            <span className="ml-1.5 inline-flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-white text-[9px] font-bold">
+                                                {clientRequests.filter(r => r.status !== 'completed').length}
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
+                            ) : (
+                                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Chat</span>
+                            )}
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -897,6 +1013,14 @@ function EditorContent() {
                         </div>
                     )}
 
+                    {/* Panel Content: Chat or Requests */}
+                    {leftPanelTab === 'requests' && isPurchasedProject ? (
+                        <CustomerRequestsTab
+                            requests={clientRequests}
+                            onRequestUpdate={handleRequestUpdate}
+                        />
+                    ) : (
+                    <>
                     {/* Chat Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-3">
                         {chatMessages.length === 0 ? (
@@ -1008,6 +1132,8 @@ function EditorContent() {
                             </div>
                         )}
                     </div>
+                    </>
+                    )}
                 </div>
 
                 {/* Right Panel - Large Preview */}
@@ -1173,15 +1299,27 @@ function EditorContent() {
                                 </span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Button
-                                    onClick={handleApprove}
-                                    disabled={!generatedCode}
-                                    size="sm"
-                                    className="h-8 text-[10px] uppercase tracking-wider gap-2 px-3 transition-all bg-green-600 hover:bg-green-700 text-white font-bold border-none shadow-md shadow-green-100"
-                                >
-                                    <Check className="h-3 w-3" />
-                                    Approve
-                                </Button>
+                                {isPurchasedProject ? (
+                                    <Button
+                                        onClick={() => setIsRedeployDialogOpen(true)}
+                                        disabled={!generatedCode}
+                                        size="sm"
+                                        className="h-8 text-[10px] uppercase tracking-wider gap-2 px-3 transition-all bg-blue-600 hover:bg-blue-700 text-white font-bold border-none shadow-md shadow-blue-100"
+                                    >
+                                        <Rocket className="h-3 w-3" />
+                                        Redeploy
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={handleApprove}
+                                        disabled={!generatedCode}
+                                        size="sm"
+                                        className="h-8 text-[10px] uppercase tracking-wider gap-2 px-3 transition-all bg-green-600 hover:bg-green-700 text-white font-bold border-none shadow-md shadow-green-100"
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Approve
+                                    </Button>
+                                )}
                                 <div className="h-5 w-px bg-zinc-200" />
                                 <div className="flex items-center gap-1" title="Rate & save as template">
                                     {[1, 2, 3].map((star) => {
@@ -1312,6 +1450,17 @@ function EditorContent() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Redeploy Dialog */}
+            {isPurchasedProject && purchaseInfo && (
+                <RedeployDialog
+                    open={isRedeployDialogOpen}
+                    onOpenChange={setIsRedeployDialogOpen}
+                    businessName={purchaseInfo.businessName}
+                    onConfirm={handleRedeploy}
+                    isDeploying={isRedeploying}
+                />
+            )}
 
             {/* Outreach Modal */}
             {activeProjectId && (
