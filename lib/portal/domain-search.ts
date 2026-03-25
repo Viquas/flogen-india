@@ -5,79 +5,94 @@ export interface DomainStatus {
     summary: 'inactive' | 'active' | 'unknown'
 }
 
-interface DomainrStatusResponse {
-    status: DomainStatus[]
-}
-
-interface DomainrSearchResult {
-    domain: string
-    host: string
-    path: string
-}
-
-interface DomainrSearchResponse {
-    results: DomainrSearchResult[]
-}
-
 export const AVAILABILITY_DISCLAIMER =
     'Availability may vary. Check directly at the registrar before purchasing.'
 
-const RAPIDAPI_HOST = 'domainr.p.rapidapi.com'
-
-function getHeaders(): HeadersInit | null {
-    const key = process.env.RAPIDAPI_KEY
-    if (!key) {
-        console.warn('[Portal/Domain] RAPIDAPI_KEY not set — domain search unavailable')
-        return null
-    }
-    return {
-        'x-rapidapi-key': key,
-        'x-rapidapi-host': RAPIDAPI_HOST,
-    }
-}
+const COMMON_TLDS = ['.com', '.net', '.org', '.io', '.co', '.dev', '.app', '.store', '.shop', '.site']
 
 /**
- * Check domain availability via Domainr v2 status endpoint.
+ * Check domain availability using Google DNS-over-HTTPS.
+ * If a domain has no DNS records (NXDOMAIN), it's likely available.
+ * No API key required.
  */
 export async function checkDomainAvailability(
     domain: string
 ): Promise<DomainStatus[]> {
-    const headers = getHeaders()
-    if (!headers) return [{ domain, zone: domain.split('.').pop() || '', status: 'unknown', summary: 'unknown' }]
+    const normalized = domain.toLowerCase().trim()
 
-    const url = `https://${RAPIDAPI_HOST}/v2/status?domain=${encodeURIComponent(domain)}`
+    // If no TLD provided, check .com
+    const hasTld = normalized.includes('.')
+    const domainsToCheck = hasTld ? [normalized] : [`${normalized}.com`]
 
-    const response = await fetch(url, { headers })
+    const results = await Promise.all(
+        domainsToCheck.map(async (d): Promise<DomainStatus> => {
+            const zone = d.split('.').pop() || ''
+            try {
+                const res = await fetch(
+                    `https://dns.google/resolve?name=${encodeURIComponent(d)}&type=A`,
+                    { headers: { Accept: 'application/dns-json' } }
+                )
 
-    if (!response.ok) {
-        console.error(`[Portal/Domain] Domainr status failed: ${response.status}`)
-        return []
-    }
+                if (!res.ok) {
+                    return { domain: d, zone, status: 'unknown', summary: 'unknown' }
+                }
 
-    const data: DomainrStatusResponse = await response.json()
-    return data.status ?? []
+                const data = await res.json()
+
+                // Status 3 = NXDOMAIN (domain doesn't exist = likely available)
+                if (data.Status === 3) {
+                    return { domain: d, zone, status: 'undelegated inactive', summary: 'inactive' }
+                }
+
+                // Has DNS records = taken
+                return { domain: d, zone, status: 'active', summary: 'active' }
+            } catch {
+                return { domain: d, zone, status: 'unknown', summary: 'unknown' }
+            }
+        })
+    )
+
+    return results
 }
 
 /**
- * Search for domain name suggestions via Domainr v2 search endpoint.
+ * Generate domain suggestions for a query by appending common TLDs.
+ * Returns availability status for each.
  */
 export async function searchDomains(
     query: string
-): Promise<DomainrSearchResult[]> {
-    const headers = getHeaders()
-    if (!headers) return []
+): Promise<DomainStatus[]> {
+    const base = query.toLowerCase().trim().replace(/\s+/g, '')
 
-    const url = `https://${RAPIDAPI_HOST}/v2/search?query=${encodeURIComponent(query)}`
+    const candidates = COMMON_TLDS.map(tld => `${base}${tld}`)
 
-    const response = await fetch(url, { headers })
+    const results = await Promise.all(
+        candidates.map(async (d): Promise<DomainStatus> => {
+            const zone = d.split('.').pop() || ''
+            try {
+                const res = await fetch(
+                    `https://dns.google/resolve?name=${encodeURIComponent(d)}&type=A`,
+                    { headers: { Accept: 'application/dns-json' } }
+                )
 
-    if (!response.ok) {
-        console.error(`[Portal/Domain] Domainr search failed: ${response.status}`)
-        return []
-    }
+                if (!res.ok) {
+                    return { domain: d, zone, status: 'unknown', summary: 'unknown' }
+                }
 
-    const data: DomainrSearchResponse = await response.json()
-    return data.results ?? []
+                const data = await res.json()
+
+                if (data.Status === 3) {
+                    return { domain: d, zone, status: 'undelegated inactive', summary: 'inactive' }
+                }
+
+                return { domain: d, zone, status: 'active', summary: 'active' }
+            } catch {
+                return { domain: d, zone, status: 'unknown', summary: 'unknown' }
+            }
+        })
+    )
+
+    return results
 }
 
 type Registrar = 'godaddy' | 'namecheap' | 'google'
