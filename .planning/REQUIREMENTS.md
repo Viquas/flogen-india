@@ -36,16 +36,16 @@
 
 ### Legal & Compliance
 
-- [ ] **LEGAL-01**: Privacy policy page at /privacy with data collection, GDPR, cookies
-- [ ] **LEGAL-02**: Terms of service page at /terms
-- [ ] **LEGAL-03**: Refund policy page at /refund with 30-day guarantee terms
-- [ ] **LEGAL-04**: Cookie consent banner with Accept/Decline, localStorage persistence
+- [x] **LEGAL-01**: Privacy policy page at /privacy with data collection, GDPR, cookies
+- [x] **LEGAL-02**: Terms of service page at /terms
+- [x] **LEGAL-03**: Refund policy page at /refund with 30-day guarantee terms
+- [x] **LEGAL-04**: Cookie consent banner with Accept/Decline, localStorage persistence
 
 ### Infrastructure
 
 - [x] **INFRA-01**: POST /api/contact route using existing nodemailer/Gmail SMTP setup
-- [ ] **INFRA-02**: SEO metadata: title, description, OG image, canonical URL in (marketing) layout
-- [ ] **INFRA-03**: PageSpeed 95+ on mobile and desktop (optimized images, minimal JS, next/image)
+- [x] **INFRA-02**: SEO metadata: title, description, OG image, canonical URL in (marketing) layout
+- [x] **INFRA-03**: PageSpeed 95+ on mobile and desktop (optimized images, minimal JS, next/image)
 - [x] **INFRA-04**: Mobile-first responsive at 375px, 640px, 1024px breakpoints
 
 ## Future Requirements
@@ -93,13 +93,13 @@
 | PAGE-10 | Phase 19 | Complete |
 | PAGE-11 | Phase 20 | Complete |
 | PAGE-12 | Phase 20 | Complete |
-| LEGAL-01 | Phase 20 | Pending |
-| LEGAL-02 | Phase 20 | Pending |
-| LEGAL-03 | Phase 20 | Pending |
-| LEGAL-04 | Phase 20 | Pending |
+| LEGAL-01 | Phase 20 | Complete |
+| LEGAL-02 | Phase 20 | Complete |
+| LEGAL-03 | Phase 20 | Complete |
+| LEGAL-04 | Phase 20 | Complete |
 | INFRA-01 | Phase 20 | Complete |
-| INFRA-02 | Phase 20 | Pending |
-| INFRA-03 | Phase 20 | Pending |
+| INFRA-02 | Phase 20 | Complete |
+| INFRA-03 | Phase 20 | Complete |
 | INFRA-04 | Phase 16 | Complete |
 
 **Coverage:**
