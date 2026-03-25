@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { razorpay } from '@/lib/razorpay'
+import { getRazorpayClient } from '@/lib/razorpay'
 import { calculateTotalCents, UPSELL_PRICING, type PlanType } from '@/lib/claim-pricing'
 import { z } from 'zod'
 
@@ -135,7 +135,7 @@ export async function createRazorpayOrder(input: {
         }
 
         // Create Razorpay order
-        const order = await razorpay.orders.create({
+        const order = await getRazorpayClient().orders.create({
             amount: amountCents,
             currency: 'USD',
             receipt: claimId,
@@ -341,7 +341,7 @@ export async function createUpsellOrder(input: {
         const amount = UPSELL_PRICING.strategy_call
 
         // Create Razorpay order for upsell
-        const order = await razorpay.orders.create({
+        const order = await getRazorpayClient().orders.create({
             amount,
             currency: 'USD',
             receipt: `upsell-${claimId}`,

@@ -23,9 +23,18 @@ if (!keyId || !keySecret) {
     )
 }
 
-export const razorpay = keyId && keySecret
+const razorpayInstance = keyId && keySecret
     ? new Razorpay({ key_id: keyId, key_secret: keySecret })
     : null
+
+export const razorpay = razorpayInstance
+
+export function getRazorpayClient(): Razorpay {
+    if (!razorpayInstance) {
+        throw new Error('Razorpay is not configured. Set RAZORPAY_TEST_KEY_ID and RAZORPAY_TEST_KEY_SECRET.')
+    }
+    return razorpayInstance
+}
 
 export const isRazorpayTestMode = isTestMode
 

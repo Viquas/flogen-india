@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { razorpay, getRazorpayPublicKey } from '@/lib/razorpay'
+import { getRazorpayClient, getRazorpayPublicKey } from '@/lib/razorpay'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 15
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
         }
 
         // Create Razorpay order for $49
-        const order = await razorpay.orders.create({
+        const order = await getRazorpayClient().orders.create({
             amount: 4900,
             currency: 'USD',
             notes: {

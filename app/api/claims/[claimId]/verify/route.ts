@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { razorpay } from '@/lib/razorpay'
+import { getRazorpayClient } from '@/lib/razorpay'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +42,7 @@ export async function POST(
 
     try {
         // Step 4: Fetch payments for this order from Razorpay API
-        const paymentsResponse = await razorpay.orders.fetchPayments(claim.razorpay_order_id)
+        const paymentsResponse = await getRazorpayClient().orders.fetchPayments(claim.razorpay_order_id)
         const items = paymentsResponse?.items || []
 
         // Step 5: Find a captured payment
