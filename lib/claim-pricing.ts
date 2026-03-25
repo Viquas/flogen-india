@@ -9,8 +9,8 @@ export const DISPLAY_PRICING = {
 } as const
 
 export const HOSTING_PRICING = {
-    amount: 1000,      // $10 in cents
-    display: '10',
+    standard: { amount: 1000, display: '10' },   // $10/mo
+    pro: { amount: 2900, display: '29' },         // $29/mo
 } as const
 
 export const CURRENCY_SYMBOL = '$'
@@ -23,17 +23,17 @@ export function getPricing(plan: PlanType) {
     return {
         amount: PRICING[plan],
         display: `${CURRENCY_SYMBOL}${DISPLAY_PRICING[plan]}`,
-        hosting: HOSTING_PRICING.amount,
-        hostingDisplay: `${CURRENCY_SYMBOL}${HOSTING_PRICING.display}`,
+        hosting: HOSTING_PRICING[plan].amount,
+        hostingDisplay: `${CURRENCY_SYMBOL}${HOSTING_PRICING[plan].display}`,
     }
 }
 
 /** Calculate total order amount in cents (plan + hosting). */
 export function calculateTotalCents(plan: PlanType): number {
-    return PRICING[plan] + HOSTING_PRICING.amount
+    return PRICING[plan] + HOSTING_PRICING[plan].amount
 }
 
-/** Display-friendly total for summary (e.g. "$509", "$1,309"). */
+/** Display-friendly total for summary (e.g. "$509", "$1,328"). */
 export function getDisplayTotal(plan: PlanType): string {
     const total = calculateTotalCents(plan) / 100
     return `$${total.toLocaleString('en-US', { maximumFractionDigits: 0 })}`

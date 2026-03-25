@@ -48,7 +48,7 @@ export default function ClaimPageClient({
         setPaymentError(null)
     }
 
-    const handleProceedToPayment = async () => {
+    const handleProceedToPayment = async (_addMaintenance?: boolean) => {
         if (!selectedPlan || isProcessing) return
         setIsProcessing(true)
         setPaymentError(null)

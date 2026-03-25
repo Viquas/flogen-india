@@ -93,7 +93,7 @@ export function PricingSection({
                         <span className="text-sm text-[#050304]/40 ml-1">one-time</span>
                     </div>
                     <p className="text-xs text-[#050304]/25 mt-1">
-                        + {CURRENCY_SYMBOL}{HOSTING_PRICING.display}/mo hosting
+                        + {CURRENCY_SYMBOL}{HOSTING_PRICING.standard.display}/mo hosting
                     </p>
 
                     <ul className="mt-6 space-y-3 flex-1">
@@ -140,7 +140,7 @@ export function PricingSection({
                         <span className="text-sm text-white/35 ml-1">one-time</span>
                     </div>
                     <p className="text-xs text-white/20 mt-1">
-                        + {CURRENCY_SYMBOL}{HOSTING_PRICING.display}/mo hosting
+                        + {CURRENCY_SYMBOL}{HOSTING_PRICING.pro.display}/mo hosting
                     </p>
 
                     <ul className="mt-6 space-y-3 flex-1">

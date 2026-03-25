@@ -64,7 +64,7 @@ export function SummaryCTA({
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Hosting</span>
                     <span className="text-sm text-gray-500">
-                        {CURRENCY_SYMBOL}{HOSTING_PRICING.display}/month
+                        {CURRENCY_SYMBOL}{selectedPlan ? HOSTING_PRICING[selectedPlan].display : HOSTING_PRICING.standard.display}/month
                     </span>
                 </div>
 
