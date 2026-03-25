@@ -55,11 +55,11 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 
 ### Admin Fulfillment
 
-- [ ] **ADMIN-01**: Purchased clients list view in admin dashboard — shows business name, client name/email, plan, purchase date, status badge, open request count
+- [x] **ADMIN-01**: Purchased clients list view in admin dashboard — shows business name, client name/email, plan, purchase date, status badge, open request count
 - [ ] **ADMIN-02**: Customer Requests tab in editor sidebar — lists all client_requests for a project with type, content, status, timestamp
 - [ ] **ADMIN-03**: Request status transitions: admin toggles pending → in_progress → completed from Customer Requests tab
 - [ ] **ADMIN-04**: Redeploy button — updates generated_code, increments version, saves revision to project_revisions, marks relevant requests as completed
-- [ ] **ADMIN-05**: client_requests table with id, claim_id, project_id, auth_user_id, type enum, status enum, content JSONB, created_at, updated_at
+- [x] **ADMIN-05**: client_requests table with id, claim_id, project_id, auth_user_id, type enum, status enum, content JSONB, created_at, updated_at
 
 ### Schema Changes
 
@@ -144,11 +144,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOGO-02 | Phase 14 | Complete |
 | LOGO-03 | Phase 14 | Complete |
 | LOGO-04 | Phase 14 | Complete |
-| ADMIN-01 | Phase 15 | Pending |
+| ADMIN-01 | Phase 15 | Complete |
 | ADMIN-02 | Phase 15 | Pending |
 | ADMIN-03 | Phase 15 | Pending |
 | ADMIN-04 | Phase 15 | Pending |
-| ADMIN-05 | Phase 15 | Pending |
+| ADMIN-05 | Phase 15 | Complete |
 | SCHEMA-01 | Phase 11 | Complete |
 | SCHEMA-02 | Phase 11 | Complete |
 | SCHEMA-03 | Phase 11 | Complete |

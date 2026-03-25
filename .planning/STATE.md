@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
 status: unknown
-last_updated: "2026-03-25T00:57:12.763Z"
+last_updated: "2026-03-25T01:26:45.000Z"
 progress:
-  total_phases: 14
+  total_phases: 15
   completed_phases: 14
-  total_plans: 40
-  completed_plans: 40
+  total_plans: 42
+  completed_plans: 41
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Maximize the number of high-quality websites generated per hour with minimal manual intervention, and convert generated websites into paying clients through a seamless claim-to-payment flow.
-**Current focus:** Phase 14 - Portal Features
+**Current focus:** Phase 15 - Admin Fulfillment
 
 ## Current Position
 
-Phase: 14 of 15 (Portal Features)
-Plan: 4 of 4 in current phase (14-03 complete, all plans done)
-Status: Phase 14 complete
-Last activity: 2026-03-25 -- Completed 14-03 (logo upload with AI bg removal)
+Phase: 15 of 15 (Admin Fulfillment)
+Plan: 1 of 2 in current phase (15-01 complete)
+Status: In progress
+Last activity: 2026-03-25 -- Completed 15-01 (clients list and detail pages)
 
-Progress: [**********] 100%
+Progress: [*********-] 98%
 
 ## Performance Metrics
 
@@ -40,8 +40,8 @@ Progress: [**********] 100%
 - Phases: 5/5 complete (phases 6-10)
 
 **v3.0:**
-- Total plans completed: 7
-- Phases: 3/5 complete (phases 11-15)
+- Total plans completed: 8
+- Phases: 3/5 complete (phases 11-15), Phase 15 in progress
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
@@ -56,6 +56,7 @@ Progress: [**********] 100%
 | 14-02 | 5min | 2 | 9 |
 | 14-03 | 6min | 2 | 8 |
 | 14-04 | 4min | 2 | 6 |
+| 15-01 | 4min | 2 | 6 |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Relevant to current work:
 - [14-03]: gemini-2.0-flash-exp model for bg removal -- green-screen approach with sharp pixel replacement
 - [14-04]: Webhook early return pattern: check payment.notes.type before claim lookup to avoid unnecessary DB queries for agent payments
 - [14-04]: Floating button uses usePathname() to self-hide on /portal/support rather than conditional rendering in layout
+- [15-01]: Derived fulfillment status from request states (pending_customization/in_progress/delivered) -- not from claim status
+- [15-01]: Separate client_requests query for count aggregation -- Supabase PostgREST count limitation
+- [15-01]: Requests grouped by status on detail page: In Progress first, Pending second, Completed collapsed
 
 ### Pending Todos
 
@@ -125,5 +129,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 14-03-PLAN.md (logo upload with AI bg removal)
+Stopped at: Completed 15-01-PLAN.md (clients list and detail pages)
 Resume file: None
