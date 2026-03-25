@@ -54,19 +54,11 @@ export function PricingSection({
     projectId,
 }: PricingSectionProps) {
     const handleStandardClick = () => {
-        if (selectedPlan === 'standard') {
-            onGetStarted()
-        } else {
-            onPlanSelect('standard')
-        }
+        onPlanSelect('standard')
     }
 
     const handleProClick = () => {
-        if (selectedPlan === 'pro') {
-            onGetStarted()
-        } else {
-            onPlanSelect('pro')
-        }
+        onPlanSelect('pro')
     }
 
     const handlePremiumClick = () => {
@@ -125,7 +117,7 @@ export function PricingSection({
                                 : 'bg-[#050304]/5 text-[#050304] hover:bg-[#050304]/10'
                         }`}
                     >
-                        {selectedPlan === 'standard' ? 'Get Started' : 'Select Standard'}
+                        Select Standard
                     </button>
                 </div>
 
@@ -172,7 +164,7 @@ export function PricingSection({
                                 : 'bg-white/10 text-white hover:bg-white/15'
                         }`}
                     >
-                        {selectedPlan === 'pro' ? 'Get Started' : 'Select Pro'}
+                        Select Pro
                     </button>
                 </div>
 

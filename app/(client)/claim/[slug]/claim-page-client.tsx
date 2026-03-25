@@ -36,6 +36,12 @@ export default function ClaimPageClient({
         }
     }, [searchParams])
 
+    const handlePlanSelect = (plan: PlanType) => {
+        setSelectedPlan(plan)
+        setShowConfirmation(true)
+        setPaymentError(null)
+    }
+
     const handleGetStarted = () => {
         if (!selectedPlan) return
         setShowConfirmation(true)
@@ -104,11 +110,7 @@ export default function ClaimPageClient({
             <section id="pricing" className="px-4 py-10 scroll-mt-4">
                 <PricingSection
                     selectedPlan={selectedPlan}
-                    onPlanSelect={(plan) => {
-                        setSelectedPlan(plan)
-                        setShowConfirmation(false)
-                        setPaymentError(null)
-                    }}
+                    onPlanSelect={handlePlanSelect}
                     onGetStarted={handleGetStarted}
                     projectId={projectId}
                 />
