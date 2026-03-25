@@ -121,7 +121,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 <TestModeBanner />
                 <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
                     <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-                        <img src="/sumosite-logo-dark.svg" alt="Sumosite" className="h-5" />
+                        <img src="/sumosite-logo-dark.svg" alt="Sumosite" className="h-8" />
                         <a
                             href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sumosite.com'}`}
                             className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
@@ -144,7 +144,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
             <TestModeBanner />
             <header className="sticky top-0 z-50 bg-[#050304]/90 backdrop-blur-md border-b border-white/5">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-                    <img src="/sumosite-logo.svg" alt="Sumosite" className="h-5" />
+                    <img src="/sumosite-logo.svg" alt="Sumosite" className="h-8" />
                     <a
                         href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sumosite.com'}`}
                         className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white/80 hover:text-white border border-white/15 hover:border-white/30 rounded-full transition-colors"
