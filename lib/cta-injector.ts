@@ -91,7 +91,7 @@ function buildCtaBarHtml(config: CtaConfig): string {
             line-height: 1;
         "></span>
     </div>
-    <a id="sumosite-cta-button" href="${safeUrl}" style="
+    <a id="sumosite-cta-button" href="${safeUrl}" target="_top" style="
         display: inline-flex;
         align-items: center;
         justify-content: center;
