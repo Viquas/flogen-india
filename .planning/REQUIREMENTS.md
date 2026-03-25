@@ -35,7 +35,7 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 - [x] **PORTAL-04**: Change request submission via single textarea ("Tell us what you'd like to change") with optional file upload
 - [x] **PORTAL-05**: Request history showing all submitted requests with status badges (pending, in-progress, completed)
 - [x] **PORTAL-06**: Mobile-responsive portal layout (works at 375px, mobile-first)
-- [ ] **PORTAL-07**: $49 agent support payment via Razorpay — creates agent_call request in client_requests table
+- [x] **PORTAL-07**: $49 agent support payment via Razorpay — creates agent_call request in client_requests table
 
 ### Domain Management
 
@@ -44,7 +44,7 @@ Requirements for Client Portal & Updated Funnel milestone. Each maps to roadmap 
 - [x] **DOMAIN-03**: DNS verification status display (pending, verifying, verified, failed) with step-by-step text instructions
 - [x] **DOMAIN-04**: Domain availability search via Domainr API — client types desired domain, sees availability + external registrar links
 - [x] **DOMAIN-05**: AI domain suggestions — if desired domain unavailable, Gemini generates 15-20 alternatives, batch-checked against Domainr, only available domains shown
-- [ ] **DOMAIN-06**: $49 agent domain setup payment — creates domain_setup request in client_requests table
+- [x] **DOMAIN-06**: $49 agent domain setup payment — creates domain_setup request in client_requests table
 
 ### Logo & Customization
 
@@ -133,13 +133,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORTAL-04 | Phase 14 | Complete |
 | PORTAL-05 | Phase 14 | Complete |
 | PORTAL-06 | Phase 13 | Complete |
-| PORTAL-07 | Phase 14 | Pending |
+| PORTAL-07 | Phase 14 | Complete |
 | DOMAIN-01 | Phase 14 | Complete |
 | DOMAIN-02 | Phase 14 | Complete |
 | DOMAIN-03 | Phase 14 | Complete |
 | DOMAIN-04 | Phase 14 | Complete |
 | DOMAIN-05 | Phase 14 | Complete |
-| DOMAIN-06 | Phase 14 | Pending |
+| DOMAIN-06 | Phase 14 | Complete |
 | LOGO-01 | Phase 14 | Pending |
 | LOGO-02 | Phase 14 | Pending |
 | LOGO-03 | Phase 14 | Pending |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Client Portal & Updated Funnel
 status: in-progress
-last_updated: "2026-03-25T00:40:43Z"
+last_updated: "2026-03-25T00:47:32Z"
 progress:
   total_phases: 15
   completed_phases: 13
   total_plans: 40
-  completed_plans: 38
+  completed_plans: 40
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 14 of 15 (Portal Features)
-Plan: 2 of 4 in current phase (14-02 complete)
-Status: Phase 14 in progress
-Last activity: 2026-03-25 -- Completed 14-02 (domain management page)
+Plan: 4 of 4 in current phase (14-04 complete)
+Status: Phase 14 complete
+Last activity: 2026-03-25 -- Completed 14-04 (agent support and help button)
 
-Progress: [*********-] 95%
+Progress: [**********] 100%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [*********-] 95%
 | 13-02 | 4min | 2 | 11 |
 | 14-01 | 4min | 2 | 5 |
 | 14-02 | 5min | 2 | 9 |
+| 14-04 | 4min | 2 | 6 |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Relevant to current work:
 - [14-02]: Single domain-client.tsx with view state machine (grid/subdomain/connect/buy) rather than separate routes
 - [14-02]: 6 registrar instruction sets: GoDaddy, Namecheap, Cloudflare, Google Domains, Hostinger, Other
 - [14-02]: Verification token format: flogen-verify-{first8CharsOfClaimId} -- deterministic, no DB storage
+- [14-04]: Webhook early return pattern: check payment.notes.type before claim lookup to avoid unnecessary DB queries for agent payments
+- [14-04]: Floating button uses usePathname() to self-hide on /portal/support rather than conditional rendering in layout
 
 ### Pending Todos
 
@@ -117,5 +120,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 14-02-PLAN.md (domain management page)
+Stopped at: Completed 14-04-PLAN.md (agent support and help button)
 Resume file: None
