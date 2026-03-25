@@ -93,8 +93,14 @@ export default function Navbar() {
             </a>
           ))}
           <a
+            href="/portal"
+            className="inline-flex items-center px-3.5 py-1.5 text-[13px] text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)] transition-colors"
+          >
+            Client Login
+          </a>
+          <a
             href={NAV.cta.href}
-            className="inline-flex items-center px-3.5 py-1.5 text-[13px] font-medium text-[var(--mkt-text)] bg-white/10 rounded-md hover:bg-white/15 transition-colors"
+            className="inline-flex items-center px-3.5 py-1.5 text-[13px] font-medium text-white bg-[var(--mkt-accent)] rounded-md hover:opacity-90 transition-opacity"
           >
             {NAV.cta.label}
           </a>
@@ -141,9 +147,16 @@ export default function Navbar() {
             </a>
           ))}
           <a
+            href="/portal"
+            onClick={() => setIsOpen(false)}
+            className="mt-4 inline-flex items-center justify-center px-5 py-2.5 text-[14px] text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)] transition-colors"
+          >
+            Client Login
+          </a>
+          <a
             href={NAV.cta.href}
             onClick={() => setIsOpen(false)}
-            className="mt-4 inline-flex items-center justify-center px-5 py-2.5 text-[14px] font-medium text-[var(--mkt-text)] bg-white/10 rounded-lg hover:bg-white/15 transition-colors"
+            className="mt-2 inline-flex items-center justify-center px-5 py-2.5 text-[14px] font-medium text-white bg-[var(--mkt-accent)] rounded-lg hover:opacity-90 transition-opacity"
           >
             {NAV.cta.label}
           </a>

@@ -25,6 +25,9 @@ export default function Footer() {
             <p className="mt-1 text-[13px] text-[var(--mkt-text-tertiary)]">
               {FOOTER.company.location}
             </p>
+            <p className="mt-4 text-[12px] text-[var(--mkt-text-tertiary)]">
+              A product by <span className="text-[var(--mkt-text-secondary)]">Sohail Minimalist</span>
+            </p>
           </div>
 
           {/* Link columns */}
@@ -60,7 +63,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="mt-12 pt-6 border-t border-[var(--mkt-border)] text-[12px] text-[var(--mkt-text-tertiary)]">
-          {FOOTER.copyright}
+          &copy; 2026 Sohail Minimalist. All rights reserved. Somosite is a product of Sohail Minimalist.
         </div>
       </div>
     </footer>
