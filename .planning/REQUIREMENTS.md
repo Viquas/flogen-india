@@ -28,8 +28,8 @@ Requirements for Lead Lists & Custom Builds milestone. Each maps to roadmap phas
 
 ### Schema
 
-- [ ] **SCHM-01**: `lead_lists` table created with batch_id, business fields, raw_data JSONB, and indexes
-- [ ] **SCHM-02**: `source` column added to projects table (default 'discovery', values: discovery/custom/code-drop)
+- [x] **SCHM-01**: `lead_lists` table created with batch_id, business fields, raw_data JSONB, and indexes
+- [x] **SCHM-02**: `source` column added to projects table (default 'discovery', values: discovery/custom/code-drop)
 
 ## Future Requirements
 
@@ -49,8 +49,8 @@ None — scope is complete for v5.0.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHM-01 | Phase 21 | Pending |
-| SCHM-02 | Phase 21 | Pending |
+| SCHM-01 | Phase 21 | Complete |
+| SCHM-02 | Phase 21 | Complete |
 | LEAD-01 | Phase 21 | Pending |
 | LEAD-02 | Phase 21 | Pending |
 | LEAD-07 | Phase 21 | Pending |

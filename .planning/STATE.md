@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Lead Lists & Custom Builds
-status: ready_to_plan
+status: executing
 last_updated: "2026-03-26"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 21 of 23 (Lead Lists Foundation)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-26 — v5.0 roadmap created (3 phases, 6 plans, 14 requirements)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-26 — Completed 21-01 (Schema Setup)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 17%
 
 ## Performance Metrics
 
@@ -37,6 +37,10 @@ Progress: [░░░░░░░░░░] 0%
 **v4.0 Summary:** 5/5 phases, 8 plans
 **v5.0 Target:** 3 phases, 6 plans
 
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 21 | 01 | 1min | 2 | 3 |
+
 ## Accumulated Context
 
 ### Decisions
@@ -44,8 +48,9 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 
 Key codebase facts for v5.0:
-- `source` column does NOT exist on projects table -- needs migration
-- `lead_lists` table does NOT exist -- needs migration
+- `source` column now EXISTS on projects table (migration 20260326000002)
+- `lead_lists` table now EXISTS (migration 20260326000001)
+- lead_lists.batch_id is TEXT, not FK to batches -- lead batches are independent
 - Discovery flow: `discoverBusinesses()` in lib/discovery.ts creates batch + projects, queue via lib/queue.ts
 - Enrichment happens during generation via lib/ai/enricher.ts, NOT during discovery
 - Sidebar nav at components/dashboard/sidebar-nav.tsx has sections: Main, Manage, Fulfillment
@@ -63,5 +68,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: v5.0 roadmap created, ready to plan Phase 21
+Stopped at: Completed 21-01-PLAN.md (Schema Setup)
 Resume file: None
