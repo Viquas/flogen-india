@@ -240,7 +240,7 @@ Plans:
   2. The `projects` table has a `source` column with values 'discovery', 'custom', or 'code-drop' (default 'discovery') -- existing projects are unaffected
   3. User can click "Get List" in the Discovery Engine modal and see Google Places results fetched and saved to the lead_lists table without any generation jobs being created
   4. A "Lead Lists" menu item appears in the sidebar under Fulfillment and navigates to /dashboard/leads
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 21-01: Schema migrations (lead_lists table, projects.source column) + TypeScript types
