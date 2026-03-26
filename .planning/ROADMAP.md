@@ -225,7 +225,7 @@ Plans:
 
 **Milestone Goal:** Add two new admin pipeline tools: (1) Lead Lists for discovery-only Google Places queries saved for cold calling, and (2) Custom Builds for one-off website generation from a Google Maps URL or pasted business data. Admin-only features, no client-facing changes.
 
-- [ ] **Phase 21: Lead Lists Foundation** - Schema migrations, lead discovery API, "Get List" CTA in Discovery Engine, sidebar nav item
+- [x] **Phase 21: Lead Lists Foundation** - Schema migrations, lead discovery API, "Get List" CTA in Discovery Engine, sidebar nav item (completed 2026-03-26)
 - [ ] **Phase 22: Lead Lists UI** - /dashboard/leads page with date picker and batch cards, lead detail popup with RJSON viewer, CSV export, "Generate Website" from lead
 - [ ] **Phase 23: Custom Build** - Custom build modal with URL and data tabs, APIs, source tracking on projects, /dashboard/custom page, sidebar nav, dashboard CTA
 
@@ -304,7 +304,7 @@ Phases execute in numeric order: 21 -> 22 -> 23
 | 18. How It Works, Portfolio & Benefits | v4.0 | 2/2 | Complete | 2026-03-25 |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 1/1 | Complete | 2026-03-25 |
 | 20. Contact, Footer, Legal & Polish | v4.0 | 2/2 | Complete | 2026-03-25 |
-| 21. Lead Lists Foundation | 1/2 | In Progress|  | - |
+| 21. Lead Lists Foundation | 2/2 | Complete   | 2026-03-26 | - |
 | 22. Lead Lists UI | v5.0 | 0/2 | Not started | - |
 | 23. Custom Build | v5.0 | 0/2 | Not started | - |
 

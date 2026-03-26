@@ -9,13 +9,13 @@ Requirements for Lead Lists & Custom Builds milestone. Each maps to roadmap phas
 
 ### Lead Lists
 
-- [ ] **LEAD-01**: User can click "Get List" in Discovery Engine to fetch Google Places results without triggering generation
-- [ ] **LEAD-02**: Lead results are saved to `lead_lists` table with batch grouping and full RJSON
+- [x] **LEAD-01**: User can click "Get List" in Discovery Engine to fetch Google Places results without triggering generation
+- [x] **LEAD-02**: Lead results are saved to `lead_lists` table with batch grouping and full RJSON
 - [ ] **LEAD-03**: User can view lead batches at /dashboard/leads filtered by date
 - [ ] **LEAD-04**: User can click a lead row to view full RJSON in a detail popup
 - [ ] **LEAD-05**: User can click "Generate Website" from a lead to run it through the full generation pipeline
 - [ ] **LEAD-06**: User can download a CSV of any batch (name, email, phone, location, maps URL)
-- [ ] **LEAD-07**: "Lead Lists" menu item appears in sidebar under Fulfillment
+- [x] **LEAD-07**: "Lead Lists" menu item appears in sidebar under Fulfillment
 
 ### Custom Build
 
@@ -51,9 +51,9 @@ None — scope is complete for v5.0.
 |-------------|-------|--------|
 | SCHM-01 | Phase 21 | Complete |
 | SCHM-02 | Phase 21 | Complete |
-| LEAD-01 | Phase 21 | Pending |
-| LEAD-02 | Phase 21 | Pending |
-| LEAD-07 | Phase 21 | Pending |
+| LEAD-01 | Phase 21 | Complete |
+| LEAD-02 | Phase 21 | Complete |
+| LEAD-07 | Phase 21 | Complete |
 | LEAD-03 | Phase 22 | Pending |
 | LEAD-04 | Phase 22 | Pending |
 | LEAD-05 | Phase 22 | Pending |
