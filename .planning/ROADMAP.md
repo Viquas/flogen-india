@@ -243,8 +243,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: Schema migrations (lead_lists table, projects.source column) + TypeScript types
-- [ ] 21-02: Lead discovery API (POST /api/leads/discover), "Get List" CTA in Discovery Engine modal, sidebar nav update
+- [x] 21-01: Schema migrations (lead_lists table, projects.source column) + TypeScript types
+- [x] 21-02: Lead discovery API (POST /api/leads/discover), "Get List" CTA in Discovery Engine modal, sidebar nav update
 
 ### Phase 22: Lead Lists UI
 **Goal**: The operator can browse lead batches by date, inspect individual leads with full RJSON data, export batches as CSV for cold calling, and send any lead into the website generation pipeline
@@ -255,11 +255,11 @@ Plans:
   2. User can click a lead row to open a detail popup displaying the full RJSON data (business name, address, phone, email, website, rating, reviews, photos, hours, etc.)
   3. User can click "Generate Website" from a lead detail popup and the lead is sent through the existing generation pipeline (enrichment + generation), creating a project with source='discovery'
   4. User can click a CSV export button on any batch to download a file with name, email, phone, location, and maps URL columns
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 22-01: /dashboard/leads page with date picker, batch cards, lead rows, GET /api/leads/batches endpoint
-- [ ] 22-02: Lead detail popup with RJSON viewer, "Generate Website" CTA (POST /api/leads/[id]/generate), CSV export
+- [ ] 22-01-PLAN.md -- Leads page with date picker, batch cards, lead rows table, server-side Supabase query
+- [ ] 22-02-PLAN.md -- Lead detail modal with RJSON viewer, Generate Website API + CTA, CSV batch export
 
 ### Phase 23: Custom Build
 **Goal**: The operator can generate a website from any Google Maps URL or raw business data in a single action, view all custom-built projects in a dedicated page, and access the feature from the dashboard header
@@ -304,10 +304,10 @@ Phases execute in numeric order: 21 -> 22 -> 23
 | 18. How It Works, Portfolio & Benefits | v4.0 | 2/2 | Complete | 2026-03-25 |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 1/1 | Complete | 2026-03-25 |
 | 20. Contact, Footer, Legal & Polish | v4.0 | 2/2 | Complete | 2026-03-25 |
-| 21. Lead Lists Foundation | 2/2 | Complete    | 2026-03-26 | - |
+| 21. Lead Lists Foundation | v5.0 | 2/2 | Complete | 2026-03-26 |
 | 22. Lead Lists UI | v5.0 | 0/2 | Not started | - |
 | 23. Custom Build | v5.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- v5.0 roadmap created (3 phases, 6 plans)*
+*Last updated: 2026-03-26 -- Phase 22 planned (2 plans, 2 waves)*
