@@ -19,10 +19,10 @@ Requirements for Lead Lists & Custom Builds milestone. Each maps to roadmap phas
 
 ### Custom Build
 
-- [ ] **CUST-01**: User can click "Custom Build" on dashboard header to open the custom build modal
-- [ ] **CUST-02**: User can paste a Google Maps URL to generate a website from that business
-- [ ] **CUST-03**: User can paste/upload business data (text or JSON) to generate a website
-- [ ] **CUST-04**: Custom-built projects are tagged with `source='custom'` on the projects table
+- [x] **CUST-01**: User can click "Custom Build" on dashboard header to open the custom build modal
+- [x] **CUST-02**: User can paste a Google Maps URL to generate a website from that business
+- [x] **CUST-03**: User can paste/upload business data (text or JSON) to generate a website
+- [x] **CUST-04**: Custom-built projects are tagged with `source='custom'` on the projects table
 - [ ] **CUST-05**: User can view custom-built projects at /dashboard/custom filtered by source
 - [ ] **CUST-06**: "Custom Builds" menu item appears in sidebar under Fulfillment
 
@@ -58,10 +58,10 @@ None — scope is complete for v5.0.
 | LEAD-04 | Phase 22 | Complete |
 | LEAD-05 | Phase 22 | Complete |
 | LEAD-06 | Phase 22 | Complete |
-| CUST-01 | Phase 23 | Pending |
-| CUST-02 | Phase 23 | Pending |
-| CUST-03 | Phase 23 | Pending |
-| CUST-04 | Phase 23 | Pending |
+| CUST-01 | Phase 23 | Complete |
+| CUST-02 | Phase 23 | Complete |
+| CUST-03 | Phase 23 | Complete |
+| CUST-04 | Phase 23 | Complete |
 | CUST-05 | Phase 23 | Pending |
 | CUST-06 | Phase 23 | Pending |
 

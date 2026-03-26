@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Lead Lists & Custom Builds
-status: unknown
-last_updated: "2026-03-26T02:35:59.681Z"
+status: in-progress
+last_updated: "2026-03-26T02:56:22.000Z"
 progress:
-  total_phases: 22
+  total_phases: 23
   completed_phases: 22
-  total_plans: 54
-  completed_plans: 54
+  total_plans: 56
+  completed_plans: 55
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Maximize high-quality websites generated per hour with minimal manual intervention, and convert them into paying clients.
-**Current focus:** Phase 22 - Lead Lists UI
+**Current focus:** Phase 23 - Custom Build
 
 ## Current Position
 
-Phase: 22 of 23 (Lead Lists UI) -- COMPLETE
-Plan: 2 of 2 in current phase -- COMPLETE
-Status: Phase 22 complete, ready for Phase 23
-Last activity: 2026-03-26 — Completed 22-02 (Lead Detail Modal & Generate Flow)
+Phase: 23 of 23 (Custom Build)
+Plan: 1 of 2 in current phase -- COMPLETE
+Status: Plan 23-01 complete, ready for 23-02
+Last activity: 2026-03-26 — Completed 23-01 (Custom Build API & Dialog)
 
-Progress: [██████████] 100%
+Progress: [█████████▉] 98%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [██████████] 100%
 | 21 | 02 | 3min | 2 | 5 |
 | 22 | 01 | 2min | 2 | 3 |
 | 22 | 02 | 3min | 2 | 3 |
+| 23 | 01 | 3min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -70,6 +71,10 @@ Key codebase facts for v5.0:
 - Lead detail modal at components/dashboard/lead-detail-modal.tsx with RJSON viewer and Generate Website CTA
 - CSV export generates client-side Blob with leads-{query}-{date}.csv filename
 - sonner toast used for generate success/error feedback (project already has sonner)
+- POST /api/custom-build/from-url parses Google Maps URLs (5 formats), fetches Place Details, creates project with source=custom
+- POST /api/custom-build/from-data accepts JSON or freeform text, creates project with source=custom
+- CustomBuildDialog at components/dashboard/custom-build-dialog.tsx has URL and data tabs, file upload, toast feedback
+- Custom build endpoints use generationQueue.add() same as discovery pipeline
 
 ### Pending Todos
 
@@ -82,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 22-02-PLAN.md (Lead Detail Modal & Generate Flow)
+Stopped at: Completed 23-01-PLAN.md (Custom Build API & Dialog)
 Resume file: None
