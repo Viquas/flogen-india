@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { NewBatchDialog } from "./new-batch-dialog"
+import { CustomBuildDialog } from "./custom-build-dialog"
 import { ActiveBatchStatusBar } from "./active-batch-status-bar"
 import { getActiveAutopilotRuns } from "@/app/(admin)/dashboard/actions"
 
@@ -33,7 +34,10 @@ export function DashboardHeader({ greeting }: DashboardHeaderProps) {
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold tracking-tight">{greeting}</h2>
-                <NewBatchDialog onAutopilotStart={(runId) => setActiveRunId(runId)} />
+                <div className="flex items-center gap-2">
+                    <CustomBuildDialog />
+                    <NewBatchDialog onAutopilotStart={(runId) => setActiveRunId(runId)} />
+                </div>
             </div>
 
             {activeRunId && (
