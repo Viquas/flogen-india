@@ -14,8 +14,5 @@ export default withSentryConfig(nextConfig, {
 
   widenClientFileUpload: true,
 
-  // Proxy route to bypass ad-blockers
-  tunnelRoute: "/monitoring",
-
   silent: !process.env.CI,
 });
