@@ -60,8 +60,12 @@ export type Database = {
                     found_maps?: number
                     found_web?: number
                     not_found?: number
+                    created_at?: string
+                    updated_at?: string
                 }
                 Update: {
+                    id?: string
+                    batch_id?: string
                     source_filename?: string
                     column_mapping?: Json | null
                     status?: 'pending' | 'researching' | 'completed' | 'partially_failed'
@@ -69,6 +73,8 @@ export type Database = {
                     found_maps?: number
                     found_web?: number
                     not_found?: number
+                    created_at?: string
+                    updated_at?: string
                 }
                 Relationships: []
             }
@@ -104,8 +110,12 @@ export type Database = {
                     research_status?: 'pending' | 'researching' | 'found' | 'not_found' | 'failed'
                     project_id?: string | null
                     error_message?: string | null
+                    created_at?: string
+                    updated_at?: string
                 }
                 Update: {
+                    id?: string
+                    batch_id?: string
                     business_name?: string
                     location?: string | null
                     email?: string | null
@@ -117,6 +127,8 @@ export type Database = {
                     research_status?: 'pending' | 'researching' | 'found' | 'not_found' | 'failed'
                     project_id?: string | null
                     error_message?: string | null
+                    created_at?: string
+                    updated_at?: string
                 }
                 Relationships: []
             }

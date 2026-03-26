@@ -55,6 +55,8 @@ export function DashboardHeader({ greeting }: DashboardHeaderProps) {
                     onDismiss={() => setActiveRunId(null)}
                 />
             )}
+
+            <BulkUploadDialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen} />
         </div>
     )
 }
