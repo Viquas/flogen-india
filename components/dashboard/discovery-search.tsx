@@ -544,16 +544,8 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                     </div>
                 </div>
 
-                {/* ── Action Bar ── */}
-                <div className="flex items-center gap-3 pt-1">
-                    {/* Query preview */}
-                    {(searchTerm || industry || location) && (
-                        <span className="text-xs text-zinc-400 font-mono truncate mr-auto">
-                            {queryPreview}
-                        </span>
-                    )}
-                    {!searchTerm && !industry && !location && <span className="mr-auto" />}
-
+                {/* ── Template & DLS Options ── */}
+                <div className="flex items-center gap-2 flex-wrap">
                     {/* Selected template badge */}
                     {selectedTemplate && (
                         <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200 gap-1 shrink-0 text-xs">
@@ -568,6 +560,17 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                             </button>
                         </Badge>
                     )}
+
+                    {/* Template button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsTemplateLibraryOpen(true)}
+                        className="gap-1.5 h-8 text-xs border-zinc-200 text-zinc-600 hover:text-zinc-900 shrink-0"
+                    >
+                        <Layers className="h-3.5 w-3.5" />
+                        Template
+                    </Button>
 
                     {/* Selected DLS badge */}
                     {selectedDls && (
@@ -584,37 +587,26 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                         </Badge>
                     )}
 
-                    {/* Template button */}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsTemplateLibraryOpen(true)}
-                        className="gap-1.5 h-8 text-xs border-gray-200 text-gray-600 hover:text-gray-900 shrink-0"
-                    >
-                        <Layers className="h-3.5 w-3.5" />
-                        Template
-                    </Button>
-
                     {/* DLS picker */}
                     <div ref={dlsRef} className="relative">
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setShowDlsDropdown(!showDlsDropdown)}
-                            className="gap-1.5 h-8 text-xs border-gray-200 text-gray-600 hover:text-gray-900 shrink-0"
+                            className="gap-1.5 h-8 text-xs border-zinc-200 text-zinc-600 hover:text-zinc-900 shrink-0"
                         >
                             <Palette className="h-3.5 w-3.5" />
                             DLS
                         </Button>
                         {showDlsDropdown && (
-                            <div className="absolute top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 min-w-[200px] max-h-64 overflow-y-auto">
+                            <div className="absolute top-full mt-1 left-0 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1 min-w-[200px] max-h-64 overflow-y-auto">
                                 {dlsList.length === 0 ? (
-                                    <p className="px-3 py-2 text-xs text-gray-400">No DLS documents found. Create one in the DLS page.</p>
+                                    <p className="px-3 py-2 text-xs text-zinc-400">No DLS documents found. Create one in the DLS page.</p>
                                 ) : (
                                     <>
                                         <button
                                             onClick={() => { setSelectedDls(null); setShowDlsDropdown(false) }}
-                                            className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors ${!selectedDls ? 'font-medium text-purple-700' : 'text-gray-700'}`}
+                                            className={`w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-50 transition-colors ${!selectedDls ? 'font-medium text-purple-700' : 'text-zinc-700'}`}
                                         >
                                             Auto (industry default)
                                         </button>
@@ -622,7 +614,7 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                                             <button
                                                 key={dls.id}
                                                 onClick={() => { setSelectedDls({ id: dls.id, name: dls.name }); setShowDlsDropdown(false) }}
-                                                className={`w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${selectedDls?.id === dls.id ? 'font-medium text-purple-700' : 'text-gray-700'}`}
+                                                className={`w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-50 transition-colors flex items-center justify-between ${selectedDls?.id === dls.id ? 'font-medium text-purple-700' : 'text-zinc-700'}`}
                                             >
                                                 <span className="truncate">{dls.name}</span>
                                                 {dls.is_default && (
@@ -637,41 +629,54 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                     </div>
                 </div>
 
-                {/* Action buttons row: Get List + Autopilot */}
-                <div className="flex items-center gap-2 pt-1">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleGetList}
-                        disabled={isGettingList || !isReady}
-                        className="gap-1.5 h-7 text-xs border-zinc-300 text-zinc-700 hover:bg-zinc-50 shrink-0"
-                    >
-                        {isGettingList ? (
-                            <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Fetching...
-                            </>
-                        ) : (
-                            <>
-                                <List className="h-3 w-3" />
-                                Get List
-                            </>
-                        )}
-                    </Button>
-                    <div className="flex-1">
-                        <AutopilotButton
-                            query={searchTerm}
-                            location={location}
-                            industry={industry}
-                            entries={entries}
-                            templateId={selectedTemplate?.id}
-                            designLanguageId={selectedDls?.id}
-                            onRunStart={(runId) => {
-                                setAutopilotRunId(runId)
-                                onAutopilotStart?.(runId)
-                                onClose?.()
-                            }}
-                        />
+                {/* ── Separator ── */}
+                <div className="border-t border-zinc-100" />
+
+                {/* ── Actions ── */}
+                <div className="space-y-2">
+                    {/* Query preview */}
+                    {(searchTerm || industry || location) && (
+                        <p className="text-xs text-zinc-400 font-mono truncate">
+                            {queryPreview}
+                        </p>
+                    )}
+
+                    {/* Action buttons row */}
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGetList}
+                            disabled={isGettingList || !isReady}
+                            className="gap-1.5 h-8 text-xs border-zinc-300 text-zinc-700 hover:bg-zinc-50 shrink-0"
+                        >
+                            {isGettingList ? (
+                                <>
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Fetching...
+                                </>
+                            ) : (
+                                <>
+                                    <List className="h-3 w-3" />
+                                    Get List
+                                </>
+                            )}
+                        </Button>
+                        <div className="flex-1">
+                            <AutopilotButton
+                                query={searchTerm}
+                                location={location}
+                                industry={industry}
+                                entries={entries}
+                                templateId={selectedTemplate?.id}
+                                designLanguageId={selectedDls?.id}
+                                onRunStart={(runId) => {
+                                    setAutopilotRunId(runId)
+                                    onAutopilotStart?.(runId)
+                                    onClose?.()
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
 
