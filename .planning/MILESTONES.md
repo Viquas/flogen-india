@@ -41,3 +41,18 @@
 - Cookie consent banner, SEO metadata, CSS-only scroll animations
 
 ---
+
+## v5.0 Lead Lists & Custom Builds (Shipped: 2026-03-26)
+
+**Phases completed:** 3 phases (21-23), 6 plans
+
+**Key accomplishments:**
+- "Get List" CTA in Discovery Engine for fetch-only lead discovery with global placeId dedup
+- lead_lists table with batch grouping, RJSON storage, and projects.source tracking
+- /dashboard/leads with date picker, batch cards, lead detail popup with RJSON viewer
+- "Generate Website" from any lead through existing pipeline, CSV export per batch
+- Custom Build modal with Google Maps URL parsing (5 formats) and text/JSON business data input
+- /dashboard/custom filtered project grid, dashboard header CTA, sidebar nav items
+
+---
+

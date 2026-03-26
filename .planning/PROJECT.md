@@ -77,21 +77,17 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - ✓ Cookie consent banner, SEO metadata — v4.0
 - ✓ Linear-inspired dark DLS (#AF92FF accent), CSS-only scroll animations — v4.0
 
+<!-- v5.0: Lead Lists & Custom Builds (completed 2026-03-26) -->
+- ✓ Lead Lists: "Get List" CTA in Discovery Engine, lead_lists table, /dashboard/leads page — v5.0
+- ✓ Lead Lists: Detail popup with RJSON viewer, "Generate Website" CTA, CSV export — v5.0
+- ✓ Lead Lists: POST /api/leads/discover, GET /api/leads/batches, POST /api/leads/[id]/generate — v5.0
+- ✓ Custom Build: Modal with Google Maps URL (5 formats) and text/JSON upload tabs — v5.0
+- ✓ Custom Build: POST /api/custom-build/from-url and from-data endpoints — v5.0
+- ✓ Custom Build: projects.source column, /dashboard/custom page, sidebar + header CTA — v5.0
+
 ### Active
 
-<!-- v5.0: Lead Lists & Custom Builds -->
-- [ ] Lead Lists: "Get List" CTA in Discovery Engine modal (fetch-only, no generation)
-- [ ] Lead Lists: lead_lists table with batch grouping and RJSON storage
-- [ ] Lead Lists: /dashboard/leads page with date picker, batch cards, lead rows
-- [ ] Lead Lists: Lead detail popup with RJSON viewer and "Generate Website" CTA
-- [ ] Lead Lists: CSV export (name, email, phone, location, maps URL)
-- [ ] Lead Lists: POST /api/leads/discover, GET /api/leads/batches, POST /api/leads/[id]/generate
-- [ ] Lead Lists: Sidebar menu item under Fulfillment
-- [ ] Custom Build: Modal with Google Maps URL and Upload Business Data tabs
-- [ ] Custom Build: POST /api/custom-build/from-url (extract Place ID, fetch, enrich, generate)
-- [ ] Custom Build: POST /api/custom-build/from-data (raw text/JSON → enrich → generate)
-- [ ] Custom Build: `source` column on projects table (discovery/custom/code-drop)
-- [ ] Custom Build: /dashboard/custom page filtered by source='custom'
+(None — planning next milestone)
 - [ ] Custom Build: Sidebar menu item under Fulfillment
 - [ ] Custom Build: "Custom Build" CTA on dashboard header
 
@@ -110,13 +106,9 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - Custom scheduling infrastructure — Cal.com handles all booking logic
 - Auto-deployment to custom domains — manual DNS + hosting setup for now
 
-## Current Milestone: v5.0 Lead Lists & Custom Builds
+## Current Milestone
 
-**Goal:** Add two new admin pipeline tools: (1) Lead Lists for discovery-only Google Places queries saved for cold calling, and (2) Custom Builds for one-off website generation from a Google Maps URL or pasted business data. Admin-only features, no client-facing changes.
-
-**Target features:**
-- Lead Lists: "Get List" CTA in Discovery Engine, lead_lists table, /dashboard/leads page with date picker + batch cards, lead detail popup with RJSON viewer, CSV export, "Generate Website" from any lead
-- Custom Build: modal with Google Maps URL + upload tabs, /dashboard/custom page, source tracking on projects table, POST /api/custom-build/from-url and from-data endpoints
+None active — v5.0 shipped 2026-03-26. Ready for next milestone.
 
 ## Context
 
@@ -125,7 +117,7 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - v2.0 shipped client claim flow (5 phases, 14 plans) — 2026-03-19
 - v3.0 shipped client portal & updated funnel (5 phases, 13 plans) — 2026-03-25
 - v4.0 shipped agency landing page at root URL for credibility + Razorpay verification — 2026-03-26
-- v5.0 target: admin pipeline tools (Lead Lists + Custom Builds)
+- v5.0 shipped admin pipeline tools (Lead Lists + Custom Builds) — 2026-03-26
 - Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow, `(portal)/` for client portal, `(marketing)/` for landing page + legal pages (new)
 - Tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs, claims, customizations, claim_events, client_requests
 - Supabase Storage: site-screenshots (public), claim-uploads (private)
@@ -184,4 +176,4 @@ Maximize the number of high-quality websites generated per hour with minimal man
 | "Get Started" buttons scroll to contact (not payment) | Payment happens on /claim/[slug], not agency page | — Pending |
 
 ---
-*Last updated: 2026-03-26 after v5.0 milestone start*
+*Last updated: 2026-03-26 after v5.0 milestone complete*
