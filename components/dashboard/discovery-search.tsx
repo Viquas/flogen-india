@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +19,7 @@ import {
     ChevronRight,
     Layers,
     Rocket,
+    List,
 } from "lucide-react"
 import { TemplateLibraryModal } from "./template-library-modal"
 import { AutopilotButton } from "./autopilot-button"
@@ -75,6 +77,7 @@ interface DiscoverySearchProps {
 }
 
 export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: DiscoverySearchProps = {}) {
+    const router = useRouter()
     // Core fields
     const [searchTerm, setSearchTerm] = useState("")
     const [location, setLocation] = useState("")
@@ -95,6 +98,9 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
     const [locationFilter, setLocationFilter] = useState("")
     const [isCreatingIndustry, setIsCreatingIndustry] = useState(false)
     const [newIndustryName, setNewIndustryName] = useState("")
+
+    // Get List state
+    const [isGettingList, setIsGettingList] = useState(false)
 
     // Template state
     const [selectedTemplate, setSelectedTemplate] = useState<{ id: string; name: string; industry_tag: string } | null>(null)
@@ -254,6 +260,62 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
             })
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const handleGetList = async () => {
+        const term = searchTerm.trim()
+        if (!term && !industry) return
+
+        setIsGettingList(true)
+        setStatus(null)
+
+        try {
+            if (location.trim()) {
+                addLocationToHistory(location.trim())
+            }
+
+            const response = await fetch("/api/leads/discover", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    query: term || industry,
+                    location: location.trim(),
+                    industry,
+                    entries,
+                }),
+            })
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to fetch leads")
+            }
+
+            if (result.success === false) {
+                setStatus({
+                    type: "error",
+                    message: result.message || "No leads found",
+                })
+                return
+            }
+
+            setStatus({
+                type: "success",
+                message: `${result.savedCount} leads saved, ${result.skippedCount} duplicates skipped`,
+            })
+
+            setTimeout(() => {
+                onClose?.()
+                router.push("/dashboard/leads")
+            }, 500)
+        } catch (error) {
+            setStatus({
+                type: "error",
+                message: error instanceof Error ? error.message : "An error occurred while fetching leads.",
+            })
+        } finally {
+            setIsGettingList(false)
         }
     }
 
@@ -575,20 +637,43 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                     </div>
                 </div>
 
-                {/* Autopilot — single action (replaces Generate Sites + old Autopilot zone) */}
-                <AutopilotButton
-                    query={searchTerm}
-                    location={location}
-                    industry={industry}
-                    entries={entries}
-                    templateId={selectedTemplate?.id}
-                    designLanguageId={selectedDls?.id}
-                    onRunStart={(runId) => {
-                        setAutopilotRunId(runId)
-                        onAutopilotStart?.(runId)
-                        onClose?.()
-                    }}
-                />
+                {/* Action buttons row: Get List + Autopilot */}
+                <div className="flex items-center gap-2 pt-1">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGetList}
+                        disabled={isGettingList || !isReady}
+                        className="gap-1.5 h-7 text-xs border-zinc-300 text-zinc-700 hover:bg-zinc-50 shrink-0"
+                    >
+                        {isGettingList ? (
+                            <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Fetching...
+                            </>
+                        ) : (
+                            <>
+                                <List className="h-3 w-3" />
+                                Get List
+                            </>
+                        )}
+                    </Button>
+                    <div className="flex-1">
+                        <AutopilotButton
+                            query={searchTerm}
+                            location={location}
+                            industry={industry}
+                            entries={entries}
+                            templateId={selectedTemplate?.id}
+                            designLanguageId={selectedDls?.id}
+                            onRunStart={(runId) => {
+                                setAutopilotRunId(runId)
+                                onAutopilotStart?.(runId)
+                                onClose?.()
+                            }}
+                        />
+                    </div>
+                </div>
 
                 {/* Status message */}
                 {status && (
