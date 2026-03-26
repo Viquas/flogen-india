@@ -17,11 +17,21 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
     const { slug } = await params
     const supabase = createAdminClient()
 
-    const { data: project } = await supabase
+    // Try slug first, then fall back to UUID id
+    let { data: project } = await supabase
         .from('projects')
         .select('business_data, screenshot_url')
-        .eq('id', slug)
+        .eq('slug', slug)
         .single()
+
+    if (!project) {
+        const result = await supabase
+            .from('projects')
+            .select('business_data, screenshot_url')
+            .eq('id', slug)
+            .single()
+        project = result.data
+    }
 
     if (!project) {
         return { title: 'Preview' }
@@ -48,11 +58,21 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     const { slug } = await params
     const supabase = createAdminClient()
 
-    const { data: project } = await supabase
+    // Try slug first, then fall back to UUID id
+    let { data: project } = await supabase
         .from('projects')
         .select('id, business_data, generated_code, claim_expires_at')
-        .eq('id', slug)
+        .eq('slug', slug)
         .single()
+
+    if (!project) {
+        const result = await supabase
+            .from('projects')
+            .select('id, business_data, generated_code, claim_expires_at')
+            .eq('id', slug)
+            .single()
+        project = result.data
+    }
 
     if (!project || !project.generated_code) {
         notFound()

@@ -4,6 +4,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   transpilePackages: ['react-resizable-panels'],
   serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium-min'],
+  redirects: async () => [
+    {
+      source: '/sites/:slug*',
+      destination: '/preview/:slug*',
+      permanent: true,
+    },
+  ],
 };
 
 export default withSentryConfig(nextConfig, {
