@@ -30,15 +30,14 @@
 
 ---
 
-## v4.0 Somosite Agency Landing Page (In Progress)
+## v4.0 Somosite Agency Landing Page (Shipped: 2026-03-26)
 
-**Target:** 5 phases (16-20), 28 requirements
+**Phases completed:** 5 phases (16-20), 8 plans
 
-**Phase structure:**
-- Phase 16: Marketing Foundation -- route group, layout, fonts, design tokens, constants, root route
-- Phase 17: Hero, Trust & Problem -- nav bar, hero, trust bar, problem section, scroll animations
-- Phase 18: How It Works, Portfolio & Benefits -- 3-step process, 6-site portfolio, differentiators
-- Phase 19: Pricing, FAQ & Final CTA -- pricing cards, accordion FAQ, urgency CTA
-- Phase 20: Contact, Footer, Legal & Polish -- contact form + API, footer, legal pages, cookies, SEO, PageSpeed
+**Key accomplishments:**
+- Full marketing landing page in (marketing) route group with Linear-inspired dark DLS
+- 12 sections: hero, trust bar, problem, how it works, portfolio, benefits, pricing, FAQ, CTA
+- Contact form with email handler, footer, legal pages (privacy, terms, refund)
+- Cookie consent banner, SEO metadata, CSS-only scroll animations
 
 ---

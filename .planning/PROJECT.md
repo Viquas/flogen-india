@@ -69,36 +69,31 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - ✓ Premium plan display-only card with "Contact Us" CTA — v3.0
 - ✓ Updated claim page (remove domain selection, remove pre-payment forms) — v3.0
 - ✓ Analytics: premium_contact event tracking — v3.0
+<!-- v4.0: Somosite Agency Landing Page (completed 2026-03-26) -->
+- ✓ (marketing) route group with isolated layout, fonts, and DLS — v4.0
+- ✓ Full landing page: hero, trust bar, problem, how it works, portfolio, benefits, pricing, FAQ, CTA — v4.0
+- ✓ Contact form with email handler (POST /api/contact) — v4.0
+- ✓ Footer, privacy/terms/refund legal pages — v4.0
+- ✓ Cookie consent banner, SEO metadata — v4.0
+- ✓ Linear-inspired dark DLS (#AF92FF accent), CSS-only scroll animations — v4.0
 
 ### Active
 
-<!-- v4.0: Somosite Agency Landing Page -->
-- [ ] (marketing) route group with isolated layout, fonts, and styles
-- [ ] Root route (/) serves agency landing page instead of dashboard redirect
-- [ ] Navigation bar: sticky, transparent-to-solid on scroll, smooth anchor links, mobile hamburger
-- [ ] Hero section: headline, subheadline, CTAs, browser mockup visual
-- [ ] Trust bar: 4 credibility signals with Lucide icons
-- [ ] Problem section: empathetic copy, centered, generous whitespace
-- [ ] How It Works: 3-step cards with connecting visual, vertical timeline mobile
-- [ ] Portfolio section: 6 demo site screenshots in browser mockup frames with "View Demo" links
-- [ ] Benefits/differentiators section: outcome-focused, alternating layout
-- [ ] Pricing section: 3-tier cards (Standard $499, Pro $1,299, Premium custom), Pro highlighted
-- [ ] FAQ accordion: 7 objection-handling questions
-- [ ] Final CTA section: dark background, urgency copy
-- [ ] Contact form with email handler (POST /api/contact, reuse existing SMTP)
-- [ ] Footer: 4 columns (Company, Product, Legal, Trust)
-- [ ] Privacy policy page (/privacy)
-- [ ] Terms of service page (/terms)
-- [ ] Refund policy page (/refund)
-- [ ] Cookie consent banner (localStorage preference)
-- [ ] Linear-inspired dark DLS: #0A0A0A bg, #AF92FF accent, grain textures, translucent layers
-- [ ] Typography: premium serif headings + Inter body, loaded via next/font
-- [ ] Scroll-triggered animations (IntersectionObserver, CSS only, 600-800ms ease-out)
-- [ ] SEO: meta title, description, OG image, canonical URL
-- [ ] PageSpeed 95+ mobile and desktop
-- [ ] All marketing copy centralized in lib/marketing-constants.ts
-- [ ] Mobile-first responsive (375px, 640px, 1024px breakpoints)
-- [ ] Demo portfolio sites generated and screenshotted for portfolio section
+<!-- v5.0: Lead Lists & Custom Builds -->
+- [ ] Lead Lists: "Get List" CTA in Discovery Engine modal (fetch-only, no generation)
+- [ ] Lead Lists: lead_lists table with batch grouping and RJSON storage
+- [ ] Lead Lists: /dashboard/leads page with date picker, batch cards, lead rows
+- [ ] Lead Lists: Lead detail popup with RJSON viewer and "Generate Website" CTA
+- [ ] Lead Lists: CSV export (name, email, phone, location, maps URL)
+- [ ] Lead Lists: POST /api/leads/discover, GET /api/leads/batches, POST /api/leads/[id]/generate
+- [ ] Lead Lists: Sidebar menu item under Fulfillment
+- [ ] Custom Build: Modal with Google Maps URL and Upload Business Data tabs
+- [ ] Custom Build: POST /api/custom-build/from-url (extract Place ID, fetch, enrich, generate)
+- [ ] Custom Build: POST /api/custom-build/from-data (raw text/JSON → enrich → generate)
+- [ ] Custom Build: `source` column on projects table (discovery/custom/code-drop)
+- [ ] Custom Build: /dashboard/custom page filtered by source='custom'
+- [ ] Custom Build: Sidebar menu item under Fulfillment
+- [ ] Custom Build: "Custom Build" CTA on dashboard header
 
 ### Out of Scope
 
@@ -115,18 +110,13 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - Custom scheduling infrastructure — Cal.com handles all booking logic
 - Auto-deployment to custom domains — manual DNS + hosting setup for now
 
-## Current Milestone: v4.0 Somosite Agency Landing Page
+## Current Milestone: v5.0 Lead Lists & Custom Builds
 
-**Goal:** Build a premium agency landing page at somosite.com root that convinces cold email recipients the company is real, professional, and worth paying $499-$1,299 for a website. Also satisfies Razorpay verification requirements.
+**Goal:** Add two new admin pipeline tools: (1) Lead Lists for discovery-only Google Places queries saved for cold calling, and (2) Custom Builds for one-off website generation from a Google Maps URL or pasted business data. Admin-only features, no client-facing changes.
 
 **Target features:**
-- Full agency landing page with 12 sections in (marketing) route group
-- Legal pages (privacy, terms, refund)
-- Contact form email handler
-- Cookie consent banner
-- Linear-inspired dark DLS with #AF92FF brand purple accent
-- Demo portfolio with 6 generated site screenshots
-- 95+ PageSpeed, mobile-first, SEO-optimized
+- Lead Lists: "Get List" CTA in Discovery Engine, lead_lists table, /dashboard/leads page with date picker + batch cards, lead detail popup with RJSON viewer, CSV export, "Generate Website" from any lead
+- Custom Build: modal with Google Maps URL + upload tabs, /dashboard/custom page, source tracking on projects table, POST /api/custom-build/from-url and from-data endpoints
 
 ## Context
 
@@ -134,7 +124,8 @@ Maximize the number of high-quality websites generated per hour with minimal man
 - v1.0 shipped generation engine (5 phases, 15 plans) — 2026-03-18
 - v2.0 shipped client claim flow (5 phases, 14 plans) — 2026-03-19
 - v3.0 shipped client portal & updated funnel (5 phases, 13 plans) — 2026-03-25
-- v4.0 target: agency landing page at root URL for credibility + Razorpay verification
+- v4.0 shipped agency landing page at root URL for credibility + Razorpay verification — 2026-03-26
+- v5.0 target: admin pipeline tools (Lead Lists + Custom Builds)
 - Route groups: `(admin)/` for dashboard/editor, `(client)/` for claim flow, `(portal)/` for client portal, `(marketing)/` for landing page + legal pages (new)
 - Tables: projects, batches, queue_jobs, revisions, cost_records, prompt_versions, quality_scores, templates, batch_runs, claims, customizations, claim_events, client_requests
 - Supabase Storage: site-screenshots (public), claim-uploads (private)
@@ -193,4 +184,4 @@ Maximize the number of high-quality websites generated per hour with minimal man
 | "Get Started" buttons scroll to contact (not payment) | Payment happens on /claim/[slug], not agency page | — Pending |
 
 ---
-*Last updated: 2026-03-25 after v4.0 milestone start*
+*Last updated: 2026-03-26 after v5.0 milestone start*
