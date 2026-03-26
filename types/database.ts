@@ -53,6 +53,7 @@ export type Database = {
                     prompt_version_id: string | null
                     quality_score: number | null
                     slug: string | null
+                    source: 'discovery' | 'custom' | 'code-drop'
                     claim_expires_at: string | null
                     screenshot_url: string | null
                     created_at: string
@@ -74,6 +75,7 @@ export type Database = {
                     prompt_version_id?: string | null
                     quality_score?: number | null
                     slug?: string | null
+                    source?: 'discovery' | 'custom' | 'code-drop'
                     claim_expires_at?: string | null
                     screenshot_url?: string | null
                     created_at?: string
@@ -95,6 +97,7 @@ export type Database = {
                     prompt_version_id?: string | null
                     quality_score?: number | null
                     slug?: string | null
+                    source?: 'discovery' | 'custom' | 'code-drop'
                     claim_expires_at?: string | null
                     screenshot_url?: string | null
                     created_at?: string
@@ -477,6 +480,60 @@ export type Database = {
                         referencedColumns: ["id"]
                     }
                 ]
+            }
+            lead_lists: {
+                Row: {
+                    id: string
+                    batch_id: string
+                    place_id: string | null
+                    business_name: string
+                    phone: string | null
+                    email: string | null
+                    address: string | null
+                    website: string | null
+                    maps_url: string | null
+                    rating: number | null
+                    review_count: number | null
+                    industry: string | null
+                    location: string | null
+                    raw_data: Json | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    batch_id: string
+                    place_id?: string | null
+                    business_name: string
+                    phone?: string | null
+                    email?: string | null
+                    address?: string | null
+                    website?: string | null
+                    maps_url?: string | null
+                    rating?: number | null
+                    review_count?: number | null
+                    industry?: string | null
+                    location?: string | null
+                    raw_data?: Json | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    batch_id?: string
+                    place_id?: string | null
+                    business_name?: string
+                    phone?: string | null
+                    email?: string | null
+                    address?: string | null
+                    website?: string | null
+                    maps_url?: string | null
+                    rating?: number | null
+                    review_count?: number | null
+                    industry?: string | null
+                    location?: string | null
+                    raw_data?: Json | null
+                    created_at?: string
+                }
+                Relationships: []
             }
             claim_events: {
                 Row: {
