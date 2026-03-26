@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       location: location || '',
       industry: industry || '',
       entries: clampedEntries,
-      skipWithWebsite: skipWithWebsite !== false,
+      skipWithWebsite: skipWithWebsite === true, // default false for lead lists — include all businesses
     })
 
     return NextResponse.json({
