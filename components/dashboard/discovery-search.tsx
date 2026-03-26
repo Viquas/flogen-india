@@ -641,43 +641,41 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                         </p>
                     )}
 
-                    {/* Action buttons row */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleGetList}
-                            disabled={isGettingList || !isReady}
-                            className="gap-1.5 h-8 text-xs border-zinc-300 text-zinc-700 hover:bg-zinc-50 shrink-0"
-                        >
-                            {isGettingList ? (
-                                <>
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                    Fetching...
-                                </>
-                            ) : (
-                                <>
-                                    <List className="h-3 w-3" />
-                                    Get List
-                                </>
-                            )}
-                        </Button>
-                        <div className="flex-1">
-                            <AutopilotButton
-                                query={searchTerm}
-                                location={location}
-                                industry={industry}
-                                entries={entries}
-                                templateId={selectedTemplate?.id}
-                                designLanguageId={selectedDls?.id}
-                                onRunStart={(runId) => {
-                                    setAutopilotRunId(runId)
-                                    onAutopilotStart?.(runId)
-                                    onClose?.()
-                                }}
-                            />
-                        </div>
-                    </div>
+                    {/* Action row: Stop All (left) ... Get List + Generate Websites (right) */}
+                    <AutopilotButton
+                        query={searchTerm}
+                        location={location}
+                        industry={industry}
+                        entries={entries}
+                        templateId={selectedTemplate?.id}
+                        designLanguageId={selectedDls?.id}
+                        onRunStart={(runId) => {
+                            setAutopilotRunId(runId)
+                            onAutopilotStart?.(runId)
+                            onClose?.()
+                        }}
+                        renderBeforeGenerate={
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleGetList}
+                                disabled={isGettingList || !isReady}
+                                className="gap-1.5 h-8 text-xs border-zinc-300 text-zinc-700 hover:bg-zinc-50 shrink-0"
+                            >
+                                {isGettingList ? (
+                                    <>
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Fetching...
+                                    </>
+                                ) : (
+                                    <>
+                                        <List className="h-3 w-3" />
+                                        Get List
+                                    </>
+                                )}
+                            </Button>
+                        }
+                    />
                 </div>
 
                 {/* Status message */}

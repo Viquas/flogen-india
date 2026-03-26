@@ -15,6 +15,7 @@ interface AutopilotButtonProps {
     templateId?: string
     designLanguageId?: string
     onRunStart?: (runId: string) => void
+    renderBeforeGenerate?: React.ReactNode
 }
 
 export function AutopilotButton({
@@ -25,6 +26,7 @@ export function AutopilotButton({
     templateId,
     designLanguageId,
     onRunStart,
+    renderBeforeGenerate,
 }: AutopilotButtonProps) {
     const [isStarting, setIsStarting] = useState(false)
     const [isStopping, setIsStopping] = useState(false)
@@ -102,80 +104,52 @@ export function AutopilotButton({
 
     return (
         <div className="space-y-2">
-            {/* Horizontal bar: config left, actions right */}
-            <div className="flex items-center gap-4 flex-wrap">
-                {/* Config options */}
-                <div className="flex items-center gap-3 text-xs">
-                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                        <input
-                            type="checkbox"
-                            checked={autoFixEnabled}
-                            onChange={(e) => setAutoFixEnabled(e.target.checked)}
-                            className="rounded border-zinc-300 text-orange-500 focus:ring-orange-500 h-3.5 w-3.5"
-                        />
-                        <span className="text-zinc-500">Auto-fix</span>
-                    </label>
-
-                    {autoFixEnabled && (
-                        <label className="flex items-center gap-1">
-                            <span className="text-zinc-400">Quality:</span>
-                            <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={qualityThreshold}
-                                onChange={(e) => setQualityThreshold(Math.min(100, Math.max(0, Number(e.target.value))))}
-                                className="w-12 h-6 px-1.5 rounded border border-zinc-200 text-xs text-center focus:outline-none focus:ring-1 focus:ring-orange-500"
-                            />
-                        </label>
+            {/* Action row: Stop All (left) | active badge | Generate Websites (right) */}
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStop}
+                    disabled={isStopping}
+                    className="gap-1.5 h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                    {isStopping ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                        <Square className="h-3 w-3" />
                     )}
+                    Stop All
+                </Button>
 
-                    {activeRunCount > 0 && (
-                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1 text-[10px] h-5">
-                            <AlertTriangle className="h-2.5 w-2.5" />
-                            {activeRunCount} active
-                        </Badge>
-                    )}
-                </div>
+                {activeRunCount > 0 && (
+                    <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 gap-1 text-[10px] h-5">
+                        <AlertTriangle className="h-2.5 w-2.5" />
+                        {activeRunCount} active
+                    </Badge>
+                )}
 
                 <div className="flex-1" />
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleStop}
-                        disabled={isStopping}
-                        className="gap-1.5 h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                        {isStopping ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                            <Square className="h-3 w-3" />
-                        )}
-                        Stop All
-                    </Button>
+                {renderBeforeGenerate}
 
-                    <Button
-                        size="sm"
-                        onClick={handleStart}
-                        disabled={isStarting || !isReady}
-                        className="bg-orange-500 hover:bg-orange-600 text-white gap-1.5 h-7 text-xs px-3"
-                    >
-                        {isStarting ? (
-                            <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Running...
-                            </>
-                        ) : (
-                            <>
-                                <Rocket className="h-3 w-3" />
-                                Run Autopilot
-                            </>
-                        )}
-                    </Button>
-                </div>
+                <Button
+                    size="sm"
+                    onClick={handleStart}
+                    disabled={isStarting || !isReady}
+                    className="bg-orange-500 hover:bg-orange-600 text-white gap-1.5 h-8 text-xs px-4"
+                >
+                    {isStarting ? (
+                        <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Generating...
+                        </>
+                    ) : (
+                        <>
+                            <Rocket className="h-3 w-3" />
+                            Generate Websites
+                        </>
+                    )}
+                </Button>
             </div>
 
             {/* Inline feedback */}
