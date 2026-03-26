@@ -49,27 +49,27 @@ None — scope is complete for v5.0.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHM-01 | TBD | Pending |
-| SCHM-02 | TBD | Pending |
-| LEAD-01 | TBD | Pending |
-| LEAD-02 | TBD | Pending |
-| LEAD-07 | TBD | Pending |
-| LEAD-03 | TBD | Pending |
-| LEAD-04 | TBD | Pending |
-| LEAD-05 | TBD | Pending |
-| LEAD-06 | TBD | Pending |
-| CUST-01 | TBD | Pending |
-| CUST-02 | TBD | Pending |
-| CUST-03 | TBD | Pending |
-| CUST-04 | TBD | Pending |
-| CUST-05 | TBD | Pending |
-| CUST-06 | TBD | Pending |
+| SCHM-01 | Phase 21 | Pending |
+| SCHM-02 | Phase 21 | Pending |
+| LEAD-01 | Phase 21 | Pending |
+| LEAD-02 | Phase 21 | Pending |
+| LEAD-07 | Phase 21 | Pending |
+| LEAD-03 | Phase 22 | Pending |
+| LEAD-04 | Phase 22 | Pending |
+| LEAD-05 | Phase 22 | Pending |
+| LEAD-06 | Phase 22 | Pending |
+| CUST-01 | Phase 23 | Pending |
+| CUST-02 | Phase 23 | Pending |
+| CUST-03 | Phase 23 | Pending |
+| CUST-04 | Phase 23 | Pending |
+| CUST-05 | Phase 23 | Pending |
+| CUST-06 | Phase 23 | Pending |
 
 **Coverage:**
 - v5.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 (pending roadmap)
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-26 after roadmap creation*

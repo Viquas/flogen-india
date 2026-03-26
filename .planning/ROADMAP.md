@@ -5,7 +5,8 @@
 - [x] **v1.0 Internal Generation Engine** - Phases 1-5 (shipped 2026-03-18)
 - [x] **v2.0 Client Claim Flow** - Phases 6-10 (shipped 2026-03-19)
 - [x] **v3.0 Client Portal & Updated Funnel** - Phases 11-15 (shipped 2026-03-25)
-- [ ] **v4.0 Somosite Agency Landing Page** - Phases 16-20 (in progress)
+- [x] **v4.0 Somosite Agency Landing Page** - Phases 16-20 (shipped 2026-03-26)
+- [ ] **v5.0 Lead Lists & Custom Builds** - Phases 21-23 (in progress)
 
 ## Phases
 
@@ -161,9 +162,8 @@ Plans:
 
 </details>
 
-### v4.0 Somosite Agency Landing Page
-
-**Milestone Goal:** Build a premium agency landing page at somosite.com root that convinces cold email recipients the company is real, professional, and worth paying $499-$1,299 for a website. Also satisfies Razorpay verification requirements.
+<details>
+<summary>v4.0 Somosite Agency Landing Page (Phases 16-20) -- SHIPPED 2026-03-26</summary>
 
 - [x] **Phase 16: Marketing Foundation** - (marketing) route group, layout, font loading, design tokens, marketing-constants.ts, root route change, responsive baseline (completed 2026-03-25)
 - [x] **Phase 17: Hero, Trust & Problem** - Navigation bar, hero section, trust bar, problem section, scroll-triggered animations (completed 2026-03-25)
@@ -171,19 +171,11 @@ Plans:
 - [x] **Phase 19: Pricing, FAQ & Final CTA** - Three-tier pricing cards, objection-handling accordion, urgency-driven final CTA (completed 2026-03-25)
 - [x] **Phase 20: Contact, Footer, Legal & Polish** - Contact form with email handler, footer, 3 legal pages, cookie consent, SEO metadata, PageSpeed optimization (completed 2026-03-25)
 
-## Phase Details
-
 ### Phase 16: Marketing Foundation
 **Goal**: The (marketing) route group exists with its own layout, dark design system tokens, premium font stack, and centralized copy -- visiting / renders the landing page shell instead of redirecting to /dashboard, and all existing routes continue working
 **Depends on**: Phase 15 (v3.0 complete)
 **Requirements**: ROUTE-01, ROUTE-02, ROUTE-03, DLS-01, DLS-02, DLS-04, DLS-05, INFRA-04
-**Success Criteria** (what must be TRUE):
-  1. Visiting `/` in a browser renders the marketing landing page layout (dark background, correct fonts) instead of redirecting to `/dashboard`
-  2. The (marketing) route group has its own layout.tsx that loads DM Serif Display (or chosen serif) for headings and Inter for body via next/font, completely isolated from admin (Geist) and client (Inter) font stacks
-  3. A `lib/marketing-constants.ts` file exports all marketing copy (headlines, subheadlines, CTAs, feature descriptions, FAQ content, pricing data) and every text string on the landing page reads from this file -- no hardcoded copy in components
-  4. Design tokens (#0A0A0A background, #AF92FF accent, grain texture, translucent layers) are applied to the layout and all marketing components use them consistently
-  5. All existing routes (/dashboard, /claim/*, /preview/*, /portal/*) load and function exactly as before -- no regressions from the root route change or new route group
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
 - [x] 16-01-PLAN.md -- Marketing constants, (marketing) route group layout with dark design tokens + fonts, landing page shell, root route change
@@ -192,13 +184,7 @@ Plans:
 **Goal**: The top three sections of the landing page are complete -- visitors see a sticky navigation bar, a compelling hero with browser mockup visual, trust signals, and an empathetic problem statement that creates emotional resonance
 **Depends on**: Phase 16
 **Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04, DLS-03
-**Success Criteria** (what must be TRUE):
-  1. The navigation bar is sticky at the top, transitions from transparent to solid background on scroll, contains smooth-scrolling anchor links to each section, and collapses into a hamburger menu on mobile (below 640px)
-  2. The hero section displays a headline, subheadline, two CTA buttons ("See Our Work" scrolling to portfolio, "View Pricing" scrolling to pricing), and a browser mockup visual with a subtle float animation
-  3. The trust bar shows 4 credibility signals (sites delivered count, turnaround time, satisfaction rate, technologies used) with Lucide icons in a horizontal row
-  4. The problem section presents empathetic copy about the pain of having a bad website, centered with generous whitespace, readable and impactful
-  5. All sections animate in on scroll (fade-in/slide-up, 600-800ms ease-out) using IntersectionObserver with CSS transitions only -- no JavaScript animation libraries
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 17-01-PLAN.md -- Scroll animation hook, marketing constants update (nav/hero copy), sticky navbar with mobile hamburger
@@ -208,11 +194,7 @@ Plans:
 **Goal**: The middle sections of the landing page demonstrate competence -- visitors see a clear 3-step process, browse 6 demo site screenshots in polished browser mockups, and read outcome-focused differentiators that build purchase intent
 **Depends on**: Phase 17
 **Requirements**: PAGE-05, PAGE-06, PAGE-07
-**Success Criteria** (what must be TRUE):
-  1. The How It Works section shows 3 numbered step cards (e.g., "Tell us about your business", "We design your site", "Go live") with icons and connecting visual lines between steps on desktop, collapsing to a vertical timeline on mobile
-  2. The Portfolio section displays 6 demo site screenshots inside browser mockup frames, each with a business name, category label, and a "View Demo" link -- placeholder images are used until real screenshots are generated in a future milestone
-  3. The Benefits section presents outcome-focused differentiators (e.g., "Launch in 48 hours", "Mobile-first design", "Built to convert") in an alternating left-right layout on desktop or a clean grid, with each benefit having an icon, heading, and short description
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
 - [x] 18-01-PLAN.md -- Update marketing constants to PRD copy, create HowItWorks and Benefits components
@@ -222,11 +204,7 @@ Plans:
 **Goal**: The conversion sections are complete -- visitors can compare pricing tiers, get objections answered, and encounter a final urgency-driven call to action that pushes them to reach out
 **Depends on**: Phase 18
 **Requirements**: PAGE-08, PAGE-09, PAGE-10
-**Success Criteria** (what must be TRUE):
-  1. The Pricing section shows 3 cards: Standard ($499), Pro ($1,299, highlighted as "Most Popular" with a visual badge), and Premium ("Custom pricing", "Contact Us" CTA) -- each card lists included features, and "Get Started" buttons scroll to the contact form
-  2. The FAQ section is an accordion with 7 objection-handling questions (e.g., turnaround time, revision policy, what's included, refund policy) -- clicking a question expands/collapses the answer with smooth animation, only one open at a time
-  3. The Final CTA section has a dark background contrasting with the page, urgency-focused copy, and primary + secondary CTA buttons that scroll to the contact form
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
 - [x] 19-01-PLAN.md -- Update constants to PRD copy, create Pricing (3-tier cards with Pro elevation), FAQ (hand-coded accordion), FinalCTA (urgency section), wire into page.tsx
@@ -235,22 +213,74 @@ Plans:
 **Goal**: The landing page is complete and production-ready -- visitors can submit a contact form that sends an email, browse legal pages, accept/decline cookies, and the page scores 95+ on PageSpeed with full SEO metadata
 **Depends on**: Phase 19
 **Requirements**: PAGE-11, PAGE-12, LEGAL-01, LEGAL-02, LEGAL-03, LEGAL-04, INFRA-01, INFRA-02, INFRA-03
-**Success Criteria** (what must be TRUE):
-  1. The contact form collects name, email, business name (optional), and message -- submitting it sends an email to the operator via POST /api/contact using the existing nodemailer/Gmail SMTP setup, shows a success confirmation, and handles errors gracefully
-  2. The footer displays 4 columns (Company, Product, Legal, Trust) with relevant links, payment method badges, and copyright -- legal links navigate to /privacy, /terms, and /refund
-  3. Privacy policy (/privacy), terms of service (/terms), and refund policy (/refund) pages exist within the (marketing) route group, each with properly formatted legal content and consistent dark styling
-  4. A cookie consent banner appears on first visit with Accept/Decline buttons, persists the preference in localStorage, and does not reappear after a choice is made
-  5. The landing page has meta title, description, OG image, and canonical URL set in the (marketing) layout, and scores 95+ on both mobile and desktop PageSpeed (optimized images, minimal JS, proper next/image usage)
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 20-01-PLAN.md -- Contact form component + /api/contact email route + footer component + constants update + page wiring
-- [ ] 20-02-PLAN.md -- 3 legal pages (privacy, terms, refund) + cookie consent banner + SEO metadata + layout update
+- [x] 20-01-PLAN.md -- Contact form component + /api/contact email route + footer component + constants update + page wiring
+- [x] 20-02-PLAN.md -- 3 legal pages (privacy, terms, refund) + cookie consent banner + SEO metadata + layout update
+
+</details>
+
+### v5.0 Lead Lists & Custom Builds
+
+**Milestone Goal:** Add two new admin pipeline tools: (1) Lead Lists for discovery-only Google Places queries saved for cold calling, and (2) Custom Builds for one-off website generation from a Google Maps URL or pasted business data. Admin-only features, no client-facing changes.
+
+- [ ] **Phase 21: Lead Lists Foundation** - Schema migrations, lead discovery API, "Get List" CTA in Discovery Engine, sidebar nav item
+- [ ] **Phase 22: Lead Lists UI** - /dashboard/leads page with date picker and batch cards, lead detail popup with RJSON viewer, CSV export, "Generate Website" from lead
+- [ ] **Phase 23: Custom Build** - Custom build modal with URL and data tabs, APIs, source tracking on projects, /dashboard/custom page, sidebar nav, dashboard CTA
+
+## Phase Details
+
+### Phase 21: Lead Lists Foundation
+**Goal**: The database schema supports lead lists and project source tracking, the Discovery Engine has a "Get List" CTA that fetches Google Places results without triggering generation, and the sidebar has a Lead Lists menu item
+**Depends on**: Phase 20 (v4.0 complete)
+**Requirements**: SCHM-01, SCHM-02, LEAD-01, LEAD-02, LEAD-07
+**Success Criteria** (what must be TRUE):
+  1. A `lead_lists` table exists in Supabase with batch_id, business name, phone, email, address, maps URL, raw_data (JSONB), and appropriate indexes -- and TypeScript types are generated
+  2. The `projects` table has a `source` column with values 'discovery', 'custom', or 'code-drop' (default 'discovery') -- existing projects are unaffected
+  3. User can click "Get List" in the Discovery Engine modal and see Google Places results fetched and saved to the lead_lists table without any generation jobs being created
+  4. A "Lead Lists" menu item appears in the sidebar under Fulfillment and navigates to /dashboard/leads
+**Plans**: TBD
+
+Plans:
+- [ ] 21-01: Schema migrations (lead_lists table, projects.source column) + TypeScript types
+- [ ] 21-02: Lead discovery API (POST /api/leads/discover), "Get List" CTA in Discovery Engine modal, sidebar nav update
+
+### Phase 22: Lead Lists UI
+**Goal**: The operator can browse lead batches by date, inspect individual leads with full RJSON data, export batches as CSV for cold calling, and send any lead into the website generation pipeline
+**Depends on**: Phase 21
+**Requirements**: LEAD-03, LEAD-04, LEAD-05, LEAD-06
+**Success Criteria** (what must be TRUE):
+  1. User can visit /dashboard/leads and see lead batches grouped by date with a date picker filter, each batch showing query, location, and lead count
+  2. User can click a lead row to open a detail popup displaying the full RJSON data (business name, address, phone, email, website, rating, reviews, photos, hours, etc.)
+  3. User can click "Generate Website" from a lead detail popup and the lead is sent through the existing generation pipeline (enrichment + generation), creating a project with source='discovery'
+  4. User can click a CSV export button on any batch to download a file with name, email, phone, location, and maps URL columns
+**Plans**: TBD
+
+Plans:
+- [ ] 22-01: /dashboard/leads page with date picker, batch cards, lead rows, GET /api/leads/batches endpoint
+- [ ] 22-02: Lead detail popup with RJSON viewer, "Generate Website" CTA (POST /api/leads/[id]/generate), CSV export
+
+### Phase 23: Custom Build
+**Goal**: The operator can generate a website from any Google Maps URL or raw business data in a single action, view all custom-built projects in a dedicated page, and access the feature from the dashboard header
+**Depends on**: Phase 21
+**Requirements**: CUST-01, CUST-02, CUST-03, CUST-04, CUST-05, CUST-06
+**Success Criteria** (what must be TRUE):
+  1. User can click "Custom Build" on the dashboard header to open a modal with two tabs: "Google Maps URL" and "Upload Business Data"
+  2. User can paste a Google Maps URL in the first tab, submit it, and a website is generated (Place ID extracted, data fetched, enriched, generated) -- the resulting project has source='custom'
+  3. User can paste or type business data (text or JSON) in the second tab, submit it, and a website is generated from that data -- the resulting project has source='custom'
+  4. User can visit /dashboard/custom and see only projects where source='custom', with the same grid/card layout as the main dashboard
+  5. A "Custom Builds" menu item appears in the sidebar under Fulfillment and navigates to /dashboard/custom
+**Plans**: TBD
+
+Plans:
+- [ ] 23-01: Custom build modal (Google Maps URL tab + Upload Business Data tab), POST /api/custom-build/from-url, POST /api/custom-build/from-data
+- [ ] 23-02: /dashboard/custom page (filtered by source='custom'), sidebar nav update, dashboard header CTA
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
+Phases execute in numeric order: 21 -> 22 -> 23
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -273,8 +303,11 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19 -> 20
 | 17. Hero, Trust & Problem | v4.0 | 2/2 | Complete | 2026-03-25 |
 | 18. How It Works, Portfolio & Benefits | v4.0 | 2/2 | Complete | 2026-03-25 |
 | 19. Pricing, FAQ & Final CTA | v4.0 | 1/1 | Complete | 2026-03-25 |
-| 20. Contact, Footer, Legal & Polish | 2/2 | Complete    | 2026-03-25 | - |
+| 20. Contact, Footer, Legal & Polish | v4.0 | 2/2 | Complete | 2026-03-25 |
+| 21. Lead Lists Foundation | v5.0 | 0/2 | Not started | - |
+| 22. Lead Lists UI | v5.0 | 0/2 | Not started | - |
+| 23. Custom Build | v5.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- Phase 20 planned (2 plans, wave 1)*
+*Last updated: 2026-03-26 -- v5.0 roadmap created (3 phases, 6 plans)*
