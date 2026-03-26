@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "db:migrate": "supabase db push",
     "db:types": "supabase gen types typescript --local > types/database.ts"
   },
