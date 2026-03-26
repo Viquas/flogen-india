@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Lead Lists & Custom Builds
 status: in-progress
-last_updated: "2026-03-26T02:26:11Z"
+last_updated: "2026-03-26T02:31:20Z"
 progress:
   total_phases: 23
-  completed_phases: 21
+  completed_phases: 22
   total_plans: 54
-  completed_plans: 53
+  completed_plans: 54
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 22 of 23 (Lead Lists UI)
-Plan: 1 of 2 in current phase -- COMPLETE
-Status: Executing Phase 22
-Last activity: 2026-03-26 — Completed 22-01 (Lead Lists Page)
+Phase: 22 of 23 (Lead Lists UI) -- COMPLETE
+Plan: 2 of 2 in current phase -- COMPLETE
+Status: Phase 22 complete, ready for Phase 23
+Last activity: 2026-03-26 — Completed 22-02 (Lead Detail Modal & Generate Flow)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [█████░░░░░] 50%
 | 21 | 01 | 1min | 2 | 3 |
 | 21 | 02 | 3min | 2 | 5 |
 | 22 | 01 | 2min | 2 | 3 |
+| 22 | 02 | 3min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -65,6 +66,10 @@ Key codebase facts for v5.0:
 - GET /api/leads/batches endpoint groups lead_lists by batch_id for a date
 - LeadsPageClient component uses useTransition for date navigation pending state
 - Download CSV button on batch cards wired with empty onClick (Plan 02)
+- POST /api/leads/[id]/generate creates project with source=discovery from lead data, queues via generationQueue
+- Lead detail modal at components/dashboard/lead-detail-modal.tsx with RJSON viewer and Generate Website CTA
+- CSV export generates client-side Blob with leads-{query}-{date}.csv filename
+- sonner toast used for generate success/error feedback (project already has sonner)
 
 ### Pending Todos
 
@@ -77,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 22-01-PLAN.md (Lead Lists Page)
+Stopped at: Completed 22-02-PLAN.md (Lead Detail Modal & Generate Flow)
 Resume file: None
