@@ -3,9 +3,6 @@ import * as Sentry from "@sentry/nextjs"
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Proxy through our own API to bypass CORS and ad-blockers
-  tunnel: "/api/sentry-tunnel",
-
   sendDefaultPii: true,
 
   // 100% in dev, 10% in production
