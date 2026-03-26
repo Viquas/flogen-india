@@ -14,8 +14,5 @@ export default withSentryConfig(nextConfig, {
 
   widenClientFileUpload: true,
 
-  // Tunnel Sentry requests through our API to bypass CORS/ad-blockers
-  tunnelRoute: "/api/sentry-tunnel",
-
   silent: !process.env.CI,
 });
