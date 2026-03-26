@@ -22,9 +22,19 @@ export function LoginForm() {
             const result = await loginWithPassword({ email, password })
             // If we get here, login failed (success redirects server-side)
             setError(result.error)
-        } catch {
-            // redirect() throws -- this is expected on success
-        } finally {
+            setLoading(false)
+        } catch (err: unknown) {
+            // redirect() throws NEXT_REDIRECT -- let it propagate
+            if (
+                err &&
+                typeof err === 'object' &&
+                'digest' in err &&
+                typeof (err as { digest: unknown }).digest === 'string' &&
+                (err as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+            ) {
+                throw err
+            }
+            setError('Something went wrong. Please try again.')
             setLoading(false)
         }
     }
