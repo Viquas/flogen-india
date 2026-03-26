@@ -22,12 +22,21 @@ export default async function CustomizePage({ params }: CustomizePageProps) {
 
     const supabase = createAdminClient()
 
-    // Fetch project with business_data
-    const { data: project } = await supabase
+    // Try slug first, then fall back to UUID id
+    let { data: project } = await supabase
         .from('projects')
         .select('id, business_data')
-        .eq('id', slug)
+        .eq('slug', slug)
         .single()
+
+    if (!project) {
+        const result = await supabase
+            .from('projects')
+            .select('id, business_data')
+            .eq('id', slug)
+            .single()
+        project = result.data
+    }
 
     if (!project) {
         notFound()
