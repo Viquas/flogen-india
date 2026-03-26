@@ -258,8 +258,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 22-01-PLAN.md -- Leads page with date picker, batch cards, lead rows table, server-side Supabase query
-- [ ] 22-02-PLAN.md -- Lead detail modal with RJSON viewer, Generate Website API + CTA, CSV batch export
+- [x] 22-01-PLAN.md -- Leads page with date picker, batch cards, lead rows table, server-side Supabase query
+- [x] 22-02-PLAN.md -- Lead detail modal with RJSON viewer, Generate Website API + CTA, CSV batch export
 
 ### Phase 23: Custom Build
 **Goal**: The operator can generate a website from any Google Maps URL or raw business data in a single action, view all custom-built projects in a dedicated page, and access the feature from the dashboard header
@@ -271,11 +271,11 @@ Plans:
   3. User can paste or type business data (text or JSON) in the second tab, submit it, and a website is generated from that data -- the resulting project has source='custom'
   4. User can visit /dashboard/custom and see only projects where source='custom', with the same grid/card layout as the main dashboard
   5. A "Custom Builds" menu item appears in the sidebar under Fulfillment and navigates to /dashboard/custom
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 23-01: Custom build modal (Google Maps URL tab + Upload Business Data tab), POST /api/custom-build/from-url, POST /api/custom-build/from-data
-- [ ] 23-02: /dashboard/custom page (filtered by source='custom'), sidebar nav update, dashboard header CTA
+- [ ] 23-01-PLAN.md -- Custom build modal (two tabs: URL + data), POST /api/custom-build/from-url, POST /api/custom-build/from-data
+- [ ] 23-02-PLAN.md -- /dashboard/custom page (filtered by source='custom'), sidebar nav update, dashboard header CTA
 
 ## Progress
 
@@ -310,4 +310,4 @@ Phases execute in numeric order: 21 -> 22 -> 23
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-26 -- Phase 22 planned (2 plans, 2 waves)*
+*Last updated: 2026-03-26 -- Phase 23 planned (2 plans, 2 waves)*
