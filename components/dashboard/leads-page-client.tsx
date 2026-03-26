@@ -1,9 +1,17 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
-import { CalendarDays, ChevronDown, Download, FileSearch } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronDown,
+  Download,
+  FileSearch,
+  CheckCircle2,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { LeadDetailModal } from '@/components/dashboard/lead-detail-modal'
 
 interface LeadRow {
   id: string
@@ -35,6 +43,9 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
   const [isPending, startTransition] = useTransition()
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null)
+  const [generatedLeadIds, setGeneratedLeadIds] = useState<Set<string>>(
+    new Set(),
+  )
 
   const dateObj = parseISO(selectedDate)
   const formattedDate = format(dateObj, 'EEE d MMM')
@@ -44,6 +55,53 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
     startTransition(() => {
       router.push(`/dashboard/leads?date=${value}`)
     })
+  }
+
+  const handleGenerate = useCallback(async (leadId: string) => {
+    const res = await fetch(`/api/leads/${leadId}/generate`, { method: 'POST' })
+    if (!res.ok) {
+      const data = await res.json()
+      toast.error(data.error || 'Generation failed')
+      throw new Error(data.error || 'Generation failed')
+    }
+    setGeneratedLeadIds((prev) => new Set(prev).add(leadId))
+    toast.success('Website generation queued')
+  }, [])
+
+  function handleDownloadCSV(batch: LeadBatch) {
+    const headers = [
+      'Company Name',
+      'Email',
+      'Phone',
+      'Location',
+      'Google Maps URL',
+    ]
+    const rows = batch.leads.map((lead) => [
+      lead.business_name,
+      lead.email || '',
+      lead.phone || '',
+      lead.address || lead.location || '',
+      lead.maps_url || '',
+    ])
+
+    const csvContent = [headers, ...rows]
+      .map((row) =>
+        row.map((cell) => `"${(cell || '').replace(/"/g, '""')}"`).join(','),
+      )
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const safeQuery = batch.query
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+$/, '')
+    const dateStr = format(parseISO(batch.created_at), 'yyyy-MM-dd')
+    link.href = url
+    link.download = `leads-${safeQuery}-${dateStr}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -97,11 +155,20 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
                 key={batch.batch_id}
                 batch={batch}
                 onSelectLead={setSelectedLead}
+                onDownloadCSV={handleDownloadCSV}
+                generatedLeadIds={generatedLeadIds}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Lead detail modal */}
+      <LeadDetailModal
+        lead={selectedLead}
+        onOpenChange={(open) => !open && setSelectedLead(null)}
+        onGenerate={handleGenerate}
+      />
     </div>
   )
 }
@@ -109,9 +176,13 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
 function BatchCard({
   batch,
   onSelectLead,
+  onDownloadCSV,
+  generatedLeadIds,
 }: {
   batch: LeadBatch
   onSelectLead: (lead: LeadRow) => void
+  onDownloadCSV: (batch: LeadBatch) => void
+  generatedLeadIds: Set<string>
 }) {
   const batchTime = format(parseISO(batch.created_at), 'HH:mm')
 
@@ -129,9 +200,7 @@ function BatchCard({
           <span className="text-xs text-muted-foreground">{batchTime}</span>
         </div>
         <button
-          onClick={() => {
-            /* CSV download wired in Plan 02 */
-          }}
+          onClick={() => onDownloadCSV(batch)}
           className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
         >
           <Download className="h-3.5 w-3.5" />
@@ -154,7 +223,12 @@ function BatchCard({
           onClick={() => onSelectLead(lead)}
           className="grid grid-cols-[1fr_1fr_1fr_1fr] gap-2 border-b last:border-b-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
         >
-          <div className="font-medium truncate">{lead.business_name}</div>
+          <div className="flex items-center gap-1.5 font-medium truncate">
+            {generatedLeadIds.has(lead.id) && (
+              <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-green-600" />
+            )}
+            <span className="truncate">{lead.business_name}</span>
+          </div>
           <div className="text-muted-foreground truncate">
             {lead.email || '\u2014'}
           </div>
