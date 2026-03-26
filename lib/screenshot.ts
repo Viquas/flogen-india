@@ -13,6 +13,7 @@ import chromium from '@sparticuz/chromium-min'
 import puppeteer from 'puppeteer-core'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
+import { logger } from '@/lib/logger'
 
 const CHROMIUM_URL = process.env.CHROMIUM_REMOTE_URL
     || 'https://github.com/nicehash/chromium-bin/releases/download/v133.0.0/chromium-v133.0-pack.tar'
@@ -45,7 +46,7 @@ export async function generateScreenshot(
             })
 
         if (uploadError) {
-            console.error('[Screenshot] Upload failed for', projectId, uploadError)
+            logger.screenshot.error('Upload failed', { projectId, error: uploadError.message })
             return null
         }
 
@@ -58,7 +59,7 @@ export async function generateScreenshot(
 
         return data.publicUrl
     } catch (err) {
-        console.error('[Screenshot] Failed for', projectId, err)
+        logger.screenshot.error('Screenshot generation failed', { projectId, error: err instanceof Error ? err.message : String(err) })
         return null
     } finally {
         if (browser) await browser.close()

@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAndSaveWebsite } from '@/lib/ai/generator'
+import { logger } from '@/lib/logger'
 
 export interface QueueJob {
     id: string
@@ -10,6 +11,23 @@ export interface QueueJob {
     template_id: string | null
     status: 'pending' | 'processing' | 'completed' | 'failed'
     attempts: number
+    updated_at?: string
+    model_id?: string | null  // repurposed as priority field (e.g. "1" = high priority)
+}
+
+// Max retry attempts before permanently failing a job
+const MAX_ATTEMPTS = 3
+
+// Backoff schedule: 2^attempt * 30 seconds (30s, 60s, 120s)
+function getBackoffMs(attempt: number): number {
+    return Math.pow(2, attempt) * 30 * 1000
+}
+
+// Parse priority from model_id column (used as priority carrier)
+function parsePriority(modelId: string | null | undefined): number {
+    if (!modelId) return 0
+    const parsed = parseInt(modelId, 10)
+    return isNaN(parsed) ? 0 : parsed
 }
 
 // Returns ISO string for Monday 00:00:00 of the current week (UTC)
@@ -21,9 +39,21 @@ function currentWeekStart(): string {
     return monday.toISOString()
 }
 
+// Parse and validate QUEUE_MAX_CONCURRENT from environment
+function getMaxConcurrent(): number {
+    const envVal = process.env.QUEUE_MAX_CONCURRENT
+    if (!envVal) return 3
+    const parsed = parseInt(envVal, 10)
+    if (isNaN(parsed) || parsed < 1 || parsed > 20) {
+        logger.queue.warn('Invalid QUEUE_MAX_CONCURRENT, using default 3', { value: envVal })
+        return 3
+    }
+    return parsed
+}
+
 class GenerationQueue {
     private processingSince: number | null = null
-    private maxConcurrent = 3
+    private maxConcurrent: number = getMaxConcurrent()
 
     // Processing is considered stale after 2 minutes without heartbeat
     private readonly STALE_MS = 2 * 60 * 1000
@@ -32,7 +62,7 @@ class GenerationQueue {
         if (!this.processingSince) return false
         // Auto-expire stale locks
         if (Date.now() - this.processingSince > this.STALE_MS) {
-            console.log('[Queue] Processing lock expired (stale), allowing re-entry')
+            logger.queue.warn('Processing lock expired (stale), allowing re-entry')
             this.processingSince = null
             return false
         }
@@ -48,7 +78,7 @@ class GenerationQueue {
         if (this.processingSince) this.processingSince = Date.now()
     }
 
-    async add(projectId: string, rules?: string, templateId?: string) {
+    async add(projectId: string, rules?: string, templateId?: string, priority: number = 0) {
         const supabase = createAdminClient()
 
         // Dedup: skip if this project already has a pending/processing job
@@ -59,7 +89,7 @@ class GenerationQueue {
             .in('status', ['pending', 'processing'])
 
         if (existing && existing > 0) {
-            console.log(`[Queue] Job already exists for project ${projectId}, skipping`)
+            logger.queue.info('Job already exists, skipping', { projectId })
             return
         }
 
@@ -71,7 +101,7 @@ class GenerationQueue {
             .single()
 
         if (proj && ['review', 'approved', 'deployed'].includes(proj.status)) {
-            console.log(`[Queue] Project ${projectId} already in '${proj.status}', skipping`)
+            logger.queue.info('Project already completed, skipping', { projectId, status: proj.status })
             return
         }
 
@@ -79,21 +109,22 @@ class GenerationQueue {
             project_id: projectId,
             rules: rules || null,
             status: 'pending',
-            attempts: 0
+            attempts: 0,
+            model_id: priority > 0 ? String(priority) : null,
         }
         if (templateId) payload.template_id = templateId
 
         const { error: insertError } = await supabase.from('queue_jobs').insert(payload)
         if (insertError) {
             if (insertError.message?.includes('duplicate key') || insertError.code === '23505') {
-                console.log(`[Queue] Job already exists for project ${projectId}, skipping duplicate`)
+                logger.queue.info('Job already exists, skipping duplicate', { projectId })
                 return
             }
-            console.error('[Queue] queue_jobs insert failed, falling back to direct generation:', insertError.message)
+            logger.queue.error('queue_jobs insert failed, falling back to direct generation', { error: insertError.message })
             // Fall back: bypass queue table and generate directly
             await supabase.from('projects').update({ status: 'generating', generated_code: null }).eq('id', projectId)
             generateAndSaveWebsite(projectId, undefined, rules, templateId).catch(async (err) => {
-                console.error(`[Queue] Fallback generation failed for ${projectId}`, err)
+                logger.queue.error('Fallback generation failed', { projectId, error: err instanceof Error ? err.message : String(err) })
                 await supabase.from('projects').update({
                     status: 'error',
                     generation_phase: `Generation failed: ${err instanceof Error ? err.message.substring(0, 200) : 'Unknown error'}`,
@@ -130,19 +161,19 @@ class GenerationQueue {
 
             const completedIds = new Set((completedProjects || []).map(p => p.id))
             if (completedIds.size > 0) {
-                console.log(`[Queue] Skipping ${completedIds.size} already-completed projects`)
+                logger.queue.info('Skipping already-completed projects', { count: completedIds.size })
                 newProjectIds = newProjectIds.filter(id => !completedIds.has(id))
             }
         }
 
         if (newProjectIds.length === 0) {
-            console.log(`[Queue] All ${projectIds.length} projects already queued or completed, skipping`)
+            logger.queue.info('All projects already queued or completed, skipping', { count: projectIds.length })
             this.process()
             return
         }
 
         if (alreadyQueued.size > 0) {
-            console.log(`[Queue] Skipping ${alreadyQueued.size} already-queued projects, adding ${newProjectIds.length} new`)
+            logger.queue.info('Skipping already-queued projects, adding new', { skipped: alreadyQueued.size, adding: newProjectIds.length })
         }
 
         // Build payloads — only include template_id if provided
@@ -161,19 +192,19 @@ class GenerationQueue {
 
         if (insertError) {
             if (insertError.message?.includes('duplicate key') || insertError.code === '23505') {
-                console.log(`[Queue] Batch insert hit duplicate key, falling back to individual inserts`)
+                logger.queue.warn('Batch insert hit duplicate key, falling back to individual inserts')
                 // Fall back to individual inserts to skip just the duplicates
                 for (const id of projectIds) {
                     await this.add(id, rules, templateId)
                 }
                 return
             }
-            console.error('[Queue] queue_jobs batch insert failed, falling back to direct generation:', insertError.message)
+            logger.queue.error('queue_jobs batch insert failed, falling back to direct generation', { error: insertError.message })
             // Fall back: mark each project as generating and kick off directly
             await supabase.from('projects').update({ status: 'generating', generated_code: null }).in('id', projectIds)
             for (const id of projectIds) {
                 generateAndSaveWebsite(id, undefined, rules, templateId).catch(async (err) => {
-                    console.error(`[Queue] Fallback generation failed for ${id}`, err)
+                    logger.queue.error('Fallback generation failed', { projectId: id, error: err instanceof Error ? err.message : String(err) })
                     await supabase.from('projects').update({
                         status: 'error',
                         generation_phase: `Generation failed: ${err instanceof Error ? err.message.substring(0, 200) : 'Unknown error'}`,
@@ -209,7 +240,7 @@ class GenerationQueue {
                     .eq('status', 'processing')
 
                 if (countError) {
-                    console.error('[Queue] Failed to count processing jobs:', countError.message)
+                    logger.queue.error('Failed to count processing jobs', { error: countError.message })
                     break
                 }
 
@@ -220,25 +251,37 @@ class GenerationQueue {
                     continue
                 }
 
-                // 2. Fetch one pending job
+                // 2. Fetch pending jobs (batch of 10, sorted by created_at for FIFO)
+                //    We fetch a small batch so we can sort by priority in-memory
+                //    (model_id column carries priority; no dedicated DB column)
+                //    Also filter out jobs in backoff: updated_at > now means "retry later"
                 const { data: pendingJobs, error: fetchError } = await supabase
                     .from('queue_jobs')
                     .select('*')
                     .eq('status', 'pending')
+                    .lte('updated_at', new Date().toISOString()) // skip jobs still in backoff
                     .order('created_at', { ascending: true })
-                    .limit(1)
+                    .limit(10)
 
                 if (fetchError) {
-                    console.error('[Queue] Failed to fetch pending jobs:', fetchError.message)
+                    logger.queue.error('Failed to fetch pending jobs', { error: fetchError.message })
                     break
                 }
 
                 if (!pendingJobs || pendingJobs.length === 0) {
-                    console.log('[Queue] No more pending jobs, loop exiting')
+                    logger.queue.info('No more pending jobs, loop exiting')
                     break
                 }
 
-                const job = pendingJobs[0] as unknown as QueueJob
+                // Sort by priority DESC (highest first), then by created_at ASC (FIFO within same priority)
+                const sorted = [...pendingJobs].sort((a, b) => {
+                    const pA = parsePriority(a.model_id)
+                    const pB = parsePriority(b.model_id)
+                    if (pB !== pA) return pB - pA // higher priority first
+                    return 0 // already sorted by created_at from DB
+                })
+
+                const job = sorted[0] as unknown as QueueJob
 
                 // 3. Mark as processing (optimistic lock — only succeeds if still 'pending')
                 const { data: updatedJob, error: updateError } = await supabase
@@ -259,9 +302,9 @@ class GenerationQueue {
                     continue
                 }
 
-                console.log(`[Queue] Starting job ${job.id} for project ${job.project_id}`)
+                logger.queue.info('Starting job', { jobId: job.id, projectId: job.project_id })
                 // Process job asynchronously so the loop can immediately pick up the next one
-                this.executeJob(updatedJob as unknown as QueueJob).catch(console.error)
+                this.executeJob(updatedJob as unknown as QueueJob).catch((err) => logger.queue.error('executeJob unhandled error', { error: err instanceof Error ? err.message : String(err) }))
             }
         } finally {
             this.isProcessing = false
@@ -290,17 +333,50 @@ class GenerationQueue {
 
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            console.error(`[Queue] Job ${job.id} failed for project ${job.project_id}:`, errorMessage)
+            const currentAttempts = job.attempts || 1
 
-            await supabase.from('queue_jobs').update({
-                status: 'failed',
-                error_message: errorMessage,
-                updated_at: new Date().toISOString(),
-                completed_at: new Date().toISOString(),
-            }).eq('id', job.id)
+            if (currentAttempts < MAX_ATTEMPTS) {
+                // Exponential backoff: set updated_at to future timestamp so process loop skips it
+                const backoffMs = getBackoffMs(currentAttempts)
+                const retryAfter = new Date(Date.now() + backoffMs).toISOString()
+                logger.queue.warn('Job failed, scheduling retry with backoff', {
+                    jobId: job.id,
+                    projectId: job.project_id,
+                    attempt: currentAttempts,
+                    maxAttempts: MAX_ATTEMPTS,
+                    retryAfter,
+                    backoffSeconds: backoffMs / 1000,
+                    error: errorMessage,
+                })
 
-            if (job.project_id) {
-                await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
+                await supabase.from('queue_jobs').update({
+                    status: 'pending',
+                    error_message: errorMessage,
+                    updated_at: retryAfter, // acts as retry_after — process loop filters .lte('updated_at', now)
+                }).eq('id', job.id)
+
+                if (job.project_id) {
+                    await supabase.from('projects').update({ status: 'queued' }).eq('id', job.project_id)
+                }
+            } else {
+                // Permanently failed after MAX_ATTEMPTS
+                logger.queue.error('Job permanently failed after max attempts', {
+                    jobId: job.id,
+                    projectId: job.project_id,
+                    attempts: currentAttempts,
+                    error: errorMessage,
+                })
+
+                await supabase.from('queue_jobs').update({
+                    status: 'failed',
+                    error_message: errorMessage,
+                    updated_at: new Date().toISOString(),
+                    completed_at: new Date().toISOString(),
+                }).eq('id', job.id)
+
+                if (job.project_id) {
+                    await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
+                }
             }
         }
     }
@@ -354,7 +430,7 @@ if (typeof process !== 'undefined') {
                 .select('id')
 
             if (staleJobs && staleJobs.length > 0) {
-                console.log(`[Queue] Startup: reset ${staleJobs.length} orphaned processing jobs`)
+                logger.queue.info('Startup: reset orphaned processing jobs', { count: staleJobs.length })
                 generationQueue.process()
             }
 
@@ -373,7 +449,7 @@ if (typeof process !== 'undefined') {
                 .select('id')
 
             if (staleRuns && staleRuns.length > 0) {
-                console.log(`[Queue] Startup: cancelled ${staleRuns.length} stale batch_runs`)
+                logger.queue.info('Startup: cancelled stale batch_runs', { count: staleRuns.length })
             }
         } catch (err) {
             // Startup cleanup is best-effort — don't crash the module
