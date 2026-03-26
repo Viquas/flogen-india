@@ -94,7 +94,7 @@ export default function Navbar() {
           ))}
           <a
             href="/portal"
-            className="inline-flex items-center px-3.5 py-1.5 text-[13px] text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)] transition-colors"
+            className="inline-flex items-center px-4 py-1.5 text-[13px] rounded-[var(--mkt-radius)] border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] hover:text-white hover:border-white/20 transition-colors"
           >
             Client Login
           </a>
@@ -149,7 +149,7 @@ export default function Navbar() {
           <a
             href="/portal"
             onClick={() => setIsOpen(false)}
-            className="mt-4 inline-flex items-center justify-center px-5 py-2.5 text-[14px] text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)] transition-colors"
+            className="mt-4 inline-flex items-center justify-center px-5 py-2.5 text-[14px] rounded-[var(--mkt-radius)] border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] hover:text-white hover:border-white/20 transition-colors"
           >
             Client Login
           </a>

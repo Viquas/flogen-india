@@ -44,7 +44,7 @@ export default function Hero() {
           </a>
           <a
             href={HERO.secondaryCtaHref}
-            className="inline-flex items-center justify-center px-5 py-2.5 text-[14px] font-medium text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)] transition-colors"
+            className="inline-flex items-center justify-center px-5 py-2.5 text-[14px] rounded-[var(--mkt-radius)] border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] hover:text-white hover:border-white/20 transition-colors"
           >
             {HERO.secondaryCta} <span className="ml-1.5">→</span>
           </a>
