@@ -8,6 +8,7 @@ import {
     CURRENCY_SYMBOL,
     UPSELL_DISPLAY,
 } from '@/lib/claim-pricing'
+import { trackClientEvent } from '@/lib/analytics/track'
 import { createUpsellOrder, updateStrategyCallPreference } from '../claim-actions'
 
 interface UpsellClientProps {
@@ -68,6 +69,7 @@ export default function UpsellClient({
                     setHasPaidUpsell(true)
                     setShowCalendar(true)
                     setIsProcessing(false)
+                    trackClientEvent('upsell.accepted', { slug, plan })
                 },
                 modal: {
                     ondismiss: () => {
@@ -108,6 +110,7 @@ export default function UpsellClient({
 
     const handleSkip = async () => {
         setIsSkipping(true)
+        trackClientEvent('upsell.declined', { slug, plan })
         try {
             await updateStrategyCallPreference(claimId, false)
         } catch {

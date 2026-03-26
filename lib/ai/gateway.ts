@@ -1,5 +1,9 @@
 import { generateText, streamText } from 'ai'
-import { getModel } from './model-config'
+import { getModel, resolveProvider } from './model-config'
+import { circuitBreaker } from './circuit-breaker'
+import { logger } from '@/lib/logger'
+
+const log = logger.ai.child('gateway')
 
 // Model pricing per 1M tokens (input/output)
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
@@ -25,9 +29,61 @@ function estimateCost(modelId: string, inputTokens: number, outputTokens: number
   return (inputTokens * pricing.input + outputTokens * pricing.output) / 1_000_000
 }
 
+// --- Retry helpers ---
+
+const MAX_RETRIES = 3
+const BASE_DELAY_MS = 1000
+const JITTER_FACTOR = 0.25
+
+/** HTTP status codes that are transient and worth retrying */
+const TRANSIENT_STATUS_CODES = new Set([429, 500, 503])
+
+/** HTTP status codes that are permanent — don't retry */
+const PERMANENT_STATUS_CODES = new Set([400, 401, 403])
+
 /**
- * Tracked generateText — wraps AI SDK generateText with cost/latency tracking.
- * Returns both the result and metrics.
+ * Extract an HTTP status code from an AI SDK error, if present.
+ * AI SDK errors may have `status`, `statusCode`, or nested `data.status`.
+ */
+function extractStatusCode(error: unknown): number | undefined {
+  if (error && typeof error === 'object') {
+    const e = error as Record<string, unknown>
+    if (typeof e.status === 'number') return e.status
+    if (typeof e.statusCode === 'number') return e.statusCode
+    if (e.data && typeof e.data === 'object') {
+      const d = e.data as Record<string, unknown>
+      if (typeof d.status === 'number') return d.status
+    }
+  }
+  return undefined
+}
+
+function isTransientError(error: unknown): boolean {
+  const status = extractStatusCode(error)
+  if (status && TRANSIENT_STATUS_CODES.has(status)) return true
+  // Network errors (no status code) are transient
+  if (status === undefined) {
+    const msg = error instanceof Error ? error.message : String(error)
+    if (/ECONNRESET|ETIMEDOUT|ENOTFOUND|fetch failed|socket hang up/i.test(msg)) return true
+  }
+  return false
+}
+
+function isPermanentError(error: unknown): boolean {
+  const status = extractStatusCode(error)
+  return status !== undefined && PERMANENT_STATUS_CODES.has(status)
+}
+
+/** Sleep for ms with ±25% jitter */
+function sleepWithJitter(baseMs: number): Promise<void> {
+  const jitter = baseMs * JITTER_FACTOR * (2 * Math.random() - 1) // range: -25% to +25%
+  const ms = Math.max(0, Math.round(baseMs + jitter))
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Tracked generateText — wraps AI SDK generateText with cost/latency tracking,
+ * retry with exponential backoff, and circuit breaker integration.
  */
 export async function trackedGenerateText(
   options: Parameters<typeof generateText>[0] & { callType?: string }
@@ -38,30 +94,103 @@ export async function trackedGenerateText(
   // Remove custom field before passing to AI SDK
   const { callType: _, ...sdkOptions } = options
 
-  const result = await generateText(sdkOptions)
-  const durationMs = Date.now() - start
-
   const modelId = typeof options.model === 'string' ? options.model : (options.model?.modelId || 'unknown')
-  const inputTokens = result.usage?.inputTokens || 0
-  const outputTokens = result.usage?.outputTokens || 0
+  const provider = resolveProvider(modelId)
 
-  const metrics: GenerationMetrics = {
-    model: modelId,
-    inputTokens,
-    outputTokens,
-    estimatedCostUsd: estimateCost(modelId, inputTokens, outputTokens),
-    durationMs,
-    callType,
+  let lastError: unknown
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1)
+        log.info('Retrying AI call', { attempt, delayMs, modelId, callType })
+        await sleepWithJitter(delayMs)
+      }
+
+      const result = await generateText(sdkOptions)
+      const durationMs = Date.now() - start
+
+      // Record success to circuit breaker
+      circuitBreaker.recordSuccess(provider)
+
+      const inputTokens = result.usage?.inputTokens || 0
+      const outputTokens = result.usage?.outputTokens || 0
+
+      const metrics: GenerationMetrics = {
+        model: modelId,
+        inputTokens,
+        outputTokens,
+        estimatedCostUsd: estimateCost(modelId, inputTokens, outputTokens),
+        durationMs,
+        callType,
+      }
+
+      log.info('Generation complete', {
+        callType,
+        model: modelId,
+        inputTokens,
+        outputTokens,
+        cost: `$${metrics.estimatedCostUsd.toFixed(4)}`,
+        durationMs,
+        attempts: attempt + 1,
+      })
+
+      return { result, metrics }
+    } catch (error) {
+      lastError = error
+
+      // Record failure to circuit breaker
+      circuitBreaker.recordFailure(provider)
+
+      const status = extractStatusCode(error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+
+      // Permanent errors: don't retry
+      if (isPermanentError(error)) {
+        log.error('Permanent AI error, not retrying', {
+          modelId,
+          callType,
+          status,
+          error: errorMsg,
+          attempt: attempt + 1,
+        })
+        break
+      }
+
+      // Transient errors: retry if attempts remain
+      if (isTransientError(error) && attempt < MAX_RETRIES) {
+        log.warn('Transient AI error, will retry', {
+          modelId,
+          callType,
+          status,
+          error: errorMsg,
+          attempt: attempt + 1,
+          maxRetries: MAX_RETRIES,
+        })
+        continue
+      }
+
+      // Unknown error type or out of retries
+      log.error('AI call failed', {
+        modelId,
+        callType,
+        status,
+        error: errorMsg,
+        attempt: attempt + 1,
+        retriesExhausted: attempt >= MAX_RETRIES,
+      })
+      break
+    }
   }
 
-  console.log(`[AI Gateway] ${callType} | model=${modelId} | tokens=${inputTokens}+${outputTokens} | cost=$${metrics.estimatedCostUsd.toFixed(4)} | ${durationMs}ms`)
-
-  return { result, metrics }
+  // All retries exhausted or permanent error
+  throw lastError
 }
 
 /**
  * Tracked streamText — wraps AI SDK streamText with cost/latency tracking.
  * Metrics are available after the stream completes.
+ * Note: Streams are not retried (the consumer reads incrementally).
+ * Circuit breaker is recorded on stream completion/failure.
  */
 export function trackedStreamText(
   options: Parameters<typeof streamText>[0] & { callType?: string }
@@ -73,12 +202,16 @@ export function trackedStreamText(
 
   const streamResult = streamText(sdkOptions)
   const modelId = typeof options.model === 'string' ? options.model : (options.model?.modelId || 'unknown')
+  const provider = resolveProvider(modelId)
 
-  // Attach metrics promise that resolves when stream completes
-  const metricsPromise = streamResult.usage.then((usage) => {
+  // Wrap PromiseLike in a real Promise so we can use .catch()
+  const metricsPromise = Promise.resolve(streamResult.usage).then((usage) => {
     const durationMs = Date.now() - start
     const inputTokens = usage?.inputTokens || 0
     const outputTokens = usage?.outputTokens || 0
+
+    // Stream completed successfully
+    circuitBreaker.recordSuccess(provider)
 
     const metrics: GenerationMetrics = {
       model: modelId,
@@ -89,9 +222,25 @@ export function trackedStreamText(
       callType,
     }
 
-    console.log(`[AI Gateway] ${callType} | model=${modelId} | tokens=${inputTokens}+${outputTokens} | cost=$${metrics.estimatedCostUsd.toFixed(4)} | ${durationMs}ms`)
+    log.info('Stream complete', {
+      callType,
+      model: modelId,
+      inputTokens,
+      outputTokens,
+      cost: `$${metrics.estimatedCostUsd.toFixed(4)}`,
+      durationMs,
+    })
 
     return metrics
+  }).catch((error) => {
+    // Stream failed — record to circuit breaker
+    circuitBreaker.recordFailure(provider)
+    log.error('Stream failed', {
+      modelId,
+      callType,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    throw error
   })
 
   return { ...streamResult, metricsPromise }
@@ -116,6 +265,8 @@ export async function persistMetrics(metrics: GenerationMetrics, projectId?: str
     })
   } catch (error) {
     // Non-fatal: log and continue
-    console.error('[AI Gateway] Failed to persist metrics:', error)
+    log.error('Failed to persist metrics', {
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
 }

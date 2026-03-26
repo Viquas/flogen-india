@@ -20,13 +20,18 @@ jobs:
       - run: npm ci
 
       - name: Lint
-        run: npx eslint --max-warnings 10000 || true
+        # TODO: remove || true once lint warnings are cleaned up
+        run: npx eslint --max-warnings 0 || true
 
       - name: Type Check
-        run: npx tsc --noEmit || true
+        run: npx tsc --noEmit
 
       - name: Test
         run: npm test
+
+      - name: Test Coverage
+        run: npx vitest run --coverage
+        continue-on-error: true
 
       - name: Build
         run: npm run build

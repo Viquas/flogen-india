@@ -14,6 +14,21 @@ interface FunnelStep {
   dropOff: number
 }
 
+interface FunnelMetricStage {
+  stage: string
+  eventType: string
+  count: number
+  dropOff: number       // % dropped from previous stage
+  conversion: number    // % of first stage that reached here
+}
+
+export interface FunnelMetrics {
+  stages: FunnelMetricStage[]
+  overallConversion: number  // first stage -> payment completed
+  totalEvents: number
+  dateRange: { from: string; to: string }
+}
+
 interface RevenueStats {
   totalRevenue: { inr: number; usd: number }
   byPlan: Array<{ plan: string; count: number; revenue: number; currency: string }>
@@ -36,7 +51,7 @@ function dateRangeISO(days: number): { from: string; to: string } {
 }
 
 // ---------------------------------------------------------------------------
-// Funnel step definitions
+// Funnel step definitions (original legacy events)
 // ---------------------------------------------------------------------------
 
 const FUNNEL_STEPS = [
@@ -45,6 +60,20 @@ const FUNNEL_STEPS = [
   { step: 'Payment Initiated', eventType: 'payment_initiated' },
   { step: 'Payment Completed', eventType: 'payment_completed' },
   { step: 'Customization Submitted', eventType: 'customization_submitted' },
+] as const
+
+// ---------------------------------------------------------------------------
+// Full claim-to-revenue funnel (new analytics events)
+// ---------------------------------------------------------------------------
+
+const FULL_FUNNEL_STAGES = [
+  { stage: 'Preview Viewed', eventType: 'preview.viewed' },
+  { stage: 'Claim Started', eventType: 'claim.started' },
+  { stage: 'Plan Selected', eventType: 'claim.form_submitted' },
+  { stage: 'Checkout Opened', eventType: 'payment.checkout_opened' },
+  { stage: 'Payment Completed', eventType: 'payment.completed' },
+  { stage: 'Upsell Viewed', eventType: 'upsell.viewed' },
+  { stage: 'Upsell Accepted', eventType: 'upsell.accepted' },
 ] as const
 
 // ---------------------------------------------------------------------------
@@ -189,6 +218,85 @@ export async function getRevenueStats(days: number = 7): Promise<RevenueStats> {
     }
   } catch (e) {
     console.error('[Funnel] getRevenueStats exception:', e)
+    return empty
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 3. Full claim-to-revenue funnel metrics with drop-off analysis
+// ---------------------------------------------------------------------------
+
+export async function getFunnelMetrics(days: number = 7): Promise<FunnelMetrics> {
+  const supabase = createAdminClient()
+  const safeDays = clampDays(days)
+  const { from, to } = dateRangeISO(safeDays)
+
+  const empty: FunnelMetrics = {
+    stages: [],
+    overallConversion: 0,
+    totalEvents: 0,
+    dateRange: { from, to },
+  }
+
+  try {
+    // Fetch all new funnel events in date range
+    const eventTypes = FULL_FUNNEL_STAGES.map((s) => s.eventType)
+    const { data, error } = await supabase
+      .from('claim_events')
+      .select('event_type')
+      .in('event_type', eventTypes)
+      .gte('created_at', from)
+      .lte('created_at', to)
+
+    if (error || !data) {
+      console.error('[Funnel] getFunnelMetrics error:', error?.message)
+      return empty
+    }
+
+    // Count occurrences of each event_type
+    const counts: Record<string, number> = {}
+    for (const row of data) {
+      const et = row.event_type
+      counts[et] = (counts[et] || 0) + 1
+    }
+
+    // Build stages with drop-off and conversion percentages
+    const firstCount = counts[FULL_FUNNEL_STAGES[0].eventType] || 0
+    let previousCount = 0
+
+    const stages: FunnelMetricStage[] = FULL_FUNNEL_STAGES.map((fs, index) => {
+      const count = counts[fs.eventType] || 0
+      const dropOff =
+        index === 0 || previousCount === 0
+          ? 0
+          : Math.round(((previousCount - count) / previousCount) * 100)
+      const conversion =
+        firstCount > 0 ? Math.round((count / firstCount) * 1000) / 10 : 0
+      previousCount = count
+      return {
+        stage: fs.stage,
+        eventType: fs.eventType,
+        count,
+        dropOff,
+        conversion,
+      }
+    })
+
+    // Overall conversion: preview.viewed -> payment.completed
+    const paymentCompletedCount = counts['payment.completed'] || 0
+    const overallConversion =
+      firstCount > 0
+        ? Math.round((paymentCompletedCount / firstCount) * 1000) / 10
+        : 0
+
+    return {
+      stages,
+      overallConversion,
+      totalEvents: data.length,
+      dateRange: { from, to },
+    }
+  } catch (e) {
+    console.error('[Funnel] getFunnelMetrics exception:', e)
     return empty
   }
 }

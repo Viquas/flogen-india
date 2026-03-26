@@ -12,7 +12,7 @@ export type ClaimEventType =
 
 interface TrackEventParams {
   siteSlug: string
-  eventType: ClaimEventType
+  eventType: ClaimEventType | (string & {})
   ip?: string | null
   userAgent?: string | null
   metadata?: Record<string, Json>

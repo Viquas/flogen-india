@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   const fullPreviewUrl = previewUrl.startsWith('http')
     ? previewUrl
-    : `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${previewUrl}`
+    : `${process.env.NEXT_PUBLIC_APP_URL || ''}${previewUrl}`
 
   try {
     await transporter.sendMail({

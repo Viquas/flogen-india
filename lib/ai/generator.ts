@@ -11,6 +11,7 @@ import { recordCost, buildCostRecord, getModelId } from './cost-tracker'
 import { getActivePrompt } from './prompt-manager'
 import { generateDLS } from './design-architect'
 import { CODE_GENERATOR_PROMPT } from './prompts/code-generator'
+import { logger } from '@/lib/logger'
 
 // Generate website code based on business data (Supports Multi-Agent, Monolithic, and Modular Sections)
 export async function generateWebsiteCode(
@@ -29,7 +30,7 @@ export async function generateWebsiteCode(
     // --- OPTION B: MODULAR COMPONENT GENERATION (Stitching) ---
     // If the data has 'sections', generate them individually to save tokens
     if (richData && richData.sections && Array.isArray(richData.sections)) {
-        console.log(`[Generator] Modular SJSON detected. Generating ${richData.sections.length} sections individually...`);
+        logger.ai.info('Modular SJSON detected, generating sections individually', { sectionCount: richData.sections.length });
         const modelInstance = getModel(model);
 
         let componentsCodeMap: Record<string, string> = {};
@@ -77,10 +78,10 @@ ${rulesSection}
                 code = code.replace(/import React.*?;\n?/g, '');
 
                 componentsCodeMap[section.component as string] = code;
-                console.log(`[Generator] Generated section: ${section.component}`);
+                logger.ai.info('Generated section', { component: section.component });
                 completed++;
             } catch (e) {
-                console.error(`[Generator] Failed to generate section ${section.component}:`, e);
+                logger.ai.error('Failed to generate section', { component: section.component, error: e instanceof Error ? e.message : String(e) });
                 // Fallback comment if failure
                 componentsCodeMap[section.component as string] = `export function ${section.component}() { return <div className="p-8 text-center text-red-500">Failed to load ${section.component}</div>; }`;
                 completed++;
@@ -142,10 +143,10 @@ export default function GeneratedPage() {
                     if (stored) {
                         dls = stored.content
                         dlsFromStore = true
-                        console.log(`[Generator] Using stored default DLS for industry "${dlsIndustryTag}" (${dls!.length} chars)`)
+                        logger.ai.info('Using stored default DLS for industry', { industry: dlsIndustryTag, chars: dls!.length })
                     }
                 } catch (lookupErr) {
-                    console.error('[Generator] DLS store lookup failed, generating fresh:', lookupErr)
+                    logger.ai.error('DLS store lookup failed, generating fresh', { error: lookupErr instanceof Error ? lookupErr.message : String(lookupErr) })
                 }
             }
 
@@ -155,7 +156,7 @@ export default function GeneratedPage() {
             }
 
             if (dls && dls.length > 100) {
-                console.log(`[Generator] Multi-agent path: DLS generated (${dls.length} chars). Proceeding with Code Generator...`)
+                logger.ai.info('Multi-agent path: DLS generated, proceeding with Code Generator', { chars: dls.length })
                 if (onProgress) onProgress('Generating code from DLS...')
 
                 // Build content-only user prompt (no design rules — DLS handles design)
@@ -170,7 +171,7 @@ export default function GeneratedPage() {
                         const fewShot = await getFewShotContext(dlsIndustry)
                         if (fewShot) dlsFewShotBlock = '\n\n' + fewShot + '\n'
                     } catch (err) {
-                        console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+                        logger.ai.error('Few-shot lookup failed, proceeding without', { error: err instanceof Error ? err.message : String(err) })
                     }
                 }
 
@@ -223,13 +224,13 @@ Generate the code now.`
                     code = code.replace(/\n?\`\`\`$/, '')
                 }
 
-                console.log(`[Generator] Multi-agent generation complete (${code.length} chars)`)
+                logger.ai.info('Multi-agent generation complete', { chars: code.length })
                 return { code, promptVersionId, dls }
             } else {
-                console.warn('[Generator] DLS too short or empty, falling back to legacy prompt')
+                logger.ai.warn('DLS too short or empty, falling back to legacy prompt')
             }
         } catch (dlsError) {
-            console.error('[Generator] Multi-agent DLS generation failed, falling back to legacy prompt:', dlsError)
+            logger.ai.error('Multi-agent DLS generation failed, falling back to legacy prompt', { error: dlsError instanceof Error ? dlsError.message : String(dlsError) })
             // Fall through to legacy monolithic generation below
         }
     }
@@ -314,7 +315,7 @@ ${markdownContext}
             const fewShot = await getFewShotContext(industry)
             if (fewShot) fewShotBlock = '\n\n' + fewShot + '\n'
         } catch (err) {
-            console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+            logger.ai.error('Few-shot lookup failed, proceeding without', { error: err instanceof Error ? err.message : String(err) })
         }
     }
 
@@ -531,7 +532,7 @@ ${markdownContext}
             const fewShot = await getFewShotContext(streamIndustry)
             if (fewShot) fewShotBlock = '\n\n' + fewShot + '\n'
         } catch (err) {
-            console.error('[TemplateSeeder] Few-shot lookup failed, proceeding without:', err)
+            logger.ai.error('Few-shot lookup failed, proceeding without', { error: err instanceof Error ? err.message : String(err) })
         }
     }
 
@@ -585,7 +586,7 @@ export async function generateAndSaveWebsite(
             timeoutPromise,
         ])
     } catch (error) {
-        console.error(`Generation pipeline failed for ${projectId}:`, error)
+        logger.ai.error('Generation pipeline failed', { projectId, error: error instanceof Error ? error.message : String(error) })
 
         const { createAdminClient } = await import('@/lib/supabase/admin')
         const supabase = createAdminClient()
@@ -632,7 +633,7 @@ async function _generateAndSaveWebsiteInner(
 
         // --- TEMPLATE-BASED GENERATION (fast content-swap path) ---
         if (templateId) {
-            console.log(`[Generator] Template-based generation for ${projectId} using template ${templateId}`)
+            logger.ai.info('Template-based generation', { projectId, templateId })
             // generation_phase column removed — status tracking via project status only
 
             const { data: template, error: tplError } = await supabase
@@ -642,7 +643,7 @@ async function _generateAndSaveWebsiteInner(
                 .single()
 
             if (tplError || !template?.generated_code) {
-                console.warn(`[Generator] Template ${templateId} not found, falling back to full generation`)
+                logger.ai.warn('Template not found, falling back to full generation', { templateId })
             } else {
                 /* generation_phase removed */
 
@@ -751,7 +752,7 @@ Return the modified React code. Remember: modify the template code above, don't 
 
                     return { success: true, code: validatedCode }
                 } catch (swapError) {
-                    console.error(`[Generator] Template content swap failed for ${projectId}, falling back to full generation`, swapError)
+                    logger.ai.error('Template content swap failed, falling back to full generation', { projectId, error: swapError instanceof Error ? swapError.message : String(swapError) })
                     // Fall through to full generation below
                 }
             }
@@ -763,7 +764,7 @@ Return the modified React code. Remember: modify the template code above, don't 
         let activeRules = rules;
         const richData = data as Record<string, unknown>;
         if (!richData.$$manifest) {
-            console.log(`Enriching data for project ${projectId}...`);
+            logger.ai.info('Enriching data for project', { projectId });
             /* generation_phase removed */
             try {
                 let activeRulesStr = rules;
@@ -781,9 +782,9 @@ Return the modified React code. Remember: modify the template code above, don't 
                     .eq('id', projectId);
 
                 data = enriched as any;
-                console.log(`Enrichment complete for ${projectId}`);
+                logger.ai.info('Enrichment complete', { projectId });
             } catch (enrichError) {
-                console.error(`Enrichment failed for ${projectId}, proceeding with basic data.`, enrichError);
+                logger.ai.error('Enrichment failed, proceeding with basic data', { projectId, error: enrichError instanceof Error ? enrichError.message : String(enrichError) });
             }
         }
 
@@ -836,13 +837,13 @@ Return the modified React code. Remember: modify the template code above, don't 
                 .update({ quality_score: score.overall })
                 .eq('id', projectId)
         } catch (scoreErr) {
-            console.error(`[QualityScorer] Scoring failed for ${projectId}:`, scoreErr)
+            logger.ai.error('Quality scoring failed', { projectId, error: scoreErr instanceof Error ? scoreErr.message : String(scoreErr) })
             // Never block generation for scoring failure
         }
 
         return { success: true, code: validatedCode }
     } catch (error) {
-        console.error('Generation failed:', error)
+        logger.ai.error('Generation failed', { error: error instanceof Error ? error.message : String(error) })
 
         const { createAdminClient } = await import('@/lib/supabase/admin')
         const supabase = createAdminClient()

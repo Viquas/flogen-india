@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
 import { injectCtaBar } from '@/lib/cta-injector'
 import { CLAIM_WINDOW_DAYS } from '@/lib/claim-pricing'
+import { trackEvent } from '@/lib/analytics/track'
 import { addDays } from 'date-fns'
 import type { Metadata } from 'next'
 
@@ -56,6 +57,9 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     if (!project || !project.generated_code) {
         notFound()
     }
+
+    // Fire-and-forget — don't block render
+    trackEvent('preview.viewed', { slug, projectId: project.id }).catch(() => {})
 
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'

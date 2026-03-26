@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import type { PlanType } from '@/lib/claim-pricing'
+import { trackClientEvent } from '@/lib/analytics/track'
 import { CountdownTimer } from './components/countdown-timer'
 import { PricingSection } from './components/pricing-section'
 import { ConfirmationStep } from './components/confirmation-step'
@@ -40,6 +41,7 @@ export default function ClaimPageClient({
         setSelectedPlan(plan)
         setShowConfirmation(true)
         setPaymentError(null)
+        trackClientEvent('claim.form_submitted', { slug, projectId, plan })
     }
 
     const handleGetStarted = () => {
@@ -91,8 +93,10 @@ export default function ClaimPageClient({
             rzp.on('payment.failed', (response: { error?: { description?: string } }) => {
                 setPaymentError(response.error?.description || 'Payment failed. Please try again.')
                 setIsProcessing(false)
+                trackClientEvent('payment.failed', { slug, projectId, plan: selectedPlan })
             })
             rzp.open()
+            trackClientEvent('payment.checkout_opened', { slug, projectId, plan: selectedPlan })
         } catch {
             setPaymentError('Something went wrong. Please try again.')
             setIsProcessing(false)

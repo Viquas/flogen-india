@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { trackEvent } from '@/lib/analytics/track'
 import type { Metadata } from 'next'
 import { ProgressSteps } from '../customize/components/progress-steps'
 import UpsellClient from './upsell-client'
@@ -57,6 +58,9 @@ export default async function UpsellPage({ params }: UpsellPageProps) {
     if (!customization) {
         redirect(`/claim/${slug}/customize`)
     }
+
+    // Track upsell page view — fire-and-forget
+    trackEvent('upsell.viewed', { slug, projectId: project.id, plan: claim.plan }).catch(() => {})
 
     // Currency is always USD
     const currency = 'USD' as const
