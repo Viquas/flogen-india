@@ -23,8 +23,8 @@ Requirements for Lead Lists & Custom Builds milestone. Each maps to roadmap phas
 - [x] **CUST-02**: User can paste a Google Maps URL to generate a website from that business
 - [x] **CUST-03**: User can paste/upload business data (text or JSON) to generate a website
 - [x] **CUST-04**: Custom-built projects are tagged with `source='custom'` on the projects table
-- [ ] **CUST-05**: User can view custom-built projects at /dashboard/custom filtered by source
-- [ ] **CUST-06**: "Custom Builds" menu item appears in sidebar under Fulfillment
+- [x] **CUST-05**: User can view custom-built projects at /dashboard/custom filtered by source
+- [x] **CUST-06**: "Custom Builds" menu item appears in sidebar under Fulfillment
 
 ### Schema
 
@@ -62,8 +62,8 @@ None — scope is complete for v5.0.
 | CUST-02 | Phase 23 | Complete |
 | CUST-03 | Phase 23 | Complete |
 | CUST-04 | Phase 23 | Complete |
-| CUST-05 | Phase 23 | Pending |
-| CUST-06 | Phase 23 | Pending |
+| CUST-05 | Phase 23 | Complete |
+| CUST-06 | Phase 23 | Complete |
 
 **Coverage:**
 - v5.0 requirements: 14 total

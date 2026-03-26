@@ -227,7 +227,7 @@ Plans:
 
 - [x] **Phase 21: Lead Lists Foundation** - Schema migrations, lead discovery API, "Get List" CTA in Discovery Engine, sidebar nav item (completed 2026-03-26)
 - [x] **Phase 22: Lead Lists UI** - /dashboard/leads page with date picker and batch cards, lead detail popup with RJSON viewer, CSV export, "Generate Website" from lead (completed 2026-03-26)
-- [ ] **Phase 23: Custom Build** - Custom build modal with URL and data tabs, APIs, source tracking on projects, /dashboard/custom page, sidebar nav, dashboard CTA
+- [x] **Phase 23: Custom Build** - Custom build modal with URL and data tabs, APIs, source tracking on projects, /dashboard/custom page, sidebar nav, dashboard CTA (completed 2026-03-26)
 
 ## Phase Details
 
@@ -306,7 +306,7 @@ Phases execute in numeric order: 21 -> 22 -> 23
 | 20. Contact, Footer, Legal & Polish | v4.0 | 2/2 | Complete | 2026-03-25 |
 | 21. Lead Lists Foundation | v5.0 | 2/2 | Complete | 2026-03-26 |
 | 22. Lead Lists UI | 2/2 | Complete    | 2026-03-26 | - |
-| 23. Custom Build | 1/2 | In Progress|  | - |
+| 23. Custom Build | 2/2 | Complete   | 2026-03-26 | - |
 
 ---
 *Roadmap created: 2026-03-18*
