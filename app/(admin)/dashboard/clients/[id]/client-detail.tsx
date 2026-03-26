@@ -213,7 +213,7 @@ export function ClientDetail({ client, requests }: ClientDetailProps) {
 
     // Build preview URL: prefer slug, fallback to project ID
     const previewUrl = client.slug
-        ? `/sites/${client.slug}`
+        ? `/preview/${client.slug}`
         : `/preview/${client.projectId}`
 
     return (
