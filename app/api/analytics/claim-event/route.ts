@@ -1,10 +1,18 @@
 import { trackClaimEvent, type ClaimEventType } from '@/lib/claim-tracking'
 import { headers } from 'next/headers'
 
-const VALID_EVENTS: ClaimEventType[] = [
+const VALID_EVENTS: string[] = [
+  // Original events
   'preview_view', 'claim_page_view', 'cta_click',
   'plan_selected', 'payment_initiated', 'payment_completed',
   'customization_submitted',
+  // Funnel analytics events
+  'preview.viewed', 'claim.started', 'claim.form_submitted',
+  'payment.checkout_opened', 'payment.completed', 'payment.failed',
+  'portal.first_login',
+  'upsell.viewed', 'upsell.accepted', 'upsell.declined',
+  // Scroll depth events
+  'scroll.25', 'scroll.50', 'scroll.75', 'scroll.100',
 ]
 
 export async function POST(request: Request) {

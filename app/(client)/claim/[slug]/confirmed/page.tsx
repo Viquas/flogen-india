@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { trackEvent } from '@/lib/analytics/track'
 import type { Metadata } from 'next'
 import { ConfirmationClient } from './confirmation-client'
 import { TestModeBanner } from '../components/test-mode-banner'
@@ -69,6 +70,9 @@ export default async function ConfirmedPage({ params, searchParams }: ConfirmedP
     if (!claim) {
         redirect(`/claim/${slug}`)
     }
+
+    // Track payment completion — fire-and-forget
+    trackEvent('payment.completed', { slug, projectId: project.id, plan: claim.plan }).catch(() => {})
 
     return (
         <main className="max-w-lg mx-auto px-4 py-8">
