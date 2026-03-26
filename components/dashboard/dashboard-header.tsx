@@ -46,7 +46,6 @@ export function DashboardHeader({ greeting }: DashboardHeaderProps) {
                     <CustomBuildDialog />
                     <NewBatchDialog onAutopilotStart={(runId) => setActiveRunId(runId)} />
                 </div>
-                <BulkUploadDialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen} />
             </div>
 
             {activeRunId && (
