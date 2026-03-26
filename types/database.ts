@@ -159,6 +159,10 @@ export type Database = {
                     is_default: boolean
                     created_at: string
                     updated_at: string
+                    version: number
+                    parent_id: string | null
+                    change_notes: string | null
+                    is_active: boolean
                 }
                 Insert: {
                     id?: string
@@ -170,6 +174,10 @@ export type Database = {
                     is_default?: boolean
                     created_at?: string
                     updated_at?: string
+                    version?: number
+                    parent_id?: string | null
+                    change_notes?: string | null
+                    is_active?: boolean
                 }
                 Update: {
                     id?: string
@@ -181,6 +189,10 @@ export type Database = {
                     is_default?: boolean
                     created_at?: string
                     updated_at?: string
+                    version?: number
+                    parent_id?: string | null
+                    change_notes?: string | null
+                    is_active?: boolean
                 }
                 Relationships: []
             }
@@ -320,6 +332,10 @@ export type Database = {
                     source_project_id: string | null
                     created_at: string
                     updated_at: string
+                    version: number
+                    parent_id: string | null
+                    change_notes: string | null
+                    is_active: boolean
                 }
                 Insert: {
                     id?: string
@@ -331,6 +347,10 @@ export type Database = {
                     source_project_id?: string | null
                     created_at?: string
                     updated_at?: string
+                    version?: number
+                    parent_id?: string | null
+                    change_notes?: string | null
+                    is_active?: boolean
                 }
                 Update: {
                     id?: string
@@ -342,6 +362,10 @@ export type Database = {
                     source_project_id?: string | null
                     created_at?: string
                     updated_at?: string
+                    version?: number
+                    parent_id?: string | null
+                    change_notes?: string | null
+                    is_active?: boolean
                 }
                 Relationships: [
                     {

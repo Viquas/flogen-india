@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { generationQueue } from '@/lib/queue'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
     try {
@@ -21,7 +22,7 @@ export async function GET() {
                 .update({ status: 'pending', updated_at: new Date().toISOString() })
                 .in('id', staleJobs.map(j => j.id))
             resetCount = staleJobs.length
-            console.log(`[Queue] Reset ${resetCount} stale processing jobs back to pending`)
+            logger.queue.info('Reset stale processing jobs back to pending', { count: resetCount })
         }
 
         // 2. Rescue orphaned projects: status='queued' but no matching pending/processing queue_job
@@ -44,7 +45,7 @@ export async function GET() {
             const orphanIds = projectIds.filter((id: string) => !coveredIds.has(id))
 
             if (orphanIds.length > 0) {
-                console.log(`[Queue] Rescuing ${orphanIds.length} orphaned queued projects...`)
+                logger.queue.info('Rescuing orphaned queued projects', { count: orphanIds.length })
                 const orphanJobs = orphanIds.map((id: string) => ({
                     project_id: id,
                     status: 'pending' as const,
@@ -52,11 +53,13 @@ export async function GET() {
                 }))
                 const { error: rescueError } = await supabase.from('queue_jobs').insert(orphanJobs)
                 if (rescueError) {
-                    console.error('[Queue] Rescue insert failed:', rescueError.message)
+                    logger.queue.error('Rescue insert failed, falling back to direct generation', { error: rescueError.message })
                     const { generateAndSaveWebsite } = await import('@/lib/ai/generator')
                     await supabase.from('projects').update({ status: 'generating' }).in('id', orphanIds)
                     for (const id of orphanIds) {
-                        generateAndSaveWebsite(id).catch(console.error)
+                        generateAndSaveWebsite(id).catch((err) =>
+                            logger.queue.error('Orphan fallback generation failed', { projectId: id, error: err instanceof Error ? err.message : String(err) })
+                        )
                     }
                     rescued = orphanIds.length
                 } else {
@@ -67,8 +70,10 @@ export async function GET() {
 
         const status = await generationQueue.getStatus()
         const totalRecovered = rescued + resetCount
-        console.log('[Queue] Manual kickstart triggered. Status:', status, `| Rescued: ${rescued}, Reset: ${resetCount}`)
-        generationQueue.process().catch(console.error)
+        logger.queue.info('Manual kickstart triggered', { ...status, rescued, reset: resetCount })
+        generationQueue.process().catch((err) =>
+            logger.queue.error('Process loop failed after kickstart', { error: err instanceof Error ? err.message : String(err) })
+        )
 
         return NextResponse.json({
             success: true,
@@ -78,7 +83,7 @@ export async function GET() {
             reset: resetCount,
         })
     } catch (error) {
-        console.error('Queue kickstart error:', error)
+        logger.queue.error('Queue kickstart error', { error: error instanceof Error ? error.message : String(error) })
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
     }
 }

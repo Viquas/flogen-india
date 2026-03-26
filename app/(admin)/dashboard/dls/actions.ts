@@ -2,6 +2,15 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { createVersion, softDelete, getVersionHistory, restoreVersion, type VersionConfig } from '@/lib/versioning'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('dls-actions')
+
+const DLS_VERSION_CONFIG: VersionConfig = {
+    tableName: 'design_languages',
+    contentField: 'content',
+}
 
 export type DesignLanguage = {
     id: string
@@ -13,6 +22,10 @@ export type DesignLanguage = {
     is_default: boolean
     created_at: string
     updated_at: string
+    version?: number
+    parent_id?: string | null
+    change_notes?: string | null
+    is_active?: boolean
 }
 
 export async function listDesignLanguages() {
@@ -24,11 +37,14 @@ export async function listDesignLanguages() {
         .order('updated_at', { ascending: false })
 
     if (error) {
-        console.error('Failed to list design languages:', error)
+        log.error('Failed to list design languages', { error: error.message })
         return { success: false as const, error: error.message }
     }
 
-    return { success: true as const, data: data as DesignLanguage[] }
+    // Only return active DLS entries (is_active defaults to true in the schema)
+    const filtered = data.filter((d) => d.is_active !== false)
+
+    return { success: true as const, data: filtered as DesignLanguage[] }
 }
 
 export async function getDesignLanguage(id: string) {
@@ -41,7 +57,7 @@ export async function getDesignLanguage(id: string) {
         .single()
 
     if (error) {
-        console.error('Failed to get design language:', error)
+        log.error('Failed to get design language', { id, error: error.message })
         return { success: false as const, error: error.message }
     }
 
@@ -81,7 +97,7 @@ export async function createDesignLanguage(params: {
         .single()
 
     if (error) {
-        console.error('Failed to create design language:', error)
+        log.error('Failed to create design language', { error: error.message })
         return { success: false as const, error: error.message }
     }
 
@@ -94,12 +110,12 @@ export async function updateDesignLanguage(id: string, params: {
     industry_tag?: string
     content?: string
     is_default?: boolean
+    changeNotes?: string
 }) {
     const supabase = createAdminClient()
 
     // If setting as default, need to unset existing default for this industry
     if (params.is_default) {
-        // Get the industry_tag for this DLS
         const industryTag = params.industry_tag
         if (industryTag) {
             await supabase
@@ -111,35 +127,39 @@ export async function updateDesignLanguage(id: string, params: {
         }
     }
 
-    const { error } = await supabase
-        .from('design_languages')
-        .update({
-            ...params,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
+    // Extract changeNotes before passing updates to versioning
+    const { changeNotes, ...updates } = params
 
-    if (error) {
-        console.error('Failed to update design language:', error)
-        return { success: false as const, error: error.message }
+    // Use versioning to create a new version instead of in-place update
+    const result = await createVersion<DesignLanguage>(
+        DLS_VERSION_CONFIG,
+        id,
+        updates,
+        changeNotes,
+    )
+
+    if (!result.success) {
+        log.error('Failed to update design language', { id, error: result.error })
+        return { success: false as const, error: result.error }
     }
 
     revalidatePath('/dashboard/dls')
     revalidatePath(`/dashboard/dls/${id}`)
+
+    // If a new versioned row was created, also revalidate that path
+    if (result.versioned && result.data?.id) {
+        revalidatePath(`/dashboard/dls/${result.data.id}`)
+    }
+
     return { success: true as const }
 }
 
 export async function deleteDesignLanguage(id: string) {
-    const supabase = createAdminClient()
+    const result = await softDelete(DLS_VERSION_CONFIG, id)
 
-    const { error } = await supabase
-        .from('design_languages')
-        .delete()
-        .eq('id', id)
-
-    if (error) {
-        console.error('Failed to delete design language:', error)
-        return { success: false as const, error: error.message }
+    if (!result.success) {
+        log.error('Failed to delete design language', { id, error: result.error })
+        return { success: false as const, error: result.error }
     }
 
     revalidatePath('/dashboard/dls')
@@ -164,7 +184,7 @@ export async function toggleDefault(id: string, industryTag: string, isDefault: 
         .eq('id', id)
 
     if (error) {
-        console.error('Failed to toggle default:', error)
+        log.error('Failed to toggle default', { id, error: error.message })
         return { success: false as const, error: error.message }
     }
 
@@ -188,10 +208,40 @@ export async function getDefaultDLSForIndustry(industryTag: string) {
     if (error) {
         // PGRST116 = not found, which is expected
         if (error.code !== 'PGRST116') {
-            console.error('Failed to get default DLS:', error)
+            log.error('Failed to get default DLS', { industryTag, error: error.message })
         }
         return null
     }
 
     return data
+}
+
+/**
+ * Get the full version history for a design language.
+ * Pass the original (root) DLS id.
+ */
+export async function getDLSVersionHistory(dlsId: string) {
+    const result = await getVersionHistory<DesignLanguage>(DLS_VERSION_CONFIG, dlsId)
+
+    if (!result.success) {
+        log.error('Failed to get DLS version history', { dlsId, error: result.error })
+        return { success: false as const, error: result.error }
+    }
+
+    return { success: true as const, data: result.data }
+}
+
+/**
+ * Restore a specific DLS version by making it the active one.
+ */
+export async function restoreDLSVersion(versionId: string) {
+    const result = await restoreVersion(DLS_VERSION_CONFIG, versionId)
+
+    if (!result.success) {
+        log.error('Failed to restore DLS version', { versionId, error: result.error })
+        return { success: false as const, error: result.error }
+    }
+
+    revalidatePath('/dashboard/dls')
+    return { success: true as const }
 }
