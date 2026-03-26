@@ -26,7 +26,7 @@ interface SupportClientProps {
     isTestMode: boolean
 }
 
-const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || '+1234567890'
+const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || ''
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@essodigital.com'
 
 const FAQ_ITEMS = [
