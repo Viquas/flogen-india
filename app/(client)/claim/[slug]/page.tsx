@@ -107,16 +107,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         if (paidClaim.status === 'completed') {
             redirect(`/claim/${slug}/confirmed`)
         }
-        const { data: customization } = await supabase
-            .from('customizations')
-            .select('id')
-            .eq('claim_id', paidClaim.id)
-            .maybeSingle()
-
-        if (customization) {
-            redirect(`/claim/${slug}/confirmed`)
-        }
-        redirect(`/claim/${slug}/customize`)
+        // Paid but not completed — stay on main claim page (no redirect to /customize)
     }
 
     // Build preview HTML for the hero iframe
