@@ -30,6 +30,9 @@ export default async function PortalDashboardPage() {
         .single()
 
     if (!claim) {
+        // User is authenticated but has no active claim — sign them out
+        // to avoid infinite redirect loop (proxy redirects authenticated users away from /portal/login)
+        await supabase.auth.signOut()
         redirect('/portal/login')
     }
 
