@@ -9,6 +9,7 @@ import {
   Download,
   FileSearch,
   CheckCircle2,
+  Filter,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { LeadDetailModal } from '@/components/dashboard/lead-detail-modal'
@@ -21,8 +22,11 @@ interface LeadRow {
   address: string | null
   location: string | null
   maps_url: string | null
+  website: string | null
   raw_data: Record<string, unknown> | null
 }
+
+type WebsiteFilter = 'all' | 'with-website' | 'without-website'
 
 interface LeadBatch {
   batch_id: string
@@ -46,6 +50,7 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
   const [generatedLeadIds, setGeneratedLeadIds] = useState<Set<string>>(
     new Set(),
   )
+  const [websiteFilter, setWebsiteFilter] = useState<WebsiteFilter>('all')
 
   const dateObj = parseISO(selectedDate)
   const formattedDate = format(dateObj, 'EEE d MMM')
@@ -71,16 +76,18 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
   function handleDownloadCSV(batch: LeadBatch) {
     const headers = [
       'Company Name',
-      'Email',
       'Phone',
+      'Email',
       'Location',
+      'Website',
       'Google Maps URL',
     ]
     const rows = batch.leads.map((lead) => [
       lead.business_name,
-      lead.email || '',
       lead.phone || '',
+      lead.email || '',
       lead.address || lead.location || '',
+      lead.website || '',
       lead.maps_url || '',
     ])
 
@@ -104,6 +111,17 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
     URL.revokeObjectURL(url)
   }
 
+  // Apply website filter to batch leads
+  const filteredBatches = batches
+    .map((batch) => {
+      if (websiteFilter === 'all') return batch
+      const filtered = batch.leads.filter((lead) =>
+        websiteFilter === 'with-website' ? !!lead.website : !lead.website,
+      )
+      return { ...batch, leads: filtered, lead_count: filtered.length }
+    })
+    .filter((batch) => batch.leads.length > 0)
+
   return (
     <div className="space-y-6">
       {/* Header row */}
@@ -115,32 +133,58 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
           </p>
         </div>
 
-        {/* Date picker button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
-            className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-          >
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            {formattedDate}
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-          {showDatePicker && (
-            <div className="absolute right-0 top-full z-50 mt-1 rounded-lg border bg-white p-2 shadow-lg dark:bg-zinc-900">
-              <input
-                type="date"
-                defaultValue={selectedDate}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800 dark:border-zinc-700"
-              />
-            </div>
-          )}
+        {/* Filters */}
+        <div className="flex items-center gap-2">
+          {/* Website filter */}
+          <div className="relative">
+            <select
+              value={websiteFilter}
+              onChange={(e) => setWebsiteFilter(e.target.value as WebsiteFilter)}
+              className="appearance-none rounded-lg border bg-white pl-8 pr-8 py-2 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:bg-zinc-900 dark:border-zinc-700 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">All Leads</option>
+              <option value="with-website">With Website</option>
+              <option value="without-website">Without Website</option>
+            </select>
+            <Filter className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+
+          {/* Date picker button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              {formattedDate}
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+            {showDatePicker && (
+              <div className="absolute right-0 top-full z-50 mt-1 rounded-lg border bg-white p-2 shadow-lg dark:bg-zinc-900">
+                <input
+                  type="date"
+                  defaultValue={selectedDate}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  className="rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary dark:bg-zinc-800 dark:border-zinc-700"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Batch list */}
       <div className={isPending ? 'opacity-60 pointer-events-none' : ''}>
-        {batches.length === 0 ? (
+        {filteredBatches.length === 0 && batches.length > 0 ? (
+          <div className="rounded-lg border border-dashed border-zinc-300 p-12 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            <Filter className="mx-auto mb-3 h-10 w-10 text-zinc-300 dark:text-zinc-600" />
+            <p>No leads match this filter.</p>
+            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+              Try changing the website filter.
+            </p>
+          </div>
+        ) : batches.length === 0 ? (
           <div className="rounded-lg border border-dashed border-zinc-300 p-12 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             <FileSearch className="mx-auto mb-3 h-10 w-10 text-zinc-300 dark:text-zinc-600" />
             <p>No leads found for this date.</p>
@@ -150,7 +194,7 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
           </div>
         ) : (
           <div className="space-y-6">
-            {batches.map((batch) => (
+            {filteredBatches.map((batch) => (
               <BatchCard
                 key={batch.batch_id}
                 batch={batch}
@@ -209,11 +253,12 @@ function BatchCard({
       </div>
 
       {/* Lead table header */}
-      <div className="grid grid-cols-[1fr_1fr_1fr_1fr] gap-2 border-b px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-2 border-b px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
         <div>Company Name</div>
-        <div>Email</div>
         <div>Phone</div>
+        <div>Email</div>
         <div>Location</div>
+        <div>Website</div>
       </div>
 
       {/* Lead rows */}
@@ -221,7 +266,7 @@ function BatchCard({
         <div
           key={lead.id}
           onClick={() => onSelectLead(lead)}
-          className="grid grid-cols-[1fr_1fr_1fr_1fr] gap-2 border-b last:border-b-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+          className="grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-2 border-b last:border-b-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
         >
           <div className="flex items-center gap-1.5 font-medium truncate">
             {generatedLeadIds.has(lead.id) && (
@@ -230,13 +275,20 @@ function BatchCard({
             <span className="truncate">{lead.business_name}</span>
           </div>
           <div className="text-muted-foreground truncate">
-            {lead.email || '\u2014'}
-          </div>
-          <div className="text-muted-foreground truncate">
             {lead.phone || '\u2014'}
           </div>
           <div className="text-muted-foreground truncate">
+            {lead.email || '\u2014'}
+          </div>
+          <div className="text-muted-foreground truncate">
             {lead.location || lead.address || '\u2014'}
+          </div>
+          <div className="text-muted-foreground truncate">
+            {lead.website ? (
+              <span className="text-xs text-green-600 font-medium">Yes</span>
+            ) : (
+              <span className="text-xs text-zinc-400">No</span>
+            )}
           </div>
         </div>
       ))}

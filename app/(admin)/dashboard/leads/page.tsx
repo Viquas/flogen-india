@@ -32,6 +32,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       address: string | null
       location: string | null
       maps_url: string | null
+      website: string | null
       raw_data: Record<string, unknown> | null
     }>
   }> = []
@@ -56,6 +57,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           address: row.address,
           location: row.location,
           maps_url: row.maps_url,
+          website: row.website as string | null,
           raw_data: row.raw_data as Record<string, unknown> | null,
         }
 
