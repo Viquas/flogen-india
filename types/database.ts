@@ -36,6 +36,90 @@ export type Database = {
                 }
                 Relationships: []
             }
+            bulk_uploads: {
+                Row: {
+                    id: string
+                    batch_id: string
+                    source_filename: string
+                    column_mapping: Json | null
+                    status: 'pending' | 'researching' | 'completed' | 'partially_failed'
+                    total_leads: number
+                    found_maps: number
+                    found_web: number
+                    not_found: number
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    batch_id?: string
+                    source_filename: string
+                    column_mapping?: Json | null
+                    status?: 'pending' | 'researching' | 'completed' | 'partially_failed'
+                    total_leads?: number
+                    found_maps?: number
+                    found_web?: number
+                    not_found?: number
+                }
+                Update: {
+                    source_filename?: string
+                    column_mapping?: Json | null
+                    status?: 'pending' | 'researching' | 'completed' | 'partially_failed'
+                    total_leads?: number
+                    found_maps?: number
+                    found_web?: number
+                    not_found?: number
+                }
+                Relationships: []
+            }
+            bulk_upload_leads: {
+                Row: {
+                    id: string
+                    batch_id: string
+                    business_name: string
+                    location: string | null
+                    email: string | null
+                    phone: string | null
+                    industry: string | null
+                    apollo_data: Json
+                    raw_data: Json | null
+                    research_source: 'google_maps' | 'web_search' | 'not_found' | null
+                    research_status: 'pending' | 'researching' | 'found' | 'not_found' | 'failed'
+                    project_id: string | null
+                    error_message: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    batch_id: string
+                    business_name: string
+                    location?: string | null
+                    email?: string | null
+                    phone?: string | null
+                    industry?: string | null
+                    apollo_data?: Json
+                    raw_data?: Json | null
+                    research_source?: 'google_maps' | 'web_search' | 'not_found' | null
+                    research_status?: 'pending' | 'researching' | 'found' | 'not_found' | 'failed'
+                    project_id?: string | null
+                    error_message?: string | null
+                }
+                Update: {
+                    business_name?: string
+                    location?: string | null
+                    email?: string | null
+                    phone?: string | null
+                    industry?: string | null
+                    apollo_data?: Json
+                    raw_data?: Json | null
+                    research_source?: 'google_maps' | 'web_search' | 'not_found' | null
+                    research_status?: 'pending' | 'researching' | 'found' | 'not_found' | 'failed'
+                    project_id?: string | null
+                    error_message?: string | null
+                }
+                Relationships: []
+            }
             projects: {
                 Row: {
                     id: string
