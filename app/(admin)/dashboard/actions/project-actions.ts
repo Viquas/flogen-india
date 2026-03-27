@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
-// Admin auth guard removed — single-operator dashboard, no login flow
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function getProjectsByDate(dateString: string) {
     const { startOfDay, endOfDay, parseISO } = await import('date-fns')
@@ -85,7 +85,7 @@ export async function searchProjects(query: string) {
 }
 
 export async function approveProject(projectId: string) {
-
+    await requireAdmin()
     const supabase = createAdminClient()
 
     const { error } = await supabase

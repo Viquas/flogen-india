@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { cleanTemplateCode } from '@/lib/ai/generator'
-// Admin auth guard removed — single-operator dashboard, no login flow
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { createVersion, softDelete, getVersionHistory, restoreVersion, type VersionConfig } from '@/lib/versioning'
 import { createLogger } from '@/lib/logger'
 import type { Json } from '@/types/database'
@@ -180,8 +180,7 @@ export async function getTemplateById(templateId: string) {
 }
 
 export async function deleteTemplate(templateId: string) {
-
-
+    await requireAdmin()
     const result = await softDelete(TEMPLATE_VERSION_CONFIG, templateId)
 
     if (!result.success) {
@@ -212,8 +211,7 @@ export async function getTemplateVersionHistory(templateId: string) {
  * Restore a specific template version by making it the active one.
  */
 export async function restoreTemplateVersion(versionId: string) {
-
-
+    await requireAdmin()
     const result = await restoreVersion(TEMPLATE_VERSION_CONFIG, versionId)
 
     if (!result.success) {
