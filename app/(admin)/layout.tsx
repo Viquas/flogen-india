@@ -4,24 +4,17 @@ import { SidebarNav } from "@/components/dashboard/sidebar-nav"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { Toaster } from "sonner"
 import { createClient } from "@/lib/supabase/server"
-import { isAdmin } from "@/lib/supabase/roles"
 
 export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    // Auth guard — defense in depth (middleware also checks)
+    // Auth guard — lightweight check only (proxy already verified admin role)
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        redirect('/login')
-    }
-
-    const adminCheck = await isAdmin(user.id)
-    if (!adminCheck) {
-        await supabase.auth.signOut()
         redirect('/login')
     }
 

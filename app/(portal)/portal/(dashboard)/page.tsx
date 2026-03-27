@@ -53,17 +53,18 @@ export default async function PortalDashboardPage() {
     const previewUrl = `${siteUrl}/preview/${project?.id}`
     const displayUrl = previewUrl
 
-    const { count: pendingRequests } = await admin
-        .from('client_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('auth_user_id', user.id)
-        .eq('status', 'pending')
-
-    const { count: inProgressRequests } = await admin
-        .from('client_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('auth_user_id', user.id)
-        .eq('status', 'in_progress')
+    const [{ count: pendingRequests }, { count: inProgressRequests }] = await Promise.all([
+        admin
+            .from('client_requests')
+            .select('id', { count: 'exact', head: true })
+            .eq('auth_user_id', user.id)
+            .eq('status', 'pending'),
+        admin
+            .from('client_requests')
+            .select('id', { count: 'exact', head: true })
+            .eq('auth_user_id', user.id)
+            .eq('status', 'in_progress'),
+    ])
 
     const status = deriveSiteStatus({
         pendingRequestCount: pendingRequests ?? 0,

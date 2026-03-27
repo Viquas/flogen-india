@@ -1,5 +1,4 @@
-export const dynamic = 'force-dynamic'
-
+import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
@@ -13,25 +12,29 @@ interface PreviewPageProps {
     params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
-    const { slug } = await params
+// Cached project lookup — deduplicates between generateMetadata and page component
+const getPreviewProject = cache(async (slug: string) => {
     const supabase = createAdminClient()
-
-    // Try slug first, then fall back to UUID id
     let { data: project } = await supabase
         .from('projects')
-        .select('business_data, screenshot_url')
+        .select('id, business_data, generated_code, claim_expires_at, screenshot_url')
         .eq('slug', slug)
         .single()
 
     if (!project) {
         const result = await supabase
             .from('projects')
-            .select('business_data, screenshot_url')
+            .select('id, business_data, generated_code, claim_expires_at, screenshot_url')
             .eq('id', slug)
             .single()
         project = result.data
     }
+    return project
+})
+
+export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
+    const { slug } = await params
+    const project = await getPreviewProject(slug)
 
     if (!project) {
         return { title: 'Preview' }
@@ -56,23 +59,9 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
 
 export default async function PreviewPage({ params }: PreviewPageProps) {
     const { slug } = await params
-    const supabase = createAdminClient()
 
-    // Try slug first, then fall back to UUID id
-    let { data: project } = await supabase
-        .from('projects')
-        .select('id, business_data, generated_code, claim_expires_at')
-        .eq('slug', slug)
-        .single()
-
-    if (!project) {
-        const result = await supabase
-            .from('projects')
-            .select('id, business_data, generated_code, claim_expires_at')
-            .eq('id', slug)
-            .single()
-        project = result.data
-    }
+    // Reuses cached query from generateMetadata — no duplicate DB call
+    const project = await getPreviewProject(slug)
 
     if (!project || !project.generated_code) {
         notFound()

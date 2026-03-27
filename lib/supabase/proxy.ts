@@ -66,28 +66,23 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Authenticated but non-admin users on admin routes → redirect to /login
-  if (isAdminRoute && user) {
+  // Single role query for all admin-related routes (reused below)
+  if ((isAdminRoute || isAdminLoginPage) && user) {
     const admin = createAdminClientForMiddleware()
     const { data } = await (admin as any)
       .from('user_roles')
       .select('role')
       .eq('id', user.id)
       .single()
-    if (data?.role !== 'admin') {
+    const isUserAdmin = data?.role === 'admin'
+
+    // Non-admin on admin routes → redirect to /login
+    if (isAdminRoute && !isUserAdmin) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-  }
 
-  // Authenticated user on /login → check if admin and redirect
-  if (isAdminLoginPage && user) {
-    const admin = createAdminClientForMiddleware()
-    const { data } = await (admin as any)
-      .from('user_roles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (data?.role === 'admin') {
+    // Admin on /login → redirect to dashboard
+    if (isAdminLoginPage && isUserAdmin) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
