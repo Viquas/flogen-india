@@ -191,3 +191,6 @@ The internal dashboard should show:
 - Rate limiting too aggressively kills throughput. Too loosely gets IP blocked
 - Generated sites with missing photos look worse than no site at all
 - Email deliverability drops fast with bad sender reputation
+- `user_roles` table PK column is `id` (NOT `user_id`). Always use `.eq('id', userId)` when querying roles. The proxy, layout, and require-admin.ts must all use the same column name.
+- Never use `force-dynamic` on public-facing pages (claim, preview). Use React `cache()` to deduplicate queries between `generateMetadata()` and the page component instead.
+- Admin auth flows: proxy.ts does the role check, layout.tsx checks auth only (no redundant role query), server actions call `requireAdmin()`. Don't duplicate role DB queries across these layers.

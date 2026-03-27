@@ -24,7 +24,7 @@ async function hasAdminRole(userId: string): Promise<boolean> {
     const { data } = await admin
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .eq('role', 'admin')
       .maybeSingle()
 
