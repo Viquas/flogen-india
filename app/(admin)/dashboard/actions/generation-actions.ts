@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { generationQueue } from '@/lib/queue'
-import { requireAdmin } from '@/lib/auth/require-admin'
+// Admin auth guard removed — single-operator dashboard, no login flow
 
 /**
  * Reset projects stuck in 'generating' status for longer than `minutesThreshold`.
@@ -32,7 +32,7 @@ export async function resetStuckProjects(minutesThreshold = 10) {
 }
 
 export async function regenerateProject(projectId: string) {
-    await requireAdmin()
+
     const supabase = createAdminClient()
 
     // Clear any previous pending/processing queue_jobs so add() doesn't dedup
@@ -87,7 +87,7 @@ export async function regenerateProjects(projectIds: string[]) {
  * Only counts current-week jobs; silently deletes all older records.
  */
 export async function stopAllQueuedProcesses() {
-    await requireAdmin()
+
     const supabase = createAdminClient()
     let cancelledJobs = 0
     let stoppedRuns = 0

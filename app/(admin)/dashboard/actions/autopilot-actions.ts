@@ -1,7 +1,7 @@
 "use server"
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { requireAdmin } from '@/lib/auth/require-admin'
+// Admin auth guard removed — single-operator dashboard, no login flow
 import { runAutopilotPipeline } from '@/lib/autopilot'
 import type { BatchRunConfig } from '@/lib/autopilot-types'
 
@@ -11,7 +11,6 @@ import type { BatchRunConfig } from '@/lib/autopilot-types'
  * Returns immediately with the runId for progress polling.
  */
 export async function runAutopilot(config: BatchRunConfig) {
-    await requireAdmin()
     const supabase = createAdminClient()
 
     const { data: run, error } = await supabase
