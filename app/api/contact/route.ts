@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import nodemailer from "nodemailer"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function POST(request: NextRequest) {
   let body: { name?: string; email?: string; businessName?: string; message?: string }
@@ -77,6 +78,20 @@ export async function POST(request: NextRequest) {
         </div>
       `,
     })
+
+    // Save to database for admin dashboard
+    try {
+      const supabase = createAdminClient()
+      await (supabase as any).from('contact_submissions').insert({
+        name: name.trim(),
+        email: email.trim(),
+        business_name: businessName?.trim() || null,
+        message: message.trim(),
+        source: 'contact_form',
+      })
+    } catch (dbErr) {
+      console.error("[contact] DB save failed (email still sent):", dbErr)
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

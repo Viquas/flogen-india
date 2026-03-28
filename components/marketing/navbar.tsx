@@ -63,11 +63,7 @@ export default function Navbar() {
       className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 transition-all duration-300"
     >
       <div
-        className={`mx-auto max-w-[1063px] flex items-center justify-between transition-all duration-300 ${
-          scrolled
-            ? "mkt-navbar-float mt-3 px-6 h-[60px]"
-            : "bg-transparent px-4 sm:px-6 lg:px-8 h-14"
-        }`}
+        className="mkt-navbar-float mx-auto max-w-[1063px] flex items-center justify-between mt-3 pl-6 pr-6 py-5"
       >
         <a href="#hero" className="flex items-center">
           <Image
@@ -94,18 +90,20 @@ export default function Navbar() {
               {link.label}
             </a>
           ))}
-          <a
-            href="/portal"
-            className="mkt-cta-secondary inline-flex items-center px-5 py-3 text-[14px]"
-          >
-            Client Login
-          </a>
-          <a
-            href={NAV.cta.href}
-            className="mkt-cta-primary inline-flex items-center px-5 py-3 text-[14px]"
-          >
-            {NAV.cta.label}
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="/portal"
+              className="mkt-cta-secondary inline-flex items-center px-5 py-3 text-[14px]"
+            >
+              Client Login
+            </a>
+            <a
+              href={NAV.cta.href}
+              className="mkt-cta-primary inline-flex items-center px-5 py-3 text-[14px]"
+            >
+              {NAV.cta.label}
+            </a>
+          </div>
         </div>
 
         <button

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users, ClipboardList, Wrench, Upload, LogOut } from "lucide-react"
+import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users, ClipboardList, Wrench, Upload, MessageSquare, LogOut } from "lucide-react"
 import { logoutAdmin } from "@/app/login/login-actions"
 
 const sections = [
@@ -19,6 +19,7 @@ const sections = [
         label: "Manage",
         items: [
             { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+            { title: "Queries", href: "/dashboard/queries", icon: MessageSquare },
             { title: "Funnel", href: "/dashboard/funnel", icon: TrendingDown },
             { title: "Config", href: "/dashboard/config", icon: Settings },
         ],
