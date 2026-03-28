@@ -2,7 +2,7 @@
 
 import { PRICING } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { Check, Shield } from "lucide-react"
+import { Check, Shield } from "@phosphor-icons/react"
 
 export default function Pricing() {
   const sectionRef = useScrollAnimation()

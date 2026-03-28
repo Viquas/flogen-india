@@ -2,9 +2,9 @@
 
 import { HOW_IT_WORKS } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { Search, Palette, Rocket } from "lucide-react"
+import { MagnifyingGlass, Palette, Rocket } from "@phosphor-icons/react"
 
-const ICON_MAP = { Search, Palette, Rocket } as const
+const ICON_MAP = { Search: MagnifyingGlass, Palette, Rocket } as const
 
 export default function HowItWorks() {
   const sectionRef = useScrollAnimation()

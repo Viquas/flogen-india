@@ -2,9 +2,9 @@
 
 import { TRUST_SIGNALS } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { CheckCircle, Shield, BarChart, Clock } from "lucide-react"
+import { CheckCircle, Shield, ChartBar, Clock } from "@phosphor-icons/react"
 
-const ICON_MAP = { CheckCircle, Shield, BarChart, Clock } as const
+const ICON_MAP = { CheckCircle, Shield, BarChart: ChartBar, Clock } as const
 
 export default function TrustBar() {
   const sectionRef = useScrollAnimation()

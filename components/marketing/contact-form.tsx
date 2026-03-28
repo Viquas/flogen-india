@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { CONTACT } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { Loader2 } from "lucide-react"
+import { SpinnerGap } from "@phosphor-icons/react"
 
 type FormData = {
   name: string
@@ -173,7 +173,7 @@ export default function ContactForm() {
           >
             {status === "sending" ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <SpinnerGap className="w-4 h-4 animate-spin" />
                 Sending...
               </>
             ) : (

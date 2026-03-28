@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { FAQ } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { ChevronDown } from "lucide-react"
+import { CaretDown } from "@phosphor-icons/react"
 
 export default function Faq() {
   const sectionRef = useScrollAnimation()
@@ -37,7 +37,7 @@ export default function Faq() {
                   <span className="text-[15px] font-medium text-[var(--mkt-text)] pr-4">
                     {item.question}
                   </span>
-                  <ChevronDown
+                  <CaretDown
                     className={`w-4 h-4 shrink-0 text-[var(--mkt-text-tertiary)] transition-transform duration-300 ${
                       isOpen ? "rotate-180" : ""
                     }`}

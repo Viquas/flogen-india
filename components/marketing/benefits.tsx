@@ -2,9 +2,9 @@
 
 import { BENEFITS } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { Database, Fingerprint, Smartphone, Zap, ShieldCheck } from "lucide-react"
+import { Database, Fingerprint, DeviceMobile, Lightning, ShieldCheck } from "@phosphor-icons/react"
 
-const ICON_MAP = { Database, Fingerprint, Smartphone, Zap, ShieldCheck } as const
+const ICON_MAP = { Database, Fingerprint, Smartphone: DeviceMobile, Zap: Lightning, ShieldCheck } as const
 
 export default function Benefits() {
   const sectionRef = useScrollAnimation()
