@@ -38,13 +38,13 @@ export default function Hero() {
         <div className="flex items-center justify-center gap-4">
           <a
             href={HERO.primaryCtaHref}
-            className="mkt-cta-primary inline-flex items-center justify-center px-5 py-2.5 text-[14px]"
+            className="mkt-cta-primary inline-flex items-center justify-center px-6 py-3 text-[14px]"
           >
             {HERO.primaryCta}
           </a>
           <a
             href={HERO.secondaryCtaHref}
-            className="inline-flex items-center justify-center px-5 py-2.5 text-[14px] rounded-[var(--mkt-radius)] border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] hover:text-white hover:border-white/20 transition-colors"
+            className="mkt-cta-secondary inline-flex items-center justify-center px-5 py-3 text-[14px]"
           >
             {HERO.secondaryCta} <span className="ml-1.5">→</span>
           </a>

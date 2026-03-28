@@ -133,6 +133,24 @@ export default function MarketingLayout({
               opacity: 0.9;
             }
 
+            /* Glossy dark secondary CTA — gradient white border + inner shadows */
+            .mkt-cta-secondary {
+              border: 1px solid transparent;
+              border-radius: 8px;
+              background:
+                linear-gradient(#0A0B0D, #0A0B0D) padding-box,
+                linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.2)) border-box;
+              box-shadow:
+                inset 0 7px 16px rgba(255, 255, 255, 0.18),
+                inset 0 -7px 16px rgba(240, 240, 240, 0.16);
+              color: #fff;
+              font-weight: 500;
+              transition: opacity 0.2s;
+            }
+            .mkt-cta-secondary:hover {
+              opacity: 0.9;
+            }
+
             .marketing::before {
               content: '';
               position: fixed;

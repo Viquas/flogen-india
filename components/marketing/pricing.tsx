@@ -71,7 +71,7 @@ export default function Pricing() {
                   className={`mt-8 block text-center px-5 py-2.5 text-[14px] ${
                     isHighlighted
                       ? "mkt-cta-primary rounded-lg"
-                      : "rounded-lg border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] font-medium hover:bg-[var(--mkt-bg-hover)] hover:text-[var(--mkt-text)] transition-colors"
+                      : "mkt-cta-secondary"
                   }`}
                 >
                   {tier.cta}
