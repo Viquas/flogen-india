@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { generationQueue } from '@/lib/queue'
 import { logger } from '@/lib/logger'
 
@@ -6,7 +6,14 @@ import { logger } from '@/lib/logger'
 let lastCronStart = 0
 const CRON_GUARD_MS = 20 * 1000 // reject if another invocation started <20s ago
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // Verify cron secret (Vercel sets this header on cron invocations)
+    const authHeader = request.headers.get('authorization')
+    const cronSecret = process.env.CRON_SECRET
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const now = Date.now()
 
     // Prevent concurrent invocations (e.g. overlapping cron triggers)
@@ -22,9 +29,9 @@ export async function GET() {
 
     lastCronStart = now
 
-    // 25-second timeout guard (Vercel hobby functions have 10s, pro has 60s;
-    // we target 25s to leave headroom for response serialization)
-    const TIMEOUT_MS = 25 * 1000
+    // 55-second timeout guard (Vercel Pro has 60s limit;
+    // we target 55s to leave headroom for response serialization)
+    const TIMEOUT_MS = 55 * 1000
     const deadline = now + TIMEOUT_MS
 
     try {
