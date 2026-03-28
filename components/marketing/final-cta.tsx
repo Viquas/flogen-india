@@ -20,18 +20,12 @@ export default function FinalCta() {
           {FINAL_CTA.subheadline}
         </p>
 
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className="mt-10 flex justify-center">
           <a
             href={FINAL_CTA.primaryCtaHref}
             className="mkt-cta-primary inline-flex items-center justify-center px-6 py-3 text-[14px]"
           >
             {FINAL_CTA.primaryCta}
-          </a>
-          <a
-            href={FINAL_CTA.secondaryCtaHref}
-            className="mkt-cta-secondary inline-flex items-center justify-center px-6 py-3 text-[14px]"
-          >
-            {FINAL_CTA.secondaryCta}
           </a>
         </div>
       </div>
