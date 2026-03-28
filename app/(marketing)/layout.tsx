@@ -151,6 +151,16 @@ export default function MarketingLayout({
               opacity: 0.9;
             }
 
+            /* Floating navbar bar — gradient border + inner glow */
+            .mkt-navbar-float {
+              border: 1px solid transparent;
+              border-radius: 16px;
+              background:
+                linear-gradient(#0A0B0D, #0A0B0D) padding-box,
+                linear-gradient(to bottom, #282D33, #1D2026) border-box;
+              box-shadow: inset 0 0 39.5px rgba(255, 255, 255, 0.12);
+            }
+
             .marketing::before {
               content: '';
               position: fixed;

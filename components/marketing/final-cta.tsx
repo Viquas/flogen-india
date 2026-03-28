@@ -29,7 +29,7 @@ export default function FinalCta() {
           </a>
           <a
             href={FINAL_CTA.secondaryCtaHref}
-            className="inline-flex items-center justify-center text-[14px] text-[var(--mkt-text-secondary)] hover:text-[var(--mkt-text)] transition-colors"
+            className="mkt-cta-secondary inline-flex items-center justify-center px-6 py-3 text-[14px]"
           >
             {FINAL_CTA.secondaryCta}
           </a>
