@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generationQueue } from '@/lib/queue'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
 
 // Guard: track last invocation to prevent concurrent cron runs
@@ -35,6 +36,27 @@ export async function GET(request: NextRequest) {
     const deadline = now + TIMEOUT_MS
 
     try {
+        // Reset stuck jobs: processing for >2 min means the function died mid-generation
+        const supabase = createAdminClient()
+        const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        const { data: stuckJobs } = await supabase
+            .from('queue_jobs')
+            .update({ status: 'pending', updated_at: new Date().toISOString() })
+            .eq('status', 'processing')
+            .lt('started_at', staleThreshold)
+            .select('id')
+
+        if (stuckJobs && stuckJobs.length > 0) {
+            logger.queue.info('Cron: reset stuck processing jobs', { count: stuckJobs.length })
+        }
+
+        // Also reset projects stuck in 'generating' status (matching stuck queue jobs)
+        await supabase
+            .from('projects')
+            .update({ status: 'queued', updated_at: new Date().toISOString() })
+            .eq('status', 'generating')
+            .lt('updated_at', staleThreshold)
+
         const statusBefore = await generationQueue.getStatus()
 
         // Run the queue processor with a timeout wrapper
