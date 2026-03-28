@@ -7,6 +7,8 @@ import { logger } from '@/lib/logger'
 let lastCronStart = 0
 const CRON_GUARD_MS = 20 * 1000 // reject if another invocation started <20s ago
 
+export const maxDuration = 300 // 5 min (Vercel Pro)
+
 export async function GET(request: NextRequest) {
     // Verify cron secret (Vercel sets this header on cron invocations)
     const authHeader = request.headers.get('authorization')
@@ -30,9 +32,9 @@ export async function GET(request: NextRequest) {
 
     lastCronStart = now
 
-    // 55-second timeout guard (Vercel Pro has 60s limit;
-    // we target 55s to leave headroom for response serialization)
-    const TIMEOUT_MS = 55 * 1000
+    // 290-second timeout guard (maxDuration is 300s;
+    // leave 10s headroom for cleanup and response serialization)
+    const TIMEOUT_MS = 290 * 1000
     const deadline = now + TIMEOUT_MS
 
     try {

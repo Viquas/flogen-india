@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { discoverBusinesses } from '@/lib/discovery'
 import { generationQueue } from '@/lib/queue'
 
+export const maxDuration = 300 // 5 min (Vercel Pro)
+
 export async function POST(req: NextRequest) {
     try {
         const { query, skipWithWebsite, rules, structured, templateId } = await req.json()
