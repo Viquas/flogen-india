@@ -100,7 +100,7 @@ export default function Navbar() {
           </a>
           <a
             href={NAV.cta.href}
-            className="inline-flex items-center px-3.5 py-1.5 text-[13px] font-medium text-white bg-[var(--mkt-accent)] rounded-md hover:opacity-90 transition-opacity"
+            className="mkt-cta-primary inline-flex items-center px-3.5 py-1.5 text-[13px]"
           >
             {NAV.cta.label}
           </a>
@@ -156,7 +156,7 @@ export default function Navbar() {
           <a
             href={NAV.cta.href}
             onClick={() => setIsOpen(false)}
-            className="mt-2 inline-flex items-center justify-center px-5 py-2.5 text-[14px] font-medium text-white bg-[var(--mkt-accent)] rounded-lg hover:opacity-90 transition-opacity"
+            className="mkt-cta-primary mt-2 inline-flex items-center justify-center px-5 py-2.5 text-[14px]"
           >
             {NAV.cta.label}
           </a>

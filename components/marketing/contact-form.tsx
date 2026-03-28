@@ -169,7 +169,7 @@ export default function ContactForm() {
           <button
             type="submit"
             disabled={status === "sending"}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3 text-[14px] font-medium bg-[var(--mkt-accent)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mkt-cta-primary w-full flex items-center justify-center gap-2 px-5 py-3 text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {status === "sending" ? (
               <>

@@ -68,10 +68,10 @@ export default function Pricing() {
 
                 <a
                   href={tier.ctaHref}
-                  className={`mt-8 block text-center px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors ${
+                  className={`mt-8 block text-center px-5 py-2.5 text-[14px] ${
                     isHighlighted
-                      ? "bg-[var(--mkt-accent)] text-white hover:opacity-90"
-                      : "border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] hover:bg-[var(--mkt-bg-hover)] hover:text-[var(--mkt-text)]"
+                      ? "mkt-cta-primary rounded-lg"
+                      : "rounded-lg border border-[var(--mkt-border)] text-[var(--mkt-text-secondary)] font-medium hover:bg-[var(--mkt-bg-hover)] hover:text-[var(--mkt-text)] transition-colors"
                   }`}
                 >
                   {tier.cta}

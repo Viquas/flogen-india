@@ -38,7 +38,7 @@ export default function Hero() {
         <div className="flex items-center justify-center gap-4">
           <a
             href={HERO.primaryCtaHref}
-            className="inline-flex items-center justify-center px-5 py-2.5 text-[14px] font-medium bg-[var(--mkt-accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
+            className="mkt-cta-primary inline-flex items-center justify-center px-5 py-2.5 text-[14px]"
           >
             {HERO.primaryCta}
           </a>

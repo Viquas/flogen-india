@@ -23,7 +23,7 @@ export default function FinalCta() {
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
           <a
             href={FINAL_CTA.primaryCtaHref}
-            className="inline-flex items-center justify-center px-6 py-3 text-[14px] font-medium bg-[var(--mkt-accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
+            className="mkt-cta-primary inline-flex items-center justify-center px-6 py-3 text-[14px]"
           >
             {FINAL_CTA.primaryCta}
           </a>
