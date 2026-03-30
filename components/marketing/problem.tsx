@@ -19,9 +19,6 @@ export default function Problem() {
         <p className="mt-6 text-[17px] sm:text-[19px] text-[var(--mkt-text-secondary)] leading-relaxed">
           {PROBLEM.body}
         </p>
-        <p className="mt-8 text-lg sm:text-xl font-medium text-[var(--mkt-accent)]">
-          {PROBLEM.emphasis}
-        </p>
       </div>
     </section>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CONTACT } from "@/lib/marketing-constants"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { SpinnerGap } from "@phosphor-icons/react"
@@ -14,6 +14,8 @@ type FormData = {
 
 type FormStatus = "idle" | "sending" | "success" | "error"
 
+type SelectedPlan = { name: string; price: string }
+
 export default function ContactForm() {
   const sectionRef = useScrollAnimation()
   const [formData, setFormData] = useState<FormData>({
@@ -24,6 +26,23 @@ export default function ContactForm() {
   })
   const [status, setStatus] = useState<FormStatus>("idle")
   const [errorMessage, setErrorMessage] = useState("")
+  const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { name, price } = (e as CustomEvent<SelectedPlan>).detail
+      setSelectedPlan({ name, price })
+      setFormData((prev) => ({
+        ...prev,
+        message:
+          price === "Custom"
+            ? `I'd like to discuss the ${name} Plan for my business.`
+            : `I'm interested in the ${name} Plan (${price}) for my business.`,
+      }))
+    }
+    window.addEventListener("plan-selected", handler)
+    return () => window.removeEventListener("plan-selected", handler)
+  }, [])
 
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -64,6 +83,7 @@ export default function ContactForm() {
 
       setStatus("success")
       setFormData({ name: "", email: "", businessName: "", message: "" })
+      setSelectedPlan(null)
     } catch (err) {
       setStatus("error")
       setErrorMessage(
@@ -90,6 +110,40 @@ export default function ContactForm() {
             {CONTACT.sectionSubtitle}
           </p>
         </div>
+
+        {/* Plan selection banner */}
+        {selectedPlan && (
+          <div className="mt-6 max-w-lg mx-auto flex items-center justify-between gap-3 rounded-lg border border-[var(--mkt-accent)]/20 bg-[var(--mkt-accent-muted)] px-4 py-3">
+            <p className="text-[14px] text-[var(--mkt-text)]">
+              You selected:{" "}
+              <span className="font-semibold">{selectedPlan.name}</span>
+              {" — "}
+              {selectedPlan.price === "Custom"
+                ? "Custom Pricing"
+                : selectedPlan.price}
+            </p>
+            <button
+              type="button"
+              onClick={() => setSelectedPlan(null)}
+              className="shrink-0 text-[var(--mkt-text-tertiary)] hover:text-[var(--mkt-text)] transition-colors"
+              aria-label="Dismiss plan selection"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         <form
           onSubmit={handleSubmit}
@@ -184,6 +238,26 @@ export default function ContactForm() {
           <p className="text-center text-[12px] text-[var(--mkt-text-tertiary)]">
             {CONTACT.microcopy}
           </p>
+
+          {/* What happens next */}
+          <div className="pt-4 border-t border-[var(--mkt-border)]">
+            <p className="text-[11px] text-[var(--mkt-text-tertiary)] text-center mb-3">
+              What happens next?
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6">
+              {CONTACT.nextSteps.map((step, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 text-[11px] text-[var(--mkt-text-tertiary)]"
+                >
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[var(--mkt-surface)] text-[10px] font-medium shrink-0">
+                    {i + 1}
+                  </span>
+                  {step}
+                </div>
+              ))}
+            </div>
+          </div>
         </form>
       </div>
     </section>

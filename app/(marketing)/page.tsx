@@ -10,6 +10,7 @@ import Faq from "@/components/marketing/faq"
 import FinalCta from "@/components/marketing/final-cta"
 import ContactForm from "@/components/marketing/contact-form"
 import Footer from "@/components/marketing/footer"
+import MobileCtaBar from "@/components/marketing/mobile-cta-bar"
 
 export default function MarketingPage() {
   return (
@@ -29,6 +30,7 @@ export default function MarketingPage() {
 
       <ContactForm />
       <Footer />
+      <MobileCtaBar />
     </>
   )
 }

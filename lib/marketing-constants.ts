@@ -20,27 +20,24 @@ const HERO = {
   secondaryCta: "View Pricing",
   primaryCtaHref: "#portfolio",
   secondaryCtaHref: "#pricing",
-  trustSignal: "500+ Websites Delivered",
 } as const
 
 const TRUST_SIGNALS = [
-  { icon: "CheckCircle", label: "500+ Websites Delivered" },
-  { icon: "Shield", label: "30-Day Satisfaction Guarantee" },
-  { icon: "BarChart", label: "Built From Real Business Data" },
+  { icon: "Shield", label: "30-Day Money-Back Guarantee" },
+  { icon: "CheckCircle", label: "Full Ownership, No Lock-In" },
+  { icon: "BarChart", label: "Built From Your Actual Business Info" },
   { icon: "Clock", label: "Live in 48 Hours" },
 ] as const
 
 const PROBLEM = {
-  headline: "Your Website Is Losing You Customers",
-  body: "Every day, potential customers visit your site and leave within seconds. Outdated designs, slow load times, and confusing layouts silently drive away the people you worked hard to attract. In a world where first impressions happen online, your website is either your best salesperson or your biggest liability.",
-  emphasis:
-    "You deserve a website that works as hard as you do.",
+  headline: "Invisible Online Means Invisible to Customers",
+  body: "Every day without a professional website, your potential customers find your competitors instead. They search, they compare, and they choose the business that looks most trustworthy online. The problem isn\u2019t that building a website is hard \u2014 it\u2019s that most options either cost thousands or look like every other template on the internet. Your business is unique. Your online presence should match.",
 } as const
 
 const HOW_IT_WORKS = {
   sectionTitle: "How It Works",
   sectionSubtitle:
-    "From first conversation to live site in three straightforward steps.",
+    "From research to live site in three simple steps.",
   steps: [
     {
       number: 1,
@@ -69,7 +66,7 @@ const HOW_IT_WORKS = {
 const PORTFOLIO = {
   sectionTitle: "Our Work",
   sectionSubtitle:
-    "Precision-crafted websites across industries — each one built to convert.",
+    "Websites we\u2019ve built \u2014 each one unique to the business.",
   items: [
     {
       name: "The Olive Table",
@@ -120,13 +117,13 @@ const BENEFITS = {
   items: [
     {
       icon: "Database",
-      title: "Built From Your Real Data",
+      title: "Feels Like a $5,000 Custom Site",
       description:
-        "We research your business using the same data your customers see. The result feels like it was written by someone who knows your business.",
+        "We study your services, reviews, and market the same way your customers do. The result feels like it was written by someone who actually knows your business.",
     },
     {
       icon: "Fingerprint",
-      title: "Looks Custom, Not Cookie-Cutter",
+      title: "Your Competitors Will Think You Hired an Agency",
       description:
         "Every website is designed individually. Different colors, layouts, and content. No two sites look the same.",
     },
@@ -138,9 +135,9 @@ const BENEFITS = {
     },
     {
       icon: "Zap",
-      title: "Ready in Days, Not Weeks",
+      title: "Go From Invisible to Professional in 48 Hours",
       description:
-        "Traditional agencies take 4-8 weeks. We deliver a preview within days.",
+        "Traditional agencies take 4\u20138 weeks. We deliver a preview within days.",
     },
     {
       icon: "ShieldCheck",
@@ -165,7 +162,7 @@ const PRICING = {
       price: "$499",
       period: "one-time",
       description:
-        "Perfect for small businesses that need a clean, professional online presence.",
+        "Everything you need to get found online and start converting visitors.",
       features: [
         "Custom website built from your business data",
         "Mobile-responsive design",
@@ -183,7 +180,7 @@ const PRICING = {
       price: "$1,299",
       period: "one-time",
       description:
-        "For businesses ready to stand out with a premium, conversion-optimized site.",
+        "For businesses that want bookings, calls, and customers from day one.",
       features: [
         "Everything in Standard",
         "Online booking system integration",
@@ -240,7 +237,7 @@ const FAQ = {
     {
       question: "How do you know about my business?",
       answer:
-        "We research using publicly available information \u2014 your services, location, reviews, and photos. Your website reflects your actual business, not generic content.",
+        "We research your business the same way your customers would \u2014 by looking at your services, reviews, location, and photos. This means your website reflects what real people see when they search for you.",
     },
     {
       question: "How long does it take?",
@@ -258,7 +255,7 @@ const FAQ = {
 const FINAL_CTA = {
   headline: "Ready to see what we can build for your business?",
   subheadline:
-    "Join hundreds of businesses that went from invisible to professional in days.",
+    "Get a website that matches the quality of your business.",
   primaryCta: "Get Your Website",
   secondaryCta: "Or contact us to discuss your project",
   primaryCtaHref: "#contact",
@@ -267,18 +264,23 @@ const FINAL_CTA = {
 } as const
 
 const CONTACT = {
-  sectionTitle: "Get In Touch",
+  sectionTitle: "Tell Us About Your Business",
   sectionSubtitle:
-    "Tell us about your business and we will get back to you within 24 hours with a free proposal.",
+    "Tell us your business name and location \u2014 we\u2019ll build a free website preview and send it to you within 48 hours.",
   submitButton: "Send Message",
   successMessage: "Thanks! We'll get back to you within 24 hours.",
   microcopy: "No spam, ever. We typically respond within a few hours.",
+  nextSteps: [
+    "You tell us about your business",
+    "We build your free preview",
+    "You review it \u2014 no obligation",
+  ],
 } as const
 
 const FOOTER = {
   company: {
     name: "Somosite",
-    description: "Custom websites built from real business data.",
+    description: "Custom websites for businesses ready to grow online.",
     email: "hello@somosite.com",
     location: "Bangalore, India",
   },

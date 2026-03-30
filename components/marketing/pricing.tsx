@@ -21,6 +21,10 @@ export default function Pricing() {
           {PRICING.sectionSubtitle}
         </p>
 
+        <p className="mt-6 text-[15px] italic text-center text-[var(--mkt-text-secondary)] max-w-xl mx-auto">
+          {PRICING.anchoring}
+        </p>
+
         <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
           {PRICING.tiers.map((tier) => {
             const isHighlighted = tier.highlighted
@@ -68,6 +72,15 @@ export default function Pricing() {
 
                 <a
                   href={tier.ctaHref}
+                  onClick={() => {
+                    if (tier.ctaHref === "#contact") {
+                      window.dispatchEvent(
+                        new CustomEvent("plan-selected", {
+                          detail: { name: tier.name, price: tier.price },
+                        })
+                      )
+                    }
+                  }}
                   className={`mt-8 block text-center px-5 py-2.5 text-[14px] ${
                     isHighlighted
                       ? "mkt-cta-primary rounded-lg"

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Terms of Service — Somosite",
@@ -8,6 +9,12 @@ export default function TermsPage() {
   return (
     <div className="py-16 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-[13px] text-[var(--mkt-text-tertiary)] hover:text-[var(--mkt-text-secondary)] transition-colors mb-6"
+        >
+          ← Back to Somosite
+        </Link>
         <h1 className="text-[28px] sm:text-[40px] leading-tight mb-8">
           Terms of Service
         </h1>

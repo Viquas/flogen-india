@@ -87,13 +87,6 @@ export default function Portfolio() {
               >
                 {/* Browser frame */}
                 <div className="rounded-xl border border-[var(--mkt-border)] bg-[var(--mkt-bg-elevated)] overflow-hidden hover:border-[var(--mkt-border-strong)] transition-colors">
-                  {/* Minimal URL bar */}
-                  <div className="h-8 flex items-center justify-center bg-[var(--mkt-bg-elevated)] border-b border-[var(--mkt-border)]">
-                    <span className="text-[10px] text-[var(--mkt-text-tertiary)]">
-                      {item.name.toLowerCase().replace(/[^a-z0-9]+/g, "")}.com
-                    </span>
-                  </div>
-
                   {/* Screenshot / Placeholder */}
                   <div className="aspect-video relative overflow-hidden">
                     {hasScreenshot && screenshot ? (

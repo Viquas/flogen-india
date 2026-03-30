@@ -20,7 +20,11 @@ export default function FinalCta() {
           {FINAL_CTA.subheadline}
         </p>
 
-        <div className="mt-10 flex justify-center">
+        <p className="mt-4 text-[13px] italic text-[var(--mkt-text-tertiary)]">
+          {FINAL_CTA.scarcity}
+        </p>
+
+        <div className="mt-8 flex justify-center">
           <a
             href={FINAL_CTA.primaryCtaHref}
             className="mkt-cta-primary inline-flex items-center justify-center px-6 py-3 text-[14px]"

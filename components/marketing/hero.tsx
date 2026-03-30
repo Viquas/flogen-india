@@ -57,8 +57,18 @@ export default function Hero() {
       {/* Full-bleed showcase frame */}
       <div className="mx-auto max-w-[1000px] px-4 sm:px-6 lg:px-8">
         <div className="relative">
-          {/* Ambient glow behind frame */}
-          <div className="absolute -inset-4 bg-[var(--mkt-accent)]/5 blur-3xl rounded-3xl" />
+          {/* Aurora video glow behind frame */}
+          <div className="absolute -inset-12 sm:-inset-16 overflow-hidden rounded-3xl">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover opacity-60"
+            >
+              <source src="/marketing/footer-aurora.mp4" type="video/mp4" />
+            </video>
+          </div>
 
           {/* Browser frame */}
           <div className="relative rounded-xl border border-[var(--mkt-border-strong)] overflow-hidden bg-[var(--mkt-bg-elevated)]">
