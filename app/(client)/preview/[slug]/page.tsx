@@ -88,7 +88,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
         <iframe
             srcDoc={injectedHtml}
             className="fixed inset-0 w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin allow-top-navigation"
+            sandbox="allow-scripts allow-top-navigation"
             title={`Website preview for ${businessName}`}
         />
     )

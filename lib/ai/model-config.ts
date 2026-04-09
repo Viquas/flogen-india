@@ -39,7 +39,7 @@ function buildFallbackChain(): FallbackEntry[] {
     const chain: FallbackEntry[] = []
 
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        chain.push({ provider: 'google', modelId: 'gemini-3-flash-preview', available: true })
+        chain.push({ provider: 'google', modelId: 'gemini-2.5-flash-preview-05-20', available: true })
     }
     if (process.env.OPENROUTER_API_KEY) {
         chain.push({ provider: 'openrouter', modelId: 'moonshotai/kimi-k2.5', available: true })

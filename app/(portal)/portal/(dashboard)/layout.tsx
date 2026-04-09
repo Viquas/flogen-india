@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Toaster } from 'sonner'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getActiveClaim, getClaimProject } from '@/lib/portal/get-claim'
 import { PortalHeader } from '@/components/portal/portal-header'
 import { PortalNav } from '@/components/portal/portal-nav'
 import { NeedHelpButton } from '@/components/portal/need-help-button'
@@ -32,26 +32,13 @@ export default async function PortalDashboardLayout({ children }: { children: Re
         redirect('/portal/login')
     }
 
-    const admin = createAdminClient()
-
-    const { data: claim } = await admin
-        .from('claims')
-        .select('id, project_id, plan, status, client_name, client_email')
-        .eq('auth_user_id', user.id)
-        .in('status', ['paid', 'customizing', 'completed'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+    const claim = await getActiveClaim(user.id)
 
     if (!claim) {
         redirect('/portal/login')
     }
 
-    const { data: project } = await admin
-        .from('projects')
-        .select('id, business_data, generated_code, slug, version')
-        .eq('id', claim.project_id)
-        .single()
+    const project = await getClaimProject(claim.project_id)
 
     const businessData = project?.business_data as Record<string, unknown> | null
     const businessName = (businessData?.businessName as string) || claim.client_name || 'Your Business'

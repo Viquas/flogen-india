@@ -1,8 +1,15 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
 export async function POST(request: NextRequest) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { projectId, recipientEmail, previewUrl } = await request.json()
 
   if (!projectId || !recipientEmail || !previewUrl) {

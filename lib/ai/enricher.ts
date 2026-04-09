@@ -14,7 +14,7 @@ const openrouter = createOpenAI({
 const getModel = () => {
     // Prefer Google Gemini Flash for structured data tasks (cost-effective)
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        return google('gemini-3-flash-preview')
+        return google('gemini-2.5-flash-preview-05-20')
     }
     // Fallback to OpenAI
     if (process.env.OPENAI_API_KEY) {

@@ -194,7 +194,7 @@ class GenerationQueue {
             if (insertError.message?.includes('duplicate key') || insertError.code === '23505') {
                 logger.queue.warn('Batch insert hit duplicate key, falling back to individual inserts')
                 // Fall back to individual inserts to skip just the duplicates
-                for (const id of projectIds) {
+                for (const id of newProjectIds) {
                     await this.add(id, rules, templateId)
                 }
                 return
@@ -337,7 +337,8 @@ class GenerationQueue {
 
             if (currentAttempts < MAX_ATTEMPTS) {
                 // Exponential backoff: set updated_at to future timestamp so process loop skips it
-                const backoffMs = getBackoffMs(currentAttempts)
+                // Use attempt-1 so schedule is 30s, 60s, 120s (not 60s, 120s, 240s)
+                const backoffMs = getBackoffMs(currentAttempts - 1)
                 const retryAfter = new Date(Date.now() + backoffMs).toISOString()
                 logger.queue.warn('Job failed, scheduling retry with backoff', {
                     jobId: job.id,
@@ -378,6 +379,9 @@ class GenerationQueue {
                     await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
                 }
             }
+        } finally {
+            // Restart the process loop to pick up any pending jobs
+            this.process()
         }
     }
 

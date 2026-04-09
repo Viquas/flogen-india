@@ -182,7 +182,7 @@ const customizationSchema = z.object({
     phone: z.string().max(20).optional().default(''),
     email: z.string().email().or(z.literal('')).optional().default(''),
     address: z.string().max(500).optional().default(''),
-    whatsapp: z.string().max(20).optional().default(''),
+    whatsapp: z.string().regex(/^\+?[0-9\s\-().]{7,20}$/).or(z.literal('')).optional().default(''),
     photoUrls: z.array(z.string()).max(10).optional().default([]),
     notes: z.string().max(1000).optional().default(''),
     wantsBookingSystem: z.boolean().optional().default(false),

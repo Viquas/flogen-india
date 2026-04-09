@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { trackEvent } from '@/lib/analytics/track'
@@ -68,7 +66,7 @@ export default async function ConfirmedPage({ params, searchParams }: ConfirmedP
             .from('claims')
             .select('id, status, plan, amount_paise, paid_at, client_email')
             .eq('project_id', project.id)
-            .in('status', ['order_created', 'paid', 'customizing', 'completed'])
+            .in('status', ['paid', 'customizing', 'completed'])
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle()

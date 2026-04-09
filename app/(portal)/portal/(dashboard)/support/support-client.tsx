@@ -94,6 +94,11 @@ export function SupportClient({ claimId, clientEmail, razorpayKeyId, isTestMode 
                 theme: { color: '#0F172A' },
             }
 
+            if (!window.Razorpay) {
+                toast.error('Payment system is still loading. Please wait a moment and try again.')
+                return
+            }
+
             const rzp = new window.Razorpay(options)
             rzp.open()
         } catch (error) {

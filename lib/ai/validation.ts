@@ -122,7 +122,7 @@ export async function validateAndAutoFix(
             code,
             businessData,
             undefined,
-            'gemini-3-flash-preview'
+            'gemini-2.5-flash-preview-05-20'
         )
 
         const fixValidation = await validateGeneratedCode(fixedCode)
@@ -141,7 +141,7 @@ export async function validateAndAutoFix(
             fixedCode,
             businessData,
             undefined,
-            'gemini-3-flash-preview'
+            'gemini-2.5-flash-preview-05-20'
         )
 
         const fix2Validation = await validateGeneratedCode(fixedCode2)

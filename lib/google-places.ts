@@ -65,6 +65,12 @@ export async function fetchOnePage(
     },
     body: JSON.stringify(body),
   })
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => 'Unknown error')
+    throw new Error(`Google Places API error ${res.status}: ${errorText.substring(0, 200)}`)
+  }
+
   const json = await res.json()
   return { places: json.places || [], nextPageToken: json.nextPageToken || null }
 }

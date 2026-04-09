@@ -24,6 +24,10 @@ const SAMPLE_CODE = `export default function GeneratedPage() {
 }`
 
 export async function GET() {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Debug endpoints are disabled in production' }, { status: 403 })
+  }
+
   const admin = createAdminClient()
 
   // Delete previous seed data (idempotent re-runs)

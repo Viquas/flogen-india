@@ -22,7 +22,7 @@ const openrouter = createOpenAI({
 
 function getDLSModel() {
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    return google('gemini-3-flash-preview')
+    return google('gemini-2.5-flash-preview-05-20')
   }
   if (process.env.OPENAI_API_KEY) {
     return openai('gpt-4o')

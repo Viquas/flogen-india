@@ -7,7 +7,9 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/portal'
+  const rawNext = searchParams.get('next') ?? '/portal'
+  // Prevent open redirect — only allow relative paths
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/portal'
 
   if (code) {
     const response = NextResponse.redirect(new URL(next, origin))
