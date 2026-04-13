@@ -12,5 +12,7 @@ export const config = {
     '/dashboard/:path*',
     '/editor/:path*',
     '/login',
+    '/sales/:path*',
+    '/sales-login',
   ],
 }

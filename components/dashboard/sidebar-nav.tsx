@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users, ClipboardList, Wrench, Upload, MessageSquare, LogOut } from "lucide-react"
+import { LayoutDashboard, Layers, BarChart3, Palette, TrendingDown, Settings, Users, ClipboardList, Wrench, Upload, MessageSquare, LogOut, Phone } from "lucide-react"
 import { logoutAdmin } from "@/app/login/login-actions"
 
 const sections = [
@@ -31,6 +31,7 @@ const sections = [
             { title: "Custom Builds", href: "/dashboard/custom", icon: Wrench },
             { title: "Clients", href: "/dashboard/clients", icon: Users },
             { title: "Bulk Uploads", href: "/dashboard/bulk-uploads", icon: Upload },
+            { title: "Sales CRM", href: "/sales", icon: Phone },
         ],
     },
 ]
