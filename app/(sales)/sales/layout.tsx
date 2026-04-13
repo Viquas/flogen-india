@@ -4,13 +4,18 @@ import { Toaster } from 'sonner'
 import { createClient } from '@/lib/supabase/server'
 import { SalesSidebar } from '@/components/sales/sales-sidebar'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { checkHasSalesAccess } from '@/lib/auth/require-sales'
 
 export default async function SalesLayout({ children }: { children: React.ReactNode }) {
-    // Auth guard only — proxy already verified sales/admin role.
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+        redirect('/sales-login')
+    }
+
+    const hasAccess = await checkHasSalesAccess(user.id)
+    if (!hasAccess) {
         redirect('/sales-login')
     }
 
