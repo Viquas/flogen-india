@@ -17,25 +17,24 @@ export interface AuditSignals {
 interface NicheFit {
   weight: number
   pitchTemplate: string
-  label: string
 }
 
 export const NICHE_FIT_TABLE: Record<string, NicheFit> = {
-  'plumber': { weight: 40, label: 'trades', pitchTemplate: 'missed-call text-back' },
-  'electrician': { weight: 40, label: 'trades', pitchTemplate: 'missed-call text-back' },
-  'locksmith': { weight: 40, label: 'trades', pitchTemplate: 'missed-call text-back' },
-  'dental clinic': { weight: 40, label: 'clinic', pitchTemplate: 'AI booking and appointment reminders' },
-  'dentist': { weight: 40, label: 'clinic', pitchTemplate: 'AI booking and appointment reminders' },
-  'physiotherapist': { weight: 40, label: 'clinic', pitchTemplate: 'AI booking and appointment reminders' },
-  'chiropractor': { weight: 40, label: 'clinic', pitchTemplate: 'AI booking and appointment reminders' },
-  'hair salon': { weight: 32, label: 'salon', pitchTemplate: 'AI booking' },
-  'barber': { weight: 32, label: 'salon', pitchTemplate: 'AI booking' },
-  'restaurant': { weight: 24, label: 'hospitality', pitchTemplate: 'a FAQ and table-booking bot' },
-  'cafe': { weight: 24, label: 'hospitality', pitchTemplate: 'a FAQ and table-booking bot' },
-  'real estate agent': { weight: 24, label: 'real estate', pitchTemplate: 'a lead-capture chatbot' },
-  'veterinarian': { weight: 36, label: 'clinic', pitchTemplate: 'AI booking' },
-  'gym': { weight: 24, label: 'fitness', pitchTemplate: 'a class-booking bot' },
-  'fitness studio': { weight: 24, label: 'fitness', pitchTemplate: 'a class-booking bot' },
+  'plumber': { weight: 40, pitchTemplate: 'missed-call text-back' },
+  'electrician': { weight: 40, pitchTemplate: 'missed-call text-back' },
+  'locksmith': { weight: 40, pitchTemplate: 'missed-call text-back' },
+  'dental clinic': { weight: 40, pitchTemplate: 'AI booking and appointment reminders' },
+  'dentist': { weight: 40, pitchTemplate: 'AI booking and appointment reminders' },
+  'physiotherapist': { weight: 40, pitchTemplate: 'AI booking and appointment reminders' },
+  'chiropractor': { weight: 40, pitchTemplate: 'AI booking and appointment reminders' },
+  'hair salon': { weight: 32, pitchTemplate: 'AI booking' },
+  'barber': { weight: 32, pitchTemplate: 'AI booking' },
+  'restaurant': { weight: 24, pitchTemplate: 'a FAQ and table-booking bot' },
+  'cafe': { weight: 24, pitchTemplate: 'a FAQ and table-booking bot' },
+  'real estate agent': { weight: 24, pitchTemplate: 'a lead-capture chatbot' },
+  'veterinarian': { weight: 36, pitchTemplate: 'AI booking' },
+  'gym': { weight: 24, pitchTemplate: 'a class-booking bot' },
+  'fitness studio': { weight: 24, pitchTemplate: 'a class-booking bot' },
 }
 
 export const DEFAULT_NICHE_SCORE_THRESHOLD = 40

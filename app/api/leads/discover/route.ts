@@ -32,6 +32,19 @@ export async function POST(req: NextRequest) {
       pool: resolvedPool,
     })
 
+    if (result.savedCount === 0 && result.reason) {
+      const message =
+        result.reason === 'out_of_niche'
+          ? 'No businesses in a supported automation niche were found for this search. Try a different industry or location.'
+          : 'Found businesses with websites, but none scored high enough for an automation pitch. Try a broader search or a different niche.'
+
+      return NextResponse.json({
+        success: false,
+        message,
+        savedCount: 0,
+      })
+    }
+
     return NextResponse.json({
       success: true,
       batchId: result.batchId,

@@ -23,6 +23,9 @@ async function fetchHtmlWithTimeout(url: string): Promise<{ html: string; loadMs
 
   try {
     const response = await fetch(url, { signal: controller.signal, redirect: 'follow' })
+    if (!response.ok) {
+      return null
+    }
     const html = await response.text()
     return { html, loadMs: Date.now() - start }
   } catch {

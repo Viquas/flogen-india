@@ -79,6 +79,20 @@ describe('auditWebsite', () => {
     expect(result.page_load_ms).toBeNull()
   })
 
+  it('treats a non-ok response as all-gaps-present, ignoring body content', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      text: async () => '<html><body><script src="https://assets.calendly.com/widget.js"></script></body></html>',
+    } as Response)
+
+    const result = await auditWebsite('https://example.com', 10, 2)
+    expect(result.has_booking).toBe(false)
+    expect(result.has_chat).toBe(false)
+    expect(result.mobile_friendly).toBe(false)
+    expect(result.page_load_ms).toBeNull()
+  })
+
   it('passes through review_count and review_velocity_30d unchanged', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
