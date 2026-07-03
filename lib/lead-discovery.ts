@@ -34,6 +34,13 @@ export interface LeadDiscoveryResult {
   savedCount: number
   skippedCount: number
   totalFetched: number
+  /**
+   * Discriminates the automation pool's zero-qualifying-leads outcomes.
+   * - 'out_of_niche': no fetched business's category was in the niche-fit table.
+   * - 'below_threshold': in-niche candidates were scored but none cleared the threshold.
+   * - null: leads qualified and were saved (or this is the website pool).
+   */
+  reason?: 'out_of_niche' | 'below_threshold' | null
 }
 
 interface ScoredLead {
@@ -150,15 +157,16 @@ export async function discoverLeads(config: LeadDiscoveryConfig): Promise<LeadDi
   if (pool === 'automation') {
     const { scored, anyAttempted } = await scoreAutomationCandidates(validPlaces, config.industry, threshold)
     if (scored.length === 0) {
-      // Distinguish "this industry has no niche fit at all" (soft no-op,
-      // nothing was ever attempted) from "candidates were audited and
-      // scored but none cleared the threshold" (treated as a discovery
-      // failure, same as the website pool's "nothing to save" case).
-      if (!anyAttempted) {
-        logger.discovery.info('Leads saved', { pool, count: 0, batchId })
-        return { batchId, savedCount: 0, skippedCount: counters.skippedFiltered, totalFetched: counters.totalFetched }
+      // Distinguish "this industry has no niche fit at all" from "candidates
+      // were audited and scored but none cleared the threshold" — both are
+      // valid zero-result outcomes, not failures, so both resolve. Callers
+      // can branch on `reason` if they need to tell them apart.
+      const reason = anyAttempted ? 'below_threshold' : 'out_of_niche'
+      logger.discovery.info('Leads saved', { pool, count: 0, batchId, reason })
+      return {
+        batchId, savedCount: 0, skippedCount: counters.skippedFiltered,
+        totalFetched: counters.totalFetched, reason,
       }
-      throw new Error('All found businesses already have websites or were previously saved as leads.')
     }
     leadsToInsert = scored.map(({ place, nicheScore, pitchAngle, auditSignals }) => ({
       batch_id: batchId,
@@ -214,5 +222,6 @@ export async function discoverLeads(config: LeadDiscoveryConfig): Promise<LeadDi
     savedCount: leadsToInsert.length,
     skippedCount: counters.skippedFiltered,
     totalFetched: counters.totalFetched,
+    reason: null,
   }
 }

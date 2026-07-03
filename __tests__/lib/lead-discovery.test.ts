@@ -52,6 +52,7 @@ describe('discoverLeads pool=automation', () => {
     })
 
     expect(result.savedCount).toBe(0)
+    expect(result.reason).toBe('out_of_niche')
     expect(insertedRows.length).toBe(0)
   })
 
@@ -78,13 +79,14 @@ describe('discoverLeads pool=automation', () => {
     })
 
     expect(result.savedCount).toBe(1)
+    expect(result.reason).toBeFalsy()
     expect(insertedRows[0].pool).toBe('automation')
     expect(insertedRows[0].niche_score).toBeGreaterThanOrEqual(40)
     expect(typeof insertedRows[0].pitch_angle).toBe('string')
     expect(insertedRows[0].audit_signals).toBeTruthy()
   })
 
-  it('drops leads scoring below the threshold', async () => {
+  it('drops leads scoring below the threshold, resolving with reason below_threshold', async () => {
     const insertedRows: any[] = []
     ;(createAdminClient as any).mockReturnValue(makeSupabaseMock(insertedRows))
     ;(paginatedSearch as any).mockImplementation(async (cfg: any) => {
@@ -101,11 +103,13 @@ describe('discoverLeads pool=automation', () => {
       page_load_ms: 300, review_count: 2, review_velocity_30d: 0,
     })
 
-    await expect(discoverLeads({
+    const result = await discoverLeads({
       query: 'hair salon', location: 'Chatswood, NSW',
       industry: 'hair salon', entries: 10, pool: 'automation',
-    })).rejects.toThrow(/All found businesses/)
+    })
 
+    expect(result.savedCount).toBe(0)
+    expect(result.reason).toBe('below_threshold')
     expect(insertedRows.length).toBe(0)
   })
 })
@@ -130,6 +134,7 @@ describe('discoverLeads pool=website (default, unchanged behavior)', () => {
     })
 
     expect(result.savedCount).toBe(1)
+    expect(result.reason).toBeFalsy()
     expect(insertedRows[0].pool).toBe('website')
     expect(insertedRows[0].niche_score).toBeNull()
     expect(auditWebsite).not.toHaveBeenCalled()
