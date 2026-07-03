@@ -4,7 +4,7 @@ import { discoverLeads } from '@/lib/lead-discovery'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { query, location, industry, entries, skipWithWebsite } = body
+    const { query, location, industry, entries, skipWithWebsite, pool } = body
 
     // Validation: query or industry required
     if (!query && !industry) {
@@ -20,12 +20,16 @@ export async function POST(req: NextRequest) {
       100,
     )
 
+    // Resolve pool: only 'automation' stays as-is, everything else defaults to 'website'
+    const resolvedPool = pool === 'automation' ? 'automation' : 'website'
+
     const result = await discoverLeads({
       query: query || industry,
       location: location || '',
       industry: industry || '',
       entries: clampedEntries,
       skipWithWebsite: skipWithWebsite === true, // default false for lead lists — include all businesses
+      pool: resolvedPool,
     })
 
     return NextResponse.json({
@@ -34,6 +38,8 @@ export async function POST(req: NextRequest) {
       savedCount: result.savedCount,
       skippedCount: result.skippedCount,
       totalFetched: result.totalFetched,
+      pool: resolvedPool,
+      reason: result.reason ?? null,
     })
   } catch (error) {
     console.error('[LeadDiscovery] API error:', error)
