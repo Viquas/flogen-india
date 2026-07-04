@@ -4,6 +4,8 @@
  * in the same discovery batch) by seeding the axis choice off the business ID.
  */
 
+import { normalizeNiche } from './niche-normalize'
+
 export interface DesignAxis {
   layoutArchetype: string
   typePairing: string
@@ -49,6 +51,10 @@ export const NICHE_DESIGN_AXES: Record<string, DesignAxis[]> = {
     { layoutArchetype: 'full-bleed-hero-overlay', typePairing: 'Bebas Neue/Inter', paletteSource: 'photo' },
     { layoutArchetype: 'centered-hero-stack', typePairing: 'Archivo Black/Inter', paletteSource: 'industry-default' },
   ],
+  'automotive': [
+    { layoutArchetype: 'centered-hero-stack', typePairing: 'Outfit/Inter', paletteSource: 'industry-default' },
+    { layoutArchetype: 'split-hero-image-right', typePairing: 'Space Grotesk/Inter', paletteSource: 'industry-default' },
+  ],
 }
 
 /**
@@ -63,7 +69,7 @@ function hashString(input: string): number {
 }
 
 export function pickDesignVariation(niche: string, businessId: string): DesignAxis {
-  const axes = NICHE_DESIGN_AXES[niche.trim().toLowerCase()] || GENERIC_AXES
+  const axes = NICHE_DESIGN_AXES[normalizeNiche(niche)] || GENERIC_AXES
   const index = hashString(businessId) % axes.length
   return axes[index]
 }

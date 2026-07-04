@@ -179,7 +179,7 @@ export default function GeneratedPage() {
             }
 
             if (!dls) {
-                const dlsResult = await generateDLS(richData as Record<string, unknown>, (richData as any)?.id || (businessData as any)?.id)
+                const dlsResult = await generateDLS(richData as Record<string, unknown>, imageContext?.businessId ?? (richData as any)?.id ?? (businessData as any)?.id)
                 dls = dlsResult.dls
             }
 

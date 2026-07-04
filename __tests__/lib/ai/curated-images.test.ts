@@ -41,4 +41,14 @@ describe('getCuratedFallbackImage', () => {
     }
     expect(seen.size).toBeGreaterThan(1)
   })
+
+  it('normalizes free-text categories to the automotive pool', () => {
+    const url = getCuratedFallbackImage('Automotive', 'biz-1')
+    const automotivePool = [
+      'https://images.unsplash.com/photo-1676018366904-c083ed678e60?auto=format&fit=crop&q=80&w=1600',
+      'https://images.unsplash.com/photo-1591278169757-deac26e49555?auto=format&fit=crop&q=80&w=1600',
+      'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=1600',
+    ]
+    expect(automotivePool).toContain(url)
+  })
 })

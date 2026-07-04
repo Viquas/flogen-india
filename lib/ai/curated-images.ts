@@ -1,9 +1,11 @@
 /**
  * Small, deliberately curated fallback image sets, used ONLY when a
  * business has no usable Google Places photos (see lib/ai/photo-selection.ts).
- * Deliberately small per category (3-4 images) and hand-picked to avoid the
+ * Deliberately small per category (3) and hand-picked to avoid the
  * generic stock-photo-site look — never a blind random Unsplash query.
  */
+
+import { normalizeNiche } from './niche-normalize'
 
 const CURATED_IMAGES: Record<string, string[]> = {
   'cafe': [
@@ -41,6 +43,11 @@ const CURATED_IMAGES: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&q=80&w=1600',
     'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=1600',
   ],
+  'automotive': [
+    'https://images.unsplash.com/photo-1676018366904-c083ed678e60?auto=format&fit=crop&q=80&w=1600',
+    'https://images.unsplash.com/photo-1591278169757-deac26e49555?auto=format&fit=crop&q=80&w=1600',
+    'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=1600',
+  ],
 }
 
 const GENERIC_FALLBACK = [
@@ -58,7 +65,7 @@ function hashString(input: string): number {
 }
 
 export function getCuratedFallbackImage(category: string, businessId: string): string {
-  const pool = CURATED_IMAGES[category.trim().toLowerCase()] || GENERIC_FALLBACK
+  const pool = CURATED_IMAGES[normalizeNiche(category)] || GENERIC_FALLBACK
   const index = hashString(businessId) % pool.length
   return pool[index]
 }
