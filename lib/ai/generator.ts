@@ -12,6 +12,20 @@ import { getActivePrompt } from './prompt-manager'
 import { generateDLS } from './design-architect'
 import { CODE_GENERATOR_PROMPT } from './prompts/code-generator'
 import { logger } from '@/lib/logger'
+import { buildAuVoicePromptFragment } from './copy-voice'
+import { rankPhotos } from './photo-selection'
+import { getCuratedFallbackImage } from './curated-images'
+
+// Optional image/voice/design context for a single generation call.
+// businessId + category drive curated-fallback selection; placesPhotos + placesApiKey
+// enable ranking real Google Places photos for the hero image; suburb personalizes AU voice.
+export interface GenerationImageContext {
+  category: string
+  businessId: string
+  placesPhotos?: Array<{ name: string; widthPx: number; heightPx: number }>
+  placesApiKey?: string
+  suburb?: string
+}
 
 // Generate website code based on business data (Supports Multi-Agent, Monolithic, and Modular Sections)
 export async function generateWebsiteCode(
@@ -19,9 +33,23 @@ export async function generateWebsiteCode(
     rules?: string,
     markdownContext?: string,
     model?: string,
-    onProgress?: (phase: string) => void
+    onProgress?: (phase: string) => void,
+    imageContext?: GenerationImageContext,
 ): Promise<{ code: string; promptVersionId: string; dls?: string }> {
-    const rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
+    let rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
+
+    if (imageContext) {
+        const voiceFragment = buildAuVoicePromptFragment(imageContext.suburb)
+        const ranked = imageContext.placesPhotos && imageContext.placesApiKey
+            ? rankPhotos(imageContext.placesPhotos, imageContext.placesApiKey)
+            : []
+        const heroImageUrl = ranked.length > 0
+            ? ranked[0].url
+            : getCuratedFallbackImage(imageContext.category, imageContext.businessId)
+
+        rulesSection += `\n\n${voiceFragment}\n\n## HERO IMAGE (use this exact URL, do not invent your own)\n${heroImageUrl}`
+    }
+
     let richData = businessData as unknown as { sections?: Record<string, unknown>[], brandIdentity?: Record<string, unknown>, $$manifest?: Record<string, unknown>, businessName?: string };
 
     // Load active prompt from DB (with cache/fallback)
@@ -151,7 +179,7 @@ export default function GeneratedPage() {
             }
 
             if (!dls) {
-                const dlsResult = await generateDLS(richData as Record<string, unknown>)
+                const dlsResult = await generateDLS(richData as Record<string, unknown>, (richData as any)?.id || (businessData as any)?.id)
                 dls = dlsResult.dls
             }
 

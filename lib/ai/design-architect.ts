@@ -4,6 +4,7 @@ import { openai, createOpenAI } from '@ai-sdk/openai'
 import { DESIGN_ARCHITECT_PROMPT } from './prompts/design-architect'
 import { recordCost, buildCostRecord, getModelId, type CostRecord } from './cost-tracker'
 import { GEMINI_FLASH } from './model-ids'
+import { pickDesignVariation, type DesignAxis } from './design-variation'
 
 /**
  * Design Architect — Agent 1 of the multi-agent generation pipeline.
@@ -43,22 +44,34 @@ export interface DLSResult {
  * Generate a Design Language Specification from enriched business data.
  *
  * @param businessData - Enriched business data with brandIdentity, vibe, designSystem, contentRepository
+ * @param businessId - Optional business identifier; when provided, a deterministic design
+ *   variation (layout archetype, type pairing, palette source) is injected into the prompt
+ *   to reduce template sameness across generated sites.
  * @returns DLS string + cost tracking record
  * @throws If generation fails (caller should handle fallback)
  */
-export async function generateDLS(businessData: Record<string, unknown>): Promise<DLSResult> {
+export async function generateDLS(
+  businessData: Record<string, unknown>,
+  businessId?: string,
+): Promise<DLSResult> {
   const brand = businessData.brandIdentity as Record<string, unknown> | undefined
   const vibe = (brand?.vibe as Record<string, unknown>) || {}
   const design = (brand?.designSystem as Record<string, unknown>) || {}
   const core = (brand?.core as Record<string, unknown>) || {}
   const voice = (brand?.voice as Record<string, unknown>) || {}
 
+  const industry = (vibe?.industry as string) || (businessData as any)?.industry || 'General Business'
+  const variation: DesignAxis | null = businessId ? pickDesignVariation(industry, businessId) : null
+  const variationSection = variation
+    ? `\n## DESIGN VARIATION (apply these specific choices to avoid template repetition)\n- **Layout archetype:** ${variation.layoutArchetype}\n- **Type pairing:** ${variation.typePairing}\n- **Palette source:** ${variation.paletteSource === 'photo' ? 'Derive accent colors from the business photo palette if available' : 'Use the industry default palette below'}\n`
+    : ''
+
   // Build a focused context prompt with just the data the Design Architect needs
   const userPrompt = `Create a Design Language Specification for this business:
 
 ## Business Identity
 - **Name:** ${core?.brandName || businessData.businessName || 'Unknown Business'}
-- **Industry:** ${(vibe?.industry as string) || (businessData as any)?.industry || 'General Business'}
+- **Industry:** ${industry}
 - **Aesthetic Direction:** ${vibe?.aestheticDirection || 'modern-tech'}
 - **Hero Variant:** ${vibe?.heroVariant || 'full-bleed'}
 - **Mood:** ${vibe?.mood || 'Professional'}
@@ -66,7 +79,7 @@ export async function generateDLS(businessData: Record<string, unknown>): Promis
 - **Voice:** ${vibe?.voice || 'Professional'}
 - **Visual Cues to USE:** ${((vibe?.visualCues as string[]) || []).join(', ') || 'none specified'}
 - **Visual Cues to AVOID:** ${((vibe?.avoidCues as string[]) || []).join(', ') || 'none specified'}
-
+${variationSection}
 ## Brand Personality
 - **Primary:** ${(voice?.personality as Record<string, unknown>)?.primary || 'Professional'}
 - **Secondary:** ${(voice?.personality as Record<string, unknown>)?.secondary || 'Modern'}
