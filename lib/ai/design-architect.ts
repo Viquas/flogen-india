@@ -4,6 +4,7 @@ import { openai, createOpenAI } from '@ai-sdk/openai'
 import { DESIGN_ARCHITECT_PROMPT } from './prompts/design-architect'
 import { recordCost, buildCostRecord, getModelId, type CostRecord } from './cost-tracker'
 import { GEMINI_FLASH } from './model-ids'
+import { generateTextWithFallback } from './model-config'
 import { pickDesignVariation, type DesignAxis } from './design-variation'
 
 /**
@@ -93,15 +94,12 @@ ${formatColors(design)}
 
 Produce the DLS document now. Output ONLY the DLS — no markdown fences, no explanations.`
 
-  const model = getDLSModel()
-
-  const { text, usage } = await generateText({
-    model,
+  const { text, usage, modelIdUsed } = await generateTextWithFallback(undefined, {
     system: DESIGN_ARCHITECT_PROMPT,
     prompt: userPrompt,
   })
 
-  const cost = buildCostRecord(usage, getModelId(model), 'design-architect', null)
+  const cost = buildCostRecord(usage, modelIdUsed, 'design-architect', null)
   // Fire-and-forget cost recording
   recordCost(cost).catch((err) => {
     console.error('[DesignArchitect] Cost recording failed:', err)

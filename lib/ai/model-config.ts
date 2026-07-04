@@ -1,3 +1,4 @@
+import { generateText } from 'ai'
 import { openai, createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
 import { circuitBreaker } from './circuit-breaker'
@@ -63,6 +64,53 @@ function createModel(provider: string, modelId: string) {
         default:
             return openai(modelId)
     }
+}
+
+/**
+ * Run generateText with automatic provider fallback.
+ *
+ * Tries the requested model first (if any), then each provider in the fallback
+ * chain, moving on when a call throws (e.g. Gemini free-tier quota 429). Records
+ * success/failure to the circuit breaker so repeated failures also steer future
+ * getModel() picks. Throws the last error only if EVERY provider fails.
+ *
+ * This is what makes generation resilient: without it, a quota-limited primary
+ * provider fails the whole job because the direct generateText call never retries.
+ */
+export async function generateTextWithFallback(
+    requestedModel: string | undefined,
+    params: Omit<Parameters<typeof generateText>[0], 'model'>,
+): Promise<{ text: string; usage: Awaited<ReturnType<typeof generateText>>['usage']; modelIdUsed: string }> {
+    const attempts: Array<{ provider: string; modelId: string }> = []
+    if (requestedModel && requestedModel !== 'default') {
+        attempts.push({ provider: resolveProvider(requestedModel), modelId: requestedModel })
+    }
+    for (const entry of buildFallbackChain()) {
+        if (entry.available && !attempts.some(a => a.modelId === entry.modelId)) {
+            attempts.push({ provider: entry.provider, modelId: entry.modelId })
+        }
+    }
+
+    let lastError: unknown
+    for (const attempt of attempts) {
+        try {
+            const model = createModel(attempt.provider, attempt.modelId)
+            const result = await generateText({ ...params, model } as Parameters<typeof generateText>[0])
+            circuitBreaker.recordSuccess(attempt.provider)
+            return { text: result.text, usage: result.usage, modelIdUsed: attempt.modelId }
+        } catch (err) {
+            circuitBreaker.recordFailure(attempt.provider)
+            log.warn('Generation attempt failed, trying next provider', {
+                provider: attempt.provider,
+                modelId: attempt.modelId,
+                error: err instanceof Error ? err.message : String(err),
+            })
+            lastError = err
+        }
+    }
+    throw lastError instanceof Error
+        ? lastError
+        : new Error('All AI providers failed for generateText')
 }
 
 // Select model based on available keys, with circuit breaker fallback

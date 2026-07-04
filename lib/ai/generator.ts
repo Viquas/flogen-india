@@ -2,7 +2,7 @@ import { generateText, streamText, Output } from 'ai'
 import { BusinessData, BusinessDataSchema } from '@/lib/schemas/project'
 import { z } from 'zod'
 import { enrichBusinessData } from './enricher'
-import { getModel } from './model-config'
+import { getModel, generateTextWithFallback } from './model-config'
 import { reviseWebsite } from './revision'
 import { validateAndAutoFix } from './validation'
 import { updateProjectWithCode } from './project-persistence'
@@ -65,7 +65,6 @@ export async function generateWebsiteCode(
     // If the data has 'sections', generate them individually to save tokens
     if (richData && richData.sections && Array.isArray(richData.sections)) {
         logger.ai.info('Modular SJSON detected, generating sections individually', { sectionCount: richData.sections.length });
-        const modelInstance = getModel(model);
 
         let componentsCodeMap: Record<string, string> = {};
 
@@ -94,13 +93,12 @@ ${rulesSection}
 5. Return ONLY RAW CODE. No markdown fences.`;
 
             try {
-                const { text, usage } = await generateText({
-                    model: modelInstance,
+                const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
                     system: systemPromptContent.replace('export default function GeneratedPage', `export function ${section.component}`),
                     prompt: sectionPrompt,
                 })
                 // Track cost for each section generation
-                await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId));
+                await recordCost(buildCostRecord(usage, modelIdUsed, 'generation', null, promptVersionId));
 
                 let code = text.trim();
                 if (code.startsWith('```')) {
@@ -243,14 +241,12 @@ EXECUTION PLAN:
 
 Generate the code now.`
 
-                const modelInstance = getModel(model)
-                const { text, usage } = await generateText({
-                    model: modelInstance,
+                const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
                     system: dlsSystemPrompt,
                     prompt: dlsUserPrompt,
                 })
                 // Track cost for DLS-powered generation
-                await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
+                await recordCost(buildCostRecord(usage, modelIdUsed, 'generation', null, promptVersionId))
 
                 let code = text.trim()
                 if (code.startsWith('```')) {
@@ -383,14 +379,12 @@ ${fewShotBlock}
 
 Generate the code now.`
 
-    const modelInstance = getModel(model)
-    const { text, usage } = await generateText({
-        model: modelInstance,
+    const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
         system: systemPromptContent + legacyImageBlock + rulesSection,
         prompt: userPrompt,
     })
     // Track cost for monolithic generation
-    await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
+    await recordCost(buildCostRecord(usage, modelIdUsed, 'generation', null, promptVersionId))
 
     let code = text.trim()
     if (code.startsWith('```')) {

@@ -4,6 +4,7 @@ import { google } from '@ai-sdk/google'
 import { RichBusinessDataSchema, RichBusinessData } from '@/lib/schemas/rich-data'
 import { recordCost, buildCostRecord, getModelId } from './cost-tracker'
 import { GEMINI_FLASH } from './model-ids'
+import { generateTextWithFallback } from './model-config'
 
 // Configure OpenRouter if key is present (reusing logic from generator.ts essentially)
 const openrouter = createOpenAI({
@@ -29,8 +30,6 @@ const getModel = () => {
 }
 
 export async function enrichBusinessData(googlePlace: any, rules?: string): Promise<RichBusinessData> {
-    const model = getModel()
-
     const rulesSection = rules
         ? `\n\n## USER DESIGN RULES (HIGHEST PRIORITY — OVERRIDE ALL DEFAULTS):\nThe user has defined the following design rules. You MUST follow these rules for ALL design decisions including colors, typography, layout style, and brand voice. Do NOT hallucinate or invent style information — use these rules as the primary source of truth for the designSystem and voice sections:\n\n${rules}`
         : ''
@@ -172,13 +171,12 @@ ${JSON.stringify(googlePlace, null, 2)}`
 
     try {
         // Use text-based generation (Output.object is broken with current Zod version)
-        const { text, usage } = await generateText({
-            model,
+        const { text, usage, modelIdUsed } = await generateTextWithFallback(undefined, {
             system: systemPrompt + "\n\nCRITICAL: Return ONLY the raw valid JSON object. Do not include markdown formatting, comments, or code fences.",
             prompt: userPrompt,
         })
         // Track cost for enrichment call
-        await recordCost(buildCostRecord(usage, getModelId(model), 'enrichment', null))
+        await recordCost(buildCostRecord(usage, modelIdUsed, 'enrichment', null))
 
         let cleanText = text.trim();
         // Remove markdown code blocks if present
