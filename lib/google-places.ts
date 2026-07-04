@@ -17,6 +17,7 @@ export interface PlaceResult {
   rating?: number
   userRatingCount?: number
   websiteUri?: string
+  photos?: Array<{ name: string; widthPx: number; heightPx: number }>
 }
 
 export type DedupCallback = (placeIds: string[]) => Promise<Set<string>>
@@ -44,7 +45,7 @@ const PLACES_URL = 'https://places.googleapis.com/v1/places:searchText'
 
 /** Union of all fields needed by both discovery and lead-discovery. */
 const FIELD_MASK =
-  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,nextPageToken'
+  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,places.photos,nextPageToken'
 
 // -- fetchOnePage -----------------------------------------------------------
 
