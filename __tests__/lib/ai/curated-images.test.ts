@@ -25,4 +25,20 @@ describe('getCuratedFallbackImage', () => {
     }
     expect(seen.size).toBeGreaterThan(1)
   })
+
+  it('varies image within a category that previously had only one image (plumber)', () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 15; i++) {
+      seen.add(getCuratedFallbackImage('plumber', `biz-${i}`))
+    }
+    expect(seen.size).toBeGreaterThan(1)
+  })
+
+  it('varies image within the generic fallback pool for unknown categories', () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 15; i++) {
+      seen.add(getCuratedFallbackImage('unknown-category-xyz', `biz-${i}`))
+    }
+    expect(seen.size).toBeGreaterThan(1)
+  })
 })
