@@ -27,6 +27,7 @@ import { BatchProgress } from "./batch-progress"
 import { BatchReport } from "./batch-report"
 import { listDesignLanguages, type DesignLanguage } from "@/app/(admin)/dashboard/dls/actions"
 import { Palette } from "lucide-react"
+import { SYDNEY_SUBURBS } from "@/lib/au-suburbs"
 
 const STORAGE_KEY_INDUSTRIES = "webgen-industry-history"
 const STORAGE_KEY_LOCATIONS = "webgen-location-history"
@@ -83,6 +84,7 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
     const [location, setLocation] = useState("")
     const [industry, setIndustry] = useState("")
     const [entries, setEntries] = useState(10)
+    const [leadPool, setLeadPool] = useState<'website' | 'automation'>('website')
 
     // History
     const [industryHistory, setIndustryHistory] = useState<string[]>(DEFAULT_INDUSTRIES)
@@ -283,6 +285,7 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                     location: location.trim(),
                     industry,
                     entries,
+                    pool: leadPool,
                 }),
             })
 
@@ -307,7 +310,7 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
 
             setTimeout(() => {
                 onClose?.()
-                router.push("/dashboard/leads")
+                router.push(`/dashboard/leads?pool=${leadPool}`)
             }, 500)
         } catch (error) {
             setStatus({
@@ -415,6 +418,19 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                                 ))}
                             </div>
                         )}
+                        <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            <span className="text-[10px] text-zinc-400 uppercase tracking-wider">Sydney suburbs:</span>
+                            {SYDNEY_SUBURBS.map((suburb) => (
+                                <Badge
+                                    key={suburb}
+                                    variant="outline"
+                                    onClick={() => handleSelectLocation(suburb)}
+                                    className="cursor-pointer text-[10px] px-1.5 py-0 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+                                >
+                                    {suburb.replace(", NSW", "")}
+                                </Badge>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Industry Tag */}
@@ -640,6 +656,35 @@ export function DiscoverySearch({ embedded, onAutopilotStart, onClose }: Discove
                             {queryPreview}
                         </p>
                     )}
+
+                    {/* Lead pool toggle */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">Lead type:</span>
+                        <div className="inline-flex rounded-md border border-zinc-200 p-0.5 bg-zinc-50">
+                            <button
+                                type="button"
+                                onClick={() => setLeadPool("website")}
+                                aria-pressed={leadPool === "website"}
+                                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${leadPool === "website"
+                                    ? "bg-white text-zinc-900 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-700"
+                                    }`}
+                            >
+                                Websites (no site)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLeadPool("automation")}
+                                aria-pressed={leadPool === "automation"}
+                                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${leadPool === "automation"
+                                    ? "bg-white text-zinc-900 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-700"
+                                    }`}
+                            >
+                                AI Automation (has site)
+                            </button>
+                        </div>
+                    </div>
 
                     {/* Action row: Stop All (left) ... Get List + Generate Websites (right) */}
                     <AutopilotButton
