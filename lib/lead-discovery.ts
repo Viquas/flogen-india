@@ -101,7 +101,8 @@ export async function discoverLeads(config: LeadDiscoveryConfig): Promise<LeadDi
   const primaryQuery = `${config.query || config.industry} in ${config.location}`
   const pool = config.pool || 'website'
   // Automation pool needs businesses WITH websites, so never skip them.
-  const skipWithWebsite = pool === 'automation' ? false : (config.skipWithWebsite !== false)
+  // Website pool exists to sell websites → default to ONLY businesses without one.
+  const skipWithWebsite = pool === 'automation' ? false : (config.skipWithWebsite ?? true)
   const threshold = config.nicheScoreThreshold ?? DEFAULT_NICHE_SCORE_THRESHOLD
   const supabase = createAdminClient()
   const MAX_API_PAGES = 20

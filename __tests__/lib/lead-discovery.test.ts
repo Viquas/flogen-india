@@ -139,4 +139,42 @@ describe('discoverLeads pool=website (default, unchanged behavior)', () => {
     expect(insertedRows[0].niche_score).toBeNull()
     expect(auditWebsite).not.toHaveBeenCalled()
   })
+
+  it('defaults website pool to skipWithWebsite=true (only businesses without a site)', async () => {
+    const insertedRows: any[] = []
+    ;(createAdminClient as any).mockReturnValue(makeSupabaseMock(insertedRows))
+    let capturedSkip: boolean | undefined
+    ;(paginatedSearch as any).mockImplementation(async (cfg: any) => {
+      capturedSkip = cfg.skipWithWebsite
+      if (cfg.label !== 'Primary') return
+      cfg.counters.validPlaces.push({
+        id: 'place5', displayName: { text: 'No Website Barber' },
+        formattedAddress: '5 Test St', rating: 4.0, userRatingCount: 5,
+      })
+      cfg.counters.totalFetched = 1
+    })
+
+    await discoverLeads({ query: 'barber', location: 'Bondi, NSW', industry: 'barber', entries: 10 })
+
+    expect(capturedSkip).toBe(true)
+  })
+
+  it('honors an explicit skipWithWebsite=false override for the website pool', async () => {
+    const insertedRows: any[] = []
+    ;(createAdminClient as any).mockReturnValue(makeSupabaseMock(insertedRows))
+    let capturedSkip: boolean | undefined
+    ;(paginatedSearch as any).mockImplementation(async (cfg: any) => {
+      capturedSkip = cfg.skipWithWebsite
+      if (cfg.label !== 'Primary') return
+      cfg.counters.validPlaces.push({
+        id: 'place6', displayName: { text: 'Has Website Cafe' },
+        formattedAddress: '6 Test St', websiteUri: 'https://x.example', rating: 4.0, userRatingCount: 5,
+      })
+      cfg.counters.totalFetched = 1
+    })
+
+    await discoverLeads({ query: 'cafe', location: 'Newtown, NSW', industry: 'cafe', entries: 10, skipWithWebsite: false })
+
+    expect(capturedSkip).toBe(false)
+  })
 })

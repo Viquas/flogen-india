@@ -28,7 +28,9 @@ export async function POST(req: NextRequest) {
       location: location || '',
       industry: industry || '',
       entries: clampedEntries,
-      skipWithWebsite: skipWithWebsite === true, // default false for lead lists — include all businesses
+      // Pass through only an explicit boolean; undefined lets the pool-based default apply
+      // (website pool → skip businesses that already have a site).
+      skipWithWebsite: typeof skipWithWebsite === 'boolean' ? skipWithWebsite : undefined,
       pool: resolvedPool,
     })
 
