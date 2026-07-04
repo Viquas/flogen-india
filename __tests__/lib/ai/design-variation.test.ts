@@ -29,4 +29,14 @@ describe('pickDesignVariation', () => {
       expect(axes.length, `${niche} should have >=2 axes for real variation`).toBeGreaterThanOrEqual(2)
     }
   })
+
+  it('matches free-text discovery input (capitalization, plurals, location suffix) to a specific niche', () => {
+    // "Automotive" (capitalized) and "Plumbers Sydney" (plural + suffix) must resolve to
+    // their own axes, not collapse to the generic set — otherwise variation is inert on
+    // real operator input (the reviewer's category-matching concern).
+    expect(NICHE_DESIGN_AXES['automotive']).toBeDefined()
+    expect(NICHE_DESIGN_AXES['plumber']).toBeDefined()
+    expect(pickDesignVariation('Automotive', 'biz-1')).toEqual(pickDesignVariation('automotive', 'biz-1'))
+    expect(pickDesignVariation('Plumbers Sydney', 'biz-1')).toEqual(pickDesignVariation('plumber', 'biz-1'))
+  })
 })

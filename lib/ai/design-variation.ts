@@ -4,8 +4,6 @@
  * in the same discovery batch) by seeding the axis choice off the business ID.
  */
 
-import { normalizeNiche } from './niche-normalize'
-
 export interface DesignAxis {
   layoutArchetype: string
   typePairing: string
@@ -68,8 +66,22 @@ function hashString(input: string): number {
   return Math.abs(hash)
 }
 
+/**
+ * Match free-text discovery input ("Automotive", "Plumbers Sydney", "cafes") to a
+ * NICHE_DESIGN_AXES key via exact-then-substring matching, mirroring how
+ * lib/ai/image-registry.ts resolves industries. Unmatched → '' (→ GENERIC_AXES).
+ */
+function matchNicheKey(raw: string): string {
+  const s = (raw || '').trim().toLowerCase()
+  if (NICHE_DESIGN_AXES[s]) return s
+  for (const key of Object.keys(NICHE_DESIGN_AXES)) {
+    if (s.includes(key)) return key
+  }
+  return s
+}
+
 export function pickDesignVariation(niche: string, businessId: string): DesignAxis {
-  const axes = NICHE_DESIGN_AXES[normalizeNiche(niche)] || GENERIC_AXES
+  const axes = NICHE_DESIGN_AXES[matchNicheKey(niche)] || GENERIC_AXES
   const index = hashString(businessId) % axes.length
   return axes[index]
 }

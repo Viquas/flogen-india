@@ -14,11 +14,12 @@ import { CODE_GENERATOR_PROMPT } from './prompts/code-generator'
 import { logger } from '@/lib/logger'
 import { buildAuVoicePromptFragment } from './copy-voice'
 import { rankPhotos } from './photo-selection'
-import { getCuratedFallbackImage } from './curated-images'
 
 // Optional image/voice/design context for a single generation call.
-// businessId + category drive curated-fallback selection; placesPhotos + placesApiKey
-// enable ranking real Google Places photos for the hero image; suburb personalizes AU voice.
+// placesPhotos + placesApiKey enable ranking the business's OWN Google Places photos
+// as the preferred hero/gallery imagery; suburb personalizes AU voice. When no real
+// photos exist, the existing industry image system (image-registry/unsplash) supplies
+// imagery, so this context never has to fabricate a fallback.
 export interface GenerationImageContext {
   category: string
   businessId: string
@@ -40,14 +41,19 @@ export async function generateWebsiteCode(
 
     if (imageContext) {
         const voiceFragment = buildAuVoicePromptFragment(imageContext.suburb)
+        rulesSection += `\n\n${voiceFragment}`
+
+        // If we have the business's OWN photos (from Google Places), prefer them for
+        // hero/gallery. When absent, we intentionally fall through to the existing
+        // industry image system (lib/ai/image-registry + lib/ai/unsplash), already
+        // injected into the prompt below — we do NOT compete with it or fabricate a hero.
         const ranked = imageContext.placesPhotos && imageContext.placesApiKey
             ? rankPhotos(imageContext.placesPhotos, imageContext.placesApiKey)
             : []
-        const heroImageUrl = ranked.length > 0
-            ? ranked[0].url
-            : getCuratedFallbackImage(imageContext.category, imageContext.businessId)
-
-        rulesSection += `\n\n${voiceFragment}\n\n## HERO IMAGE (use this exact URL, do not invent your own)\n${heroImageUrl}`
+        if (ranked.length > 0) {
+            const list = ranked.slice(0, 5).map((p, i) => `${i + 1}. ${p.url}`).join('\n')
+            rulesSection += `\n\n## REAL BUSINESS PHOTOS (actual photos of this business — prefer these for the hero and gallery over any generic stock image)\n${list}`
+        }
     }
 
     let richData = businessData as unknown as { sections?: Record<string, unknown>[], brandIdentity?: Record<string, unknown>, $$manifest?: Record<string, unknown>, businessName?: string };
