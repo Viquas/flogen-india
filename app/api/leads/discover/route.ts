@@ -4,7 +4,7 @@ import { discoverLeads } from '@/lib/lead-discovery'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { query, location, industry, entries, skipWithWebsite } = body
+    const { query, location, industry, entries, skipWithWebsite, pool } = body
 
     // Validation: query or industry required
     if (!query && !industry) {
@@ -20,13 +20,30 @@ export async function POST(req: NextRequest) {
       100,
     )
 
+    // Resolve pool: only 'automation' stays as-is, everything else defaults to 'website'
+    const resolvedPool = pool === 'automation' ? 'automation' : 'website'
+
     const result = await discoverLeads({
       query: query || industry,
       location: location || '',
       industry: industry || '',
       entries: clampedEntries,
       skipWithWebsite: skipWithWebsite === true, // default false for lead lists — include all businesses
+      pool: resolvedPool,
     })
+
+    if (result.savedCount === 0 && result.reason) {
+      const message =
+        result.reason === 'out_of_niche'
+          ? 'No businesses in a supported automation niche were found for this search. Try a different industry or location.'
+          : 'Found businesses with websites, but none scored high enough for an automation pitch. Try a broader search or a different niche.'
+
+      return NextResponse.json({
+        success: false,
+        message,
+        savedCount: 0,
+      })
+    }
 
     return NextResponse.json({
       success: true,
@@ -34,6 +51,8 @@ export async function POST(req: NextRequest) {
       savedCount: result.savedCount,
       skippedCount: result.skippedCount,
       totalFetched: result.totalFetched,
+      pool: resolvedPool,
+      reason: result.reason ?? null,
     })
   } catch (error) {
     console.error('[LeadDiscovery] API error:', error)

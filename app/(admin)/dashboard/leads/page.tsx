@@ -5,7 +5,7 @@ import { format, parseISO, startOfDay, endOfDay } from 'date-fns'
 import { LeadsPageClient } from '@/components/dashboard/leads-page-client'
 
 interface LeadsPageProps {
-  searchParams: Promise<{ date?: string }>
+  searchParams: Promise<{ date?: string; pool?: string }>
 }
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
@@ -13,6 +13,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const today = new Date()
   const selectedDate = params.date || format(today, 'yyyy-MM-dd')
   const selectedDateObj = parseISO(selectedDate)
+  const selectedPool = params.pool === 'automation' ? 'automation' : 'website'
 
   const supabase = createAdminClient()
   const dayStart = startOfDay(selectedDateObj).toISOString()
@@ -34,6 +35,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       maps_url: string | null
       website: string | null
       raw_data: Record<string, unknown> | null
+      niche_score: number | null
+      pitch_angle: string | null
+      audit_signals: Record<string, unknown> | null
     }>
   }> = []
 
@@ -41,6 +45,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     const { data, error } = await supabase
       .from('lead_lists')
       .select('*')
+      .eq('pool', selectedPool)
       .gte('created_at', dayStart)
       .lte('created_at', dayEnd)
       .order('created_at', { ascending: false })
@@ -59,6 +64,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           maps_url: row.maps_url,
           website: row.website as string | null,
           raw_data: row.raw_data as Record<string, unknown> | null,
+          niche_score: row.niche_score,
+          pitch_angle: row.pitch_angle,
+          audit_signals: row.audit_signals as Record<string, unknown> | null,
         }
 
         const existing = batchMap.get(row.batch_id)
@@ -82,14 +90,14 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
       batches = Array.from(batchMap.values()).map((batch) => ({
         ...batch,
-        leads: batch.leads.sort((a, b) =>
-          a.business_name.localeCompare(b.business_name)
-        ),
+        leads: selectedPool === 'automation'
+          ? batch.leads.sort((a, b) => (b.niche_score || 0) - (a.niche_score || 0))
+          : batch.leads.sort((a, b) => a.business_name.localeCompare(b.business_name)),
       }))
     }
   } catch (e) {
     console.error('Error fetching lead lists:', e)
   }
 
-  return <LeadsPageClient batches={batches} selectedDate={selectedDate} />
+  return <LeadsPageClient batches={batches} selectedDate={selectedDate} selectedPool={selectedPool} />
 }

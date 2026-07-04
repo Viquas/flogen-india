@@ -24,6 +24,9 @@ interface LeadRow {
   maps_url: string | null
   website: string | null
   raw_data: Record<string, unknown> | null
+  niche_score: number | null
+  pitch_angle: string | null
+  audit_signals: Record<string, unknown> | null
 }
 
 type WebsiteFilter = 'all' | 'with-website' | 'without-website'
@@ -40,9 +43,10 @@ interface LeadBatch {
 interface LeadsPageClientProps {
   batches: LeadBatch[]
   selectedDate: string
+  selectedPool: 'website' | 'automation'
 }
 
-export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps) {
+export function LeadsPageClient({ batches, selectedDate, selectedPool }: LeadsPageClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -58,7 +62,13 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
   function handleDateChange(value: string) {
     setShowDatePicker(false)
     startTransition(() => {
-      router.push(`/dashboard/leads?date=${value}`)
+      router.push(`/dashboard/leads?date=${value}&pool=${selectedPool}`)
+    })
+  }
+
+  function handlePoolChange(pool: 'website' | 'automation') {
+    startTransition(() => {
+      router.push(`/dashboard/leads?date=${selectedDate}&pool=${pool}`)
     })
   }
 
@@ -135,6 +145,30 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
 
         {/* Filters */}
         <div className="flex items-center gap-2">
+          {/* Pool toggle */}
+          <div className="flex items-center gap-1 rounded-lg border p-1">
+            <button
+              onClick={() => handlePoolChange('website')}
+              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                selectedPool === 'website'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+              }`}
+            >
+              Website Leads
+            </button>
+            <button
+              onClick={() => handlePoolChange('automation')}
+              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                selectedPool === 'automation'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+              }`}
+            >
+              AI Automation Leads
+            </button>
+          </div>
+
           {/* Website filter */}
           <div className="relative">
             <select
@@ -201,6 +235,7 @@ export function LeadsPageClient({ batches, selectedDate }: LeadsPageClientProps)
                 onSelectLead={setSelectedLead}
                 onDownloadCSV={handleDownloadCSV}
                 generatedLeadIds={generatedLeadIds}
+                selectedPool={selectedPool}
               />
             ))}
           </div>
@@ -222,13 +257,19 @@ function BatchCard({
   onSelectLead,
   onDownloadCSV,
   generatedLeadIds,
+  selectedPool,
 }: {
   batch: LeadBatch
   onSelectLead: (lead: LeadRow) => void
   onDownloadCSV: (batch: LeadBatch) => void
   generatedLeadIds: Set<string>
+  selectedPool: 'website' | 'automation'
 }) {
   const batchTime = format(parseISO(batch.created_at), 'HH:mm')
+  const gridCols =
+    selectedPool === 'automation'
+      ? 'grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_0.7fr_0.5fr_1.2fr_1fr]'
+      : 'grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr]'
 
   return (
     <section className="rounded-lg border">
@@ -253,12 +294,19 @@ function BatchCard({
       </div>
 
       {/* Lead table header */}
-      <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-2 border-b px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className={`grid ${gridCols} gap-2 border-b px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider`}>
         <div>Company Name</div>
         <div>Phone</div>
         <div>Email</div>
         <div>Location</div>
         <div>Website</div>
+        {selectedPool === 'automation' && (
+          <>
+            <div>Score</div>
+            <div>Pitch Angle</div>
+            <div>Actions</div>
+          </>
+        )}
       </div>
 
       {/* Lead rows */}
@@ -266,7 +314,7 @@ function BatchCard({
         <div
           key={lead.id}
           onClick={() => onSelectLead(lead)}
-          className="grid grid-cols-[1.5fr_1fr_1fr_1fr_0.8fr] gap-2 border-b last:border-b-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+          className={`grid ${gridCols} gap-2 border-b last:border-b-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors`}
         >
           <div className="flex items-center gap-1.5 font-medium truncate">
             {generatedLeadIds.has(lead.id) && (
@@ -290,6 +338,44 @@ function BatchCard({
               <span className="text-xs text-zinc-400">No</span>
             )}
           </div>
+          {selectedPool === 'automation' && (
+            <>
+              <div className="font-medium truncate">
+                {lead.niche_score ?? '\u2014'}
+              </div>
+              <div
+                className="text-muted-foreground truncate"
+                title={lead.pitch_angle ?? ''}
+              >
+                {lead.pitch_angle ?? '\u2014'}
+              </div>
+              <div
+                className="flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {lead.phone && (
+                  <a
+                    href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                      `Hi ${lead.business_name}, ${lead.pitch_angle || "I'd love to chat about your website."}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-green-600 hover:underline"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+                {lead.email && (
+                  <a
+                    href={`mailto:${lead.email}?subject=${encodeURIComponent(`Quick idea for ${lead.business_name}`)}&body=${encodeURIComponent(lead.pitch_angle || '')}`}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Email
+                  </a>
+                )}
+              </div>
+            </>
+          )}
         </div>
       ))}
     </section>
