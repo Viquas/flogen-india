@@ -129,6 +129,7 @@ export async function discoverBusinesses(config: DiscoveryConfig): Promise<Disco
       internationalPhoneNumber: place.internationalPhoneNumber || null,
       nationalPhoneNumber: place.nationalPhoneNumber || null,
       industry: industryTerm,
+      photos: place.photos || null,
     } as any,
   }))
 

@@ -654,6 +654,10 @@ async function _generateAndSaveWebsiteInner(
             data = project.business_data as BusinessData
         }
 
+        // Capture Places photos from the ORIGINAL business_data before enrichment
+        // can overwrite `data` with a schema-validated object that drops `photos`.
+        const originalPlacesPhotos = (data as any)?.photos ?? undefined
+
         await supabase
             .from('projects')
             .update({ status: 'generating' as const })
@@ -819,7 +823,14 @@ Return the modified React code. Remember: modify the template code above, don't 
         // --- 2. GENERATION PHASE (Multi-Agent or Legacy) ---
         /* generation_phase removed */
 
-        const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined);
+        const imageContext = {
+            category: String((data as any)?.industry || (data as any)?.vibe?.industry || 'business'),
+            businessId: projectId,
+            placesPhotos: Array.isArray(originalPlacesPhotos) ? originalPlacesPhotos : undefined,
+            placesApiKey: process.env.GOOGLE_PLACES_API_KEY,
+            suburb: undefined,
+        }
+        const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined, undefined, imageContext);
 
         const code = typeof genResult === 'string' ? genResult : (genResult as { code: string; promptVersionId: string; dls?: string }).code
         const promptVersionId = typeof genResult === 'string' ? null : (genResult as { code: string; promptVersionId: string }).promptVersionId
