@@ -1,6 +1,7 @@
 import { openai, createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
 import { circuitBreaker } from './circuit-breaker'
+import { GEMINI_FLASH } from './model-ids'
 import { logger } from '@/lib/logger'
 
 const log = logger.ai.child('model-config')
@@ -39,7 +40,7 @@ function buildFallbackChain(): FallbackEntry[] {
     const chain: FallbackEntry[] = []
 
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        chain.push({ provider: 'google', modelId: 'gemini-2.5-flash-preview-05-20', available: true })
+        chain.push({ provider: 'google', modelId: GEMINI_FLASH, available: true })
     }
     if (process.env.OPENROUTER_API_KEY) {
         chain.push({ provider: 'openrouter', modelId: 'moonshotai/kimi-k2.5', available: true })

@@ -1,5 +1,6 @@
 import { reviseWebsite } from './revision'
 import { classifyError, getFixPromptForError, ErrorType } from './error-classifier'
+import { GEMINI_FLASH } from './model-ids'
 
 /**
  * Server-side validation of generated React code.
@@ -122,7 +123,7 @@ export async function validateAndAutoFix(
             code,
             businessData,
             undefined,
-            'gemini-2.5-flash-preview-05-20'
+            GEMINI_FLASH
         )
 
         const fixValidation = await validateGeneratedCode(fixedCode)
@@ -141,7 +142,7 @@ export async function validateAndAutoFix(
             fixedCode,
             businessData,
             undefined,
-            'gemini-2.5-flash-preview-05-20'
+            GEMINI_FLASH
         )
 
         const fix2Validation = await validateGeneratedCode(fixedCode2)

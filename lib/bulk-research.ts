@@ -10,6 +10,7 @@ import { fetchOnePage, requireApiKey, type PlaceResult } from '@/lib/google-plac
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createLogger } from '@/lib/logger'
 import { google } from '@ai-sdk/google'
+import { GEMINI_FLASH } from '@/lib/ai/model-ids'
 import { generateText } from 'ai'
 
 const log = createLogger('bulk-research')
@@ -97,7 +98,7 @@ Return a JSON object with these fields (use null for unknown):
 
 IMPORTANT: Return ONLY the JSON object, no markdown formatting, no code blocks.`
 
-  const model = google('gemini-2.5-flash-preview-05-20')
+  const model = google(GEMINI_FLASH)
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {

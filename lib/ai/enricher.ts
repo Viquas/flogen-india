@@ -3,6 +3,7 @@ import { openai, createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
 import { RichBusinessDataSchema, RichBusinessData } from '@/lib/schemas/rich-data'
 import { recordCost, buildCostRecord, getModelId } from './cost-tracker'
+import { GEMINI_FLASH } from './model-ids'
 
 // Configure OpenRouter if key is present (reusing logic from generator.ts essentially)
 const openrouter = createOpenAI({
@@ -14,7 +15,7 @@ const openrouter = createOpenAI({
 const getModel = () => {
     // Prefer Google Gemini Flash for structured data tasks (cost-effective)
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        return google('gemini-2.5-flash-preview-05-20')
+        return google(GEMINI_FLASH)
     }
     // Fallback to OpenAI
     if (process.env.OPENAI_API_KEY) {

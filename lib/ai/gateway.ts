@@ -8,7 +8,7 @@ const log = logger.ai.child('gateway')
 // Model pricing per 1M tokens (input/output)
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'gemini-3.1-pro-preview': { input: 1.25, output: 5.0 },
-  'gemini-2.5-flash-preview-05-20': { input: 0.15, output: 0.6 },
+  'gemini-2.5-flash': { input: 0.15, output: 0.6 },
   'gpt-4o': { input: 2.5, output: 10.0 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'o3': { input: 10.0, output: 40.0 },

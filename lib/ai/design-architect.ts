@@ -3,6 +3,7 @@ import { google } from '@ai-sdk/google'
 import { openai, createOpenAI } from '@ai-sdk/openai'
 import { DESIGN_ARCHITECT_PROMPT } from './prompts/design-architect'
 import { recordCost, buildCostRecord, getModelId, type CostRecord } from './cost-tracker'
+import { GEMINI_FLASH } from './model-ids'
 
 /**
  * Design Architect — Agent 1 of the multi-agent generation pipeline.
@@ -22,7 +23,7 @@ const openrouter = createOpenAI({
 
 function getDLSModel() {
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    return google('gemini-2.5-flash-preview-05-20')
+    return google(GEMINI_FLASH)
   }
   if (process.env.OPENAI_API_KEY) {
     return openai('gpt-4o')
