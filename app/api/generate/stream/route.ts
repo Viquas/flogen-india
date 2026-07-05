@@ -3,7 +3,7 @@ import { streamWebsiteCode } from '@/lib/ai/generator'
 import { BusinessDataSchema } from '@/lib/schemas/project'
 import { recordCost, buildCostRecord } from '@/lib/ai/cost-tracker'
 
-export const maxDuration = 300 // 5 minute timeout for streaming
+export const maxDuration = 800 // ~13 min (Vercel Pro) for streaming generation
 
 export async function POST(req: NextRequest) {
     try {
