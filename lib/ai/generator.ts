@@ -840,7 +840,7 @@ Return the modified React code. Remember: modify the template code above, don't 
         let knowledge: SelectedKnowledge | undefined
         try {
             knowledge = selectKnowledge(
-                String((data as any)?.industry || (data as any)?.vibe?.industry || 'business'),
+                String((data as any)?.industry || (data as any)?.brandIdentity?.vibe?.industry || 'business'),
                 projectId,
             )
         } catch (e) {
