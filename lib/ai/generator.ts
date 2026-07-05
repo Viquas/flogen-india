@@ -14,6 +14,7 @@ import { CODE_GENERATOR_PROMPT } from './prompts/code-generator'
 import { logger } from '@/lib/logger'
 import { buildAuVoicePromptFragment } from './copy-voice'
 import { rankPhotos } from './photo-selection'
+import { selectKnowledge, type SelectedKnowledge } from './design-knowledge'
 
 // Optional image/voice/design context for a single generation call.
 // placesPhotos + placesApiKey enable ranking the business's OWN Google Places photos
@@ -26,6 +27,7 @@ export interface GenerationImageContext {
   placesPhotos?: Array<{ name: string; widthPx: number; heightPx: number }>
   placesApiKey?: string
   suburb?: string
+  knowledge?: SelectedKnowledge
 }
 
 // Generate website code based on business data (Supports Multi-Agent, Monolithic, and Modular Sections)
@@ -55,6 +57,13 @@ export async function generateWebsiteCode(
             rulesSection += `\n\n## REAL BUSINESS PHOTOS (actual photos of this business — prefer these for the hero and gallery over any generic stock image)\n${list}`
         }
     }
+
+    // Section craft exemplars from the design-knowledge library. Injected into the DLS-mode
+    // and legacy monolithic prompts only (NOT the modular per-section loop, which would
+    // multiply token cost by re-sending the exemplar block on every section call).
+    const exemplarSection = imageContext?.knowledge?.exemplarBlock
+        ? '\n\n## QUALITY BAR — SECTION EXEMPLARS\nThe DLS names three section archetypes. These exemplars show the exact craft expected for them. Match their quality, structure, and boldness — adapted to THIS business\'s DLS values and content. Do not copy content verbatim.\n' + imageContext.knowledge.exemplarBlock
+        : ''
 
     let richData = businessData as unknown as { sections?: Record<string, unknown>[], brandIdentity?: Record<string, unknown>, $$manifest?: Record<string, unknown>, businessName?: string };
 
@@ -183,7 +192,11 @@ export default function GeneratedPage() {
             }
 
             if (!dls) {
-                const dlsResult = await generateDLS(richData as Record<string, unknown>, imageContext?.businessId ?? (richData as any)?.id ?? (businessData as any)?.id)
+                const dlsResult = await generateDLS(
+                    richData as Record<string, unknown>,
+                    imageContext?.businessId ?? (richData as any)?.id ?? (businessData as any)?.id,
+                    imageContext?.knowledge?.dlsBlock,
+                )
                 dls = dlsResult.dls
             }
 
@@ -224,6 +237,7 @@ export default function GeneratedPage() {
                 // Combine Code Generator prompt + DLS as system prompt
                 const dlsSystemPrompt = CODE_GENERATOR_PROMPT
                     + '\n\n## DESIGN LANGUAGE SPECIFICATION:\n' + dls
+                    + exemplarSection
                     + imageBlock
                     + rulesSection
 
@@ -380,7 +394,7 @@ ${fewShotBlock}
 Generate the code now.`
 
     const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
-        system: systemPromptContent + legacyImageBlock + rulesSection,
+        system: systemPromptContent + legacyImageBlock + rulesSection + exemplarSection,
         prompt: userPrompt,
     })
     // Track cost for monolithic generation
@@ -823,12 +837,22 @@ Return the modified React code. Remember: modify the template code above, don't 
         // --- 2. GENERATION PHASE (Multi-Agent or Legacy) ---
         /* generation_phase removed */
 
+        let knowledge: SelectedKnowledge | undefined
+        try {
+            knowledge = selectKnowledge(
+                String((data as any)?.industry || (data as any)?.vibe?.industry || 'business'),
+                projectId,
+            )
+        } catch (e) {
+            logger.ai.warn('design-knowledge unavailable, generating without it', { projectId, error: e instanceof Error ? e.message : String(e) })
+        }
         const imageContext = {
             category: String((data as any)?.industry || (data as any)?.vibe?.industry || 'business'),
             businessId: projectId,
             placesPhotos: Array.isArray(originalPlacesPhotos) ? originalPlacesPhotos : undefined,
             placesApiKey: process.env.GOOGLE_PLACES_API_KEY,
             suburb: undefined,
+            knowledge,
         }
         const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined, undefined, imageContext);
 

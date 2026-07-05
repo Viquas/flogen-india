@@ -54,6 +54,7 @@ export interface DLSResult {
 export async function generateDLS(
   businessData: Record<string, unknown>,
   businessId?: string,
+  knowledgeBlock?: string,
 ): Promise<DLSResult> {
   const brand = businessData.brandIdentity as Record<string, unknown> | undefined
   const vibe = (brand?.vibe as Record<string, unknown>) || {}
@@ -65,6 +66,10 @@ export async function generateDLS(
   const variation: DesignAxis | null = businessId ? pickDesignVariation(industry, businessId) : null
   const variationSection = variation
     ? `\n## DESIGN VARIATION (apply these specific choices to avoid template repetition)\n- **Layout archetype:** ${variation.layoutArchetype}\n- **Type pairing:** ${variation.typePairing}\n- **Palette source:** ${variation.paletteSource === 'photo' ? 'Derive accent colors from the business photo palette if available' : 'Use the industry default palette below'}\n`
+    : ''
+
+  const knowledgeSection = knowledgeBlock
+    ? `\n## DESIGN KNOWLEDGE (BINDING)\nThe following curated design knowledge is BINDING for this DLS. The three archetype documents below are the chosen section treatments: your DLS MUST name them (hero/services/social-proof), and resolve every visual value to comply with their Craft rules. "Craft Core" bans override everything, including the aesthetic direction system and the design variation above. Where the design variation above conflicts with an archetype, the archetype wins.\n\n${knowledgeBlock}\n`
     : ''
 
   // Build a focused context prompt with just the data the Design Architect needs
@@ -81,6 +86,7 @@ export async function generateDLS(
 - **Visual Cues to USE:** ${((vibe?.visualCues as string[]) || []).join(', ') || 'none specified'}
 - **Visual Cues to AVOID:** ${((vibe?.avoidCues as string[]) || []).join(', ') || 'none specified'}
 ${variationSection}
+${knowledgeSection}
 ## Brand Personality
 - **Primary:** ${(voice?.personality as Record<string, unknown>)?.primary || 'Professional'}
 - **Secondary:** ${(voice?.personality as Record<string, unknown>)?.secondary || 'Modern'}
