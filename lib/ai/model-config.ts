@@ -37,7 +37,7 @@ interface FallbackEntry {
 /**
  * Build the ordered fallback chain based on available API keys.
  */
-function buildFallbackChain(): FallbackEntry[] {
+export function buildFallbackChain(): FallbackEntry[] {
     const chain: FallbackEntry[] = []
 
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
@@ -46,7 +46,9 @@ function buildFallbackChain(): FallbackEntry[] {
     if (process.env.OPENROUTER_API_KEY) {
         chain.push({ provider: 'openrouter', modelId: 'moonshotai/kimi-k2.5', available: true })
     }
-    chain.push({ provider: 'openai', modelId: 'o3', available: !!process.env.OPENAI_API_KEY })
+    // Cost-guard: never fall back to o3 (~₹50/site). gpt-4o-mini is the
+    // cheap OpenAI terminus (~same price class as Gemini Flash).
+    chain.push({ provider: 'openai', modelId: 'gpt-4o-mini', available: !!process.env.OPENAI_API_KEY })
 
     return chain
 }
@@ -159,6 +161,6 @@ export const getModel = (modelId?: string) => {
     }
 
     // Absolute last resort (shouldn't happen if at least one key is configured)
-    log.error('No available providers, returning openai o3 as last resort')
-    return openai('o3')
+    log.error('No available providers, returning openai gpt-4o-mini as last resort')
+    return openai('gpt-4o-mini')
 }
