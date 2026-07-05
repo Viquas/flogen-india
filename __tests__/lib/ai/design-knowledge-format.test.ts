@@ -32,4 +32,17 @@ describe('design-knowledge file format', () => {
       expect(len, `${f} is ${len} chars`).toBeLessThanOrEqual(9000)
     }
   })
+
+  it('every niche file has the 5 required sections and stays under 3500 chars', () => {
+    const dir = path.join(ROOT, 'niches')
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'))
+    expect(files.length).toBe(7)
+    for (const f of files) {
+      const text = fs.readFileSync(path.join(dir, f), 'utf8')
+      for (const h of ['## Energy', '## Palette direction', '## Type direction', '## Photo treatment', '## Copy attitude']) {
+        expect(text, `${f} missing ${h}`).toContain(h)
+      }
+      expect(text.length, `${f} too long`).toBeLessThanOrEqual(3500)
+    }
+  })
 })
