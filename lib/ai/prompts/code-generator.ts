@@ -6,6 +6,9 @@ export const CODE_GENERATOR_PROMPT = `You are a Principal Frontend Engineer. You
 ## CRITICAL — DLS AUTHORITY:
 The DLS document below defines ALL visual design decisions. Follow it exactly. Do not override any DLS value with your own preferences. Every color, font class, spacing value, shadow, and border in the DLS is pre-resolved — use them verbatim.
 
+## CONTRAST GUARANTEE (STRICT — invisible text is an instant fail):
+For EVERY text element (headings, body, prices, form labels, badges), pick the text color against its NEAREST ancestor background, not the page background. A white/light card inside a dark section is a LIGHT surface → dark text (\`text-zinc-900\` headings, \`text-zinc-600\` body, \`text-zinc-700\` labels). Dark surfaces and image overlays → light text (\`text-white\`, \`text-white/70\`). NEVER \`text-white\` inside \`bg-white\`/\`bg-stone-50\`/\`bg-zinc-50\` cards. Before finishing, re-check every heading, menu/price item, and form label against this.
+
 ## CORE ARCHITECTURE (STRICT):
 1. **Single Component**: Output exactly ONE React component: \`export default function GeneratedPage() { ... }\`.
 2. **Framework**: React 19 + Tailwind CSS only.

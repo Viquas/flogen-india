@@ -3,7 +3,7 @@ import { rankPhotos, buildPhotoMediaUrl } from '@/lib/ai/photo-selection'
 
 describe('rankPhotos', () => {
   it('returns an empty array for no photos', () => {
-    expect(rankPhotos([], 'fake-key')).toEqual([])
+    expect(rankPhotos([])).toEqual([])
   })
 
   it('ranks higher-resolution photos first', () => {
@@ -11,7 +11,7 @@ describe('rankPhotos', () => {
       { name: 'places/1/photos/low', widthPx: 400, heightPx: 300 },
       { name: 'places/1/photos/high', widthPx: 4000, heightPx: 3000 },
     ]
-    const result = rankPhotos(photos, 'fake-key')
+    const result = rankPhotos(photos)
     expect(result[0].url).toContain('high')
   })
 
@@ -20,7 +20,7 @@ describe('rankPhotos', () => {
       { name: 'places/1/photos/portrait', widthPx: 1200, heightPx: 1600 },
       { name: 'places/1/photos/landscape', widthPx: 1600, heightPx: 1200 },
     ]
-    const result = rankPhotos(photos, 'fake-key')
+    const result = rankPhotos(photos)
     expect(result[0].url).toContain('landscape')
   })
 
@@ -29,22 +29,27 @@ describe('rankPhotos', () => {
       { name: 'places/1/photos/tiny', widthPx: 200, heightPx: 150 },
       { name: 'places/1/photos/good', widthPx: 1200, heightPx: 900 },
     ]
-    const result = rankPhotos(photos, 'fake-key')
+    const result = rankPhotos(photos)
     expect(result.length).toBe(1)
     expect(result[0].url).toContain('good')
   })
 })
 
-describe('buildPhotoMediaUrl', () => {
-  it('builds a valid Places Photo Media API URL', () => {
-    const url = buildPhotoMediaUrl('places/abc123/photos/xyz', 'fake-key', 1200)
-    expect(url).toContain('places/abc123/photos/xyz/media')
-    expect(url).toContain('key=fake-key')
-    expect(url).toContain('maxWidthPx=1200')
+describe('buildPhotoMediaUrl (proxy URLs — never expose the Places API key)', () => {
+  it('builds a proxy URL with the encoded photo name and width', () => {
+    const url = buildPhotoMediaUrl('places/abc123/photos/xyz', 1200)
+    expect(url).toContain('/api/photos?name=places%2Fabc123%2Fphotos%2Fxyz')
+    expect(url).toContain('w=1200')
   })
 
-  it('defaults maxWidthPx to 1600 when not provided', () => {
-    const url = buildPhotoMediaUrl('places/abc123/photos/xyz', 'fake-key')
-    expect(url).toContain('maxWidthPx=1600')
+  it('defaults width to 1600 when not provided', () => {
+    const url = buildPhotoMediaUrl('places/abc123/photos/xyz')
+    expect(url).toContain('w=1600')
+  })
+
+  it('never embeds an API key in the URL', () => {
+    const url = buildPhotoMediaUrl('places/abc123/photos/xyz')
+    expect(url).not.toContain('key=')
+    expect(url).not.toContain('googleapis.com')
   })
 })

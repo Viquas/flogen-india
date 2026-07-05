@@ -49,12 +49,14 @@ export async function generateWebsiteCode(
         // hero/gallery. When absent, we intentionally fall through to the existing
         // industry image system (lib/ai/image-registry + lib/ai/unsplash), already
         // injected into the prompt below — we do NOT compete with it or fabricate a hero.
-        const ranked = imageContext.placesPhotos && imageContext.placesApiKey
-            ? rankPhotos(imageContext.placesPhotos, imageContext.placesApiKey)
+        const ranked = imageContext.placesPhotos
+            ? rankPhotos(imageContext.placesPhotos)
             : []
         if (ranked.length > 0) {
-            const list = ranked.slice(0, 5).map((p, i) => `${i + 1}. ${p.url}`).join('\n')
-            rulesSection += `\n\n## REAL BUSINESS PHOTOS (actual photos of this business — prefer these for the hero and gallery over any generic stock image)\n${list}`
+            const list = ranked.slice(0, 6).map((p, i) => `${i + 1}. ${p.url} (${p.widthPx}x${p.heightPx})`).join('\n')
+            rulesSection += `\n\n## REAL BUSINESS PHOTOS (actual photos of THIS business — these beat any stock image)
+Use photo #1 for the hero. Spread at least 2-3 of the remaining photos across the page (about section, gallery/collage, menu/service imagery) so the site unmistakably shows THEIR business, not stock. Only fall back to stock imagery for slots these photos can't cover.
+${list}`
         }
     }
 
@@ -821,6 +823,14 @@ Return the modified React code. Remember: modify the template code above, don't 
                 activeRules = activeRulesStr;
 
                 const enriched = await enrichBusinessData(data, activeRulesStr);
+
+                // Preserve the business's real Google Places photos across enrichment.
+                // The enrichment schema drops unknown fields; without this, the photos
+                // are lost on the first save and every retry/regeneration permanently
+                // falls back to stock imagery instead of the client's own photos.
+                if (Array.isArray(originalPlacesPhotos) && originalPlacesPhotos.length > 0) {
+                    (enriched as any).photos = originalPlacesPhotos
+                }
 
                 await supabase
                     .from('projects')

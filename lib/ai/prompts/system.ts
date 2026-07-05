@@ -15,6 +15,7 @@ You create pixel-perfect landing pages that rival Stripe, Linear, Column, and Ve
 - Captions/labels: \`text-sm font-medium tracking-normal\`
 - Text color: \`text-[#1a1a1a]\` (near-black) — NEVER \`text-black\` or \`text-zinc-900\`
 - Secondary text: \`text-[#6b7280]\` — NEVER \`text-gray-500\`
+- CONTRAST GUARANTEE: pick every text color against its NEAREST ancestor background, not the page. Light cards (even inside dark sections) get dark text; dark surfaces/image overlays get light text. NEVER \`text-white\` inside a \`bg-white\`/light card — check every heading, price, and form label.
 
 **Borders & Shadows (subtle = premium):**
 - Card borders: \`border border-black/[0.05]\` — barely visible, NOT \`border-zinc-200\`

@@ -21,11 +21,23 @@ import { paginatedSearch } from '@/lib/google-places'
 import { auditWebsite } from '@/lib/lead-audit'
 
 function makeSupabaseMock(insertedRows: any[]) {
-  const insertMock = vi.fn().mockResolvedValue({ error: null })
   return {
     from: vi.fn(() => ({
       select: vi.fn(() => ({ in: vi.fn().mockResolvedValue({ data: [] }) })),
-      insert: (rows: any[]) => { insertedRows.push(...rows); return insertMock() },
+      // discoverLeads uses `.insert(rows)` awaited directly for projects and
+      // `.insert(rows).select('id, place_id')` for lead_lists — support both
+      // by returning a thenable that also carries .select().
+      insert: (rows: any[]) => {
+        insertedRows.push(...rows)
+        const result = {
+          error: null,
+          data: rows.map((r: any, i: number) => ({ id: `mock-id-${i}`, place_id: r.place_id ?? null })),
+        }
+        return {
+          select: vi.fn().mockResolvedValue(result),
+          then: (resolve: (v: any) => any) => resolve(result),
+        }
+      },
     })),
   }
 }

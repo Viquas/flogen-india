@@ -8,6 +8,12 @@ These rules override everything else, including niche files and archetype defaul
 - Create scale CONTRAST: if display is 7rem, body stays `text-base`/`text-lg`. The jump is the drama.
 - One display face + one text face maximum. Use the configured font variables (`font-heading`, `font-elegant`, `font-tech`, `font-sans`).
 
+## Contrast guarantee (hard rule — invisible text is an instant fail)
+- Every text element's color is chosen against its NEAREST background, not the page background. A white card inside a dark section is a LIGHT surface: its text must be dark (`text-zinc-900` headings, `text-zinc-600` body). Text on dark surfaces (`bg-zinc-950`, accent blocks, image overlays) must be light (`text-white` / `text-white/70`).
+- BANNED: `text-white` or `text-white/xx` anywhere inside a `bg-white`, `bg-stone-50`, `bg-zinc-50`, or other light card/surface — including headings, prices, and form labels.
+- The DLS MUST specify text-color PAIRS for every surface it defines (surface background → heading color + body color), so the code generator never guesses.
+- Form labels and input text always get an explicit readable color (`text-zinc-700` on light, `text-zinc-300` on dark) — never inherit.
+
 ## Layout (asymmetry = craft)
 - BANNED: three identical cards in a row; every section centered; every section the same width; uniform `py-24` rhythm on all sections.
 - At least one section must break the container (full-bleed color or image).
