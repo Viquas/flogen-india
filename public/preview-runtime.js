@@ -450,8 +450,12 @@
         var codeDataEl = document.getElementById('user-code-data');
         var userCode = JSON.parse(codeDataEl.textContent);
 
-        // Scan for uppercase identifiers → populate window globals
-        var identPattern = /[<{\\s,(]([A-Z][a-zA-Z0-9]*)/g;
+        // Scan for uppercase identifiers → populate window globals.
+        // Word-boundary match catches component/icon references ANYWHERE
+        // (JSX <Gauge/>, arrays [Gauge], object values { icon: Gauge }, etc.).
+        // The old char-class regex missed whitespace-preceded names, so a single
+        // uncommon lucide icon (e.g. Gauge) would be undefined and blank the page.
+        var identPattern = /\b([A-Z][a-zA-Z0-9]*)/g;
         var match; var seen = {};
         while ((match = identPattern.exec(userCode)) !== null) {
           var name = match[1];
@@ -481,10 +485,12 @@
 
         var result = Babel.transform(fullCode, {
           presets: [
-            ['env', { targets: { esmodules: true }, modules: false, bugfixes: true }],
             ['react', { runtime: 'classic' }],
-            ['typescript', { isTSX: true, allExtensions: true }]
+            'typescript'
           ],
+          // TSX/JSX is detected from the .tsx filename (preset-typescript default),
+          // so no removed isTSX/allExtensions options are needed. Dropped preset-env:
+          // the iframe targets a modern browser, so JSX + TS stripping is all we need.
           filename: 'generated.tsx',
           configFile: false,
           babelrc: false

@@ -82,7 +82,7 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
   <script src="https://cdn.tailwindcss.com"><\/script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"><\/script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"><\/script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"><\/script>
+  <script src="https://unpkg.com/@babel/standalone@8.0.3/babel.min.js" crossorigin="anonymous"><\/script>
   <script src="https://unpkg.com/lucide-react@0.475.0/dist/umd/lucide-react.js" crossorigin="anonymous"><\/script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" />
