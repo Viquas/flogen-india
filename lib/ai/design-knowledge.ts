@@ -84,7 +84,11 @@ function stripWhenToUse(text: string): string {
   return text.replace(/## When to use[\s\S]*?(?=## )/, '')
 }
 
-export function selectKnowledge(niche: string, businessId: string): SelectedKnowledge {
+export function selectKnowledge(
+  niche: string,
+  businessId: string,
+  maxChars: number = CEILING_CHARS
+): SelectedKnowledge {
   const lib = loadLibrary()
   const h = hashString(businessId)
   const pick = (keys: string[], shift: number) => keys[(h >> shift) % keys.length]
@@ -94,7 +98,8 @@ export function selectKnowledge(niche: string, businessId: string): SelectedKnow
   const socialProof = pick(lib.socialProofKeys, 6)
   const nicheFile = resolveNicheFile(niche, lib.niches)
 
-  const selected = [lib.archetypes[hero], lib.archetypes[services], lib.archetypes[socialProof]]
+  const archetypeNames = [hero, services, socialProof]
+  const selected = archetypeNames.map(name => lib.archetypes[name])
 
   let dlsBlock = [
     lib.craftCore,
@@ -104,7 +109,7 @@ export function selectKnowledge(niche: string, businessId: string): SelectedKnow
   ].join('\n\n---\n\n')
 
   // Token ceiling: drop "When to use" prose first, then trim the niche file.
-  if (dlsBlock.length > CEILING_CHARS) {
+  if (dlsBlock.length > maxChars) {
     dlsBlock = [
       lib.craftCore,
       lib.niches[nicheFile],
@@ -112,14 +117,21 @@ export function selectKnowledge(niche: string, businessId: string): SelectedKnow
       lib.misc,
     ].join('\n\n---\n\n')
   }
-  if (dlsBlock.length > CEILING_CHARS) {
-    const over = dlsBlock.length - CEILING_CHARS
+  if (dlsBlock.length > maxChars) {
+    const over = dlsBlock.length - maxChars
     const trimmedNiche = lib.niches[nicheFile].slice(0, Math.max(0, lib.niches[nicheFile].length - over))
     dlsBlock = [lib.craftCore, trimmedNiche, ...selected.map(stripWhenToUse), lib.misc].join('\n\n---\n\n')
   }
 
   const exemplarBlock = selected
-    .map((t, i) => `### Exemplar: ${[hero, services, socialProof][i]}\n${extractExemplar(t)}`)
+    .map((t, i) => {
+      const name = archetypeNames[i]
+      const exemplar = extractExemplar(t)
+      if (!exemplar) {
+        throw new Error(`design-knowledge: archetype ${name} has no tsx exemplar fence`)
+      }
+      return `### Exemplar: ${name}\n${exemplar}`
+    })
     .join('\n\n')
 
   return { archetypes: { hero, services, socialProof }, dlsBlock, exemplarBlock }

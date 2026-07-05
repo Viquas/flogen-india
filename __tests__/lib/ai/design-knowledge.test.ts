@@ -52,4 +52,15 @@ describe('selectKnowledge', () => {
       expect(selectKnowledge('restaurant', `biz-${i}`).dlsBlock.length).toBeLessThanOrEqual(32000)
     }
   })
+
+  it('reduces the block when it exceeds the ceiling (drops When-to-use, keeps exemplars)', () => {
+    const full = selectKnowledge('automotive', 'biz-ceiling')
+    const reduced = selectKnowledge('automotive', 'biz-ceiling', 4000)
+    // reduction fired: the reduced block is strictly shorter (When-to-use sections dropped, niche trimmed)
+    expect(reduced.dlsBlock.length).toBeLessThan(full.dlsBlock.length)
+    // reduction must NOT be achieved by dropping exemplar code — the 3 exemplar tsx fences stay intact in exemplarBlock
+    expect((reduced.exemplarBlock.match(/```tsx/g) || []).length).toBe(3)
+    // 'When to use' prose removed from the dls block under reduction
+    expect(reduced.dlsBlock).not.toContain('## When to use')
+  })
 })

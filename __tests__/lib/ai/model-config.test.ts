@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 describe('buildFallbackChain cost-guard', () => {
   beforeEach(() => {
@@ -6,6 +6,12 @@ describe('buildFallbackChain cost-guard', () => {
     process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'fake'
     process.env.OPENROUTER_API_KEY = 'fake'
     process.env.OPENAI_API_KEY = 'fake'
+  })
+
+  afterEach(() => {
+    delete process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    delete process.env.OPENROUTER_API_KEY
+    delete process.env.OPENAI_API_KEY
   })
 
   it('never includes o3 (cost-guard: worst-case fallback must stay cheap)', async () => {
