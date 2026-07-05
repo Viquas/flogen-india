@@ -79,7 +79,7 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview</title>
-  <script src="https://cdn.tailwindcss.com"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"><\/script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"><\/script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"><\/script>
   <script src="https://unpkg.com/@babel/standalone@8.0.3/babel.min.js" crossorigin="anonymous"><\/script>
@@ -92,20 +92,14 @@ export function constructHtmlBoilerplate(code: string, options?: { runtimeUrl?: 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Inter"', 'sans-serif'],
-            heading: ['"Outfit"', 'sans-serif'],
-            elegant: ['"Playfair Display"', 'serif'],
-            tech: ['"Space Grotesk"', 'sans-serif'],
-          }
-        }
-      }
+  <style type="text/tailwindcss">
+    @theme {
+      --font-sans: "Inter", sans-serif;
+      --font-heading: "Outfit", sans-serif;
+      --font-elegant: "Playfair Display", serif;
+      --font-tech: "Space Grotesk", sans-serif;
     }
-  <\/script>
+  <\/style>
   
   <style>
     *, *::before, *::after { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
