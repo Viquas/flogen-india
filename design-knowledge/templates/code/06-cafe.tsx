@@ -1,4 +1,6 @@
-import { MapPin, Phone, Star, Quote } from "lucide-react"
+import { useState, useEffect } from "react"
+import { MapPin, Phone, Star, Quote, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
   const businessName = "Fernback Coffee"
@@ -40,7 +42,19 @@ export default function GeneratedPage() {
       caption: "SUNDAY CROWD",
       h: "h-[300px]",
     },
+    {
+      src: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=900",
+      caption: "SUNNY CORNER",
+      h: "h-[340px]",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&q=80&w=900",
+      caption: "THE COFFEE BAR",
+      h: "h-[300px]",
+    },
   ]
+
+  const galleryPhotos = [heroPhoto, ...scrollPhotos.map((p) => p.src)]
 
   const favourites = [
     {
@@ -74,6 +88,29 @@ export default function GeneratedPage() {
     name: "Priya",
     since: "2021",
   }
+
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  const showPrev = () =>
+    setLightboxIndex((i) => (i - 1 + galleryPhotos.length) % galleryPhotos.length)
+  const showNext = () => setLightboxIndex((i) => (i + 1) % galleryPhotos.length)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") showPrev()
+      if (e.key === "ArrowRight") showNext()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen])
 
   return (
     <div className="bg-[#FFFDF9] font-sans">
@@ -153,15 +190,16 @@ export default function GeneratedPage() {
             THE FEED, IN PERSON
           </p>
           <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 md:mx-0 md:px-0">
-            {scrollPhotos.map((photo) => (
+            {scrollPhotos.map((photo, index) => (
               <div
                 key={photo.caption}
-                className="shrink-0 w-[220px] md:w-[280px] snap-start flex flex-col gap-3"
+                className="shrink-0 w-[220px] md:w-[280px] snap-start flex flex-col gap-3 cursor-pointer group"
+                onClick={() => openLightbox(index + 1)}
               >
                 <img
                   src={photo.src}
                   alt={`${photo.caption.toLowerCase()} at ${businessName}`}
-                  className={`w-full ${photo.h} object-cover rounded-2xl`}
+                  className={`w-full ${photo.h} object-cover rounded-2xl transition-all duration-300 group-hover:scale-[1.03] group-hover:opacity-90`}
                 />
                 <span className="font-mono text-xs tracking-[0.15em] text-[#78716C]">
                   {photo.caption}
@@ -295,6 +333,47 @@ export default function GeneratedPage() {
         <span className="font-heading font-medium text-base text-[#292524]">{businessName}</span>
         <span className="text-sm text-[#78716C]">{formattedAddress}</span>
       </footer>
+
+      {/* Photo lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={galleryPhotos[lightboxIndex]}
+            alt={`${businessName} gallery photo ${lightboxIndex + 1}`}
+            className="w-full h-full max-h-[85vh] object-contain rounded-2xl"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close gallery"
+            className="absolute top-4 right-4 flex items-center justify-center size-10 rounded-full bg-[#292524]/70 text-[#FFFDF9] hover:bg-[#C65D3B] transition-all duration-300"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={showPrev}
+            aria-label="Previous photo"
+            className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-full bg-[#292524]/70 text-[#FFFDF9] hover:bg-[#C65D3B] transition-all duration-300"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Next photo"
+            className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-full bg-[#292524]/70 text-[#FFFDF9] hover:bg-[#C65D3B] transition-all duration-300"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-xs tracking-[0.15em] text-[#FFFDF9] bg-[#292524]/70 rounded-full px-4 py-2">
+            {lightboxIndex + 1} / {galleryPhotos.length}
+          </span>
+        </div>
+      </Dialog>
     </div>
   )
 }
