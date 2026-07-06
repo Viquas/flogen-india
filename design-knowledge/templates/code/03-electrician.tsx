@@ -148,7 +148,7 @@ export default function GeneratedPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 items-center max-w-6xl mx-auto">
           <div className="md:col-span-7">
             <Eyebrow>Licensed electrician — {suburb}</Eyebrow>
-            <h1 className="font-heading font-bold text-[clamp(3rem,8vw,7rem)] tracking-[-0.04em] leading-[0.95] text-[#FAFAF9]">
+            <h1 className="font-heading font-medium text-[clamp(3rem,8vw,7rem)] tracking-[-0.04em] leading-[0.95] text-[#FAFAF9]">
               Power, done
               <br />
               properly.
@@ -235,7 +235,7 @@ export default function GeneratedPage() {
                   </div>
                   {service.emergency && (
                     <div className="relative z-10 mt-6 flex items-center gap-4">
-                      <span className="font-heading font-bold text-[clamp(2.5rem,5vw,3.5rem)] leading-none tracking-[-0.03em] text-[#A3E635]">
+                      <span className="font-heading font-medium text-[clamp(2.5rem,5vw,3.5rem)] leading-none tracking-[-0.03em] text-[#A3E635]">
                         24/7
                       </span>
                       <span className="text-sm text-[#A1A1AA] max-w-[10rem]">
@@ -263,7 +263,7 @@ export default function GeneratedPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
             <div>
-              <p className="font-heading font-bold text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
                 {rating}★
               </p>
               <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
@@ -272,7 +272,7 @@ export default function GeneratedPage() {
               </p>
             </div>
             <div>
-              <p className="font-heading font-bold text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
                 Licensed
               </p>
               <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
@@ -281,7 +281,7 @@ export default function GeneratedPage() {
               </p>
             </div>
             <div>
-              <p className="font-heading font-bold text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
                 Upfront
               </p>
               <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
@@ -339,12 +339,12 @@ export default function GeneratedPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-10 max-w-5xl mx-auto">
           <div className="md:col-span-6">
             <Eyebrow>Get in touch</Eyebrow>
-            <h2 className="font-heading font-bold text-[clamp(2.5rem,6vw,4.5rem)] tracking-[-0.04em] leading-[0.95] text-[#FAFAF9]">
+            <h2 className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] tracking-[-0.04em] leading-[0.95] text-[#FAFAF9]">
               Get it wired right.
             </h2>
             <a
               href={telHref}
-              className="mt-8 inline-block font-heading font-bold text-[clamp(2rem,5vw,3.5rem)] tracking-[-0.03em] leading-none text-[#A3E635] transition-all duration-300 hover:opacity-80"
+              className="mt-8 inline-block font-heading font-medium text-[clamp(2rem,5vw,3.5rem)] tracking-[-0.03em] leading-none text-[#A3E635] transition-all duration-300 hover:opacity-80"
             >
               {phone}
             </a>

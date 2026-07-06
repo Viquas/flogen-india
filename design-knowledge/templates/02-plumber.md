@@ -10,7 +10,7 @@ Urgency engineered into design: someone with a burst pipe decides in five second
 - Accent (CTA/highlights): `#FACC15` (high-vis yellow — buttons, phone number, tape stripes)
 
 ## Typography
-- Display: `font-heading` — hero `text-[clamp(3rem,8vw,7rem)]`, `tracking-[-0.04em]`, `leading-[0.95]`, `font-bold`
+- Display: `font-heading` — hero `text-[clamp(3rem,8vw,7rem)]`, `tracking-[-0.04em]`, `leading-[0.95]`, `font-medium`
 - Text: `font-sans` — body `text-base`/`text-lg`
 
 ## Sections (in order)

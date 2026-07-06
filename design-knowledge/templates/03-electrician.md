@@ -10,7 +10,7 @@ Dark-mode precision: an electrician's site that feels like well-organised switch
 - Accent (CTA/highlights): `#A3E635` (volt lime — CTAs, live indicators, index labels)
 
 ## Typography
-- Display: `font-heading` — hero `text-[clamp(3rem,8vw,7rem)]`, `tracking-[-0.04em]`, `leading-[0.95]`, `font-bold`
+- Display: `font-heading` — hero `text-[clamp(3rem,8vw,7rem)]`, `tracking-[-0.04em]`, `leading-[0.95]`, `font-medium`
 - Text: `font-sans` — body; mono labels in `font-tech` `text-xs tracking-[0.2em] uppercase`
 
 ## Sections (in order)

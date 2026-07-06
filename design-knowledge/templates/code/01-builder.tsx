@@ -67,7 +67,7 @@ export default function GeneratedPage() {
         <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#C2410C] mb-6">
           {suburb}, Sydney — Est. builders of the Inner West
         </p>
-        <h1 className="font-heading font-bold text-[clamp(3.5rem,9vw,8rem)] leading-[0.9] tracking-[-0.04em] text-[#171412] max-w-5xl">
+        <h1 className="font-heading font-medium text-[clamp(3.5rem,9vw,8rem)] leading-[0.9] tracking-[-0.04em] text-[#171412] max-w-5xl">
           Quality builds.
           <br />
           No shortcuts.
@@ -88,19 +88,19 @@ export default function GeneratedPage() {
       <section className="bg-[#171412] px-6 md:px-10 py-16 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto text-center md:text-left">
           <div>
-            <p className="font-heading font-bold text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
+            <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
               {rating}
             </p>
             <p className="mt-3 text-sm text-[#A8A29E]">Average client rating</p>
           </div>
           <div>
-            <p className="font-heading font-bold text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
+            <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
               {reviews}
             </p>
             <p className="mt-3 text-sm text-[#A8A29E]">From homeowners across Sydney's Inner West</p>
           </div>
           <div>
-            <p className="font-heading font-bold text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
+            <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
               Licensed
               <span className="text-[#C2410C]">.</span>
             </p>
@@ -188,7 +188,7 @@ export default function GeneratedPage() {
       <section className="bg-[#171412] px-6 md:px-10 py-24 md:py-32">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
           <div className="md:col-span-7">
-            <h2 className="font-heading font-bold text-[clamp(3rem,7vw,6rem)] leading-[0.95] tracking-[-0.04em] text-[#FAF9F7]">
+            <h2 className="font-heading font-medium text-[clamp(3rem,7vw,6rem)] leading-[0.95] tracking-[-0.04em] text-[#FAF9F7]">
               Let's build.
             </h2>
             <a

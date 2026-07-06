@@ -10,7 +10,7 @@ An architectural portfolio site, not a tradie brochure: the work IS the site. Ov
 - Accent (CTA/highlights): `#C2410C` (burnt orange — used sparingly: numbers, underlines, one button)
 
 ## Typography
-- Display: `font-heading` — hero `text-[clamp(3.5rem,9vw,8rem)]`, `tracking-[-0.04em]`, `leading-[0.9]`, `font-bold`
+- Display: `font-heading` — hero `text-[clamp(3.5rem,9vw,8rem)]`, `tracking-[-0.04em]`, `leading-[0.9]`, `font-medium`
 - Text: `font-sans` — body `text-base`/`text-lg`, `leading-relaxed`
 
 ## Sections (in order)

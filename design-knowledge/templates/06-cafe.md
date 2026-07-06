@@ -10,7 +10,7 @@ Morning light as a website: white-on-white warmth, huge friendly sans display, a
 - Accent (CTA/highlights): `#C65D3B` (terracotta — buttons, underlines, price dots)
 
 ## Typography
-- Display: `font-heading` (sans) — hero `text-[clamp(3rem,9vw,7.5rem)]`, `tracking-[-0.045em]`, `leading-[0.92]`, `font-bold`
+- Display: `font-heading` (sans) — hero `text-[clamp(3rem,9vw,7.5rem)]`, `tracking-[-0.045em]`, `leading-[0.92]`, `font-medium`
 - Text: `font-sans` — body `text-base`/`text-lg`
 
 ## Sections (in order)
@@ -35,7 +35,7 @@ Morning light as a website: white-on-white warmth, huge friendly sans display, a
 
 ### 4. Menu favourites
 - Purpose: what to order, casually.
-- Layout: 2×2 of oat cards, each: dish name `text-xl font-bold`, one-line description, terracotta price dot ("• 14"); one card is the coffee card with a terracotta background (text `#FFFDF9` — contrast pair).
+- Layout: 2×2 of oat cards, each: dish name `text-xl font-medium`, one-line description, terracotta price dot ("• 14"); one card is the coffee card with a terracotta background (text `#FFFDF9` — contrast pair).
 - Content slots: favourites ← generic brunch staples (Smashed avo, Big breakfast, Ricotta hotcakes, Single-origin batch brew)
 - Fallback: always renders (generic café favourites; content-swap replaces with real menu).
 

@@ -10,7 +10,7 @@ Kinetic typography as motivation: the site moves like a session. Oversized-type 
 - Accent (CTA/highlights): `#FF4D24` (signal orange-red — CTAs, stat numbers, underlines)
 
 ## Typography
-- Display: `font-heading` — hero `text-[clamp(3.5rem,10vw,8.5rem)]`, `tracking-[-0.05em]`, `leading-[0.88]`, `font-bold`, `uppercase`
+- Display: `font-heading` — hero `text-[clamp(3.5rem,10vw,8.5rem)]`, `tracking-[-0.05em]`, `leading-[0.88]`, `font-medium`, `uppercase`
 - Text: `font-sans` — body; labels `font-tech text-xs tracking-[0.2em] uppercase`
 
 ## Sections (in order)

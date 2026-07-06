@@ -155,7 +155,7 @@ export default function GeneratedPage() {
 
       {/* 1. Nav */}
       <nav className="bg-[#141416] border-b border-[#2C2C33] px-6 md:px-10 py-4 flex items-center justify-between sticky top-0 z-20">
-        <span className="font-heading font-bold text-lg tracking-[-0.02em] uppercase text-[#F4F4F5]">
+        <span className="font-heading font-medium text-lg tracking-[-0.02em] uppercase text-[#F4F4F5]">
           {businessName}
         </span>
         <a
@@ -171,7 +171,7 @@ export default function GeneratedPage() {
       <section className="relative bg-[#141416] pt-20 md:pt-28">
         <div className="px-6 md:px-10 max-w-6xl mx-auto pb-16 md:pb-24">
           <Eyebrow>{suburb} — mobile &amp; workshop mechanical</Eyebrow>
-          <h1 className="font-heading font-bold text-[clamp(3rem,8vw,7rem)] tracking-[-0.03em] leading-[0.92] uppercase text-[#F4F4F5]">
+          <h1 className="font-heading font-medium text-[clamp(3rem,8vw,7rem)] tracking-[-0.03em] leading-[0.92] uppercase text-[#F4F4F5]">
             Your car.
             <br />
             Fixed right.
@@ -179,7 +179,7 @@ export default function GeneratedPage() {
 
           <a
             href={telHref}
-            className="mt-10 inline-block font-heading font-bold text-[clamp(2.25rem,6vw,4.5rem)] tracking-[-0.03em] leading-none text-[#E11D2E] transition-all duration-300 hover:opacity-80"
+            className="mt-10 inline-block font-heading font-medium text-[clamp(2.25rem,6vw,4.5rem)] tracking-[-0.03em] leading-none text-[#E11D2E] transition-all duration-300 hover:opacity-80"
           >
             {phone}
           </a>
@@ -267,7 +267,7 @@ export default function GeneratedPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
             <div>
-              <p className="font-heading font-bold text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
                 {rating}★
               </p>
               <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
@@ -276,7 +276,7 @@ export default function GeneratedPage() {
               </p>
             </div>
             <div>
-              <p className="font-heading font-bold text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
                 Upfront
               </p>
               <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
@@ -285,7 +285,7 @@ export default function GeneratedPage() {
               </p>
             </div>
             <div>
-              <p className="font-heading font-bold text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
                 Guaranteed
               </p>
               <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
@@ -370,12 +370,12 @@ export default function GeneratedPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-10 max-w-5xl mx-auto">
           <div className="md:col-span-6">
             <Eyebrow>Get it sorted</Eyebrow>
-            <h2 className="font-heading font-bold text-[clamp(2.5rem,6vw,4.5rem)] tracking-[-0.03em] leading-[0.95] uppercase text-[#F4F4F5]">
+            <h2 className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] tracking-[-0.03em] leading-[0.95] uppercase text-[#F4F4F5]">
               Book it in.
             </h2>
             <a
               href={telHref}
-              className="mt-8 inline-block font-heading font-bold text-[clamp(2rem,5vw,3.5rem)] tracking-[-0.03em] leading-none text-[#E11D2E] transition-all duration-300 hover:opacity-80"
+              className="mt-8 inline-block font-heading font-medium text-[clamp(2rem,5vw,3.5rem)] tracking-[-0.03em] leading-none text-[#E11D2E] transition-all duration-300 hover:opacity-80"
             >
               {phone}
             </a>
@@ -435,7 +435,7 @@ export default function GeneratedPage() {
 
       {/* 8. Footer */}
       <footer className="bg-[#141416] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#2C2C33]">
-        <span className="font-heading font-bold text-sm tracking-[-0.02em] uppercase text-[#F4F4F5]">
+        <span className="font-heading font-medium text-sm tracking-[-0.02em] uppercase text-[#F4F4F5]">
           {businessName}
         </span>
         <span className="text-sm text-[#9D9DA6]">{formattedAddress}</span>

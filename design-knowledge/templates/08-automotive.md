@@ -10,7 +10,7 @@ Garage-as-showroom: the dark industrial category where an award-grade site creat
 - Accent (CTA/highlights): `#E11D2E` (gasoline red — CTAs, phone, gauge accents)
 
 ## Typography
-- Display: `font-heading` — hero `text-[clamp(3rem,8vw,7rem)]`, `tracking-[-0.03em]`, `leading-[0.92]`, `font-bold`, `uppercase`
+- Display: `font-heading` — hero `text-[clamp(3rem,8vw,7rem)]`, `tracking-[-0.03em]`, `leading-[0.92]`, `font-medium`, `uppercase`
 - Text: `font-sans` — body; labels `font-tech text-xs tracking-[0.25em] uppercase`
 
 ## Sections (in order)

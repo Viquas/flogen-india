@@ -79,7 +79,7 @@ export default function GeneratedPage() {
     <div className="bg-[#FFFDF9] font-sans">
       {/* 1. Nav */}
       <nav className="px-6 md:px-10 py-6 flex items-center justify-between max-w-6xl mx-auto">
-        <span className="font-heading font-bold text-xl tracking-[-0.02em] text-[#292524]">
+        <span className="font-heading font-medium text-xl tracking-[-0.02em] text-[#292524]">
           {businessName}
         </span>
         <div className="flex items-center gap-5">
@@ -100,7 +100,7 @@ export default function GeneratedPage() {
       <section className="px-6 md:px-10 pt-8 md:pt-12 pb-0">
         <div className="max-w-6xl mx-auto">
           <div className="relative z-10">
-            <h1 className="font-heading font-bold text-[clamp(3rem,9vw,7.5rem)] tracking-[-0.045em] leading-[0.92] text-[#292524]">
+            <h1 className="font-heading font-medium text-[clamp(3rem,9vw,7.5rem)] tracking-[-0.045em] leading-[0.92] text-[#292524]">
               Flat whites done
               <br />
               properly since{" "}
@@ -175,7 +175,7 @@ export default function GeneratedPage() {
       {/* 4. Menu favourites */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-[#F6F1E8]">
         <div className="max-w-6xl mx-auto">
-          <h2 className="font-heading font-bold text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#292524] mb-16 max-w-xl">
+          <h2 className="font-heading font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#292524] mb-16 max-w-xl">
             What to order.
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -186,7 +186,7 @@ export default function GeneratedPage() {
                   className="bg-[#C65D3B] rounded-2xl p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1"
                 >
                   <div>
-                    <h3 className="text-xl font-bold text-[#FFFDF9]">{item.name}</h3>
+                    <h3 className="text-xl font-medium text-[#FFFDF9]">{item.name}</h3>
                     <p className="mt-2 text-base text-[#FFFDF9]/85">{item.description}</p>
                   </div>
                   <p className="mt-6 text-lg text-[#FFFDF9] flex items-center gap-1">
@@ -199,7 +199,7 @@ export default function GeneratedPage() {
                   className="bg-[#FFFDF9] rounded-2xl p-8 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1"
                 >
                   <div>
-                    <h3 className="text-xl font-bold text-[#292524]">{item.name}</h3>
+                    <h3 className="text-xl font-medium text-[#292524]">{item.name}</h3>
                     <p className="mt-2 text-base text-[#78716C]">{item.description}</p>
                   </div>
                   <p className="mt-6 text-lg text-[#292524] flex items-center gap-1">
@@ -216,7 +216,7 @@ export default function GeneratedPage() {
       <section className="px-6 md:px-10 py-24 md:py-32 bg-[#292524]">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
           <div className="md:col-span-7">
-            <h2 className="font-heading font-bold text-[clamp(2.5rem,5vw,4.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FFFDF9]">
+            <h2 className="font-heading font-medium text-[clamp(2.5rem,5vw,4.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FFFDF9]">
               Open early.
               <br />
               Every day.
@@ -256,7 +256,7 @@ export default function GeneratedPage() {
       <section className="px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <Quote className="size-10 text-[#C65D3B] mx-auto mb-6" />
-          <p className="font-heading font-bold text-[clamp(1.75rem,3.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-[#292524]">
+          <p className="font-heading font-medium text-[clamp(1.75rem,3.5vw,2.75rem)] tracking-[-0.02em] leading-[1.15] text-[#292524]">
             {review.text}
           </p>
           <p className="mt-8 text-base text-[#78716C]">
@@ -268,7 +268,7 @@ export default function GeneratedPage() {
       {/* 7. Visit CTA */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-[#F6F1E8]">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-heading font-bold text-[clamp(2.5rem,5.5vw,4rem)] tracking-[-0.03em] leading-[1.05] text-[#292524]">
+          <h2 className="font-heading font-medium text-[clamp(2.5rem,5.5vw,4rem)] tracking-[-0.03em] leading-[1.05] text-[#292524]">
             Find us.
           </h2>
           <p className="mt-6 text-lg text-[#78716C]">{formattedAddress}</p>
@@ -292,7 +292,7 @@ export default function GeneratedPage() {
 
       {/* 8. Footer */}
       <footer className="px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#EDE6D8]">
-        <span className="font-heading font-bold text-base text-[#292524]">{businessName}</span>
+        <span className="font-heading font-medium text-base text-[#292524]">{businessName}</span>
         <span className="text-sm text-[#78716C]">{formattedAddress}</span>
       </footer>
     </div>

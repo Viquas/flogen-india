@@ -127,7 +127,7 @@ export default function GeneratedPage() {
           <p className="font-sans text-xs md:text-sm tracking-[0.2em] uppercase text-[#94A3B8] mb-6">
             {suburb} &amp; the Sutherland Shire — 24/7 emergency response
           </p>
-          <h1 className="font-heading font-bold text-[clamp(3rem,8vw,7rem)] tracking-[-0.04em] leading-[0.95] text-white max-w-4xl">
+          <h1 className="font-heading font-medium text-[clamp(3rem,8vw,7rem)] tracking-[-0.04em] leading-[0.95] text-white max-w-4xl">
             Blocked drain in {suburb}?
             <br />
             Sorted today.
@@ -135,7 +135,7 @@ export default function GeneratedPage() {
 
           <a
             href={telHref}
-            className="mt-12 inline-block font-heading font-bold text-[clamp(2.5rem,7vw,5rem)] tracking-[-0.03em] leading-none text-[#FACC15] transition-all duration-300 hover:opacity-80"
+            className="mt-12 inline-block font-heading font-medium text-[clamp(2.5rem,7vw,5rem)] tracking-[-0.03em] leading-none text-[#FACC15] transition-all duration-300 hover:opacity-80"
           >
             {phone}
           </a>
@@ -165,7 +165,7 @@ export default function GeneratedPage() {
       <section className="bg-white px-6 md:px-10 py-20 md:py-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 max-w-5xl mx-auto text-center">
           <div>
-            <p className="font-heading font-bold text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
+            <p className="font-heading font-medium text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
               Same-day service
             </p>
             <div className="mt-3 mx-auto w-12 h-1 bg-[#FACC15]" />
@@ -174,7 +174,7 @@ export default function GeneratedPage() {
             </p>
           </div>
           <div>
-            <p className="font-heading font-bold text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
+            <p className="font-heading font-medium text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
               {rating}★ rated
             </p>
             <div className="mt-3 mx-auto w-12 h-1 bg-[#FACC15]" />
@@ -183,7 +183,7 @@ export default function GeneratedPage() {
             </p>
           </div>
           <div>
-            <p className="font-heading font-bold text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
+            <p className="font-heading font-medium text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
               Upfront pricing
             </p>
             <div className="mt-3 mx-auto w-12 h-1 bg-[#FACC15]" />
@@ -219,7 +219,7 @@ export default function GeneratedPage() {
                   />
                 </div>
                 <div className="md:col-span-7">
-                  <span className="font-heading font-bold text-[clamp(3rem,6vw,5rem)] leading-none tracking-[-0.03em] text-[#FACC15]">
+                  <span className="font-heading font-medium text-[clamp(3rem,6vw,5rem)] leading-none tracking-[-0.03em] text-[#FACC15]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div className="mt-4 flex items-center gap-3">
@@ -293,12 +293,12 @@ export default function GeneratedPage() {
       <section className="bg-[#0C1B2A] px-6 md:px-10 py-24 md:py-32">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-10 max-w-5xl mx-auto">
           <div className="md:col-span-6">
-            <h2 className="font-heading font-bold text-[clamp(2.5rem,6vw,4.5rem)] tracking-[-0.04em] leading-[0.95] text-white">
+            <h2 className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] tracking-[-0.04em] leading-[0.95] text-white">
               Need a plumber now?
             </h2>
             <a
               href={telHref}
-              className="mt-8 inline-block font-heading font-bold text-[clamp(2rem,5vw,3.5rem)] tracking-[-0.03em] leading-none text-[#FACC15] transition-all duration-300 hover:opacity-80"
+              className="mt-8 inline-block font-heading font-medium text-[clamp(2rem,5vw,3.5rem)] tracking-[-0.03em] leading-none text-[#FACC15] transition-all duration-300 hover:opacity-80"
             >
               {phone}
             </a>
