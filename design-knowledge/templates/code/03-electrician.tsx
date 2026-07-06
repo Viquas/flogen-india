@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import {
   Phone,
   Star,
@@ -8,12 +9,19 @@ import {
   ClipboardCheck,
   BatteryCharging,
   AlarmClock,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
   const businessName = "Northline Electrical Co."
   const phone = "0412 884 207"
   const telHref = "tel:0412884207"
@@ -105,6 +113,64 @@ export default function GeneratedPage() {
     },
   ]
 
+  const galleryPhotos = [
+    {
+      photo:
+        "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&q=80&w=1600",
+      alt: "Electrician's hands wiring a residential switchboard with safety switches",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=1600",
+      alt: "Electric vehicle charging cable connected to a home wall charger",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1565608087341-404b25492fee?auto=format&fit=crop&q=80&w=1600",
+      alt: "Close-up of an open switchboard showing labelled circuit breakers",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=1600",
+      alt: "Electrician running new wiring through a wall cavity during a rewire",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1521207418485-99c705420785?auto=format&fit=crop&q=80&w=1600",
+      alt: "Row of modern LED downlights installed in a ceiling",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=1600",
+      alt: "Electrician on site testing a circuit with a multimeter",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&q=80&w=1600",
+      alt: "Neatly bundled and labelled cabling inside a switchboard cabinet",
+    },
+    {
+      photo:
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600",
+      alt: "Electrician's tool belt and equipment laid out on a job site",
+    },
+  ]
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLightboxOpen(false)
+      } else if (e.key === "ArrowLeft") {
+        setLightboxIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length)
+      } else if (e.key === "ArrowRight") {
+        setLightboxIndex((prev) => (prev + 1) % galleryPhotos.length)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen, galleryPhotos.length])
+
   const LiveDot = () => (
     <span className="relative inline-flex h-2 w-2 shrink-0">
       <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-[#A3E635]" />
@@ -120,7 +186,7 @@ export default function GeneratedPage() {
   )
 
   return (
-    <div className="bg-[#111113] font-sans">
+    <div className="bg-[#111113] font-sans pb-20 md:pb-0">
       <style>{`
         @keyframes marquee {
           from { transform: translateX(0); }
@@ -316,6 +382,77 @@ export default function GeneratedPage() {
         </div>
       </section>
 
+      {/* 5.5 Gallery — the job book, in photos */}
+      <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
+        <div className="max-w-6xl mx-auto">
+          <Eyebrow>On the tools</Eyebrow>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl">
+            Every job, wired live.
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {galleryPhotos.map((item, i) => (
+              <button
+                key={item.photo}
+                type="button"
+                onClick={() => {
+                  setLightboxIndex(i)
+                  setLightboxOpen(true)
+                }}
+                className="group relative block overflow-hidden rounded-sm cursor-pointer border border-[#2A2A30] transition-all duration-300 hover:border-[#A3E635]/60"
+              >
+                <img
+                  src={item.photo}
+                  alt={item.alt}
+                  className="w-full h-40 md:h-56 object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-80"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={galleryPhotos[lightboxIndex].photo}
+            alt={galleryPhotos[lightboxIndex].alt}
+            className="w-full h-full max-h-[85vh] object-contain"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-0 right-0 -translate-y-full md:translate-y-0 md:-top-2 md:-right-2 bg-[#A3E635] text-[#111113] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            aria-label="Close"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLightboxIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length)
+            }
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#A3E635] text-[#111113] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            aria-label="Previous photo"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setLightboxIndex((prev) => (prev + 1) % galleryPhotos.length)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#A3E635] text-[#111113] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            aria-label="Next photo"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#111113] text-[#A3E635] text-sm font-semibold px-3 py-1 rounded-full border border-[#A3E635]/40">
+            {lightboxIndex + 1} / {galleryPhotos.length}
+          </span>
+        </div>
+      </Dialog>
+
       {/* 6. Testimonial — oversized quote */}
       <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
         <div className="max-w-4xl mx-auto text-center">
@@ -402,6 +539,15 @@ export default function GeneratedPage() {
           {phone}
         </a>
       </footer>
+
+      {/* Sticky mobile call bar */}
+      <a
+        href={telHref}
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-center justify-center gap-2 bg-[#A3E635] text-[#111113] font-semibold text-base py-4 transition-all duration-300"
+      >
+        <Phone className="size-5" />
+        Call now — {phone}
+      </a>
     </div>
   )
 }
