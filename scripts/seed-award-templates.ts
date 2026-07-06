@@ -69,9 +69,12 @@ export function buildPreviewProjectRow(entry: TemplateManifestEntry, code: strin
   return {
     slug: `award-preview-${entry.slug}`,
     status: 'review',
-    source: 'award-seed-preview',
+    // projects.source is constrained to ('discovery','custom','code-drop','bulk_upload');
+    // award previews aren't a generation source, so use 'custom' and mark the
+    // preview via business_data.awardPreview instead of inventing a new source value.
+    source: 'custom',
     generated_code: code,
-    business_data: { businessName: `Award preview — ${businessName}`, industry: entry.industryTag },
+    business_data: { businessName: `Award preview — ${businessName}`, industry: entry.industryTag, awardPreview: true },
   }
 }
 

@@ -62,10 +62,11 @@ describe('buildPreviewProjectRow', () => {
     expect(row).toMatchObject({
       slug: 'award-preview-restaurant',
       status: 'review',
-      source: 'award-seed-preview',
+      source: 'custom',
       generated_code: 'const businessName = "Ember & Salt";',
     })
     expect((row.business_data as any).businessName).toBe('Award preview — Ember & Salt')
     expect((row.business_data as any).industry).toBe('restaurant')
+    expect((row.business_data as any).awardPreview).toBe(true)
   })
 })
