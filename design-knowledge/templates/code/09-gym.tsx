@@ -1,8 +1,12 @@
-import { Phone, Star, MapPin } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Phone, Star, MapPin, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const businessName = "Ironyard Strength Co."
   const phone = "(02) 9051 7742"
   const telHref = "tel:0290517742"
@@ -65,6 +69,44 @@ export default function GeneratedPage() {
 
   const heroPhoto =
     "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&q=80&w=1600"
+
+  const galleryPhotos = [
+    {
+      src: heroPhoto,
+      alt: "Athlete gripping a loaded barbell on an industrial gym floor in Alexandria",
+    },
+    ...programs.map((program) => ({ src: program.photo, alt: program.alt })),
+    ...floorPhotos.map((floor) => ({ src: floor.src, alt: floor.alt })),
+    {
+      src: "https://images.unsplash.com/photo-1533560777675-c7e2f0dfb0f7?auto=format&fit=crop&q=80&w=1600",
+      alt: "Close-up of chalked hands and a barbell knurling before a heavy lift",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&q=80&w=1600",
+      alt: "Group of athletes training together with kettlebells on a gym floor",
+    },
+  ]
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  const showPrev = () =>
+    setLightboxIndex((i) => (i - 1 + galleryPhotos.length) % galleryPhotos.length)
+  const showNext = () =>
+    setLightboxIndex((i) => (i + 1) % galleryPhotos.length)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") showPrev()
+      if (e.key === "ArrowRight") showNext()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen])
 
   const MonoTag = ({ children }: { children: React.ReactNode }) => (
     <span className="font-tech text-xs tracking-[0.2em] uppercase text-[#FF4D24]">
@@ -196,7 +238,8 @@ export default function GeneratedPage() {
                     <img
                       src={program.photo}
                       alt={program.alt}
-                      className="w-full h-[320px] md:h-[420px] object-cover rounded-sm transition-all duration-300 hover:scale-[1.02]"
+                      onClick={() => openLightbox(i + 1)}
+                      className="w-full h-[320px] md:h-[420px] object-cover rounded-sm cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
                     />
                   </div>
                   <div
@@ -249,7 +292,8 @@ export default function GeneratedPage() {
               <img
                 src={floorPhotos[0].src}
                 alt={floorPhotos[0].alt}
-                className="w-full h-[320px] md:h-[420px] object-cover rounded-sm"
+                onClick={() => openLightbox(programs.length + 1)}
+                className="w-full h-[320px] md:h-[420px] object-cover rounded-sm cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
               />
               <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#565650]">
                 {floorPhotos[0].caption}
@@ -259,7 +303,8 @@ export default function GeneratedPage() {
               <img
                 src={floorPhotos[1].src}
                 alt={floorPhotos[1].alt}
-                className="w-full h-[320px] md:h-[480px] object-cover rounded-sm"
+                onClick={() => openLightbox(programs.length + 2)}
+                className="w-full h-[320px] md:h-[480px] object-cover rounded-sm cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
               />
               <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#565650]">
                 {floorPhotos[1].caption}
@@ -268,6 +313,79 @@ export default function GeneratedPage() {
           </div>
         </div>
       </section>
+
+      {/* 6b. Gallery — click-to-open lightbox */}
+      <section className="bg-[#121212] px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-6xl mx-auto">
+          <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
+            The gallery
+          </p>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F7F7F4] mb-16 max-w-2xl">
+            Every rep. Every session. On record.
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {galleryPhotos.map((photo, index) => (
+              <button
+                key={photo.src + index}
+                type="button"
+                onClick={() => openLightbox(index)}
+                className="group relative aspect-square overflow-hidden rounded-sm border border-[#F7F7F4]/10 cursor-pointer"
+              >
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:opacity-80"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={galleryPhotos[lightboxIndex].src}
+            alt={galleryPhotos[lightboxIndex].alt}
+            className="w-full h-full max-h-[85vh] object-contain"
+          />
+
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#121212] border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-sm p-2 transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
+          >
+            <X className="size-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={showPrev}
+            aria-label="Previous photo"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#121212]/80 border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-sm p-2 transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Next photo"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#121212]/80 border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-sm p-2 transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+
+          <p className="absolute bottom-3 left-1/2 -translate-x-1/2 font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] bg-[#121212]/90 border border-[#F7F7F4]/20 px-4 py-1.5 rounded-sm flex items-center gap-3">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FF4D24] animate-pulse" />
+            {lightboxIndex + 1} / {galleryPhotos.length}
+          </p>
+        </div>
+      </Dialog>
 
       {/* 7. Trial CTA (ink) — the rep, repeated */}
       <section id="contact" className="bg-[#121212] px-6 md:px-10 py-24 md:py-32">
