@@ -1,6 +1,11 @@
-import { MapPin, Phone, Star, Quote, Instagram } from "lucide-react"
+import { useEffect, useState } from "react"
+import { MapPin, Phone, Star, Quote, Instagram, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
   const businessName = "Sable & Rye"
   const suburb = "Paddington"
   const phone = "(02) 9331 7420"
@@ -53,10 +58,42 @@ export default function GeneratedPage() {
       src: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&q=80&w=900",
       caption: "THE CHAIR, MID-SESSION",
     },
+    {
+      src: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&q=80&w=900",
+      caption: "GLASS-FINISH BOB",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=900",
+      caption: "COPPER BALAYAGE",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1522337094846-8a8994f5f8ce?auto=format&fit=crop&q=80&w=900",
+      caption: "THE FINISHING TOUCH",
+    },
   ]
 
   const storyPhoto =
     "https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?auto=format&fit=crop&q=80&w=1200"
+
+  const allPhotos = [heroPhoto, ...galleryPhotos.map((p) => p.src), storyPhoto]
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowRight")
+        setLightboxIndex((i) => (i + 1) % allPhotos.length)
+      if (e.key === "ArrowLeft")
+        setLightboxIndex((i) => (i - 1 + allPhotos.length) % allPhotos.length)
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen, allPhotos.length])
 
   const review = {
     text: "I've had my colour done all over the world and no one reads my hair like Sable & Rye. They talk you out of the bad ideas and somehow make the good ones better.",
@@ -127,7 +164,8 @@ export default function GeneratedPage() {
               <img
                 src={heroPhoto}
                 alt={`Editorial portrait of a client's finished colour and cut at ${businessName} in ${suburb}`}
-                className="w-full aspect-[3/4] object-cover rounded-b-3xl md:rounded-3xl shadow-xl"
+                onClick={() => openLightbox(0)}
+                className="w-full aspect-[3/4] object-cover rounded-b-3xl md:rounded-3xl shadow-xl cursor-pointer transition-all duration-300 hover:opacity-90"
               />
             </div>
           </div>
@@ -176,19 +214,21 @@ export default function GeneratedPage() {
               <img
                 src={galleryPhotos[0].src}
                 alt={`${galleryPhotos[0].caption.toLowerCase()} finished by a stylist at ${businessName}`}
-                className="w-full h-[520px] object-cover rounded-2xl"
+                onClick={() => openLightbox(1)}
+                className="w-full h-[520px] object-cover rounded-2xl cursor-pointer transition-all duration-300 hover:opacity-90 hover:scale-[1.01]"
               />
               <span className="font-tech text-xs tracking-[0.15em] text-[#A39A94]">
                 01 — {galleryPhotos[0].caption}
               </span>
             </div>
-            <div className="grid grid-rows-2 gap-6">
+            <div className="grid grid-cols-2 grid-rows-3 gap-6">
               {galleryPhotos.slice(1).map((photo, i) => (
                 <div key={photo.caption} className="flex flex-col gap-3">
                   <img
                     src={photo.src}
                     alt={`${photo.caption.toLowerCase()} at ${businessName}`}
-                    className="w-full h-[247px] object-cover rounded-2xl"
+                    onClick={() => openLightbox(i + 2)}
+                    className="w-full h-[157px] object-cover rounded-2xl cursor-pointer transition-all duration-300 hover:opacity-90 hover:scale-[1.02]"
                   />
                   <span className="font-tech text-xs tracking-[0.15em] text-[#A39A94]">
                     {String(i + 2).padStart(2, "0")} — {photo.caption}
@@ -223,7 +263,8 @@ export default function GeneratedPage() {
             <img
               src={storyPhoto}
               alt={`Interior of the ${businessName} salon space in ${suburb}`}
-              className="w-full h-[440px] object-cover rounded-3xl rotate-1 shadow-lg"
+              onClick={() => openLightbox(allPhotos.length - 1)}
+              className="w-full h-[440px] object-cover rounded-3xl rotate-1 shadow-lg cursor-pointer transition-all duration-300 hover:opacity-90"
             />
           </div>
         </div>
@@ -337,6 +378,49 @@ export default function GeneratedPage() {
         <span className="font-elegant font-medium text-base text-[#211C1A]">{businessName}</span>
         <span className="text-sm text-[#6D625C]">{formattedAddress}</span>
       </footer>
+
+      {/* Lightbox — editorial photo carousel */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={allPhotos[lightboxIndex]}
+            alt={`${businessName} gallery photo ${lightboxIndex + 1}`}
+            className="w-full h-full max-h-[85vh] object-contain rounded-2xl"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close"
+            className="absolute -top-4 -right-4 md:top-4 md:right-4 inline-flex items-center justify-center size-10 rounded-full bg-[#211C1A] text-[#FAF6F3] transition-all duration-300 hover:bg-[#B07D62] hover:scale-105"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLightboxIndex((i) => (i - 1 + allPhotos.length) % allPhotos.length)
+            }
+            aria-label="Previous photo"
+            className="absolute left-2 md:-left-14 top-1/2 -translate-y-1/2 inline-flex items-center justify-center size-11 rounded-full bg-[#211C1A]/80 text-[#B07D62] transition-all duration-300 hover:bg-[#211C1A] hover:scale-105"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setLightboxIndex((i) => (i + 1) % allPhotos.length)}
+            aria-label="Next photo"
+            className="absolute right-2 md:-right-14 top-1/2 -translate-y-1/2 inline-flex items-center justify-center size-11 rounded-full bg-[#211C1A]/80 text-[#B07D62] transition-all duration-300 hover:bg-[#211C1A] hover:scale-105"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-tech text-xs tracking-[0.15em] text-[#FAF6F3] bg-[#211C1A]/80 px-4 py-2 rounded-full">
+            {lightboxIndex + 1} / {allPhotos.length}
+          </span>
+        </div>
+      </Dialog>
     </div>
   )
 }
