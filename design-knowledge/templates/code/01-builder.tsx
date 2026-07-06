@@ -1,7 +1,9 @@
-import { Phone, MapPin, ArrowUpRight } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Phone, MapPin, ArrowUpRight, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
   const businessName = "Marrick & Vane Building Co."
@@ -10,6 +12,9 @@ export default function GeneratedPage() {
   const formattedAddress = "14 Fitzroy Street, Marrickville NSW 2204"
   const rating = "4.9★"
   const reviews = "120+ reviews"
+
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   const portfolio = [
     {
@@ -30,7 +35,42 @@ export default function GeneratedPage() {
       caption: "New build",
       tall: false,
     },
+    {
+      src: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=1200",
+      alt: "Freshly poured concrete slab and formwork on a new build foundation",
+      caption: "Foundations",
+      tall: false,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&q=80&w=1200",
+      alt: "Finished hardwood deck and pergola overlooking a landscaped backyard",
+      caption: "Deck & outdoor",
+      tall: false,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&q=80&w=1200",
+      alt: "Bathroom renovation with matte black fixtures and floor-to-ceiling tiling",
+      caption: "Bathroom renovation",
+      tall: false,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=1200",
+      alt: "Open-plan living area addition with raked ceiling and skylights",
+      caption: "Living area addition",
+      tall: false,
+    },
   ]
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") setLightboxIndex((i) => (i - 1 + portfolio.length) % portfolio.length)
+      if (e.key === "ArrowRight") setLightboxIndex((i) => (i + 1) % portfolio.length)
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen, portfolio.length])
 
   const services = [
     { title: "Renovations", copy: "Whole-house or single-room, done properly the first time." },
@@ -47,7 +87,7 @@ export default function GeneratedPage() {
   }
 
   return (
-    <div className="bg-[#FAF9F7] font-sans">
+    <div className="bg-[#FAF9F7] font-sans pb-20 md:pb-0">
       {/* 1. Nav */}
       <nav className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-[#171412]/10">
         <span className="font-heading text-lg tracking-[-0.02em] text-[#171412]">
@@ -117,34 +157,118 @@ export default function GeneratedPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
           <div className="md:col-span-7 md:-mt-8">
-            <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setLightboxIndex(0)
+                setLightboxOpen(true)
+              }}
+              className="relative block w-full text-left cursor-pointer group"
+            >
               <img
                 src={portfolio[0].src}
                 alt={portfolio[0].alt}
-                className="w-full h-[420px] md:h-[620px] object-cover"
+                className="w-full h-[420px] md:h-[620px] object-cover transition-all duration-300 group-hover:opacity-90 group-hover:scale-[1.01]"
               />
               <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#57534E]">
                 <span className="text-[#C2410C]">01</span> — {portfolio[0].caption.toUpperCase()}
               </p>
-            </div>
+            </button>
           </div>
 
           <div className="md:col-span-5 flex flex-col gap-6 md:gap-8">
-            {portfolio.slice(1).map((item, i) => (
-              <div key={item.caption}>
+            {portfolio.slice(1, 3).map((item, i) => (
+              <button
+                type="button"
+                key={item.caption}
+                onClick={() => {
+                  setLightboxIndex(i + 1)
+                  setLightboxOpen(true)
+                }}
+                className="block w-full text-left cursor-pointer group"
+              >
                 <img
                   src={item.src}
                   alt={item.alt}
-                  className="w-full h-[260px] md:h-[290px] object-cover"
+                  className="w-full h-[260px] md:h-[290px] object-cover transition-all duration-300 group-hover:opacity-90 group-hover:scale-[1.01]"
                 />
                 <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#57534E]">
                   <span className="text-[#C2410C]">{String(i + 2).padStart(2, "0")}</span> — {item.caption.toUpperCase()}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
+
+        {/* Gallery grid — remaining photos */}
+        <div className="mt-6 md:mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {portfolio.slice(3).map((item, i) => (
+            <button
+              type="button"
+              key={item.caption}
+              onClick={() => {
+                setLightboxIndex(i + 3)
+                setLightboxOpen(true)
+              }}
+              className="block w-full text-left cursor-pointer group"
+            >
+              <div className="overflow-hidden">
+                <img
+                  src={item.src}
+                  alt={item.alt}
+                  className="w-full h-[160px] md:h-[220px] object-cover transition-all duration-300 group-hover:opacity-90 group-hover:scale-105"
+                />
+              </div>
+              <p className="mt-3 font-tech text-xs tracking-[0.2em] uppercase text-[#57534E]">
+                <span className="text-[#C2410C]">{String(i + 4).padStart(2, "0")}</span> — {item.caption.toUpperCase()}
+              </p>
+            </button>
+          ))}
+        </div>
       </section>
+
+      {/* Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={portfolio[lightboxIndex].src}
+            alt={portfolio[lightboxIndex].alt}
+            className="w-full h-[85vh] object-contain"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close lightbox"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#171412] text-[#FAF9F7] p-2 hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLightboxIndex((i) => (i - 1 + portfolio.length) % portfolio.length)
+            }
+            aria-label="Previous image"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#171412]/70 text-[#FAF9F7] p-2 hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setLightboxIndex((i) => (i + 1) % portfolio.length)}
+            aria-label="Next image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#171412]/70 text-[#FAF9F7] p-2 hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 font-tech text-xs tracking-[0.2em] uppercase text-[#FAF9F7] bg-[#171412]/70 px-3 py-1.5">
+            <span className="text-[#C2410C]">{lightboxIndex + 1}</span> / {portfolio.length}
+          </p>
+        </div>
+      </Dialog>
 
       {/* 5. Services — editorial list */}
       <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#171412]/10">
@@ -248,6 +372,17 @@ export default function GeneratedPage() {
         </span>
         <span className="text-sm text-[#57534E]">{suburb}, NSW</span>
       </footer>
+
+      {/* Sticky mobile call bar */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#C2410C] pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(23,20,18,0.25)]">
+        <a
+          href="tel:0295574128"
+          className="flex items-center justify-center gap-2 py-4 text-base font-medium tracking-[-0.01em] text-[#FAF9F7]"
+        >
+          <Phone className="size-5" />
+          Call now — {phone}
+        </a>
+      </div>
     </div>
   )
 }
