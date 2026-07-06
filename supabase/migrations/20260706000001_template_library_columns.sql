@@ -1,0 +1,10 @@
+-- Template library columns for the award template seeding pipeline.
+-- industry_tag (existing) is the routing key; only status='approved' templates route.
+alter table templates add column if not exists source text not null default 'promoted'
+  check (source in ('award-seed', 'promoted'));
+alter table templates add column if not exists prd_path text;
+alter table templates add column if not exists status text not null default 'pending'
+  check (status in ('pending', 'approved', 'rejected'));
+
+create index if not exists idx_templates_industry_status
+  on templates (industry_tag, status);
