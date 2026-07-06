@@ -111,12 +111,12 @@ export default function GeneratedPage() {
 
       {/* 4. Portfolio — the proof */}
       <section className="px-6 md:px-10 py-24 md:py-32">
-        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-20 max-w-2xl">
           Recent work, not a portfolio of promises.
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-          <div className="md:col-span-7 md:-mt-16">
+          <div className="md:col-span-7 md:-mt-8">
             <div className="relative">
               <img
                 src={portfolio[0].src}

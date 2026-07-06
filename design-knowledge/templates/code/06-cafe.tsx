@@ -121,7 +121,7 @@ export default function GeneratedPage() {
                 </svg>
               </span>
             </h1>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-8 mb-10 md:mb-16 flex flex-wrap items-center gap-4">
               <div className="inline-flex items-center gap-2 bg-[#F6F1E8] rounded-full pl-3 pr-4 py-2">
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -136,7 +136,7 @@ export default function GeneratedPage() {
             </div>
           </div>
 
-          <div className="relative -mt-10 md:-mt-16 z-0">
+          <div className="relative -mt-4 md:-mt-8 z-0">
             <img
               src={heroPhoto}
               alt={`Barista pouring latte art at ${businessName} in ${suburb}`}

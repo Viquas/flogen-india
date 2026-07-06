@@ -701,17 +701,27 @@ async function _generateAndSaveWebsiteInner(
                 const roundedClasses = [...new Set((templateCode.match(/rounded-\w+/g) || []))]
                 const isDarkTheme = (templateCode.match(/bg-(?:zinc|slate|gray|neutral|black)-[89]\d{2}/g) || []).length > 3
 
+                // Real Places photos for THIS business — content-swap must prefer these
+                // over stock imagery everywhere a slot can use one.
+                const templateRankedPhotos = originalPlacesPhotos ? rankPhotos(originalPlacesPhotos) : []
+                const realPhotosBlock = templateRankedPhotos.length > 0
+                    ? `\n## REAL BUSINESS PHOTOS (actual photos of THIS business — use these, not stock, for every image slot they can fill)\n${templateRankedPhotos.slice(0, 8).map((p, i) => `${i + 1}. ${p.url}`).join('\n')}\nFill the template's image slots (hero, gallery, service/menu photos) with these in order. Only fall back to a relevant Unsplash URL for a slot once every real photo above has been used.`
+                    : ''
+
                 const templateSystemPrompt = `You are a CODE EDITOR, not a designer. You will receive an existing React component and new business data. Your job is to MODIFY THE EXISTING CODE — not rewrite it from scratch.
 
 ## CRITICAL: MODIFY, DON'T REWRITE
 Start with the template code as your base. Make surgical edits to swap content. The output should be 80-90% identical code to the input template.
 
+## MAXIMIZE USE OF THE REAL DATA BELOW
+The business data below often has more in it than the template's default slots use — real review quotes, categories/secondary types, opening hours, price level, multiple photos. Don't leave a slot generic when the data has a real value for it: a template testimonial placeholder must become a REAL review's text + reviewer name if one exists; a services list should reflect the business's actual category/type, not the template's stock list; a photo slot must use a REAL photo (see below) before ever touching stock. Only fall back to generic-relevant copy for a slot when the data genuinely has nothing for it.
+
 ## WHAT TO CHANGE (ONLY these):
 - String literals: business name, tagline, descriptions, section headings
 - Service/product names, descriptions, and prices
-- Testimonial names, quotes, ratings
+- Testimonial names, quotes, ratings — use REAL review text/author from the data when present
 - Contact info: phone, email, address, hours
-- Image \`src\` URLs (use Unsplash URLs relevant to the new industry, keep onError fallbacks)
+- Image \`src\` URLs — see REAL BUSINESS PHOTOS below; only use Unsplash for slots with no real photo left
 - Icon component names (swap to match new industry, keep lucide-react)
 - Navigation link labels
 - Array items in data arrays (services list, menu items, FAQ items)
@@ -747,13 +757,14 @@ This is the ONE area where you MUST modify className strings if needed:
 ## CODE REQUIREMENTS:
 - Keep the single-file React component format
 - Keep \`export default function GeneratedPage()\`
-- All images need real Unsplash URLs with onError fallback
+- Every image slot: a REAL business photo (below) first, Unsplash only once those are used, with onError fallback
 - No placeholder "Lorem ipsum" text`
 
                 const templateUserPrompt = `## TEMPLATE CODE (your starting point — modify this, don't rewrite):
 ${templateCode}
+${realPhotosBlock}
 
-## NEW BUSINESS DATA (swap into the template above):
+## NEW BUSINESS DATA (swap into the template above — use every field that has a real value):
 ${JSON.stringify(data, null, 2)}
 
 ${rules ? `## ADDITIONAL RULES:\n${rules}` : ''}
