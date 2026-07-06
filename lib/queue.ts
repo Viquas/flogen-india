@@ -318,7 +318,20 @@ class GenerationQueue {
 
             await supabase.from('projects').update({ status: 'generating' }).eq('id', job.project_id)
 
-            const result = await generateAndSaveWebsite(job.project_id, undefined, job.rules || undefined, job.template_id || undefined)
+            // Auto-route: jobs without an explicit template use the approved award
+            // template for their industry (cheap content-swap) when one exists.
+            let templateId = job.template_id || undefined
+            if (!templateId) {
+                const { data: proj } = await supabase
+                    .from('projects').select('business_data').eq('id', job.project_id).single()
+                const bd = (proj?.business_data ?? {}) as Record<string, any>
+                const industry = bd.industry || bd.brandIdentity?.vibe?.industry || null
+                const { findApprovedTemplate } = await import('@/lib/ai/template-routing')
+                templateId = (await findApprovedTemplate(industry, supabase)) ?? undefined
+                if (templateId) logger.queue.info('Auto-routed to approved template', { projectId: job.project_id, templateId })
+            }
+
+            const result = await generateAndSaveWebsite(job.project_id, undefined, job.rules || undefined, templateId)
 
             if (!result.success) {
                 throw new Error(result.error || 'Generation failed')
