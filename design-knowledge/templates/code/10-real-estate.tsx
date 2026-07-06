@@ -1,7 +1,9 @@
-import { Phone, Star, MapPin, Quote, Home, Key, ClipboardCheck, Calculator } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Phone, Star, MapPin, Quote, Home, Key, ClipboardCheck, Calculator, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog } from "@/components/ui/dialog"
 
 function SectionEyebrow({ index, label, tone = "light" }: { index: string; label: string; tone?: "light" | "dark" }) {
   const textColor = tone === "dark" ? "text-[#9C7C38]" : "text-[#9C7C38]"
@@ -17,6 +19,8 @@ function SectionEyebrow({ index, label, tone = "light" }: { index: string; label
 }
 
 export default function GeneratedPage() {
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const businessName = "Hartwell & Co Property"
   const suburb = "Mosman"
   const phone = "(02) 9969 4417"
@@ -63,6 +67,57 @@ export default function GeneratedPage() {
       name: "Eleanor",
     },
   ]
+
+  const galleryPhotos = [
+    {
+      src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1600",
+      alt: `Contemporary architectural home exterior represented by ${businessName}`,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1600",
+      alt: "Light-filled open-plan living room with timber floors and floor-to-ceiling glazing",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=1600",
+      alt: "Designer kitchen with stone benchtop and integrated joinery",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&q=80&w=1600",
+      alt: "Period home facade with manicured hedging and a paved entry path",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&q=80&w=1600",
+      alt: "Primary bedroom suite with warm natural light and neutral furnishings",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&q=80&w=1600",
+      alt: "Landscaped backyard with pool overlooking the harbour side of the suburb",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?auto=format&fit=crop&q=80&w=1600",
+      alt: `The ${businessName} office reception, styled in the agency's quiet-luxury palette`,
+    },
+    {
+      src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&q=80&w=1600",
+      alt: `Leafy streetscape in ${suburb} showing period and contemporary homes`,
+    },
+  ]
+
+  const showPrev = () =>
+    setLightboxIndex((i) => (i - 1 + galleryPhotos.length) % galleryPhotos.length)
+  const showNext = () =>
+    setLightboxIndex((i) => (i + 1) % galleryPhotos.length)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") showPrev()
+      if (e.key === "ArrowRight") showNext()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen])
 
   return (
     <div className="bg-[#FBFAF7] font-sans">
@@ -217,10 +272,80 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 6. Testimonial — oversized quote */}
+      {/* 6. Gallery — click-to-open lightbox */}
+      <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#E8E4DA]">
+        <div className="max-w-6xl mx-auto">
+          <SectionEyebrow index="06" label="THE PORTFOLIO" />
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#14213D] mb-16 max-w-xl">
+            Homes we've been trusted with.
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {galleryPhotos.map((photo, i) => (
+              <button
+                type="button"
+                key={photo.src}
+                onClick={() => {
+                  setLightboxIndex(i)
+                  setLightboxOpen(true)
+                }}
+                className="block w-full text-left cursor-pointer group overflow-hidden rounded-xl"
+              >
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  className="w-full h-[160px] md:h-[220px] object-cover transition-all duration-300 group-hover:opacity-90 group-hover:scale-105"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={galleryPhotos[lightboxIndex].src}
+            alt={galleryPhotos[lightboxIndex].alt}
+            className="w-full h-[85vh] object-contain"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close lightbox"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#14213D] text-[#FBFAF7] p-2 hover:bg-[#9C7C38] transition-all duration-300 cursor-pointer"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={showPrev}
+            aria-label="Previous image"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#14213D]/70 text-[#9C7C38] p-2 hover:bg-[#9C7C38] hover:text-[#14213D] transition-all duration-300 cursor-pointer"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Next image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#14213D]/70 text-[#9C7C38] p-2 hover:bg-[#9C7C38] hover:text-[#14213D] transition-all duration-300 cursor-pointer"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 font-tech text-xs tracking-[0.2em] uppercase text-[#FBFAF7] bg-[#14213D]/70 px-3 py-1.5">
+            <span className="text-[#9C7C38]">{lightboxIndex + 1}</span> / {galleryPhotos.length}
+          </p>
+        </div>
+      </Dialog>
+
+      {/* 7. Testimonial — oversized quote */}
       <section className="px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-4xl mx-auto">
-          <SectionEyebrow index="05" label="A VENDOR'S WORDS" />
+          <SectionEyebrow index="07" label="A VENDOR'S WORDS" />
           <Quote className="size-10 text-[#9C7C38] mb-6" />
           <p className="font-elegant italic text-[clamp(1.5rem,3vw,2.5rem)] leading-snug text-[#14213D] max-w-3xl">
             "{reviews[0].text}"
@@ -229,10 +354,10 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 7. Appraisal CTA — midnight */}
+      {/* 8. Appraisal CTA — midnight */}
       <section id="appraisal" className="bg-[#14213D] px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-6xl mx-auto">
-          <SectionEyebrow index="06" label="FREE APPRAISAL" tone="dark" />
+          <SectionEyebrow index="08" label="FREE APPRAISAL" tone="dark" />
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16">
             <div className="md:col-span-5">
               <h2 className="font-elegant font-medium text-[clamp(2.5rem,5.5vw,4rem)] tracking-[-0.02em] leading-[1.05] text-[#FBFAF7]">
@@ -299,7 +424,7 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 8. Footer */}
+      {/* 9. Footer */}
       <footer className="bg-[#FBFAF7] border-t border-[#E8E4DA] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <span className="font-elegant font-medium text-base text-[#14213D]">
           {businessName}
