@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import {
   Phone,
   Star,
@@ -9,12 +10,18 @@ import {
   Search,
   MapPin,
   ShieldCheck,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const businessName = "Penrith Engine Room"
   const phone = "(02) 4721 3390"
   const telHref = "tel:0247213390"
@@ -128,6 +135,62 @@ export default function GeneratedPage() {
   const heroStrip =
     "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600"
 
+  const galleryPhotos = [
+    {
+      src: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80&w=1600",
+      alt: "Car raised on a hydraulic hoist inside a clean mechanic workshop",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1632823471565-1ecdf7c8a5f5?auto=format&fit=crop&q=80&w=1600",
+      alt: "Mechanic using a diagnostic scanner plugged into a car's OBD port",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?auto=format&fit=crop&q=80&w=1600",
+      alt: "Close-up of a car engine bay during servicing",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1600",
+      alt: "Mechanic's workshop bay with a car up on a hoist, ready for inspection",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1600",
+      alt: "Clean, organized workshop interior with tool cabinets and bays",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=1600",
+      alt: "Detailer polishing the paintwork of a car in the workshop",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1580274455191-1c62238fa333?auto=format&fit=crop&q=80&w=1600",
+      alt: "Mechanic's hands torquing a wheel bolt during a tyre service",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=1600",
+      alt: "Wide shot of the workshop floor with multiple vehicles in service bays",
+    },
+  ]
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  const showPrev = () =>
+    setLightboxIndex((i) => (i - 1 + galleryPhotos.length) % galleryPhotos.length)
+  const showNext = () =>
+    setLightboxIndex((i) => (i + 1) % galleryPhotos.length)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") showPrev()
+      if (e.key === "ArrowRight") showNext()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen])
+
   const DiagnosticStrip = ({ children }: { children: React.ReactNode }) => (
     <div className="bg-[#141416] border-y border-[#2C2C33] px-6 md:px-10 py-3 overflow-hidden">
       <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#E11D2E] text-center flex items-center justify-center gap-3">
@@ -145,7 +208,7 @@ export default function GeneratedPage() {
   )
 
   return (
-    <div className="bg-[#141416] font-sans">
+    <div className="bg-[#141416] font-sans pb-20 md:pb-0">
       <style>{`
         @keyframes marquee {
           from { transform: translateX(0); }
@@ -330,6 +393,79 @@ export default function GeneratedPage() {
         </div>
       </section>
 
+      <DiagnosticStrip>PHOTO LOG — BEFORE / AFTER</DiagnosticStrip>
+
+      {/* 5b. Gallery — click-to-open lightbox */}
+      <section className="bg-[#141416] px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-6xl mx-auto">
+          <Eyebrow>The shop floor</Eyebrow>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16 max-w-2xl">
+            See the work before you book it.
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {galleryPhotos.map((photo, index) => (
+              <button
+                key={photo.src + index}
+                type="button"
+                onClick={() => openLightbox(index)}
+                className="group relative aspect-square overflow-hidden rounded-sm border border-[#2C2C33] cursor-pointer"
+              >
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:opacity-80"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={galleryPhotos[lightboxIndex].src}
+            alt={galleryPhotos[lightboxIndex].alt}
+            className="w-full h-full max-h-[85vh] object-contain"
+          />
+
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#141416] border border-[#2C2C33] text-[#F4F4F5] rounded-sm p-2 transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
+          >
+            <X className="size-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={showPrev}
+            aria-label="Previous photo"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#141416]/80 border border-[#2C2C33] text-[#F4F4F5] rounded-sm p-2 transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Next photo"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#141416]/80 border border-[#2C2C33] text-[#F4F4F5] rounded-sm p-2 transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+
+          <p className="absolute bottom-3 left-1/2 -translate-x-1/2 font-tech text-xs tracking-[0.25em] uppercase text-[#E11D2E] bg-[#141416]/90 border border-[#2C2C33] px-4 py-1.5 rounded-sm flex items-center gap-3">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#E11D2E] animate-pulse" />
+            {lightboxIndex + 1} / {galleryPhotos.length}
+          </p>
+        </div>
+      </Dialog>
+
       <DiagnosticStrip>CUSTOMER FEEDBACK — LOGGED</DiagnosticStrip>
 
       {/* 6. Review marquee */}
@@ -440,6 +576,15 @@ export default function GeneratedPage() {
         </span>
         <span className="text-sm text-[#9D9DA6]">{formattedAddress}</span>
       </footer>
+
+      {/* Sticky mobile call bar */}
+      <a
+        href={telHref}
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-center justify-center gap-2 bg-[#E11D2E] text-[#F4F4F5] font-tech text-sm tracking-[0.1em] uppercase py-4 px-6 w-full"
+      >
+        <Phone className="size-5" />
+        Call now — {phone}
+      </a>
     </div>
   )
 }
