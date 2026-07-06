@@ -255,7 +255,9 @@ describe('award template code gate', () => {
       })
 
       it('uses AU spelling where the words appear', () => {
-        expect(code).not.toMatch(/\bcolor:|\bSpecialized\b|\bLicensed and insured\b/i === undefined ? /$^/ : /\bSpecialized\b/)
+        // Prose must use AU spelling: "specialise/specialised", not the US -ize forms.
+        expect(code).not.toMatch(/\bSpecializ(?:e|ed|ing)\b/)
+        expect(code).not.toMatch(/\bspecializ(?:e|ed|ing)\b/)
       })
     })
   }
