@@ -1,7 +1,9 @@
-import { Phone, Star, MapPin, Quote } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Phone, Star, MapPin, Quote, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
   const businessName = "Shoreline Dental Cronulla"
@@ -47,10 +49,59 @@ export default function GeneratedPage() {
     "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&q=80&w=1200",
   ]
 
+  const galleryPhotos = [
+    {
+      src: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=1600",
+      alt: "Sunlit treatment room with a calm, uncluttered dental chair",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1629904888107-57e4fc98c56c?auto=format&fit=crop&q=80&w=1600",
+      alt: "Quiet reception area with soft seating at Shoreline Dental Cronulla",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1571772996211-2f02c9727629?auto=format&fit=crop&q=80&w=1600",
+      alt: "Patient sharing a relaxed smile after a check-up",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1600",
+      alt: "Close-up of modern, well-maintained dental equipment",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1600",
+      alt: "Dentist and patient in an unhurried consultation",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&q=80&w=1600",
+      alt: "Dentist and patient sharing a smile in the treatment room",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1600",
+      alt: "Bright, plant-filled waiting area at Shoreline Dental Cronulla",
+    },
+  ]
+
   const review = {
     text: "I've never left a dental appointment feeling relaxed before this place. They talk you through everything and there's genuinely no judgement about the years I put it off.",
     name: "Isabelle",
   }
+
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  const showPrev = () =>
+    setLightboxIndex((i) => (i - 1 + galleryPhotos.length) % galleryPhotos.length)
+  const showNext = () => setLightboxIndex((i) => (i + 1) % galleryPhotos.length)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") showPrev()
+      if (e.key === "ArrowRight") showNext()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen])
 
   return (
     <div className="bg-[#F6F5F1] font-sans">
@@ -215,6 +266,37 @@ export default function GeneratedPage() {
         </div>
       </section>
 
+      {/* 5b. Gallery — clickable thumbnail grid */}
+      <section className="px-6 md:px-10 py-24 md:py-32 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#1F2937] mb-12">
+            Around the practice.
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+            {galleryPhotos.map((photo, i) => (
+              <button
+                key={photo.src}
+                type="button"
+                onClick={() => {
+                  setLightboxIndex(i)
+                  setLightboxOpen(true)
+                }}
+                aria-label={`Open gallery photo ${i + 1}: ${photo.alt}`}
+                className={`group relative overflow-hidden rounded-2xl cursor-pointer ${
+                  i === 0 ? "col-span-2 row-span-2 h-[320px] md:h-[420px]" : "h-[150px] md:h-[200px]"
+                }`}
+              >
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 6. Testimonial — oversized quote */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-white">
         <div className="max-w-3xl mx-auto text-center">
@@ -296,6 +378,47 @@ export default function GeneratedPage() {
         </span>
         <span className="text-sm text-[#5B6472]">{formattedAddress}</span>
       </footer>
+
+      {/* Photo lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={galleryPhotos[lightboxIndex].src}
+            alt={galleryPhotos[lightboxIndex].alt}
+            className="w-full h-full max-h-[85vh] object-contain rounded-3xl"
+          />
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close gallery"
+            className="absolute top-4 right-4 flex items-center justify-center size-10 rounded-full bg-[#2F4A43]/80 text-[#F6F5F1] hover:bg-[#3E7C6F] transition-all duration-300"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={showPrev}
+            aria-label="Previous photo"
+            className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-full bg-[#2F4A43]/80 text-[#F6F5F1] hover:bg-[#3E7C6F] transition-all duration-300"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Next photo"
+            className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-full bg-[#2F4A43]/80 text-[#F6F5F1] hover:bg-[#3E7C6F] transition-all duration-300"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs tracking-[0.15em] text-[#F6F5F1] bg-[#2F4A43]/80 rounded-full px-4 py-2">
+            {lightboxIndex + 1} / {galleryPhotos.length}
+          </span>
+        </div>
+      </Dialog>
     </div>
   )
 }
