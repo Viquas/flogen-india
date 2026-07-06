@@ -1,7 +1,9 @@
-import { Phone, Star, MapPin, Quote } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Phone, Star, MapPin, Quote, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog } from "@/components/ui/dialog"
 
 export default function GeneratedPage() {
   const businessName = "Ember & Salt"
@@ -23,6 +25,40 @@ export default function GeneratedPage() {
     "https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?auto=format&fit=crop&q=80&w=1200",
     "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80&w=1200",
   ]
+
+  // All real photos on the page, in on-page order, for the lightbox to navigate through.
+  const allPhotos = [
+    heroPhoto,
+    storyPhoto,
+    ...galleryPhotos,
+    "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?auto=format&fit=crop&q=80&w=1200",
+  ]
+
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  const showPrev = () =>
+    setLightboxIndex((i) => (i - 1 + allPhotos.length) % allPhotos.length)
+  const showNext = () =>
+    setLightboxIndex((i) => (i + 1) % allPhotos.length)
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false)
+      if (e.key === "ArrowLeft") showPrev()
+      if (e.key === "ArrowRight") showNext()
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [lightboxOpen])
 
   const menu = [
     {
@@ -86,7 +122,8 @@ export default function GeneratedPage() {
         <img
           src={heroPhoto}
           alt={`Candlelit dining room at ${businessName} with wood-fired grill glowing in the background`}
-          className="absolute inset-0 w-full h-full object-cover"
+          onClick={() => openLightbox(0)}
+          className="absolute inset-0 w-full h-full object-cover cursor-pointer transition-all duration-300 hover:opacity-90"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#191512] via-[#191512]/50 to-[#191512]/10" />
         <div className="relative h-full flex flex-col justify-end px-6 md:px-10 pb-16 md:pb-24 max-w-6xl mx-auto">
@@ -160,7 +197,8 @@ export default function GeneratedPage() {
             <img
               src={storyPhoto}
               alt={`Chef tending the wood-fired grill at ${businessName}`}
-              className="w-full h-[420px] md:h-[520px] object-cover rounded-2xl -rotate-1"
+              onClick={() => openLightbox(1)}
+              className="w-full h-[420px] md:h-[520px] object-cover rounded-2xl -rotate-1 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
             />
           </div>
           <div className="md:col-span-7">
@@ -228,17 +266,20 @@ export default function GeneratedPage() {
           <img
             src={galleryPhotos[0]}
             alt={`Wood-fired dish plated at ${businessName}`}
-            className="w-full h-[320px] object-cover rounded-2xl"
+            onClick={() => openLightbox(2)}
+            className="w-full h-[320px] object-cover rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
           />
           <img
             src={galleryPhotos[1]}
             alt={`Dining room detail at ${businessName}`}
-            className="w-full h-[400px] object-cover rounded-2xl -mt-8"
+            onClick={() => openLightbox(3)}
+            className="w-full h-[400px] object-cover rounded-2xl -mt-8 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
           />
           <img
             src={galleryPhotos[2]}
             alt={`Dessert course at ${businessName}`}
-            className="w-full h-[320px] object-cover rounded-2xl"
+            onClick={() => openLightbox(4)}
+            className="w-full h-[320px] object-cover rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
           />
         </div>
       </section>
@@ -318,6 +359,44 @@ export default function GeneratedPage() {
           {phone}
         </a>
       </footer>
+
+      {/* Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-5xl w-full mx-4 max-h-[85vh]"
+        >
+          <img
+            src={allPhotos[lightboxIndex]}
+            alt={`${businessName} photo ${lightboxIndex + 1}`}
+            className="w-full h-[85vh] object-contain rounded-lg"
+          />
+          <button
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close"
+            className="absolute top-4 right-4 flex items-center justify-center size-10 rounded-full bg-[#191512]/80 border border-[#D97C2B]/40 text-[#F5EFE6] hover:bg-[#D97C2B] hover:text-[#191512] transition-all duration-300"
+          >
+            <X className="size-5" />
+          </button>
+          <button
+            onClick={showPrev}
+            aria-label="Previous photo"
+            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 md:size-12 rounded-full bg-[#191512]/80 border border-[#D97C2B]/40 text-[#F5EFE6] hover:bg-[#D97C2B] hover:text-[#191512] transition-all duration-300"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            onClick={showNext}
+            aria-label="Next photo"
+            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 md:size-12 rounded-full bg-[#191512]/80 border border-[#D97C2B]/40 text-[#F5EFE6] hover:bg-[#D97C2B] hover:text-[#191512] transition-all duration-300"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 font-mono text-xs tracking-[0.15em] text-[#F5EFE6] bg-[#191512]/80 border border-[#D97C2B]/40 rounded-full px-4 py-1.5">
+            {lightboxIndex + 1} / {allPhotos.length}
+          </div>
+        </div>
+      </Dialog>
     </div>
   )
 }
