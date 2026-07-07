@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react"
-import { Phone, MapPin, ArrowUpRight, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Phone, MapPin, ArrowUpRight, Star, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const businessName = "Marrick & Vane Building Co."
   const phone = "(02) 9557 4128"
   const suburb = "Marrickville"
   const formattedAddress = "14 Fitzroy Street, Marrickville NSW 2204"
-  const rating = "4.9★"
+  const rating = "4.9"
   const reviews = "120+ reviews"
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -80,11 +81,49 @@ export default function GeneratedPage() {
     { title: "Project management", copy: "One point of contact from council approval to handover." },
   ]
 
-  const testimonial = {
-    quote:
-      "They pulled our 1920s terrace apart and put it back together better than we imagined — on the timeline they promised, with none of the excuses.",
-    author: "Renee & Tom, Marrickville",
-  }
+  const reviewCards = [
+    {
+      name: "Renee",
+      quote: "Pulled our terrace apart and rebuilt it better than we imagined, on the timeline they promised.",
+    },
+    {
+      name: "David",
+      quote: "Straight answers, tidy site, and the invoice matched the quote. That's rarer than it should be.",
+    },
+    {
+      name: "Priya",
+      quote: "Council approvals, scheduling, trades — one phone call sorted it. Extension finished on time.",
+    },
+  ]
+
+  const hours = [
+    { day: "Mon–Fri", time: "7:00am – 4:00pm" },
+    { day: "Sat", time: "By appointment" },
+    { day: "Sun", time: "Closed" },
+  ]
+
+  const faqs = [
+    {
+      q: "Do you handle council approvals?",
+      a: "Yes. We manage development applications and certifications with council on your behalf, so you're not chasing paperwork.",
+    },
+    {
+      q: "How long does a typical renovation take?",
+      a: "A single-room renovation usually runs 4–8 weeks. Full house renovations and extensions are typically 3–6 months, depending on scope.",
+    },
+    {
+      q: "Are you licensed and insured?",
+      a: "Yes, we're fully licensed builders carrying home warranty and public liability insurance on every job.",
+    },
+    {
+      q: "Do you provide fixed-price quotes?",
+      a: "Yes. Once scope is locked in you get a fixed-price quote, not a rough estimate that grows once work starts.",
+    },
+    {
+      q: "What areas do you service?",
+      a: "We work across Sydney's Inner West, including Marrickville, Newtown, Dulwich Hill, Petersham and surrounding suburbs.",
+    },
+  ]
 
   return (
     <div className="bg-[#FAF9F7] font-sans pb-20 md:pb-0">
@@ -130,6 +169,7 @@ export default function GeneratedPage() {
           <div>
             <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
               {rating}
+              <span className="text-[0.35em] align-middle ml-1">★</span>
             </p>
             <p className="mt-3 text-sm text-[#A8A29E]">Average client rating</p>
           </div>
@@ -242,7 +282,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={() => setLightboxOpen(false)}
             aria-label="Close lightbox"
-            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#171412] text-[#FAF9F7] p-2 hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 flex items-center justify-center size-10 rounded-full bg-[#171412] text-[#FAF9F7] hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -252,7 +292,7 @@ export default function GeneratedPage() {
               setLightboxIndex((i) => (i - 1 + portfolio.length) % portfolio.length)
             }
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#171412]/70 text-[#FAF9F7] p-2 hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
+            className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-full bg-[#171412]/70 text-[#FAF9F7] hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
           >
             <ChevronLeft className="size-6" />
           </button>
@@ -260,7 +300,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={() => setLightboxIndex((i) => (i + 1) % portfolio.length)}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#171412]/70 text-[#FAF9F7] p-2 hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center size-10 rounded-full bg-[#171412]/70 text-[#FAF9F7] hover:bg-[#C2410C] transition-all duration-300 cursor-pointer"
           >
             <ChevronRight className="size-6" />
           </button>
@@ -296,16 +336,47 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 6. Testimonial — oversized quote */}
+      {/* 6. Reviews — social proof cards */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-white">
-        <blockquote className="max-w-3xl mx-auto text-center">
-          <p className="font-heading text-[clamp(1.75rem,3.5vw,3rem)] leading-[1.2] tracking-[-0.02em] text-[#171412]">
-            &ldquo;{testimonial.quote}&rdquo;
-          </p>
-          <footer className="mt-8 text-sm tracking-[0.05em] uppercase text-[#57534E]">
-            {testimonial.author}
-          </footer>
-        </blockquote>
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl">
+          What clients say.
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-5xl">
+          {reviewCards.map((review) => (
+            <div key={review.name} className="flex flex-col">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="size-3.5 fill-[#C2410C] text-[#C2410C]" />
+                ))}
+              </div>
+              <p className="mt-4 text-base leading-relaxed text-[#171412]">
+                &ldquo;{review.quote}&rdquo;
+              </p>
+              <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#57534E]">
+                {review.name}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ — common questions */}
+      <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#171412]/10">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl">
+          Common questions.
+        </h2>
+        <Accordion className="max-w-3xl">
+          {faqs.map((faq) => (
+            <AccordionItem key={faq.q} value={faq.q}>
+              <AccordionTrigger className="font-heading text-lg md:text-xl text-[#171412]">
+                {faq.q}
+              </AccordionTrigger>
+              <AccordionContent className="text-base leading-relaxed text-[#57534E]">
+                {faq.a}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </section>
 
       {/* 7. Contact / CTA (dark) */}
@@ -325,6 +396,31 @@ export default function GeneratedPage() {
               <MapPin className="size-4" />
               {formattedAddress}
             </p>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 text-sm text-[#A8A29E] hover:text-[#C2410C] transition-all duration-300"
+            >
+              <MapPin className="size-4" />
+              View on Google Maps
+            </a>
+
+            <div className="mt-10 max-w-xs">
+              <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#C2410C] mb-3">
+                Opening hours
+              </p>
+              <div className="flex flex-col gap-2">
+                {hours.map((h) => (
+                  <div key={h.day} className="flex items-center justify-between border-t border-[#A8A29E]/20 py-2">
+                    <span className="font-tech text-xs tracking-wide uppercase text-[#FAF9F7]">
+                      {h.day}
+                    </span>
+                    <span className="text-sm text-[#A8A29E]">{h.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <form className="md:col-span-5 flex flex-col gap-4">
