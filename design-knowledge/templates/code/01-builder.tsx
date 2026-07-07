@@ -12,7 +12,7 @@ export default function GeneratedPage() {
   const suburb = "Marrickville"
   const formattedAddress = "14 Fitzroy Street, Marrickville NSW 2204"
   const rating = "4.9"
-  const reviews = "120+ reviews"
+  const reviews = "120+"
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -165,7 +165,7 @@ export default function GeneratedPage() {
 
       {/* 3. Stat band (dark) */}
       <section className="bg-[#171412] px-6 md:px-10 py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto text-center md:text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 max-w-5xl mx-auto items-start text-center">
           <div>
             <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
               {rating}
@@ -177,7 +177,7 @@ export default function GeneratedPage() {
             <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
               {reviews}
             </p>
-            <p className="mt-3 text-sm text-[#A8A29E]">From homeowners across Sydney's Inner West</p>
+            <p className="mt-3 text-sm text-[#A8A29E]">reviews · from homeowners across Sydney's Inner West</p>
           </div>
           <div>
             <p className="font-heading font-medium text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-[-0.03em] text-[#FAF9F7]">
@@ -338,10 +338,10 @@ export default function GeneratedPage() {
 
       {/* 6. Reviews — social proof cards */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-white">
-        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl mx-auto text-center">
           What clients say.
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-5xl mx-auto">
           {reviewCards.map((review) => (
             <div key={review.name} className="flex flex-col">
               <div className="flex items-center gap-0.5">
@@ -362,10 +362,10 @@ export default function GeneratedPage() {
 
       {/* FAQ — common questions */}
       <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#171412]/10">
-        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#171412] mb-16 max-w-2xl mx-auto text-center">
           Common questions.
         </h2>
-        <Accordion className="max-w-3xl">
+        <Accordion className="max-w-3xl mx-auto">
           {faqs.map((faq) => (
             <AccordionItem key={faq.q} value={faq.q}>
               <AccordionTrigger className="font-heading text-lg md:text-xl text-[#171412]">
