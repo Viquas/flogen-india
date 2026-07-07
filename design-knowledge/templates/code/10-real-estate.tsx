@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react"
-import { Phone, Star, MapPin, Quote, Home, Key, ClipboardCheck, Calculator, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Phone, Star, MapPin, Quote, Home, Key, ClipboardCheck, Calculator, X, ChevronLeft, ChevronRight, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 function SectionEyebrow({ index, label, tone = "light" }: { index: string; label: string; tone?: "light" | "dark" }) {
   const textColor = tone === "dark" ? "text-[#9C7C38]" : "text-[#9C7C38]"
@@ -68,6 +69,40 @@ export default function GeneratedPage() {
     },
   ]
 
+  const shortReviews = [
+    {
+      text: "Straightforward advice from the first phone call. No pressure, just a clear plan.",
+      name: "Marcus, buyer",
+    },
+    {
+      text: "Settlement was smooth and every question was answered the same day.",
+      name: "Priya, vendor",
+    },
+  ]
+
+  const faqs = [
+    {
+      q: "How do you determine a property's value?",
+      a: "We compare recent, genuinely comparable sales on the same streets, then walk the property with you to account for condition, aspect, and any work that's been done. You'll get a written range, not a single guess.",
+    },
+    {
+      q: "What's your commission structure?",
+      a: "A flat, disclosed percentage agreed before we sign anything — no sliding scales or hidden marketing mark-ups. We'll talk you through it at the appraisal.",
+    },
+    {
+      q: "How long does a typical sale take?",
+      a: "Most campaigns in this market run four to six weeks from launch to exchange, though it varies with season and property type. We'll give you a realistic timeline up front.",
+    },
+    {
+      q: "Do you help with property management?",
+      a: "Yes — tenant selection, routine inspections, and maintenance coordination are all part of our property management service for investment owners.",
+    },
+    {
+      q: "What areas do you service?",
+      a: `We focus on ${suburb} and the surrounding suburbs, where we track every sale closely rather than spreading thin across the wider region.`,
+    },
+  ]
+
   const galleryPhotos = [
     {
       src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1600",
@@ -94,7 +129,7 @@ export default function GeneratedPage() {
       alt: "Landscaped backyard with pool overlooking the harbour side of the suburb",
     },
     {
-      src: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?auto=format&fit=crop&q=80&w=1600",
+      src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1600",
       alt: `The ${businessName} office reception, styled in the agency's quiet-luxury palette`,
     },
     {
@@ -211,7 +246,7 @@ export default function GeneratedPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8">
             <div>
               <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7]">
-                {rating}★
+                {rating}<span className="text-[0.35em] align-middle ml-1">★</span>
               </p>
               <p className="mt-3 font-tech text-xs tracking-[0.25em] uppercase text-[#9C7C38]">
                 Client rating
@@ -275,7 +310,7 @@ export default function GeneratedPage() {
       {/* 6. Gallery — click-to-open lightbox */}
       <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#E8E4DA]">
         <div className="max-w-6xl mx-auto">
-          <SectionEyebrow index="06" label="THE PORTFOLIO" />
+          <SectionEyebrow index="05" label="THE PORTFOLIO" />
           <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#14213D] mb-16 max-w-xl">
             Homes we've been trusted with.
           </h2>
@@ -316,7 +351,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={() => setLightboxOpen(false)}
             aria-label="Close lightbox"
-            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#14213D] text-[#FBFAF7] p-2 hover:bg-[#9C7C38] transition-all duration-300 cursor-pointer"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 size-10 flex items-center justify-center rounded-full bg-[#14213D] text-[#FBFAF7] hover:bg-[#9C7C38] transition-all duration-300 cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -324,7 +359,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={showPrev}
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#14213D]/70 text-[#9C7C38] p-2 hover:bg-[#9C7C38] hover:text-[#14213D] transition-all duration-300 cursor-pointer"
+            className="absolute left-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-full bg-[#14213D]/70 text-[#9C7C38] hover:bg-[#9C7C38] hover:text-[#14213D] transition-all duration-300 cursor-pointer"
           >
             <ChevronLeft className="size-6" />
           </button>
@@ -332,7 +367,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={showNext}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#14213D]/70 text-[#9C7C38] p-2 hover:bg-[#9C7C38] hover:text-[#14213D] transition-all duration-300 cursor-pointer"
+            className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-full bg-[#14213D]/70 text-[#9C7C38] hover:bg-[#9C7C38] hover:text-[#14213D] transition-all duration-300 cursor-pointer"
           >
             <ChevronRight className="size-6" />
           </button>
@@ -342,22 +377,41 @@ export default function GeneratedPage() {
         </div>
       </Dialog>
 
-      {/* 7. Testimonial — oversized quote */}
+      {/* 6. Testimonial — oversized quote + short review cards */}
       <section className="px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-4xl mx-auto">
-          <SectionEyebrow index="07" label="A VENDOR'S WORDS" />
+          <SectionEyebrow index="06" label="WHAT CLIENTS SAY" />
           <Quote className="size-10 text-[#9C7C38] mb-6" />
           <p className="font-elegant italic text-[clamp(1.5rem,3vw,2.5rem)] leading-snug text-[#14213D] max-w-3xl">
             "{reviews[0].text}"
           </p>
           <p className="mt-8 text-sm text-[#5C6478]">— {reviews[0].name}</p>
+
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {shortReviews.map((review) => (
+              <div
+                key={review.name}
+                className="rounded-2xl border border-[#E8E4DA] p-6 md:p-7"
+              >
+                <div className="flex items-center gap-0.5 mb-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="size-3.5 fill-[#9C7C38] text-[#9C7C38]" />
+                  ))}
+                </div>
+                <p className="text-base leading-relaxed text-[#5C6478]">
+                  "{review.text}"
+                </p>
+                <p className="mt-4 text-sm text-[#14213D]">— {review.name}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 8. Appraisal CTA — midnight */}
+      {/* 7. Appraisal CTA — midnight */}
       <section id="appraisal" className="bg-[#14213D] px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-6xl mx-auto">
-          <SectionEyebrow index="08" label="FREE APPRAISAL" tone="dark" />
+          <SectionEyebrow index="07" label="FREE APPRAISAL" tone="dark" />
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16">
             <div className="md:col-span-5">
               <h2 className="font-elegant font-medium text-[clamp(2.5rem,5.5vw,4rem)] tracking-[-0.02em] leading-[1.05] text-[#FBFAF7]">
@@ -424,22 +478,123 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 9. Footer */}
-      <footer className="bg-[#FBFAF7] border-t border-[#E8E4DA] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <span className="font-elegant font-medium text-base text-[#14213D]">
-          {businessName}
-        </span>
-        {formattedAddress && (
-          <span className="text-sm text-[#5C6478]">{formattedAddress}</span>
-        )}
-        {phone && (
-          <a
-            href={telHref}
-            className="text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300"
-          >
-            {phone}
-          </a>
-        )}
+      {/* 8. Opening hours — quiet, understated */}
+      <section className="px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-3xl mx-auto">
+          <SectionEyebrow index="08" label="OPENING HOURS" />
+          <div className="flex items-start gap-4">
+            <Clock className="size-5 text-[#9C7C38] mt-1 shrink-0" />
+            <div className="w-full max-w-sm">
+              <div className="flex items-center justify-between py-3 border-b border-[#E8E4DA]">
+                <span className="text-base text-[#14213D]">Monday – Friday</span>
+                <span className="text-base text-[#5C6478]">9:00am – 5:30pm</span>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-[#E8E4DA]">
+                <span className="text-base text-[#14213D]">Saturday</span>
+                <span className="text-base text-[#5C6478]">9:00am – 1:00pm, by appointment</span>
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <span className="text-base text-[#14213D]">Sunday</span>
+                <span className="text-base text-[#5C6478]">Closed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. FAQ — accordion */}
+      <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#E8E4DA]">
+        <div className="max-w-3xl mx-auto">
+          <SectionEyebrow index="09" label="COMMON QUESTIONS" />
+          <Accordion>
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.q} value={faq.q}>
+                <AccordionTrigger className="font-elegant font-medium text-lg md:text-xl text-[#14213D]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-relaxed text-[#5C6478]">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* 10. Footer — three columns with gold hairline and depth */}
+      <footer className="bg-[#F2EFE6] px-6 md:px-10 pt-16 pb-8">
+        <div className="max-w-6xl mx-auto">
+          <span className="block h-px w-full bg-[#9C7C38]/60 mb-14" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+            <div>
+              <span className="font-elegant font-medium text-xl text-[#14213D]">
+                {businessName}
+              </span>
+              <p className="mt-3 text-sm leading-relaxed text-[#5C6478] max-w-xs">
+                Considered real estate for {suburb} and the surrounding
+                suburbs — from first appraisal to settlement day.
+              </p>
+            </div>
+            <div>
+              <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#9C7C38] mb-4">
+                Quick links
+              </p>
+              <nav className="flex flex-col gap-2.5">
+                <a href="#appraisal" className="text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300 w-fit">
+                  Book an appraisal
+                </a>
+                <a href="#appraisal" className="text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300 w-fit">
+                  Selling
+                </a>
+                <a href="#appraisal" className="text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300 w-fit">
+                  Buying
+                </a>
+                <a href="#appraisal" className="text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300 w-fit">
+                  Property management
+                </a>
+              </nav>
+            </div>
+            <div>
+              <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#9C7C38] mb-4">
+                Contact
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {phone && (
+                  <a
+                    href={telHref}
+                    className="inline-flex items-center gap-2 text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300 w-fit"
+                  >
+                    <Phone className="size-4 text-[#9C7C38]" />
+                    {phone}
+                  </a>
+                )}
+                {formattedAddress && (
+                  <span className="inline-flex items-center gap-2 text-sm text-[#5C6478]">
+                    <MapPin className="size-4 text-[#9C7C38]" />
+                    {formattedAddress}
+                  </span>
+                )}
+                {formattedAddress && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-[#5C6478] hover:text-[#14213D] transition-all duration-300 w-fit"
+                  >
+                    <MapPin className="size-4 text-[#9C7C38]" />
+                    View on Google Maps
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="mt-14 pt-6 border-t border-[#E8E4DA] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-[#5C6478]">
+              © {new Date().getFullYear()} {businessName}. All rights reserved.
+            </p>
+            <p className="text-xs text-[#5C6478]">{suburb} NSW</p>
+          </div>
+        </div>
       </footer>
     </div>
   )
