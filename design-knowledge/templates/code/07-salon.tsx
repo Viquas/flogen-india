@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { MapPin, Phone, Star, Quote, Instagram, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -67,7 +68,7 @@ export default function GeneratedPage() {
       caption: "COPPER BALAYAGE",
     },
     {
-      src: "https://images.unsplash.com/photo-1522337094846-8a8994f5f8ce?auto=format&fit=crop&q=80&w=900",
+      src: "https://images.unsplash.com/photo-1554519515-242161756769?auto=format&fit=crop&q=80&w=900",
       caption: "THE FINISHING TOUCH",
     },
   ]
@@ -99,6 +100,46 @@ export default function GeneratedPage() {
     text: "I've had my colour done all over the world and no one reads my hair like Sable & Rye. They talk you out of the bad ideas and somehow make the good ones better.",
     name: "Freya",
   }
+
+  const shortReviews = [
+    {
+      text: "Booked in for a root touch-up and left with a whole new appreciation for what a good colourist actually does.",
+      name: "Mia",
+    },
+    {
+      text: "Honest about what would and wouldn't work on my hair. Rare, and worth the drive across town.",
+      name: "Tom",
+    },
+  ]
+
+  const openingHours = [
+    { day: "Tue – Fri", hours: "9:00 am – 6:00 pm" },
+    { day: "Saturday", hours: "8:00 am – 4:00 pm" },
+    { day: "Sun – Mon", hours: "Closed" },
+  ]
+
+  const faqs = [
+    {
+      q: "Do I need to book in advance?",
+      a: "For colour work, yes — we'd suggest a week or two out, especially for balayage or full colour. Cuts and blow-dries can often be squeezed in with a few days' notice.",
+    },
+    {
+      q: "Do you offer consultations for colour?",
+      a: "Always. Every colour appointment starts with a proper conversation about what your hair can realistically do, not just what you've seen in a photo.",
+    },
+    {
+      q: "What products do you use?",
+      a: "We work with a small range of professional colour and care lines chosen for condition, not just shine on the day. Happy to talk through what's in your formula.",
+    },
+    {
+      q: "Can I bring inspiration photos?",
+      a: "Please do. Photos help us talk about tone, dimension and maintenance before we touch a single strand — it's the fastest way to get on the same page.",
+    },
+    {
+      q: "Do you cater to all hair types?",
+      a: "Yes — our stylists are trained across a full range of textures and lengths, from fine and straight through to coily and coarse.",
+    },
+  ]
 
   return (
     <div className="bg-[#FAF6F3] font-sans">
@@ -279,6 +320,67 @@ export default function GeneratedPage() {
           </p>
           <p className="mt-8 text-base text-[#6D625C]">— {review.name}</p>
         </div>
+
+        <div className="max-w-4xl mx-auto mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {shortReviews.map((r) => (
+            <div key={r.name} className="bg-white rounded-2xl p-8">
+              <div className="flex items-center gap-0.5 mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="size-3.5 fill-[#B07D62] text-[#B07D62]" />
+                ))}
+              </div>
+              <p className="text-base text-[#211C1A] leading-relaxed">{r.text}</p>
+              <p className="mt-4 text-sm text-[#6D625C]">— {r.name}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6b. Opening hours */}
+      <section className="px-6 md:px-10 py-24 md:py-32 bg-[#211C1A]">
+        <div className="max-w-3xl mx-auto">
+          <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#A39A94] mb-6">
+            OPENING HOURS
+          </p>
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAF6F3] mb-12">
+            When to find us.
+          </h2>
+          <div className="max-w-md">
+            {openingHours.map((row) => (
+              <div
+                key={row.day}
+                className="flex items-center justify-between py-4 border-t border-[#3A332F] last:border-b"
+              >
+                <span className="text-base text-[#FAF6F3]">{row.day}</span>
+                <span className="text-base text-[#A39A94]">{row.hours}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6c. FAQ */}
+      <section className="px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-3xl mx-auto">
+          <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#B07D62] mb-6">
+            FAQ
+          </p>
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#211C1A] mb-12">
+            Common questions.
+          </h2>
+          <Accordion>
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.q} value={faq.q}>
+                <AccordionTrigger className="font-elegant font-medium text-lg md:text-xl text-[#211C1A]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-relaxed text-[#6D625C]">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </section>
 
       {/* 7. Booking CTA */}
@@ -374,9 +476,67 @@ export default function GeneratedPage() {
       </section>
 
       {/* 8. Footer */}
-      <footer className="px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#EAE1DA]">
-        <span className="font-elegant font-medium text-base text-[#211C1A]">{businessName}</span>
-        <span className="text-sm text-[#6D625C]">{formattedAddress}</span>
+      <footer className="px-6 md:px-10 pt-16 pb-8 bg-[#211C1A] border-t border-[#3A332F]">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6">
+          <div>
+            <span className="font-elegant font-medium text-xl text-[#FAF6F3]">{businessName}</span>
+            <p className="mt-3 text-sm text-[#A39A94] max-w-xs">
+              Considered colour and cutting, one chair at a time.
+            </p>
+          </div>
+          <div>
+            <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#A39A94] mb-4">
+              EXPLORE
+            </p>
+            <div className="flex flex-col gap-3">
+              <a href="#booking" className="text-sm text-[#D9CFC8] hover:text-[#FAF6F3] transition-all duration-300 w-fit">
+                The menu of looks
+              </a>
+              <a href="#booking" className="text-sm text-[#D9CFC8] hover:text-[#FAF6F3] transition-all duration-300 w-fit">
+                Book a chair
+              </a>
+              <a href="#booking" className="text-sm text-[#D9CFC8] hover:text-[#FAF6F3] transition-all duration-300 w-fit">
+                Contact
+              </a>
+            </div>
+          </div>
+          <div>
+            <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#A39A94] mb-4">
+              CONTACT
+            </p>
+            <div className="flex flex-col gap-3">
+              <a
+                href={telHref}
+                className="inline-flex items-center gap-2 text-sm text-[#D9CFC8] hover:text-[#FAF6F3] transition-all duration-300 w-fit"
+              >
+                <Phone className="size-4 text-[#B07D62]" />
+                {phone}
+              </a>
+              <span className="inline-flex items-center gap-2 text-sm text-[#D9CFC8]">
+                <MapPin className="size-4 text-[#B07D62]" />
+                {formattedAddress}
+              </span>
+              <a
+                href={directionsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-[#D9CFC8] hover:text-[#FAF6F3] transition-all duration-300 w-fit"
+              >
+                <MapPin className="size-4 text-[#B07D62]" />
+                View on Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-[#3A332F] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span className="text-xs text-[#A39A94]">
+            © {new Date().getFullYear()} {businessName}. All rights reserved.
+          </span>
+          <span className="inline-flex items-center gap-2 text-xs text-[#A39A94]">
+            <Instagram className="size-3.5 text-[#B07D62]" />
+            @sableandrye
+          </span>
+        </div>
       </footer>
 
       {/* Lightbox — editorial photo carousel */}
