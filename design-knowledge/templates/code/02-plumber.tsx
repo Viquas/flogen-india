@@ -323,7 +323,7 @@ export default function GeneratedPage() {
 
       {/* 5. Individual review cards */}
       <section className="bg-white px-6 md:px-10 py-24 md:py-32">
-        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 max-w-2xl">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 max-w-2xl mx-auto text-center">
           {userRatingCount} five-star reviews, and counting.
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
@@ -440,10 +440,10 @@ export default function GeneratedPage() {
 
       {/* 6.7 FAQ */}
       <section className="bg-[#F1F5F9] px-6 md:px-10 py-24 md:py-32">
-        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 max-w-2xl">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 max-w-2xl mx-auto text-center">
           Common questions.
         </h2>
-        <Accordion className="max-w-3xl">
+        <Accordion className="max-w-3xl mx-auto">
           {faqs.map((faq) => (
             <AccordionItem key={faq.q} value={faq.q}>
               <AccordionTrigger className="font-heading text-lg md:text-xl text-[#0C1B2A]">
