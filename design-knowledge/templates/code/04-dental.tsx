@@ -373,11 +373,11 @@ export default function GeneratedPage() {
 
       {/* 6b. Opening hours */}
       <section className="px-6 md:px-10 py-24 md:py-32">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#1F2937] mb-12">
             Opening hours.
           </h2>
-          <div className="max-w-md">
+          <div className="max-w-md mx-auto text-left">
             {openingHours.map((row) => (
               <div
                 key={row.day}
@@ -394,13 +394,13 @@ export default function GeneratedPage() {
       {/* 6c. FAQ */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-white">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#1F2937] mb-12">
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#1F2937] mb-12 text-center">
             Common questions.
           </h2>
-          <Accordion>
+          <Accordion className="max-w-3xl mx-auto">
             {faqs.map((faq) => (
               <AccordionItem key={faq.q} value={faq.q}>
-                <AccordionTrigger className="font-elegant font-medium text-lg md:text-xl text-[#1F2937]">
+                <AccordionTrigger className="text-left font-elegant font-medium text-lg md:text-xl text-[#1F2937]">
                   {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-base leading-relaxed text-[#5B6472]">
