@@ -471,7 +471,7 @@ export default function GeneratedPage() {
           </div>
 
           <div className="md:col-span-8">
-            <div className="max-w-3xl mx-auto text-center">
+            <div className="max-w-3xl mx-auto text-center md:text-left">
               <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
                 Before you show up
               </p>
