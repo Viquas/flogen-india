@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label"
 import { Dialog } from "@/components/ui/dialog"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
-function SectionEyebrow({ index, label, tone = "light" }: { index: string; label: string; tone?: "light" | "dark" }) {
+function SectionEyebrow({ index, label, tone = "light", center = false }: { index: string; label: string; tone?: "light" | "dark"; center?: boolean }) {
   const textColor = tone === "dark" ? "text-[#9C7C38]" : "text-[#9C7C38]"
   const ruleColor = tone === "dark" ? "bg-[#9C7C38]/60" : "bg-[#9C7C38]"
   return (
-    <div className="flex items-center gap-4 mb-10 md:mb-14">
+    <div className={`flex items-center gap-4 mb-10 md:mb-14 ${center ? "justify-center mx-auto w-fit" : ""}`}>
       <span className={`h-px w-12 ${ruleColor}`} />
       <p className={`font-tech text-xs tracking-[0.25em] uppercase ${textColor}`}>
         {index} — {label}
@@ -242,10 +242,10 @@ export default function GeneratedPage() {
       {/* 4. Results band — midnight */}
       <section className="bg-[#14213D] px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-5xl mx-auto">
-          <SectionEyebrow index="03" label="TRACK RECORD" tone="dark" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8">
+          <SectionEyebrow index="03" label="TRACK RECORD" tone="dark" center />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-8 text-center sm:items-start">
             <div>
-              <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7]">
+              <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7] whitespace-nowrap">
                 {rating}<span className="text-[0.35em] align-middle ml-1">★</span>
               </p>
               <p className="mt-3 font-tech text-xs tracking-[0.25em] uppercase text-[#9C7C38]">
@@ -253,7 +253,7 @@ export default function GeneratedPage() {
               </p>
             </div>
             <div>
-              <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7]">
+              <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7] whitespace-nowrap">
                 {userRatingCount}
               </p>
               <p className="mt-3 font-tech text-xs tracking-[0.25em] uppercase text-[#9C7C38]">
@@ -261,7 +261,7 @@ export default function GeneratedPage() {
               </p>
             </div>
             <div>
-              <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7]">
+              <p className="font-elegant font-medium text-[clamp(2.5rem,5vw,4rem)] tracking-[-0.02em] leading-[1.0] text-[#FBFAF7] whitespace-nowrap">
                 Local
               </p>
               <p className="mt-3 font-tech text-xs tracking-[0.25em] uppercase text-[#9C7C38]">
@@ -379,15 +379,15 @@ export default function GeneratedPage() {
 
       {/* 6. Testimonial — oversized quote + short review cards */}
       <section className="px-6 md:px-10 py-24 md:py-32">
-        <div className="max-w-4xl mx-auto">
-          <SectionEyebrow index="06" label="WHAT CLIENTS SAY" />
-          <Quote className="size-10 text-[#9C7C38] mb-6" />
-          <p className="font-elegant italic text-[clamp(1.5rem,3vw,2.5rem)] leading-snug text-[#14213D] max-w-3xl">
+        <div className="max-w-4xl mx-auto text-center">
+          <SectionEyebrow index="06" label="WHAT CLIENTS SAY" center />
+          <Quote className="size-10 text-[#9C7C38] mb-6 mx-auto" />
+          <p className="font-elegant italic text-[clamp(1.5rem,3vw,2.5rem)] leading-snug text-[#14213D] max-w-3xl mx-auto">
             "{reviews[0].text}"
           </p>
           <p className="mt-8 text-sm text-[#5C6478]">— {reviews[0].name}</p>
 
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
             {shortReviews.map((review) => (
               <div
                 key={review.name}
@@ -480,9 +480,9 @@ export default function GeneratedPage() {
 
       {/* 8. Opening hours — quiet, understated */}
       <section className="px-6 md:px-10 py-24 md:py-32">
-        <div className="max-w-3xl mx-auto">
-          <SectionEyebrow index="08" label="OPENING HOURS" />
-          <div className="flex items-start gap-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <SectionEyebrow index="08" label="OPENING HOURS" center />
+          <div className="flex items-start gap-4 w-fit mx-auto">
             <Clock className="size-5 text-[#9C7C38] mt-1 shrink-0" />
             <div className="w-full max-w-sm">
               <div className="flex items-center justify-between py-3 border-b border-[#E8E4DA]">
@@ -505,7 +505,7 @@ export default function GeneratedPage() {
       {/* 9. FAQ — accordion */}
       <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#E8E4DA]">
         <div className="max-w-3xl mx-auto">
-          <SectionEyebrow index="09" label="COMMON QUESTIONS" />
+          <SectionEyebrow index="09" label="COMMON QUESTIONS" center />
           <Accordion>
             {faqs.map((faq) => (
               <AccordionItem key={faq.q} value={faq.q}>
