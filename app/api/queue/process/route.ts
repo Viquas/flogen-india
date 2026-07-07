@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generationQueue } from '@/lib/queue'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
+import { CLAUDE_STUCK_MS } from '@/lib/generation/router-scope'
 
 // Guard: track last invocation to prevent concurrent cron runs
 let lastCronStart = 0
@@ -38,17 +39,32 @@ export async function GET(request: NextRequest) {
     const deadline = now + TIMEOUT_MS
 
     try {
-        // Reset stuck jobs: processing for >2 min means the function died mid-generation
+        // Reset stuck jobs: processing for >2 min means the function died mid-generation.
+        // Jobs claimed by the local Claude worker get a longer 15-min window (CLAUDE_STUCK_MS)
+        // before the safety valve reclaims them — Claude generation can legitimately run longer.
         const supabase = createAdminClient()
         const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
-        const { data: stuckJobs } = await supabase
+        const claudeStaleThreshold = new Date(Date.now() - CLAUDE_STUCK_MS).toISOString()
+
+        const { data: stuckNonClaudeJobs } = await supabase
             .from('queue_jobs')
-            .update({ status: 'pending', updated_at: new Date().toISOString() })
+            .update({ status: 'pending', updated_at: new Date().toISOString(), claimed_by: null, claimed_at: null })
             .eq('status', 'processing')
             .lt('started_at', staleThreshold)
+            .or('claimed_by.is.null,claimed_by.eq.cron')
             .select('id')
 
-        if (stuckJobs && stuckJobs.length > 0) {
+        const { data: stuckClaudeJobs } = await supabase
+            .from('queue_jobs')
+            .update({ status: 'pending', updated_at: new Date().toISOString(), claimed_by: null, claimed_at: null })
+            .eq('status', 'processing')
+            .eq('claimed_by', 'claude')
+            .lt('started_at', claudeStaleThreshold)
+            .select('id')
+
+        const stuckJobs = [...(stuckNonClaudeJobs || []), ...(stuckClaudeJobs || [])]
+
+        if (stuckJobs.length > 0) {
             logger.queue.info('Cron: reset stuck processing jobs', { count: stuckJobs.length })
         }
 

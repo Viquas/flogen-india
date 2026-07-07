@@ -3,6 +3,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAndSaveWebsite } from '@/lib/ai/generator'
 import { logger } from '@/lib/logger'
+import { isClaudeLive } from '@/lib/generation/worker-liveness'
+import { selectHighValue, type Project } from '@/lib/generation/high-value'
+import { shouldCronSkip } from '@/lib/generation/router-scope'
 
 export interface QueueJob {
     id: string
@@ -11,8 +14,11 @@ export interface QueueJob {
     template_id: string | null
     status: 'pending' | 'processing' | 'completed' | 'failed'
     attempts: number
+    created_at?: string
     updated_at?: string
     model_id?: string | null  // repurposed as priority field (e.g. "1" = high priority)
+    claimed_by?: string | null
+    claimed_at?: string | null
 }
 
 // Max retry attempts before permanently failing a job
@@ -229,6 +235,9 @@ class GenerationQueue {
         this.isProcessing = true
         const supabase = createAdminClient()
 
+        // Compute once per run — cheap heartbeat check, not per-iteration.
+        const claudeLive = await isClaudeLive(supabase, Date.now())
+
         try {
             while (true) {
                 this.heartbeat()
@@ -279,9 +288,39 @@ class GenerationQueue {
                     const pB = parsePriority(b.model_id)
                     if (pB !== pA) return pB - pA // higher priority first
                     return 0 // already sorted by created_at from DB
-                })
+                }) as unknown as QueueJob[]
 
-                const job = sorted[0] as unknown as QueueJob
+                // If Claude is live, work out which of these jobs' projects are in
+                // Claude's high-value scope, so the cron can leave them alone.
+                let highValueIds = new Set<string>()
+                if (claudeLive) {
+                    const projectIds = sorted.map((j) => j.project_id)
+                    const { data: projects, error: projectsError } = await supabase
+                        .from('projects')
+                        .select('id,is_high_value,niche_score,business_data')
+                        .in('id', projectIds)
+
+                    if (projectsError) {
+                        logger.queue.error('Failed to fetch projects for high-value scoping', { error: projectsError.message })
+                    } else if (projects) {
+                        const highValue = selectHighValue(projects as unknown as Project[])
+                        highValueIds = new Set(highValue.map((p) => p.id))
+                    }
+                }
+
+                const job = sorted.find(
+                    (j) => !shouldCronSkip(j as { project_id: string; created_at: string }, {
+                        claudeLive,
+                        nowMs: Date.now(),
+                        highValueProjectIds: highValueIds,
+                    })
+                ) as QueueJob | undefined
+
+                if (!job) {
+                    // Everything remaining pending belongs to a live Claude worker's scope.
+                    logger.queue.info('All remaining pending jobs are in Claude scope, cron yielding')
+                    break
+                }
 
                 // 3. Mark as processing (optimistic lock — only succeeds if still 'pending')
                 const { data: updatedJob, error: updateError } = await supabase
@@ -291,6 +330,8 @@ class GenerationQueue {
                         attempts: (job.attempts || 0) + 1,
                         updated_at: new Date().toISOString(),
                         started_at: new Date().toISOString(),
+                        claimed_by: 'cron',
+                        claimed_at: new Date().toISOString(),
                     })
                     .eq('id', job.id)
                     .eq('status', 'pending')
