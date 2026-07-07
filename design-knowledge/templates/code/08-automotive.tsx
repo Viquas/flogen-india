@@ -364,13 +364,13 @@ export default function GeneratedPage() {
             Straight answers. Fair prices.
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 items-start text-center">
             <div>
               <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
                 {rating}
                 <span className="text-[0.35em] align-middle ml-1">★</span>
               </p>
-              <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
+              <div className="mt-3 w-12 h-1 bg-[#E11D2E] mx-auto" />
               <p className="mt-4 text-base text-[#55555E]">
                 Average rating from {userRatingCount} Google reviews.
               </p>
@@ -379,7 +379,7 @@ export default function GeneratedPage() {
               <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
                 Upfront
               </p>
-              <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
+              <div className="mt-3 w-12 h-1 bg-[#E11D2E] mx-auto" />
               <p className="mt-4 text-base text-[#55555E]">
                 Fixed quotes before we touch a spanner — no invoice shocks.
               </p>
@@ -388,7 +388,7 @@ export default function GeneratedPage() {
               <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
                 Guaranteed
               </p>
-              <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
+              <div className="mt-3 w-12 h-1 bg-[#E11D2E] mx-auto" />
               <p className="mt-4 text-base text-[#55555E]">
                 All work guaranteed, all makes and models welcome.
               </p>
@@ -507,11 +507,13 @@ export default function GeneratedPage() {
 
       {/* 5c. Featured reviews — static grid */}
       <section className="bg-[#141416] px-6 md:px-10 py-24 md:py-32">
-        <div className="max-w-6xl mx-auto">
-          <Eyebrow>Straight from the customers</Eyebrow>
-          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16 max-w-2xl">
-            Top-rated in Penrith.
-          </h2>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center">
+            <Eyebrow>Straight from the customers</Eyebrow>
+            <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16 max-w-2xl mx-auto">
+              Top-rated in Penrith.
+            </h2>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredReviews.map((review) => (
@@ -642,10 +644,12 @@ export default function GeneratedPage() {
       {/* 7b. FAQ accordion */}
       <section className="bg-[#141416] px-6 md:px-10 py-24 md:py-32">
         <div className="max-w-3xl mx-auto">
-          <Eyebrow>Common questions</Eyebrow>
-          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16">
-            Before you book.
-          </h2>
+          <div className="text-center">
+            <Eyebrow>Common questions</Eyebrow>
+            <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16">
+              Before you book.
+            </h2>
+          </div>
 
           <Accordion className="w-full">
             {faqs.map((faq) => (
