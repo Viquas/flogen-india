@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -70,8 +71,8 @@ export default function GeneratedPage() {
       copy: "Drop it in before 9am, we'll have the fault found and a fixed quote in your inbox by lunch.",
       icon: Gauge,
       photo:
-        "https://images.unsplash.com/photo-1632823471565-1ecdf7c8a5f5?auto=format&fit=crop&q=80&w=1600",
-      alt: "Mechanic using a diagnostic scanner plugged into a car's OBD port",
+        "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=1600",
+      alt: "Wide shot of the workshop floor with multiple vehicles in service bays",
       span: "md:col-span-6",
     },
     {
@@ -119,6 +120,41 @@ export default function GeneratedPage() {
     },
   ]
 
+  const featuredReviews = [
+    { name: "Dean R.", quote: "Told me straight what needed doing and what could wait. No upsell rubbish." },
+    { name: "Priya K.", quote: "Car back same day with a proper diagnostic printout. Rego renewal sorted." },
+    { name: "Wade T.", quote: "Fixed a fault two other places couldn't find. Fair price, no BS." },
+  ]
+
+  const openingHours = [
+    { day: "Mon — Fri", hours: "7:30AM – 5:30PM" },
+    { day: "Saturday", hours: "8:00AM – 1:00PM" },
+    { day: "Sunday", hours: "Closed" },
+  ]
+
+  const faqs = [
+    {
+      q: "Do you work on all makes and models?",
+      a: "Yes — European, Japanese, Korean and American vehicles all come through the workshop. If it's got an engine, we can service it.",
+    },
+    {
+      q: "Do you offer loan cars?",
+      a: "Loan cars are available for logbook services and longer repairs, subject to availability. Ask when you book so we can hold one for you.",
+    },
+    {
+      q: "How long does a logbook service take?",
+      a: "Most logbook services are done within a few hours and same-day where the car's dropped off in the morning. We'll give you a time when you book.",
+    },
+    {
+      q: "Do you provide written quotes?",
+      a: "Always. You get a fixed, written quote before we touch a spanner — no surprises on the invoice.",
+    },
+    {
+      q: "Are your parts genuine or aftermarket?",
+      a: "Your choice. We fit genuine manufacturer parts to protect warranty, or quality aftermarket parts if you'd rather save on cost.",
+    },
+  ]
+
   const workshopPhotos = [
     {
       src: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80&w=1600",
@@ -141,8 +177,8 @@ export default function GeneratedPage() {
       alt: "Car raised on a hydraulic hoist inside a clean mechanic workshop",
     },
     {
-      src: "https://images.unsplash.com/photo-1632823471565-1ecdf7c8a5f5?auto=format&fit=crop&q=80&w=1600",
-      alt: "Mechanic using a diagnostic scanner plugged into a car's OBD port",
+      src: "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=1600",
+      alt: "Wide shot of the workshop floor with multiple vehicles in service bays",
     },
     {
       src: "https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?auto=format&fit=crop&q=80&w=1600",
@@ -331,7 +367,8 @@ export default function GeneratedPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
             <div>
               <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#141416]">
-                {rating}★
+                {rating}
+                <span className="text-[0.35em] align-middle ml-1">★</span>
               </p>
               <div className="mt-3 w-12 h-1 bg-[#E11D2E]" />
               <p className="mt-4 text-base text-[#55555E]">
@@ -437,7 +474,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={() => setLightboxOpen(false)}
             aria-label="Close"
-            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#141416] border border-[#2C2C33] text-[#F4F4F5] rounded-sm p-2 transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 size-10 flex items-center justify-center bg-[#141416] border border-[#2C2C33] text-[#F4F4F5] rounded-full transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
           >
             <X className="size-5" />
           </button>
@@ -446,7 +483,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={showPrev}
             aria-label="Previous photo"
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#141416]/80 border border-[#2C2C33] text-[#F4F4F5] rounded-sm p-2 transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
+            className="absolute left-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center bg-[#141416]/80 border border-[#2C2C33] text-[#F4F4F5] rounded-full transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
           >
             <ChevronLeft className="size-6" />
           </button>
@@ -454,7 +491,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={showNext}
             aria-label="Next photo"
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#141416]/80 border border-[#2C2C33] text-[#F4F4F5] rounded-sm p-2 transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
+            className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center bg-[#141416]/80 border border-[#2C2C33] text-[#F4F4F5] rounded-full transition-all duration-300 hover:bg-[#E11D2E] hover:border-[#E11D2E]"
           >
             <ChevronRight className="size-6" />
           </button>
@@ -467,6 +504,37 @@ export default function GeneratedPage() {
       </Dialog>
 
       <DiagnosticStrip>CUSTOMER FEEDBACK — LOGGED</DiagnosticStrip>
+
+      {/* 5c. Featured reviews — static grid */}
+      <section className="bg-[#141416] px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-6xl mx-auto">
+          <Eyebrow>Straight from the customers</Eyebrow>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16 max-w-2xl">
+            Top-rated in Penrith.
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredReviews.map((review) => (
+              <div
+                key={review.name}
+                className="bg-[#1D1D21] border border-[#2C2C33] rounded-sm p-8"
+              >
+                <div className="flex items-center gap-0.5 mb-4">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star key={j} className="size-3.5 fill-[#E11D2E] text-[#E11D2E]" />
+                  ))}
+                </div>
+                <p className="text-sm md:text-base leading-relaxed text-[#9D9DA6]">
+                  &ldquo;{review.quote}&rdquo;
+                </p>
+                <p className="mt-6 font-tech text-xs tracking-[0.2em] uppercase text-[#F4F4F5]">
+                  — {review.name}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* 6. Review marquee */}
       <section className="bg-[#141416] py-24 md:py-32 overflow-hidden">
@@ -569,12 +637,103 @@ export default function GeneratedPage() {
         </div>
       </section>
 
+      <DiagnosticStrip>FAQ — READOUT</DiagnosticStrip>
+
+      {/* 7b. FAQ accordion */}
+      <section className="bg-[#141416] px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-3xl mx-auto">
+          <Eyebrow>Common questions</Eyebrow>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#F4F4F5] mb-16">
+            Before you book.
+          </h2>
+
+          <Accordion className="w-full">
+            {faqs.map((faq) => (
+              <AccordionItem
+                key={faq.q}
+                value={faq.q}
+                className="border-[#2C2C33]"
+              >
+                <AccordionTrigger className="font-heading text-lg md:text-xl uppercase tracking-[-0.01em] text-[#F4F4F5]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-relaxed text-[#9D9DA6]">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
       {/* 8. Footer */}
-      <footer className="bg-[#141416] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#2C2C33]">
-        <span className="font-heading font-medium text-sm tracking-[-0.02em] uppercase text-[#F4F4F5]">
-          {businessName}
-        </span>
-        <span className="text-sm text-[#9D9DA6]">{formattedAddress}</span>
+      <footer className="bg-[#1D1D21] border-t border-[#2C2C33]">
+        <div className="px-6 md:px-10 py-16 md:py-20 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+          <div>
+            <span className="font-heading font-medium text-lg tracking-[-0.02em] uppercase text-[#F4F4F5]">
+              {businessName}
+            </span>
+            <p className="mt-3 text-sm leading-relaxed text-[#9D9DA6] max-w-xs">
+              Straight-talking mechanical servicing and repairs for {suburb} — logbook servicing to full diagnostics, done right the first time.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#E11D2E] mb-5">
+              Quick nav
+            </p>
+            <nav className="flex flex-col gap-3">
+              <a href="#contact" className="text-sm text-[#9D9DA6] transition-colors duration-300 hover:text-[#F4F4F5] w-fit">
+                Book a service
+              </a>
+              <a href={telHref} className="text-sm text-[#9D9DA6] transition-colors duration-300 hover:text-[#F4F4F5] w-fit">
+                Call the workshop
+              </a>
+              <span className="text-sm text-[#9D9DA6] w-fit">
+                Job card &amp; services
+              </span>
+            </nav>
+          </div>
+
+          <div>
+            <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#E11D2E] mb-5">
+              Contact &amp; hours
+            </p>
+            <a
+              href={telHref}
+              className="block text-sm text-[#9D9DA6] transition-colors duration-300 hover:text-[#F4F4F5] mb-2"
+            >
+              {phone}
+            </a>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-[#9D9DA6] transition-colors duration-300 hover:text-[#F4F4F5] mb-6"
+            >
+              <MapPin className="size-3.5 text-[#E11D2E]" />
+              View on Google Maps
+            </a>
+
+            <div className="font-tech text-xs tracking-[0.15em] uppercase">
+              {openingHours.map((slot) => (
+                <div
+                  key={slot.day}
+                  className="flex items-center justify-between border-t border-[#2C2C33] py-2 first:border-t-0"
+                >
+                  <span className="text-[#9D9DA6]">{slot.day}</span>
+                  <span className="text-[#F4F4F5]">{slot.hours}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-[#2C2C33] px-6 md:px-10 py-6">
+          <p className="text-xs text-[#9D9DA6] max-w-6xl mx-auto">
+            &copy; {businessName} — {formattedAddress}
+          </p>
+        </div>
       </footer>
 
       {/* Sticky mobile call bar */}
