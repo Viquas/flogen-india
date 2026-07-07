@@ -358,7 +358,7 @@ export default function GeneratedPage() {
       {/* 6.5 FAQ */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-[#F6F1E8]">
         <div className="max-w-3xl mx-auto">
-          <h2 className="font-heading font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#292524] mb-16">
+          <h2 className="font-heading font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#292524] mb-16 text-center">
             Common questions.
           </h2>
           <Accordion className="w-full">
