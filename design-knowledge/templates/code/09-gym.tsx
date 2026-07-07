@@ -3,6 +3,7 @@ import { Phone, Star, MapPin, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -70,6 +71,50 @@ export default function GeneratedPage() {
   const heroPhoto =
     "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&q=80&w=1600"
 
+  const openingHours = [
+    { day: "Mon — Fri", hours: "5:00AM – 9:00PM" },
+    { day: "Saturday", hours: "7:00AM – 5:00PM" },
+    { day: "Sunday", hours: "7:00AM – 5:00PM" },
+  ]
+
+  const memberReviews = [
+    {
+      name: "Jordan",
+      quote: "Added 30kg to my deadlift in four months. Coaching actually knows what they're doing.",
+    },
+    {
+      name: "Priya",
+      quote: "First gym where I've stuck with a program past week three. The small classes make it work.",
+    },
+    {
+      name: "Marcus",
+      quote: "Came back from a shoulder injury here. Careful programming, zero ego in the room.",
+    },
+  ]
+
+  const faqs = [
+    {
+      q: "Do I need experience to join?",
+      a: "No. Every new member starts with our beginner foundations block — four weeks of coached technique work before any serious load goes on the bar.",
+    },
+    {
+      q: "What's included in the free trial?",
+      a: "A full week of training — group classes, floor access and a coach check-in — with no card required and no obligation to continue.",
+    },
+    {
+      q: "Do you offer personal training?",
+      a: "Yes. One-on-one sessions are available alongside group programming, built around your specific goals and schedule.",
+    },
+    {
+      q: "Is there a lock-in contract?",
+      a: "No lock-in contracts. Membership runs week to week and you can pause or cancel any time.",
+    },
+    {
+      q: "What should I bring to my first session?",
+      a: "Comfortable training gear, closed shoes and a water bottle. We supply chalk, bands and all the equipment on the floor.",
+    },
+  ]
+
   const galleryPhotos = [
     {
       src: heroPhoto,
@@ -78,7 +123,7 @@ export default function GeneratedPage() {
     ...programs.map((program) => ({ src: program.photo, alt: program.alt })),
     ...floorPhotos.map((floor) => ({ src: floor.src, alt: floor.alt })),
     {
-      src: "https://images.unsplash.com/photo-1533560777675-c7e2f0dfb0f7?auto=format&fit=crop&q=80&w=1600",
+      src: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=1600",
       alt: "Close-up of chalked hands and a barbell knurling before a heavy lift",
     },
     {
@@ -137,28 +182,27 @@ export default function GeneratedPage() {
         </div>
       </nav>
 
-      {/* 2. Hero — oversized type, maximum aggression */}
-      <section className="relative bg-[#F7F7F4] overflow-hidden">
-        <div className="px-6 md:px-10 pt-16 md:pt-24 pb-10 max-w-7xl mx-auto relative">
-          <h1 className="font-heading font-medium text-[clamp(3.5rem,10vw,8.5rem)] tracking-[-0.05em] leading-[0.88] uppercase text-[#121212] relative z-10">
+      {/* 2. Hero — full-bleed photo, oversized type on top */}
+      <section className="relative overflow-hidden min-h-[640px] md:min-h-[760px] flex items-center">
+        <div className="absolute inset-0">
+          <img
+            src={heroPhoto}
+            alt="Athlete gripping a loaded barbell on an industrial gym floor in Alexandria"
+            className="w-full h-full object-cover"
+          />
+          {/* Scrim: solid chalk on the left where text sits, fading to transparent so the photo reads clearly on the right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F7F7F4] via-[#F7F7F4]/85 md:via-[#F7F7F4]/75 to-[#F7F7F4]/10" />
+          {/* Bottom scrim on mobile so the suburb/rating row stays legible over the photo at narrow widths */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#F7F7F4] via-transparent to-transparent md:hidden" />
+        </div>
+
+        <div className="relative z-10 px-6 md:px-10 py-16 md:py-24 max-w-7xl mx-auto w-full">
+          <h1 className="font-heading font-medium text-[clamp(3.5rem,10vw,8.5rem)] tracking-[-0.05em] leading-[0.88] uppercase text-[#121212]">
             Train.
             <br />
             <span className="text-[#FF4D24]">Harder.</span>
             <br />
-            <span className="relative inline-block">
-              Here.
-              <span className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[55%] w-[55vw] max-w-[900px] h-[220px] -z-10">
-                <img
-                  src={heroPhoto}
-                  alt="Athlete gripping a loaded barbell on an industrial gym floor in Alexandria"
-                  className="w-full h-full object-cover rounded-sm"
-                  style={{
-                    maskImage: "linear-gradient(to right, transparent, black 25%)",
-                    WebkitMaskImage: "linear-gradient(to right, transparent, black 25%)",
-                  }}
-                />
-              </span>
-            </span>
+            Here.
           </h1>
 
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -170,16 +214,8 @@ export default function GeneratedPage() {
               </span>
             )}
           </div>
-
-          <div className="md:hidden mt-8 -mx-6">
-            <img
-              src={heroPhoto}
-              alt="Athlete gripping a loaded barbell on an industrial gym floor in Alexandria"
-              className="w-full h-[260px] object-cover"
-            />
-          </div>
         </div>
-        <div className="w-full h-1.5 bg-[#FF4D24]" />
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-[#FF4D24]" />
       </section>
 
       {/* 3. Results stat band (ink) */}
@@ -187,7 +223,8 @@ export default function GeneratedPage() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
           <div>
             <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none text-[#FF4D24]">
-              {rating}★
+              {rating}
+              <span className="text-[0.35em] align-middle ml-1">★</span>
             </p>
             <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#8F8F88]">
               Rated by lifters training here
@@ -265,7 +302,7 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 5. Coach note — oversized quote */}
+      {/* 5. Coach note — oversized quote + member reviews */}
       <section className="bg-[#F7F7F4] px-6 md:px-10 py-24 md:py-32 border-t border-[#121212]/10">
         <div className="max-w-4xl mx-auto text-center">
           <p className="font-heading text-[clamp(1.75rem,4vw,3rem)] tracking-[-0.02em] leading-[1.1] text-[#121212]">
@@ -274,6 +311,27 @@ export default function GeneratedPage() {
           <p className="mt-8 font-tech text-xs tracking-[0.2em] uppercase text-[#565650]">
             — The coaching team
           </p>
+        </div>
+
+        <div className="max-w-5xl mx-auto mt-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {memberReviews.map((review) => (
+            <div
+              key={review.name}
+              className="bg-white border border-[#121212]/10 rounded-sm p-6"
+            >
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="size-3.5 fill-[#FF4D24] text-[#FF4D24]" />
+                ))}
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-[#565650]">
+                &ldquo;{review.quote}&rdquo;
+              </p>
+              <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#121212]">
+                — {review.name}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -358,7 +416,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={() => setLightboxOpen(false)}
             aria-label="Close"
-            className="absolute top-0 right-0 md:-top-4 md:-right-4 bg-[#121212] border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-sm p-2 transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
+            className="absolute top-0 right-0 md:-top-4 md:-right-4 size-10 flex items-center justify-center bg-[#121212] border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-full transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
           >
             <X className="size-5" />
           </button>
@@ -367,7 +425,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={showPrev}
             aria-label="Previous photo"
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#121212]/80 border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-sm p-2 transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
+            className="absolute left-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center bg-[#121212]/80 border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-full transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
           >
             <ChevronLeft className="size-6" />
           </button>
@@ -375,7 +433,7 @@ export default function GeneratedPage() {
             type="button"
             onClick={showNext}
             aria-label="Next photo"
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#121212]/80 border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-sm p-2 transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
+            className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center bg-[#121212]/80 border border-[#F7F7F4]/20 text-[#F7F7F4] rounded-full transition-all duration-300 hover:bg-[#FF4D24] hover:border-[#FF4D24]"
           >
             <ChevronRight className="size-6" />
           </button>
@@ -386,6 +444,54 @@ export default function GeneratedPage() {
           </p>
         </div>
       </Dialog>
+
+      {/* 6c. Hours + FAQ */}
+      <section className="bg-[#F7F7F4] px-6 md:px-10 py-24 md:py-32 border-t border-[#121212]/10">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-10">
+          <div className="md:col-span-4">
+            <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
+              Opening hours
+            </p>
+            <h2 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#121212] mb-8">
+              On the floor
+            </h2>
+            <div className="max-w-sm">
+              {openingHours.map((row) => (
+                <div
+                  key={row.day}
+                  className="flex items-center justify-between py-4 border-t border-[#121212]/10 last:border-b"
+                >
+                  <span className="font-tech text-xs tracking-[0.15em] uppercase text-[#121212]">
+                    {row.day}
+                  </span>
+                  <span className="text-sm text-[#565650]">{row.hours}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:col-span-8">
+            <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
+              Before you show up
+            </p>
+            <h2 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#121212] mb-8">
+              Common questions
+            </h2>
+            <Accordion>
+              {faqs.map((faq) => (
+                <AccordionItem key={faq.q} value={faq.q}>
+                  <AccordionTrigger className="font-tech text-xs md:text-sm tracking-[0.1em] uppercase text-[#121212]">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-base leading-relaxed text-[#565650]">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
 
       {/* 7. Trial CTA (ink) — the rep, repeated */}
       <section id="contact" className="bg-[#121212] px-6 md:px-10 py-24 md:py-32">
@@ -460,11 +566,69 @@ export default function GeneratedPage() {
       </section>
 
       {/* 8. Footer */}
-      <footer className="bg-[#F7F7F4] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#121212]/10">
-        <span className="font-heading font-medium text-sm tracking-[-0.02em] uppercase text-[#121212]">
-          {businessName}
-        </span>
-        <span className="text-sm text-[#565650]">{formattedAddress}</span>
+      <footer className="bg-[#121212] border-t border-[#F7F7F4]/10">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-16 md:py-20 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div>
+            <span className="font-heading font-medium text-lg tracking-[-0.02em] uppercase text-[#F7F7F4]">
+              {businessName}
+            </span>
+            <p className="mt-4 text-sm leading-relaxed text-[#8F8F88] max-w-xs">
+              Strength training and coached programming on the floor in {suburb}.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#8F8F88] mb-5">
+              Quick nav
+            </p>
+            <nav className="flex flex-col gap-3">
+              <a href="#contact" className="text-sm text-[#F7F7F4] transition-all duration-300 hover:text-[#FF4D24]">
+                Free trial
+              </a>
+              <a href="#" className="text-sm text-[#F7F7F4] transition-all duration-300 hover:text-[#FF4D24]">
+                Programs
+              </a>
+              <a href="#" className="text-sm text-[#F7F7F4] transition-all duration-300 hover:text-[#FF4D24]">
+                The floor
+              </a>
+            </nav>
+          </div>
+
+          <div>
+            <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#8F8F88] mb-5">
+              Contact
+            </p>
+            <div className="flex flex-col gap-3">
+              {phone && (
+                <a
+                  href={telHref}
+                  className="flex items-center gap-2 text-sm text-[#F7F7F4] transition-all duration-300 hover:text-[#FF4D24]"
+                >
+                  <Phone className="size-4 text-[#FF4D24]" />
+                  {phone}
+                </a>
+              )}
+              {formattedAddress && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-[#F7F7F4] transition-all duration-300 hover:text-[#FF4D24]"
+                >
+                  <MapPin className="size-4 text-[#FF4D24]" />
+                  View on Google Maps
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-[#F7F7F4]/10 px-6 md:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 max-w-6xl mx-auto">
+          <span className="text-xs text-[#8F8F88]">
+            © {new Date().getFullYear()} {businessName}. All rights reserved.
+          </span>
+          <span className="text-xs text-[#8F8F88]">{formattedAddress}</span>
+        </div>
       </footer>
     </div>
   )
