@@ -367,30 +367,30 @@ export default function GeneratedPage() {
             Fully licensed &amp; insured, every job.
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 text-center items-start">
             <div>
-              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113] whitespace-nowrap">
                 {rating}<span className="text-[0.35em] align-middle ml-1">★</span>
               </p>
-              <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
+              <div className="mt-3 w-12 h-1 bg-[#A3E635] mx-auto" />
               <p className="mt-4 text-base text-[#52525B]">
                 Average rating from {userRatingCount} Google reviews.
               </p>
             </div>
             <div>
-              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113] whitespace-nowrap">
                 Licensed
               </p>
-              <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
+              <div className="mt-3 w-12 h-1 bg-[#A3E635] mx-auto" />
               <p className="mt-4 text-base text-[#52525B]">
                 Fully licensed &amp; insured electrical contractor.
               </p>
             </div>
             <div>
-              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
+              <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113] whitespace-nowrap">
                 Upfront
               </p>
-              <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
+              <div className="mt-3 w-12 h-1 bg-[#A3E635] mx-auto" />
               <p className="mt-4 text-base text-[#52525B]">
                 Fixed quotes and a workmanship guarantee on every job.
               </p>
@@ -495,9 +495,9 @@ export default function GeneratedPage() {
 
       {/* 6. Reviews — individual cards */}
       <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <Eyebrow>From the job book</Eyebrow>
-          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl">
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl mx-auto text-center">
             What the Beaches are saying.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -527,7 +527,7 @@ export default function GeneratedPage() {
       <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
         <div className="max-w-3xl mx-auto">
           <Eyebrow>Common questions</Eyebrow>
-          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl">
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl mx-auto text-center">
             Before you call.
           </h2>
           <Accordion type="single" collapsible className="w-full">
