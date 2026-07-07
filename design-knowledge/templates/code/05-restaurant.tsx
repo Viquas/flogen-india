@@ -306,7 +306,7 @@ export default function GeneratedPage() {
             src={galleryPhotos[1]}
             alt={`Dining room detail at ${businessName}`}
             onClick={() => openLightbox(3)}
-            className="w-full h-[400px] object-cover rounded-2xl -mt-8 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
+            className="w-full h-[400px] object-cover rounded-2xl md:-mt-8 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
           />
           <img
             src={galleryPhotos[2]}
