@@ -12,11 +12,14 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  MapPin,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -89,6 +92,43 @@ export default function GeneratedPage() {
     {
       text: "Rewired our whole switchboard after it kept tripping. Explained every step, left the place spotless. Wouldn't call anyone else on the Beaches.",
       name: "Hamish",
+    },
+    {
+      text: "Quoted a fixed price, turned up on time, no surprises on the invoice. The EV charger install was clean work.",
+      name: "Priya",
+    },
+    {
+      text: "Called at 9pm with a tripping board and someone was here within the hour. Calm, methodical, sorted it first visit.",
+      name: "Dean",
+    },
+  ]
+
+  const hours = [
+    { day: "Mon – Fri", time: "7:00am – 5:00pm" },
+    { day: "Saturday", time: "By appointment" },
+    { day: "Sunday", time: "Emergency callouts only" },
+  ]
+
+  const faqs = [
+    {
+      q: "Are you a licensed electrician?",
+      a: "Yes — fully licensed and insured to work on residential and light commercial electrical systems across the Northern Beaches.",
+    },
+    {
+      q: "Do you offer emergency callouts?",
+      a: "Yes, around the clock. Power out, board tripping, or anything that smells or sparks — we answer, day or night.",
+    },
+    {
+      q: "Can you upgrade my switchboard?",
+      a: "Absolutely. We assess your existing board, size a compliant safety-switch board for your actual load, and handle the full upgrade and certification.",
+    },
+    {
+      q: "Do you install EV chargers?",
+      a: "Yes — home EV charger supply and installation, sized to your switchboard and certified to Australian standard.",
+    },
+    {
+      q: "Do you provide safety certificates?",
+      a: "Every job is signed off with a compliance certificate, filed and ready if you ever need it for insurance or sale.",
     },
   ]
 
@@ -330,7 +370,7 @@ export default function GeneratedPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
             <div>
               <p className="font-heading font-medium text-4xl md:text-5xl tracking-[-0.03em] text-[#111113]">
-                {rating}★
+                {rating}<span className="text-[0.35em] align-middle ml-1">★</span>
               </p>
               <div className="mt-3 w-12 h-1 bg-[#A3E635]" />
               <p className="mt-4 text-base text-[#52525B]">
@@ -424,7 +464,7 @@ export default function GeneratedPage() {
           <button
             type="button"
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-0 right-0 -translate-y-full md:translate-y-0 md:-top-2 md:-right-2 bg-[#A3E635] text-[#111113] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            className="absolute top-0 right-0 -translate-y-full md:translate-y-0 md:-top-2 md:-right-2 bg-[#A3E635] text-[#111113] rounded-full flex items-center justify-center size-10 transition-all duration-300 hover:scale-105"
             aria-label="Close"
           >
             <X className="size-5" />
@@ -434,7 +474,7 @@ export default function GeneratedPage() {
             onClick={() =>
               setLightboxIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length)
             }
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#A3E635] text-[#111113] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#A3E635] text-[#111113] rounded-full flex items-center justify-center size-10 transition-all duration-300 hover:scale-105"
             aria-label="Previous photo"
           >
             <ChevronLeft className="size-5" />
@@ -442,7 +482,7 @@ export default function GeneratedPage() {
           <button
             type="button"
             onClick={() => setLightboxIndex((prev) => (prev + 1) % galleryPhotos.length)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#A3E635] text-[#111113] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#A3E635] text-[#111113] rounded-full flex items-center justify-center size-10 transition-all duration-300 hover:scale-105"
             aria-label="Next photo"
           >
             <ChevronRight className="size-5" />
@@ -453,21 +493,59 @@ export default function GeneratedPage() {
         </div>
       </Dialog>
 
-      {/* 6. Testimonial — oversized quote */}
+      {/* 6. Reviews — individual cards */}
       <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
-        <div className="max-w-4xl mx-auto text-center">
-          <Eyebrow>
-            <span className="mx-auto">From the job book</span>
-          </Eyebrow>
-          <span className="font-heading text-[#A3E635] text-6xl md:text-8xl leading-none">
-            &ldquo;
-          </span>
-          <p className="font-heading text-[clamp(1.75rem,4vw,3rem)] tracking-[-0.02em] leading-[1.15] text-[#FAFAF9] -mt-6">
-            {reviews[0].text}
-          </p>
-          <p className="mt-8 font-tech text-xs tracking-[0.2em] uppercase text-[#A1A1AA]">
-            — {reviews[0].name}, Google review
-          </p>
+        <div className="max-w-6xl mx-auto">
+          <Eyebrow>From the job book</Eyebrow>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl">
+            What the Beaches are saying.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {reviews.map((review) => (
+              <div
+                key={review.name}
+                className="bg-[#1B1B1F] border border-[#2A2A30] rounded-sm p-8 flex flex-col gap-4 transition-all duration-300 hover:border-[#A3E635]/60"
+              >
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="size-3.5 fill-[#A3E635] text-[#A3E635]" />
+                  ))}
+                </div>
+                <p className="text-sm md:text-base leading-relaxed text-[#A1A1AA]">
+                  &ldquo;{review.text}&rdquo;
+                </p>
+                <p className="mt-auto font-tech text-xs tracking-[0.2em] uppercase text-[#FAFAF9]">
+                  — {review.name}, Google review
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6.5 FAQ — common questions */}
+      <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
+        <div className="max-w-3xl mx-auto">
+          <Eyebrow>Common questions</Eyebrow>
+          <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl">
+            Before you call.
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`item-${i}`}
+                className="border-b border-[#2A2A30]"
+              >
+                <AccordionTrigger className="text-left font-heading text-lg md:text-xl tracking-[-0.01em] text-[#FAFAF9] py-6 hover:text-[#A3E635]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm md:text-base leading-relaxed text-[#A1A1AA] pb-6">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
@@ -489,6 +567,33 @@ export default function GeneratedPage() {
               <ShieldCheck className="size-4 text-[#A3E635]" />
               {formattedAddress}
             </p>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 text-sm text-[#A1A1AA] transition-all duration-300 hover:text-[#A3E635]"
+            >
+              <MapPin className="size-4 text-[#A3E635]" />
+              View on Google Maps
+            </a>
+
+            <div className="mt-10 border-t border-[#2A2A30] pt-8">
+              <p className="flex items-center gap-2 font-tech text-xs tracking-[0.2em] uppercase text-[#A3E635] mb-4">
+                <Clock className="size-4" />
+                Opening hours
+              </p>
+              <div className="flex flex-col gap-2">
+                {hours.map((h) => (
+                  <div
+                    key={h.day}
+                    className="flex items-center justify-between gap-4 font-tech text-xs tracking-[0.1em] uppercase text-[#A1A1AA] border-b border-[#2A2A30] pb-2"
+                  >
+                    <span className="text-[#FAFAF9]">{h.day}</span>
+                    <span>{h.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <form className="md:col-span-6 flex flex-col gap-4">
