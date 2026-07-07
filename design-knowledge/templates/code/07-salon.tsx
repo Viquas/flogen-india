@@ -338,14 +338,14 @@ export default function GeneratedPage() {
 
       {/* 6b. Opening hours */}
       <section className="px-6 md:px-10 py-24 md:py-32 bg-[#211C1A]">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#A39A94] mb-6">
             OPENING HOURS
           </p>
           <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAF6F3] mb-12">
             When to find us.
           </h2>
-          <div className="max-w-md">
+          <div className="max-w-md mx-auto text-left">
             {openingHours.map((row) => (
               <div
                 key={row.day}
@@ -361,25 +361,27 @@ export default function GeneratedPage() {
 
       {/* 6c. FAQ */}
       <section className="px-6 md:px-10 py-24 md:py-32">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="font-tech text-xs tracking-[0.2em] uppercase text-[#B07D62] mb-6">
             FAQ
           </p>
           <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#211C1A] mb-12">
             Common questions.
           </h2>
-          <Accordion>
-            {faqs.map((faq) => (
-              <AccordionItem key={faq.q} value={faq.q}>
-                <AccordionTrigger className="font-elegant font-medium text-lg md:text-xl text-[#211C1A]">
-                  {faq.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-base leading-relaxed text-[#6D625C]">
-                  {faq.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <div className="max-w-3xl mx-auto text-left">
+            <Accordion>
+              {faqs.map((faq) => (
+                <AccordionItem key={faq.q} value={faq.q}>
+                  <AccordionTrigger className="font-elegant font-medium text-lg md:text-xl text-[#211C1A]">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-base leading-relaxed text-[#6D625C]">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         </div>
       </section>
 
