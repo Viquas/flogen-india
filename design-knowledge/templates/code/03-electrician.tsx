@@ -218,8 +218,12 @@ export default function GeneratedPage() {
     </span>
   )
 
-  const Eyebrow = ({ children }: { children: React.ReactNode }) => (
-    <p className="flex items-center gap-2 font-tech text-xs tracking-[0.2em] uppercase text-[#A3E635] mb-6">
+  const Eyebrow = ({ children, center }: { children: React.ReactNode; center?: boolean }) => (
+    <p
+      className={`flex items-center gap-2 font-tech text-xs tracking-[0.2em] uppercase text-[#A3E635] mb-6 ${
+        center ? "justify-center" : ""
+      }`}
+    >
       <LiveDot />
       {children}
     </p>
@@ -496,7 +500,7 @@ export default function GeneratedPage() {
       {/* 6. Reviews — individual cards */}
       <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
         <div className="max-w-5xl mx-auto">
-          <Eyebrow>From the job book</Eyebrow>
+          <Eyebrow center>From the job book</Eyebrow>
           <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl mx-auto text-center">
             What the Beaches are saying.
           </h2>
@@ -526,7 +530,7 @@ export default function GeneratedPage() {
       {/* 6.5 FAQ — common questions */}
       <section className="bg-[#111113] px-6 md:px-10 py-24 md:py-32 border-t border-[#2A2A30]">
         <div className="max-w-3xl mx-auto">
-          <Eyebrow>Common questions</Eyebrow>
+          <Eyebrow center>Common questions</Eyebrow>
           <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#FAFAF9] mb-16 max-w-2xl mx-auto text-center">
             Before you call.
           </h2>
@@ -646,13 +650,15 @@ export default function GeneratedPage() {
       </footer>
 
       {/* Sticky mobile call bar */}
-      <a
-        href={telHref}
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-center justify-center gap-2 bg-[#A3E635] text-[#111113] font-semibold text-base py-4 transition-all duration-300"
-      >
-        <Phone className="size-5" />
-        Call now — {phone}
-      </a>
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#A3E635] pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.35)]">
+        <a
+          href={telHref}
+          className="flex items-center justify-center gap-2 text-[#111113] font-semibold text-base py-4 transition-all duration-300"
+        >
+          <Phone className="size-5" />
+          Call now — {phone}
+        </a>
+      </div>
     </div>
   )
 }
