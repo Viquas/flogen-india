@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
-import { Phone, Star, ShieldCheck, Wrench, Droplet, Flame, Search, ShowerHead, Hammer, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Phone, Star, ShieldCheck, Wrench, Droplet, Flame, Search, ShowerHead, Hammer, MapPin, Clock, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -39,7 +40,7 @@ export default function GeneratedPage() {
       copy: "Repairs and replacements across gas, electric and heat pump systems, fitted the same day where we can.",
       icon: Flame,
       photo:
-        "https://images.unsplash.com/photo-1596205244309-15c04a0d0a29?auto=format&fit=crop&q=80&w=1200",
+        "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=1200",
       alt: "Modern hot water system installed on an exterior wall",
     },
     {
@@ -63,7 +64,7 @@ export default function GeneratedPage() {
       copy: "Licensed gas fitting for cooktops, heaters and outdoor connections, compliant and certified.",
       icon: Hammer,
       photo:
-        "https://images.unsplash.com/photo-1607472829122-7efe550bfb98?auto=format&fit=crop&q=80&w=1200",
+        "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=1200",
       alt: "Gas line fitting being connected to a residential appliance",
     },
   ]
@@ -75,6 +76,35 @@ export default function GeneratedPage() {
     { text: "Same-day hot water system replacement on a Sunday. Absolute lifesavers.", name: "Dave" },
     { text: "Tidy, punctual, explained everything in plain English. Booking them again.", name: "Renee" },
     { text: "Best plumber we've used in the Shire, hands down. Fair price, quality work.", name: "Tom" },
+  ]
+
+  const hours = [
+    { day: "Mon – Fri", time: "7:00am – 5:00pm" },
+    { day: "Saturday", time: "8:00am – 1:00pm" },
+    { day: "Sunday", time: "Emergency callouts only" },
+  ]
+
+  const faqs = [
+    {
+      q: "Do you charge a call-out fee?",
+      a: "No hidden call-out fee — we quote the job upfront before any tool comes out, so you know the full price going in.",
+    },
+    {
+      q: "Do you offer emergency plumbing?",
+      a: "Yes, 24/7. Burst pipes, no hot water, overflowing toilets — we're on the road within the hour, day or night.",
+    },
+    {
+      q: "Are you licensed?",
+      a: "Fully licensed and insured for residential and commercial plumbing and gas fitting work across NSW.",
+    },
+    {
+      q: "Do you provide upfront pricing?",
+      a: "Always. You'll get a fixed price before we start, with no surprises on the invoice afterwards.",
+    },
+    {
+      q: "What suburbs do you service?",
+      a: "We're based in Cronulla and cover the Sutherland Shire, including Miranda, Caringbah, Sutherland, Sylvania, Woolooware, Kirrawee and Gymea.",
+    },
   ]
 
   const suburbs = [
@@ -106,7 +136,7 @@ export default function GeneratedPage() {
     },
     {
       photo:
-        "https://images.unsplash.com/photo-1596205244309-15c04a0d0a29?auto=format&fit=crop&q=80&w=1600",
+        "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&q=80&w=1600",
       alt: "Modern hot water system installed on an exterior wall",
     },
     {
@@ -116,7 +146,7 @@ export default function GeneratedPage() {
     },
     {
       photo:
-        "https://images.unsplash.com/photo-1607472829122-7efe550bfb98?auto=format&fit=crop&q=80&w=1600",
+        "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&q=80&w=1600",
       alt: "Gas line fitting being connected to a residential appliance",
     },
     {
@@ -160,16 +190,6 @@ export default function GeneratedPage() {
 
   return (
     <div className="bg-white font-sans pb-20 md:pb-0">
-      <style>{`
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        .marquee-track {
-          animation: marquee 32s linear infinite;
-        }
-      `}</style>
-
       {/* 1. Nav */}
       <nav className="bg-[#0C1B2A] px-6 md:px-10 py-4 flex items-center justify-between sticky top-0 z-20">
         <span className="font-heading text-lg tracking-[-0.02em] text-white">
@@ -211,7 +231,7 @@ export default function GeneratedPage() {
                 ))}
               </div>
               <span className="text-sm text-white">
-                {rating}★ from {userRatingCount} reviews
+                {rating}<span className="text-[0.35em] align-middle ml-1">★</span> from {userRatingCount} reviews
               </span>
             </div>
             <div className="flex items-center gap-2 text-[#94A3B8]">
@@ -238,7 +258,7 @@ export default function GeneratedPage() {
           </div>
           <div>
             <p className="font-heading font-medium text-2xl md:text-3xl tracking-[-0.02em] text-[#0C1B2A]">
-              {rating}★ rated
+              {rating}<span className="text-[0.35em] align-middle ml-1">★</span> rated
             </p>
             <div className="mt-3 mx-auto w-12 h-1 bg-[#FACC15]" />
             <p className="mt-4 text-base text-[#475569]">
@@ -301,20 +321,20 @@ export default function GeneratedPage() {
         </div>
       </section>
 
-      {/* 5. Review marquee */}
-      <section className="bg-white py-24 md:py-32 overflow-hidden">
-        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 px-6 md:px-10 max-w-2xl">
+      {/* 5. Individual review cards */}
+      <section className="bg-white px-6 md:px-10 py-24 md:py-32">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 max-w-2xl">
           {userRatingCount} five-star reviews, and counting.
         </h2>
-        <div className="flex w-max marquee-track">
-          {[...reviews, ...reviews].map((review, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+          {reviews.slice(0, 3).map((review) => (
             <div
-              key={i}
-              className="w-80 md:w-96 shrink-0 mx-4 bg-[#F1F5F9] rounded-sm p-8"
+              key={review.name}
+              className="bg-[#F1F5F9] rounded-sm p-8"
             >
               <div className="flex items-center gap-0.5 mb-4">
                 {Array.from({ length: 5 }).map((_, j) => (
-                  <Star key={j} className="size-4 fill-[#FACC15] text-[#FACC15]" />
+                  <Star key={j} className="size-3.5 fill-[#FACC15] text-[#FACC15]" />
                 ))}
               </div>
               <p className="text-base leading-relaxed text-[#0C1B2A]">
@@ -389,7 +409,7 @@ export default function GeneratedPage() {
           <button
             type="button"
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-0 right-0 -translate-y-full md:translate-y-0 md:-top-2 md:-right-2 bg-[#FACC15] text-[#0C1B2A] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            className="absolute top-0 right-0 -translate-y-full md:translate-y-0 md:-top-2 md:-right-2 bg-[#FACC15] text-[#0C1B2A] rounded-full flex items-center justify-center size-10 p-2 transition-all duration-300 hover:scale-105"
             aria-label="Close"
           >
             <X className="size-5" />
@@ -399,7 +419,7 @@ export default function GeneratedPage() {
             onClick={() =>
               setLightboxIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length)
             }
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#FACC15] text-[#0C1B2A] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-[#FACC15] text-[#0C1B2A] rounded-full flex items-center justify-center size-10 p-2 transition-all duration-300 hover:scale-105"
             aria-label="Previous photo"
           >
             <ChevronLeft className="size-5" />
@@ -407,7 +427,7 @@ export default function GeneratedPage() {
           <button
             type="button"
             onClick={() => setLightboxIndex((prev) => (prev + 1) % galleryPhotos.length)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#FACC15] text-[#0C1B2A] rounded-full p-2 transition-all duration-300 hover:scale-105"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#FACC15] text-[#0C1B2A] rounded-full flex items-center justify-center size-10 p-2 transition-all duration-300 hover:scale-105"
             aria-label="Next photo"
           >
             <ChevronRight className="size-5" />
@@ -417,6 +437,25 @@ export default function GeneratedPage() {
           </span>
         </div>
       </Dialog>
+
+      {/* 6.7 FAQ */}
+      <section className="bg-[#F1F5F9] px-6 md:px-10 py-24 md:py-32">
+        <h2 className="font-heading text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#0C1B2A] mb-16 max-w-2xl">
+          Common questions.
+        </h2>
+        <Accordion className="max-w-3xl">
+          {faqs.map((faq) => (
+            <AccordionItem key={faq.q} value={faq.q}>
+              <AccordionTrigger className="font-heading text-lg md:text-xl text-[#0C1B2A]">
+                {faq.q}
+              </AccordionTrigger>
+              <AccordionContent className="text-base leading-relaxed text-[#475569]">
+                {faq.a}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
 
       <HazardTape />
 
@@ -434,6 +473,32 @@ export default function GeneratedPage() {
               {phone}
             </a>
             <p className="mt-6 text-base text-[#94A3B8]">{formattedAddress}</p>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#FACC15] transition-all duration-300"
+            >
+              <MapPin className="size-4" />
+              View on Google Maps
+            </a>
+
+            <div className="mt-10 max-w-xs">
+              <p className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#FACC15] mb-3">
+                <Clock className="size-4" />
+                Opening hours
+              </p>
+              <div className="flex flex-col gap-2">
+                {hours.map((h) => (
+                  <div key={h.day} className="flex items-center justify-between border-t border-[#94A3B8]/20 py-2">
+                    <span className="text-sm uppercase tracking-wide text-white">
+                      {h.day}
+                    </span>
+                    <span className="text-sm text-[#94A3B8]">{h.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <form className="md:col-span-6 flex flex-col gap-4">
