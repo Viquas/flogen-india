@@ -220,9 +220,9 @@ export default function GeneratedPage() {
 
       {/* 3. Results stat band (ink) */}
       <section className="bg-[#121212] px-6 md:px-10 py-20 md:py-28">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 text-center items-start">
           <div>
-            <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none text-[#FF4D24]">
+            <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none whitespace-nowrap text-[#FF4D24]">
               {rating}
               <span className="text-[0.35em] align-middle ml-1">★</span>
             </p>
@@ -231,7 +231,7 @@ export default function GeneratedPage() {
             </p>
           </div>
           <div>
-            <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none text-[#FF4D24]">
+            <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none whitespace-nowrap text-[#FF4D24]">
               {userRatingCount}+
             </p>
             <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#8F8F88]">
@@ -239,7 +239,7 @@ export default function GeneratedPage() {
             </p>
           </div>
           <div>
-            <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none text-[#FF4D24]">
+            <p className="font-heading font-medium text-[clamp(3rem,7vw,5.5rem)] tracking-[-0.03em] leading-none whitespace-nowrap text-[#FF4D24]">
               Free
             </p>
             <p className="mt-4 font-tech text-xs tracking-[0.2em] uppercase text-[#8F8F88]">
@@ -448,14 +448,14 @@ export default function GeneratedPage() {
       {/* 6c. Hours + FAQ */}
       <section className="bg-[#F7F7F4] px-6 md:px-10 py-24 md:py-32 border-t border-[#121212]/10">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-10">
-          <div className="md:col-span-4">
+          <div className="md:col-span-4 text-center md:text-left">
             <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
               Opening hours
             </p>
             <h2 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#121212] mb-8">
               On the floor
             </h2>
-            <div className="max-w-sm">
+            <div className="max-w-sm mx-auto md:mx-0">
               {openingHours.map((row) => (
                 <div
                   key={row.day}
@@ -471,13 +471,15 @@ export default function GeneratedPage() {
           </div>
 
           <div className="md:col-span-8">
-            <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
-              Before you show up
-            </p>
-            <h2 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#121212] mb-8">
-              Common questions
-            </h2>
-            <Accordion>
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="font-tech text-xs tracking-[0.25em] uppercase text-[#FF4D24] mb-6">
+                Before you show up
+              </p>
+              <h2 className="font-heading text-[clamp(1.75rem,3vw,2.5rem)] tracking-[-0.03em] leading-[1.05] uppercase text-[#121212] mb-8">
+                Common questions
+              </h2>
+            </div>
+            <Accordion className="max-w-3xl mx-auto text-left">
               {faqs.map((faq) => (
                 <AccordionItem key={faq.q} value={faq.q}>
                   <AccordionTrigger className="font-tech text-xs md:text-sm tracking-[0.1em] uppercase text-[#121212]">
