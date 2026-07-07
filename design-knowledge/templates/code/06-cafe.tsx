@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { MapPin, Phone, Star, Quote, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const businessName = "Fernback Coffee"
@@ -88,6 +89,42 @@ export default function GeneratedPage() {
     name: "Priya",
     since: "2021",
   }
+
+  const shortReviews = [
+    {
+      text: "Best smashed avo in Erskineville, hands down.",
+      name: "Marcus",
+      since: "2022",
+    },
+    {
+      text: "Staff remember my order. That's the whole review.",
+      name: "Ines",
+      since: "2023",
+    },
+  ]
+
+  const faqs = [
+    {
+      q: "Do you take bookings for groups?",
+      a: "We're first-come, first-served for groups under 6. For anything bigger, give us a call and we'll try to sort a spot for you.",
+    },
+    {
+      q: "Is there space for prams/wheelchairs?",
+      a: "Yes — level entry from the street and enough room between tables to get through comfortably.",
+    },
+    {
+      q: "Do you have vegan/gluten-free options?",
+      a: "Plenty. Oat and soy milk on rotation, a couple of vegan dishes daily, and gluten-free bread on request.",
+    },
+    {
+      q: "Is there parking?",
+      a: "Street parking along Swanson Street, plus a 2-hour zone right out front most days.",
+    },
+    {
+      q: "Do you do takeaway?",
+      a: "Always. Bring your own cup and we'll knock 50c off.",
+    },
+  ]
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -301,6 +338,42 @@ export default function GeneratedPage() {
             — {review.name}, regular since {review.since}
           </p>
         </div>
+        <div className="max-w-3xl mx-auto mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {shortReviews.map((r) => (
+            <div key={r.name} className="bg-[#F6F1E8] rounded-2xl p-6">
+              <div className="flex items-center gap-0.5 mb-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="size-3.5 fill-[#C65D3B] text-[#C65D3B]" />
+                ))}
+              </div>
+              <p className="text-base text-[#292524]">{r.text}</p>
+              <p className="mt-3 text-sm text-[#78716C]">
+                — {r.name}, regular since {r.since}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6.5 FAQ */}
+      <section className="px-6 md:px-10 py-24 md:py-32 bg-[#F6F1E8]">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-heading font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#292524] mb-16">
+            Common questions.
+          </h2>
+          <Accordion className="w-full">
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.q} value={faq.q}>
+                <AccordionTrigger className="font-heading text-lg md:text-xl text-[#292524]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-relaxed text-[#78716C]">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </section>
 
       {/* 7. Visit CTA */}
@@ -329,9 +402,77 @@ export default function GeneratedPage() {
       </section>
 
       {/* 8. Footer */}
-      <footer className="px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#EDE6D8]">
-        <span className="font-heading font-medium text-base text-[#292524]">{businessName}</span>
-        <span className="text-sm text-[#78716C]">{formattedAddress}</span>
+      <footer className="bg-[#292524] border-t border-[#44403C]">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-16 md:py-20 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div>
+            <span className="font-heading font-medium text-xl tracking-[-0.02em] text-[#FFFDF9]">
+              {businessName}
+            </span>
+            <p className="mt-3 text-sm text-[#A8A29E]">
+              Flat whites and slow mornings in {suburb}.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-mono text-xs tracking-[0.25em] text-[#C65D3B] mb-4">NAVIGATE</p>
+            <div className="flex flex-col gap-3">
+              <a
+                href="#top"
+                className="text-sm text-[#A8A29E] hover:text-[#FFFDF9] transition-all duration-300 w-fit"
+              >
+                Home
+              </a>
+              <a
+                href="#menu"
+                className="text-sm text-[#A8A29E] hover:text-[#FFFDF9] transition-all duration-300 w-fit"
+              >
+                Menu
+              </a>
+              <a
+                href="#hours"
+                className="text-sm text-[#A8A29E] hover:text-[#FFFDF9] transition-all duration-300 w-fit"
+              >
+                Hours
+              </a>
+              <a
+                href={directionsHref}
+                className="text-sm text-[#A8A29E] hover:text-[#FFFDF9] transition-all duration-300 w-fit"
+              >
+                Find us
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-mono text-xs tracking-[0.25em] text-[#C65D3B] mb-4">CONTACT</p>
+            <div className="flex flex-col gap-3">
+              <a
+                href={telHref}
+                className="inline-flex items-center gap-2 text-sm text-[#A8A29E] hover:text-[#FFFDF9] transition-all duration-300 w-fit"
+              >
+                <Phone className="size-4 text-[#C65D3B]" />
+                {phone}
+              </a>
+              <span className="text-sm text-[#A8A29E]">{formattedAddress}</span>
+              <a
+                href={directionsHref}
+                className="inline-flex items-center gap-2 text-sm text-[#A8A29E] hover:text-[#FFFDF9] transition-all duration-300 w-fit"
+              >
+                <MapPin className="size-4 text-[#C65D3B]" />
+                View on Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-[#44403C]">
+          <div className="max-w-6xl mx-auto px-6 md:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span className="text-xs text-[#78716C]">
+              © {new Date().getFullYear()} {businessName}. All rights reserved.
+            </span>
+            <span className="text-xs text-[#78716C]">{rating} ★ · {userRatingCount} Google reviews</span>
+          </div>
+        </div>
       </footer>
 
       {/* Photo lightbox */}
