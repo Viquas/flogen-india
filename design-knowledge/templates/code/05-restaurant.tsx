@@ -400,14 +400,14 @@ export default function GeneratedPage() {
 
       {/* 8. FAQ */}
       <section className="bg-[#F5EFE6] px-6 md:px-10 py-24 md:py-32">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="font-mono text-xs tracking-[0.25em] text-[#D97C2B] mb-4">
             COMMON QUESTIONS
           </p>
-          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#191512] mb-16 max-w-xl">
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#191512] mb-16 max-w-xl mx-auto">
             Good to know before you visit.
           </h2>
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full text-left">
             {faqs.map((faq, i) => (
               <AccordionItem
                 key={i}
