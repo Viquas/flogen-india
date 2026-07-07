@@ -378,7 +378,7 @@ export default function GeneratedPage() {
       </Dialog>
 
       {/* 6. Testimonial — oversized quote + short review cards */}
-      <section className="px-6 md:px-10 py-24 md:py-32">
+      <section className="px-6 md:px-10 py-24 md:py-32 border-t border-[#E8E4DA]">
         <div className="max-w-4xl mx-auto text-center">
           <SectionEyebrow index="06" label="WHAT CLIENTS SAY" center />
           <Quote className="size-10 text-[#9C7C38] mb-6 mx-auto" />
