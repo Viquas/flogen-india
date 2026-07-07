@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const businessName = "Shoreline Dental Cronulla"
@@ -55,7 +56,7 @@ export default function GeneratedPage() {
       alt: "Sunlit treatment room with a calm, uncluttered dental chair",
     },
     {
-      src: "https://images.unsplash.com/photo-1629904888107-57e4fc98c56c?auto=format&fit=crop&q=80&w=1600",
+      src: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?auto=format&fit=crop&q=80&w=1600",
       alt: "Quiet reception area with soft seating at Shoreline Dental Cronulla",
     },
     {
@@ -84,6 +85,48 @@ export default function GeneratedPage() {
     text: "I've never left a dental appointment feeling relaxed before this place. They talk you through everything and there's genuinely no judgement about the years I put it off.",
     name: "Isabelle",
   }
+
+  const shortReviews = [
+    {
+      text: "Calm waiting room, calm dentist. Didn't expect that combination.",
+      name: "Marcus",
+    },
+    {
+      text: "Explained the pricing before touching anything. First time that's happened.",
+      name: "Priya",
+    },
+  ]
+
+  const openingHours = [
+    { day: "Monday – Friday", hours: "8:00 am – 6:00 pm" },
+    { day: "Saturday", hours: "9:00 am – 1:00 pm" },
+    { day: "Sunday", hours: "Closed" },
+  ]
+
+  const faqs = [
+    {
+      q: "Do you take new patients?",
+      a: "Yes — we're welcoming new patients now, with same-week appointments available most weeks for check-ups and urgent problems.",
+    },
+    {
+      q: "What should I expect at my first visit?",
+      a: "A full examination, a chat about your dental history, and a plain-English rundown of anything worth watching. No treatment starts on the day without a written quote first.",
+    },
+    {
+      q: "Do you offer payment plans?",
+      a: "We do. Larger treatments like crowns, veneers and implants can be split into manageable instalments — ask our front desk for the current options.",
+    },
+    {
+      q: "Is teeth whitening safe?",
+      a: "Yes, when it's done under supervision. We colour-match and monitor sensitivity throughout, whether you choose in-chair or take-home whitening.",
+    },
+    {
+      q: "Do you treat dental anxiety?",
+      a: "Regularly. Tell us when you book and we'll slow the pace, explain each step before it happens, and build in breaks whenever you need them.",
+    },
+  ]
+
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -307,6 +350,65 @@ export default function GeneratedPage() {
           <p className="mt-8 text-sm tracking-[0.1em] uppercase text-[#5B6472]">
             — {review.name}, Google review
           </p>
+
+          <div className="mt-16 pt-16 border-t border-[#E4E1D8] grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
+            {shortReviews.map((r) => (
+              <div key={r.name}>
+                <div className="flex items-center gap-0.5 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="size-3.5 fill-[#3E7C6F] text-[#3E7C6F]" />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed text-[#5B6472]">
+                  "{r.text}"
+                </p>
+                <p className="mt-2 text-xs tracking-[0.1em] uppercase text-[#5B6472]/70">
+                  — {r.name}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6b. Opening hours */}
+      <section className="px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#1F2937] mb-12">
+            Opening hours.
+          </h2>
+          <div className="max-w-md">
+            {openingHours.map((row) => (
+              <div
+                key={row.day}
+                className="flex items-center justify-between py-4 border-t border-[#E4E1D8] last:border-b"
+              >
+                <span className="text-base text-[#1F2937]">{row.day}</span>
+                <span className="text-base text-[#5B6472]">{row.hours}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6c. FAQ */}
+      <section className="px-6 md:px-10 py-24 md:py-32 bg-white">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#1F2937] mb-12">
+            Common questions.
+          </h2>
+          <Accordion>
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.q} value={faq.q}>
+                <AccordionTrigger className="font-elegant font-medium text-lg md:text-xl text-[#1F2937]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-relaxed text-[#5B6472]">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </section>
 
@@ -372,11 +474,71 @@ export default function GeneratedPage() {
       </section>
 
       {/* 8. Footer */}
-      <footer className="bg-[#F6F5F1] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#E4E1D8]">
-        <span className="font-elegant font-medium text-base text-[#1F2937]">
-          {businessName}
-        </span>
-        <span className="text-sm text-[#5B6472]">{formattedAddress}</span>
+      <footer className="bg-[#EFEBE1] border-t border-[#E4E1D8]">
+        <div className="px-6 md:px-10 py-16 md:py-20 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+          <div>
+            <span className="font-elegant font-medium text-xl tracking-[-0.01em] text-[#1F2937]">
+              {businessName}
+            </span>
+            <p className="mt-3 text-sm leading-relaxed text-[#5B6472] max-w-xs">
+              Unhurried, upfront dentistry two minutes from Cronulla Beach.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-xs tracking-[0.15em] uppercase text-[#5B6472] mb-4">
+              Explore
+            </h3>
+            <nav className="flex flex-col gap-3">
+              <a href="#book" className="text-sm text-[#1F2937] hover:text-[#3E7C6F] transition-all duration-300 w-fit">
+                Book an appointment
+              </a>
+              <a href="#book" className="text-sm text-[#1F2937] hover:text-[#3E7C6F] transition-all duration-300 w-fit">
+                Treatments
+              </a>
+              <a href="#book" className="text-sm text-[#1F2937] hover:text-[#3E7C6F] transition-all duration-300 w-fit">
+                The practice
+              </a>
+              <a href="#book" className="text-sm text-[#1F2937] hover:text-[#3E7C6F] transition-all duration-300 w-fit">
+                Common questions
+              </a>
+            </nav>
+          </div>
+
+          <div>
+            <h3 className="text-xs tracking-[0.15em] uppercase text-[#5B6472] mb-4">
+              Contact
+            </h3>
+            <div className="flex flex-col gap-3">
+              <a
+                href={telHref}
+                className="inline-flex items-center gap-2 text-sm text-[#1F2937] hover:text-[#3E7C6F] transition-all duration-300 w-fit"
+              >
+                <Phone className="size-4 text-[#3E7C6F]" />
+                {phone}
+              </a>
+              <span className="inline-flex items-center gap-2 text-sm text-[#5B6472]">
+                <MapPin className="size-4 text-[#3E7C6F]" />
+                {formattedAddress}
+              </span>
+              <a
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-[#1F2937] hover:text-[#3E7C6F] transition-all duration-300 w-fit"
+              >
+                <MapPin className="size-4 text-[#3E7C6F]" />
+                View on Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 md:px-10 py-6 border-t border-[#E4E1D8]">
+          <p className="text-xs text-[#5B6472] max-w-6xl mx-auto">
+            © {new Date().getFullYear()} {businessName}. All rights reserved.
+          </p>
+        </div>
       </footer>
 
       {/* Photo lightbox */}
