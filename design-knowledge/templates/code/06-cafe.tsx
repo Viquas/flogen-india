@@ -377,7 +377,7 @@ export default function GeneratedPage() {
       </section>
 
       {/* 7. Visit CTA */}
-      <section className="px-6 md:px-10 py-24 md:py-32 bg-[#F6F1E8]">
+      <section className="px-6 md:px-10 py-24 md:py-32 bg-[#F6F1E8] border-t border-[#292524]/10">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="font-heading font-medium text-[clamp(2.5rem,5.5vw,4rem)] tracking-[-0.03em] leading-[1.05] text-[#292524]">
             Find us.
