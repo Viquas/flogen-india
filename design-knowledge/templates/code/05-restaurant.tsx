@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog } from "@/components/ui/dialog"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function GeneratedPage() {
   const businessName = "Ember & Salt"
@@ -93,6 +94,38 @@ export default function GeneratedPage() {
     { text: "Best wood-fired cooking east of the city, full stop. The flatbread alone is worth the drive.", name: "Priya" },
     { text: "Candlelit, loud in the best way, and the wine list actually matches the food.", name: "Tom" },
   ]
+
+  const hours = [
+    { label: "Lunch", value: "Fri – Sun, 12pm – 3pm" },
+    { label: "Dinner", value: "Tue – Sun, 5:30pm – 10pm" },
+    { label: "Monday", value: "Closed" },
+  ]
+
+  const faqs = [
+    {
+      q: "Do you take reservations?",
+      a: "Yes — we recommend booking ahead for dinner service, especially Friday and Saturday nights. Walk-ins are welcome at the bar, subject to availability.",
+    },
+    {
+      q: "Do you cater to dietary requirements?",
+      a: "We can accommodate most dietary requirements, including gluten-free and vegetarian, with notice. Let us know when you book and we'll talk you through the options.",
+    },
+    {
+      q: "Is there parking nearby?",
+      a: "Street parking is available along Queen Street, and there's a public car park two minutes' walk from the door.",
+    },
+    {
+      q: "Do you host private events?",
+      a: "We do — the private dining room seats up to 20 for group bookings, celebrations and semi-private functions. Get in touch for a run sheet and menu.",
+    },
+    {
+      q: "What's your cancellation policy?",
+      a: "We ask for at least 24 hours' notice for cancellations or changes to larger bookings, so we can offer the table to someone else.",
+    },
+  ]
+
+  const mapsHref =
+    "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(formattedAddress)
 
   return (
     <div className="bg-[#191512] font-sans">
@@ -300,6 +333,22 @@ export default function GeneratedPage() {
               {formattedAddress}
             </span>
           </p>
+
+          <div className="mt-10 inline-flex flex-col items-center gap-2 mx-auto">
+            <p className="font-mono text-xs tracking-[0.25em] text-[#D97C2B]">
+              OPENING HOURS
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {hours.map((row) => (
+                <div key={row.label} className="flex items-baseline justify-center gap-4">
+                  <span className="font-elegant text-lg text-[#F5EFE6] w-20 text-right">
+                    {row.label}
+                  </span>
+                  <span className="text-sm text-[#B8AB9B]">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <form className="max-w-2xl mx-auto bg-[#F5EFE6] rounded-3xl p-8 md:p-10 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -349,15 +398,92 @@ export default function GeneratedPage() {
         </form>
       </section>
 
-      {/* 8. Footer */}
-      <footer className="bg-[#191512] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#352C24]">
-        <span className="font-elegant font-medium text-base text-[#F5EFE6]">
-          {businessName}
-        </span>
-        <span className="text-sm text-[#B8AB9B]">{formattedAddress}</span>
-        <a href={telHref} className="text-sm text-[#B8AB9B] hover:text-[#F5EFE6] transition-all duration-300">
-          {phone}
-        </a>
+      {/* 8. FAQ */}
+      <section className="bg-[#F5EFE6] px-6 md:px-10 py-24 md:py-32">
+        <div className="max-w-3xl mx-auto">
+          <p className="font-mono text-xs tracking-[0.25em] text-[#D97C2B] mb-4">
+            COMMON QUESTIONS
+          </p>
+          <h2 className="font-elegant font-medium text-[clamp(2rem,4vw,3.5rem)] tracking-[-0.03em] leading-[1.05] text-[#191512] mb-16 max-w-xl">
+            Good to know before you visit.
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`item-${i}`}
+                className="border-b border-[#57504A]/20"
+              >
+                <AccordionTrigger className="text-left font-elegant text-lg md:text-xl text-[#191512] py-6 hover:text-[#D97C2B]">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm md:text-base leading-relaxed text-[#57504A] pb-6">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* 9. Footer */}
+      <footer className="bg-[#13100D] px-6 md:px-10 pt-20 pb-8 border-t border-[#352C24]">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+          <div>
+            <span className="font-elegant font-medium text-2xl text-[#F5EFE6]">
+              {businessName}
+            </span>
+            <p className="mt-3 text-sm text-[#B8AB9B] max-w-xs">
+              Wood-fired cooking and a room built for long, lively dinners in {suburb}.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-mono text-xs tracking-[0.25em] text-[#D97C2B] mb-4">
+              EXPLORE
+            </p>
+            <div className="flex flex-col gap-3">
+              <a href="#book" className="text-sm text-[#B8AB9B] hover:text-[#F5EFE6] transition-all duration-300 w-fit">
+                Menu
+              </a>
+              <a href="#book" className="text-sm text-[#B8AB9B] hover:text-[#F5EFE6] transition-all duration-300 w-fit">
+                Book a table
+              </a>
+              <a href="#book" className="text-sm text-[#B8AB9B] hover:text-[#F5EFE6] transition-all duration-300 w-fit">
+                Opening hours
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-mono text-xs tracking-[0.25em] text-[#D97C2B] mb-4">
+              VISIT
+            </p>
+            <div className="flex flex-col gap-3">
+              <a href={telHref} className="inline-flex items-center gap-2 text-sm text-[#B8AB9B] hover:text-[#F5EFE6] transition-all duration-300 w-fit">
+                <Phone className="size-4 text-[#D97C2B]" />
+                {phone}
+              </a>
+              <span className="text-sm text-[#B8AB9B]">{formattedAddress}</span>
+              <a
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-[#B8AB9B] hover:text-[#F5EFE6] transition-all duration-300 w-fit"
+              >
+                <MapPin className="size-4 text-[#D97C2B]" />
+                View on Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto mt-16 pt-6 border-t border-[#352C24] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span className="text-xs text-[#57504A]">
+            © {new Date().getFullYear()} {businessName}. All rights reserved.
+          </span>
+          <span className="text-xs text-[#57504A]">{suburb} NSW</span>
+        </div>
       </footer>
 
       {/* Lightbox */}
