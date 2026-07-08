@@ -1,26 +1,29 @@
 /**
- * Local Claude Worker (v1)
+ * Local Claude Worker (v2)
  *
  * A long-running script the user runs on their own Mac to pull the top-10
  * high-value pending leads and generate them, off the Vercel cron's plate.
  * Writes a heartbeat row so the cron's router (lib/queue.ts) backs off
  * those jobs while this worker is alive, and reclaims them via the safety
  * valve if the worker dies. See docs/superpowers/plans/2026-07-07-phase1-worker-routing.md
- * (Task 6) and scripts/claude-worker.README.md for the full picture.
+ * (Task 6), docs/superpowers/plans/2026-07-08-v2-claude-cli-generation.md, and
+ * scripts/claude-worker.README.md for the full picture.
  *
- * v1 generates via the existing generateAndSaveWebsite pipeline (Gemini /
- * OpenRouter) run in-process. See the README for the planned v2 upgrade to
- * agentic Claude Sonnet generation.
+ * v2 (default) generates via `generateSiteViaClaude` — one strong call to the
+ * user's logged-in `claude` CLI (subscription auth). Pass --gemini to force
+ * the old in-process generateAndSaveWebsite pipeline (Gemini / OpenRouter).
  *
  * Usage:
  *   npx tsx scripts/claude-worker.ts --dry-run --once   # verify, no writes beyond heartbeat
- *   npx tsx scripts/claude-worker.ts --once              # single real tick
+ *   npx tsx scripts/claude-worker.ts --once              # single real tick (Claude CLI)
+ *   npx tsx scripts/claude-worker.ts --once --gemini     # single real tick (old Gemini path)
  *   npx tsx scripts/claude-worker.ts                      # run forever
  *
  * Flags:
  *   --once       run a single tick then exit
  *   --dry-run    claim nothing, generate nothing — just log what it WOULD do
  *   --cap N      max leads per tick (default 10)
+ *   --gemini     use the old generateAndSaveWebsite (Gemini/OpenRouter) path instead of Claude CLI
  */
 import fs from 'fs'
 import path from 'path'
@@ -28,6 +31,7 @@ import path from 'path'
 import { writeHeartbeat, claimJobForClaude } from '@/lib/generation/worker-liveness'
 import { selectHighValue, type Project } from '@/lib/generation/high-value'
 import { generateAndSaveWebsite } from '@/lib/ai/generator'
+import { generateSiteViaClaude } from '@/lib/generation/claude-cli'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const WORKER_NAME = 'claude-local'
@@ -39,6 +43,7 @@ interface Cli {
     once: boolean
     dryRun: boolean
     cap: number
+    gemini: boolean
 }
 
 function parseCli(argv: string[]): Cli {
@@ -48,6 +53,7 @@ function parseCli(argv: string[]): Cli {
         once: argv.includes('--once'),
         dryRun: argv.includes('--dry-run'),
         cap: Number.isFinite(capRaw) && capRaw > 0 ? capRaw : 10,
+        gemini: argv.includes('--gemini'),
     }
 }
 
@@ -123,7 +129,7 @@ async function runTick(supabase: ReturnType<typeof createAdminClient>, cli: Cli)
     const chosen = selectHighValue(projects, cli.cap)
 
     console.log(
-        `[tick] heartbeat ok, ${jobs.length} candidate job(s), ${chosen.length} chosen (cap=${cli.cap}, dry-run=${cli.dryRun})`
+        `[tick] heartbeat ok, ${jobs.length} candidate job(s), ${chosen.length} chosen (cap=${cli.cap}, dry-run=${cli.dryRun}, engine=${cli.gemini ? 'gemini' : 'claude-cli'})`
     )
 
     for (const project of chosen) {
@@ -146,18 +152,21 @@ async function runTick(supabase: ReturnType<typeof createAdminClient>, cli: Cli)
             continue
         }
 
-        console.log(`[tick] claimed job ${job.id} for project ${businessName}, generating...`)
+        const engine = cli.gemini ? 'gemini' : 'claude-cli'
+        console.log(`[tick] claimed job ${job.id} for project ${businessName}, generating via ${engine}...`)
         await rawSupabase.from('projects').update({ status: 'generating' }).eq('id', project.id)
 
         try {
-            const result = await generateAndSaveWebsite(project.id)
+            const result = cli.gemini
+                ? await generateAndSaveWebsite(project.id)
+                : await generateSiteViaClaude(project.id)
 
             if (result.success) {
                 await rawSupabase
                     .from('queue_jobs')
                     .update({ status: 'completed', completed_at: new Date().toISOString() })
                     .eq('id', job.id)
-                console.log(`[tick] job ${job.id} (${businessName}) completed`)
+                console.log(`[tick] job ${job.id} (${businessName}) completed via ${engine}`)
             } else {
                 await rawSupabase
                     .from('queue_jobs')
@@ -167,10 +176,10 @@ async function runTick(supabase: ReturnType<typeof createAdminClient>, cli: Cli)
                         completed_at: new Date().toISOString(),
                     })
                     .eq('id', job.id)
-                // generateAndSaveWebsite already sets the project status to
-                // 'error' internally on failure (lib/ai/generator.ts) — no
+                // Both generateAndSaveWebsite and generateSiteViaClaude already
+                // set the project status to 'error' internally on failure — no
                 // extra project write needed here.
-                console.error(`[tick] job ${job.id} (${businessName}) failed: ${result.error}`)
+                console.error(`[tick] job ${job.id} (${businessName}) failed via ${engine}: ${result.error}`)
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
@@ -222,7 +231,7 @@ async function main() {
     process.on('SIGINT', shutdown)
     process.on('SIGTERM', shutdown)
 
-    console.log(`[claude-worker] starting, cap=${cli.cap}, dry-run=${cli.dryRun}`)
+    console.log(`[claude-worker] starting, cap=${cli.cap}, dry-run=${cli.dryRun}, engine=${cli.gemini ? 'gemini' : 'claude-cli'}`)
     await runTick(supabase, cli)
 
     tickTimer = setInterval(() => {
