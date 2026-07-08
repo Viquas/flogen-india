@@ -679,6 +679,26 @@ async function _generateAndSaveWebsiteInner(
             .update({ status: 'generating' as const })
             .eq('id', projectId)
 
+        // Auto-route to an approved industry template when the caller didn't pass one.
+        // Centralized here so EVERY entry point (queue cron, local Claude worker,
+        // /api/generate) gets the cheap content-swap path consistently — previously
+        // this lived only in the queue's executeJob, so the worker did full generation.
+        if (!templateId) {
+            try {
+                const industry = (data as any)?.industry || (data as any)?.brandIdentity?.vibe?.industry || null
+                const { findApprovedTemplate } = await import('./template-routing')
+                const routed = await findApprovedTemplate(industry, supabase)
+                if (routed) {
+                    templateId = routed
+                    logger.ai.info('Auto-routed to approved template', { projectId, industry, templateId })
+                }
+            } catch (routeErr) {
+                logger.ai.warn('Template auto-route failed; continuing with full generation', {
+                    projectId, error: routeErr instanceof Error ? routeErr.message : String(routeErr),
+                })
+            }
+        }
+
         // --- TEMPLATE-BASED GENERATION (fast content-swap path) ---
         if (templateId) {
             logger.ai.info('Template-based generation', { projectId, templateId })
