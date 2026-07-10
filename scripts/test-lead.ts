@@ -96,7 +96,8 @@ async function main() {
     console.log(`\nEnqueued "${name}"`)
     console.log(`  high_value: ${!normal}  → ${normal ? 'cron will take it (template / Gemini)' : 'a running Claude worker will claim it'}`)
     if (!normal) console.log('  Make sure the worker is running:  npx tsx scripts/claude-worker.ts')
-    console.log(`  Watch result: https://flogen-india.vercel.app/preview/${project.slug}\n`)
+    // Leads promoted from discovery often have no slug; /preview resolves by id too.
+    console.log(`  Watch result: https://flogen-india.vercel.app/preview/${project.slug ?? project.id}\n`)
 }
 
 if (process.argv[1]?.endsWith('test-lead.ts')) {
