@@ -37,6 +37,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const WORKER_NAME = 'claude-local'
 const HEARTBEAT_INTERVAL_MS = 30_000
 const TICK_INTERVAL_MS = 60_000
+
+/** Consecutive ticks with no work — used to throttle idle logging. */
+let idleTicks = 0
 const CANDIDATE_LIMIT = 40
 
 interface Cli {
@@ -128,9 +131,19 @@ async function runTick(supabase: ReturnType<typeof createAdminClient>, cli: Cli)
 
     const chosen = selectHighValue(projects, cli.cap)
 
-    console.log(
-        `[tick] heartbeat ok, ${jobs.length} candidate job(s), ${chosen.length} chosen (cap=${cli.cap}, dry-run=${cli.dryRun}, engine=${cli.gemini ? 'gemini' : 'claude-cli'})`
-    )
+    // Only report ticks that found work. An idle worker still heartbeats every 30s;
+    // logging every idle tick just buries the interesting lines.
+    if (chosen.length > 0) {
+        idleTicks = 0
+        console.log(
+            `[tick] heartbeat ok, ${jobs.length} candidate job(s), ${chosen.length} chosen (cap=${cli.cap}, dry-run=${cli.dryRun}, engine=${cli.gemini ? 'gemini' : 'claude-cli'})`
+        )
+    } else {
+        idleTicks++
+        if (idleTicks === 1 || idleTicks % 10 === 0) {
+            console.log(`[tick] idle — heartbeat ok, no high-value jobs waiting (${idleTicks} idle tick${idleTicks === 1 ? '' : 's'})`)
+        }
+    }
 
     for (const project of chosen) {
         const job = jobsByProjectId.get(project.id)
@@ -234,10 +247,22 @@ async function main() {
     console.log(`[claude-worker] starting, cap=${cli.cap}, dry-run=${cli.dryRun}, engine=${cli.gemini ? 'gemini' : 'claude-cli'}`)
     await runTick(supabase, cli)
 
+    // Serialize ticks: a generation can run for minutes, and setInterval would
+    // otherwise fire again mid-generation. Overlapping ticks could each claim a
+    // DIFFERENT high-value job and spawn parallel `claude -p` processes, which
+    // burns subscription rate limits. Skip a tick while one is still running —
+    // the heartbeat timer keeps running independently, so the cron still sees us live.
+    let tickRunning = false
     tickTimer = setInterval(() => {
-        runTick(supabase, cli).catch((err) =>
-            console.error('[tick] unhandled error:', err instanceof Error ? err.message : String(err))
-        )
+        if (tickRunning) return
+        tickRunning = true
+        runTick(supabase, cli)
+            .catch((err) =>
+                console.error('[tick] unhandled error:', err instanceof Error ? err.message : String(err))
+            )
+            .finally(() => {
+                tickRunning = false
+            })
     }, TICK_INTERVAL_MS)
 }
 
