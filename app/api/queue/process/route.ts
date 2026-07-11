@@ -11,10 +11,11 @@ const CRON_GUARD_MS = 20 * 1000 // reject if another invocation started <20s ago
 export const maxDuration = 800 // ~13 min (Vercel Pro) — award-grade generation can take several minutes per site
 
 export async function GET(request: NextRequest) {
-    // Verify cron secret (Vercel sets this header on cron invocations)
+    // Verify cron secret (Vercel sets this header on cron invocations).
+    // Fail closed: a missing CRON_SECRET must not leave the endpoint open.
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

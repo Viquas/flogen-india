@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Phone, CalendarClock, Users, LogOut } from 'lucide-react'
+import { LayoutDashboard, Phone, CalendarClock, Users, LogOut, Compass } from 'lucide-react'
 import { logoutSales } from '@/app/sales-login/login-actions'
 
 const items = [
     { title: 'Overview', href: '/sales', icon: LayoutDashboard, exact: true },
+    { title: 'Discover', href: '/sales/discover', icon: Compass },
     { title: 'Leads', href: '/sales/leads', icon: Phone },
     { title: 'My Follow-ups', href: '/sales/followups', icon: CalendarClock },
     { title: 'Team', href: '/sales/team', icon: Users },

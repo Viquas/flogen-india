@@ -1,7 +1,10 @@
 import Link from 'next/link'
+import { Table2, Map as MapIcon } from 'lucide-react'
 import { getSalesLeads, type SalesStatus } from '@/lib/sales/get-leads'
 import { LeadStatusChip } from '@/components/sales/lead-status-chip'
+import { LeadsMapView } from '@/components/sales/leads-map-view'
 import { relativeTime } from '@/lib/sales/format'
+import { cn } from '@/lib/utils'
 import { LeadsFilterBar } from './leads-filter-bar'
 
 interface PageProps {
@@ -14,14 +17,40 @@ export default async function SalesLeadsPage({ searchParams }: PageProps) {
     const search = typeof params.q === 'string' ? params.q : undefined
     const industry = typeof params.industry === 'string' ? params.industry : undefined
     const followup = typeof params.followup === 'string' ? params.followup : undefined
+    const pool = params.pool === 'website' || params.pool === 'automation' ? params.pool : undefined
+    const view = params.view === 'map' ? 'map' : 'table'
 
     const leads = await getSalesLeads({
         status: status ? [status] : undefined,
         search,
         industry,
         hasFollowup: followup === 'yes' ? true : followup === 'no' ? false : undefined,
+        pool,
         limit: 300,
     })
+
+    // Preserve current filters when switching views.
+    const toggleParams = new URLSearchParams()
+    for (const [k, v] of Object.entries(params)) {
+        if (typeof v === 'string' && k !== 'view') toggleParams.set(k, v)
+    }
+    const hrefFor = (v: 'table' | 'map') => {
+        const p = new URLSearchParams(toggleParams)
+        p.set('view', v)
+        return `/sales/leads?${p.toString()}`
+    }
+
+    const mapLeads = leads
+        .filter((l) => l.lat != null && l.lng != null)
+        .map((l) => ({
+            id: l.id,
+            businessName: l.businessName,
+            lat: l.lat as number,
+            lng: l.lng as number,
+            salesStatus: l.salesStatus,
+            phone: l.phone,
+            industry: l.industry,
+        }))
 
     return (
         <div className="p-8 max-w-[1400px] mx-auto">
@@ -29,9 +58,31 @@ export default async function SalesLeadsPage({ searchParams }: PageProps) {
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Leads</h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        Shared pool · {leads.length} lead{leads.length === 1 ? '' : 's'} · sorted by oldest
-                        contact first
+                        Shared pool · {leads.length} lead{leads.length === 1 ? '' : 's'}
+                        {view === 'map' && ` · ${mapLeads.length} on map`} · sorted by oldest contact first
                     </p>
+                </div>
+
+                {/* View toggle */}
+                <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+                    <Link
+                        href={hrefFor('table')}
+                        className={cn(
+                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                            view === 'table' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+                        )}
+                    >
+                        <Table2 className="h-3.5 w-3.5" /> Table
+                    </Link>
+                    <Link
+                        href={hrefFor('map')}
+                        className={cn(
+                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                            view === 'map' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+                        )}
+                    >
+                        <MapIcon className="h-3.5 w-3.5" /> Map
+                    </Link>
                 </div>
             </div>
 
@@ -39,6 +90,9 @@ export default async function SalesLeadsPage({ searchParams }: PageProps) {
                 <LeadsFilterBar />
             </div>
 
+            {view === 'map' ? (
+                <LeadsMapView leads={mapLeads} />
+            ) : (
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -69,7 +123,19 @@ export default async function SalesLeadsPage({ searchParams }: PageProps) {
                                     className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60"
                                 >
                                     <td className="px-4 py-3">
-                                        <div className="font-medium text-gray-900">{lead.businessName}</div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium text-gray-900">{lead.businessName}</span>
+                                            {lead.intent === 'interested' && (
+                                                <span className="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-[10px] font-semibold">
+                                                    🔥 Interested
+                                                </span>
+                                            )}
+                                            {lead.intent === 'engaged' && (
+                                                <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">
+                                                    👁 Engaged
+                                                </span>
+                                            )}
+                                        </div>
                                         {lead.address && (
                                             <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">
                                                 {lead.address}
@@ -128,6 +194,7 @@ export default async function SalesLeadsPage({ searchParams }: PageProps) {
                     </table>
                 </div>
             </div>
+            )}
         </div>
     )
 }

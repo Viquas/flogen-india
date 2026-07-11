@@ -18,6 +18,14 @@ export interface PlaceResult {
   userRatingCount?: number
   websiteUri?: string
   photos?: Array<{ name: string; widthPx: number; heightPx: number }>
+  location?: { latitude: number; longitude: number }
+}
+
+/** A geographic circle to bias/restrict a search toward (radius in metres, max 50000). */
+export interface Circle {
+  latitude: number
+  longitude: number
+  radiusMeters: number
 }
 
 export type DedupCallback = (placeIds: string[]) => Promise<Set<string>>
@@ -37,6 +45,8 @@ export interface PaginatedSearchConfig {
     pagesFetched: number
   }
   maxApiPages: number
+  /** Optional circle to bias results toward (map-driven area selection). */
+  locationBias?: Circle
 }
 
 // -- Constants --------------------------------------------------------------
@@ -45,7 +55,7 @@ const PLACES_URL = 'https://places.googleapis.com/v1/places:searchText'
 
 /** Union of all fields needed by both discovery and lead-discovery. */
 const FIELD_MASK =
-  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,places.photos,nextPageToken'
+  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,places.photos,places.location,nextPageToken'
 
 // -- fetchOnePage -----------------------------------------------------------
 
@@ -53,9 +63,18 @@ export async function fetchOnePage(
   apiKey: string,
   textQuery: string,
   pageToken?: string,
+  locationBias?: Circle,
 ): Promise<{ places: PlaceResult[]; nextPageToken: string | null }> {
   const body: Record<string, unknown> = { textQuery, pageSize: 20 }
   if (pageToken) body.pageToken = pageToken
+  if (locationBias) {
+    body.locationBias = {
+      circle: {
+        center: { latitude: locationBias.latitude, longitude: locationBias.longitude },
+        radius: Math.min(Math.max(locationBias.radiusMeters, 1), 50000),
+      },
+    }
+  }
 
   const res = await fetch(PLACES_URL, {
     method: 'POST',
@@ -99,12 +118,12 @@ export function buildFallbackQuery(
  * that checks their specific DB table; everything else is handled here.
  */
 export async function paginatedSearch(cfg: PaginatedSearchConfig): Promise<void> {
-  const { apiKey, searchQuery, label, maxResults, skipWithWebsite, seenPlaceIds, dedupFn, counters, maxApiPages } = cfg
+  const { apiKey, searchQuery, label, maxResults, skipWithWebsite, seenPlaceIds, dedupFn, counters, maxApiPages, locationBias } = cfg
   let pageToken = ''
   let apiExhausted = false
 
   while (counters.validPlaces.length < maxResults && !apiExhausted && counters.pagesFetched < maxApiPages) {
-    const page = await fetchOnePage(apiKey, searchQuery, pageToken || undefined)
+    const page = await fetchOnePage(apiKey, searchQuery, pageToken || undefined, locationBias)
     counters.pagesFetched++
     const pagePlaces = page.places
     counters.totalFetched += pagePlaces.length

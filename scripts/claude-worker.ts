@@ -99,6 +99,7 @@ async function runTick(supabase: ReturnType<typeof createAdminClient>, cli: Cli)
         .from('queue_jobs')
         .select('id, project_id')
         .eq('status', 'pending')
+        .eq('job_type', 'website') // plan jobs run on the cron path, not the Claude worker
         .is('claimed_by', null)
         .order('created_at', { ascending: true })
         .limit(CANDIDATE_LIMIT)

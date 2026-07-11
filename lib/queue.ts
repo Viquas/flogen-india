@@ -2,6 +2,8 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAndSaveWebsite } from '@/lib/ai/generator'
+import { generateAutomationPlan } from '@/lib/automation-plan/generate'
+import { notifyProjectRep } from '@/lib/sales/notifications'
 import { logger } from '@/lib/logger'
 import { isClaudeLive } from '@/lib/generation/worker-liveness'
 import { selectHighValue, type Project } from '@/lib/generation/high-value'
@@ -19,6 +21,7 @@ export interface QueueJob {
     model_id?: string | null  // repurposed as priority field (e.g. "1" = high priority)
     claimed_by?: string | null
     claimed_at?: string | null
+    job_type?: 'website' | 'automation_plan' | null  // null/absent = website (legacy rows)
 }
 
 // Max retry attempts before permanently failing a job
@@ -87,11 +90,13 @@ class GenerationQueue {
     async add(projectId: string, rules?: string, templateId?: string, priority: number = 0) {
         const supabase = createAdminClient()
 
-        // Dedup: skip if this project already has a pending/processing job
+        // Dedup: skip if this project already has a pending/processing website job
+        // (a pending automation-plan job must not block site generation)
         const { count: existing } = await supabase
             .from('queue_jobs')
             .select('id', { count: 'exact', head: true })
             .eq('project_id', projectId)
+            .eq('job_type', 'website')
             .in('status', ['pending', 'processing'])
 
         if (existing && existing > 0) {
@@ -141,6 +146,43 @@ class GenerationQueue {
         }
 
         await supabase.from('projects').update({ status: 'queued', generated_code: null }).eq('id', projectId)
+        this.process()
+    }
+
+    /**
+     * Enqueue an automation-plan generation job (job_type='automation_plan').
+     * Drives projects.plan_status only — never touches projects.status, so the
+     * lead keeps its place in the sales workspace while the plan generates.
+     */
+    async addPlanJob(projectId: string) {
+        // Untyped: job_type/plan_status are newer than the generated DB types
+        const supabase = createAdminClient() as any
+
+        const { count: existing } = await supabase
+            .from('queue_jobs')
+            .select('id', { count: 'exact', head: true })
+            .eq('project_id', projectId)
+            .eq('job_type', 'automation_plan')
+            .in('status', ['pending', 'processing'])
+
+        if (existing && existing > 0) {
+            logger.queue.info('Plan job already exists, skipping', { projectId })
+            return
+        }
+
+        const { error: insertError } = await supabase.from('queue_jobs').insert({
+            project_id: projectId,
+            rules: null,
+            status: 'pending',
+            attempts: 0,
+            job_type: 'automation_plan',
+        })
+        if (insertError) {
+            logger.queue.error('plan queue_jobs insert failed', { projectId, error: insertError.message })
+            throw new Error(insertError.message)
+        }
+
+        await supabase.from('projects').update({ plan_status: 'queued' }).eq('id', projectId)
         this.process()
     }
 
@@ -309,7 +351,7 @@ class GenerationQueue {
                 }
 
                 const job = sorted.find(
-                    (j) => !shouldCronSkip(j as { project_id: string; created_at: string }, {
+                    (j) => j.job_type === 'automation_plan' || !shouldCronSkip(j as { project_id: string; created_at: string }, {
                         claudeLive,
                         nowMs: Date.now(),
                         highValueProjectIds: highValueIds,
@@ -357,15 +399,28 @@ class GenerationQueue {
         try {
             if (!job.project_id) throw new Error("QueueJob missing project_id")
 
-            await supabase.from('projects').update({ status: 'generating' }).eq('id', job.project_id)
+            if (job.job_type === 'automation_plan') {
+                // Plan jobs drive projects.plan_status only (inside the generator) —
+                // projects.status stays untouched so the lead keeps its CRM state.
+                const result = await generateAutomationPlan(job.project_id)
+                if (!result.success) {
+                    throw new Error(result.error || 'Plan generation failed')
+                }
+            } else {
+                await supabase.from('projects').update({ status: 'generating' }).eq('id', job.project_id)
 
-            // Template auto-routing now lives inside generateAndSaveWebsite, so every
-            // caller (cron, local worker, API) gets the cheap content-swap path. We just
-            // pass the job's explicit template_id (usually none) and let it route.
-            const result = await generateAndSaveWebsite(job.project_id, undefined, job.rules || undefined, job.template_id || undefined)
+                // Template auto-routing now lives inside generateAndSaveWebsite, so every
+                // caller (cron, local worker, API) gets the cheap content-swap path. We just
+                // pass the job's explicit template_id (usually none) and let it route.
+                const result = await generateAndSaveWebsite(job.project_id, undefined, job.rules || undefined, job.template_id || undefined)
 
-            if (!result.success) {
-                throw new Error(result.error || 'Generation failed')
+                if (!result.success) {
+                    throw new Error(result.error || 'Generation failed')
+                }
+
+                // Close the loop: tell the assigned rep their demo site is ready
+                notifyProjectRep(job.project_id, 'deliverable_ready', { deliverable: 'website' })
+                    .catch(() => { /* notification failure must not fail the job */ })
             }
 
             // Mark job as completed
@@ -401,7 +456,11 @@ class GenerationQueue {
                 }).eq('id', job.id)
 
                 if (job.project_id) {
-                    await supabase.from('projects').update({ status: 'queued' }).eq('id', job.project_id)
+                    if (job.job_type === 'automation_plan') {
+                        await (supabase.from('projects') as any).update({ plan_status: 'queued' }).eq('id', job.project_id)
+                    } else {
+                        await supabase.from('projects').update({ status: 'queued' }).eq('id', job.project_id)
+                    }
                 }
             } else {
                 // Permanently failed after MAX_ATTEMPTS
@@ -420,7 +479,11 @@ class GenerationQueue {
                 }).eq('id', job.id)
 
                 if (job.project_id) {
-                    await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
+                    if (job.job_type === 'automation_plan') {
+                        await (supabase.from('projects') as any).update({ plan_status: 'failed' }).eq('id', job.project_id)
+                    } else {
+                        await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
+                    }
                 }
             }
         } finally {

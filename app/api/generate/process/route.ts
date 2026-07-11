@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { generationQueue } from '@/lib/queue'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
 
 export async function GET() {
+    try {
+        await requireAdmin()
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
     try {
         const supabase = createAdminClient()
 

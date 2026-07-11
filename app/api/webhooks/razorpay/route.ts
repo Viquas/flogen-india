@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { razorpayWebhookSecret } from '@/lib/razorpay'
+import { notifyProjectRep } from '@/lib/sales/notifications'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -159,7 +160,7 @@ async function handlePaymentCaptured(
     // Find claim by razorpay_order_id
     const { data: claim } = await supabase
         .from('claims')
-        .select('id, status')
+        .select('id, status, project_id')
         .eq('razorpay_order_id', payment.order_id)
         .single()
 
@@ -192,6 +193,11 @@ async function handlePaymentCaptured(
         .eq('id', claim.id)
 
     console.log('[Webhook] Claim marked as paid:', claim.id)
+
+    // Notify the owning sales rep of the conversion (highest-value signal).
+    if (claim.project_id) {
+        await notifyProjectRep(claim.project_id, 'claim_paid', { amountPaise: payment.amount }).catch(() => {})
+    }
 }
 
 async function handlePaymentFailed(

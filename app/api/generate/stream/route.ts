@@ -1,4 +1,5 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { streamWebsiteCode } from '@/lib/ai/generator'
 import { BusinessDataSchema } from '@/lib/schemas/project'
 import { recordCost, buildCostRecord } from '@/lib/ai/cost-tracker'
@@ -6,6 +7,11 @@ import { recordCost, buildCostRecord } from '@/lib/ai/cost-tracker'
 export const maxDuration = 800 // ~13 min (Vercel Pro) for streaming generation
 
 export async function POST(req: NextRequest) {
+    try {
+        await requireAdmin()
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
     try {
         const body = await req.json()
         const { rules, markdownContext, mode, model, ...otherData } = body

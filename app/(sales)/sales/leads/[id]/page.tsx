@@ -1,11 +1,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Phone, MessageCircle, MapPin, ExternalLink, ChevronLeft } from 'lucide-react'
+import { Phone, MessageCircle, MapPin, ExternalLink, ChevronLeft, Mail, MousePointerClick } from 'lucide-react'
 import { getLeadDetail } from '@/lib/sales/get-leads'
+import { getOutreachMessages, getTodayWhatsappCount, WHATSAPP_DAILY_SOFT_CAP } from '@/lib/sales/outreach'
+import { requireSales } from '@/lib/auth/require-sales'
 import { LeadStatusChip, OutcomeChip } from '@/components/sales/lead-status-chip'
 import { relativeTime, formatDateTime, toWhatsAppDigits } from '@/lib/sales/format'
 import { LogCallForm } from './log-call-form'
 import { SharePreviewButton } from './share-preview-button'
+import { DeliverableCard } from '@/components/sales/deliverable-card'
+import { OutreachComposer } from '@/components/sales/outreach-composer'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -13,9 +17,16 @@ interface PageProps {
 
 export default async function LeadDetailPage({ params }: PageProps) {
     const { id } = await params
+    const { userId } = await requireSales()
     const { lead, callLogs } = await getLeadDetail(id)
 
     if (!lead) notFound()
+
+    const [outreachMessages, whatsappCount] = await Promise.all([
+        getOutreachMessages(id),
+        getTodayWhatsappCount(userId),
+    ])
+    const senderName = process.env.NEXT_PUBLIC_SENDER_NAME || 'Flogen'
 
     const phoneDigits = lead.phone ? toWhatsAppDigits(lead.phone) : ''
     const mapsHref = lead.address
@@ -147,6 +158,18 @@ export default async function LeadDetailPage({ params }: PageProps) {
                         </div>
                     </div>
 
+                    <DeliverableCard
+                        leadId={lead.id}
+                        slug={lead.slug}
+                        pool={lead.pool}
+                        nicheScore={lead.nicheScore}
+                        pitchAngle={lead.pitchAngle}
+                        businessName={lead.businessName}
+                        projectStatus={lead.projectStatus}
+                        planStatus={lead.planStatus}
+                        presentationUrl={lead.presentationUrl}
+                    />
+
                     <div className="rounded-xl border border-gray-200 bg-white p-6">
                         <h3 className="text-sm font-semibold text-gray-900 mb-3">History snapshot</h3>
                         <dl className="space-y-2 text-sm">
@@ -180,12 +203,64 @@ export default async function LeadDetailPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                {/* Right: log call + history */}
+                {/* Right: outreach + log call + history */}
                 <div className="space-y-4">
+                    <OutreachComposer
+                        projectId={lead.id}
+                        businessName={lead.businessName}
+                        phone={lead.phone}
+                        phoneDigits={phoneDigits}
+                        slug={lead.slug}
+                        pool={lead.pool}
+                        senderName={senderName}
+                        initialWhatsappCount={whatsappCount}
+                        whatsappCap={WHATSAPP_DAILY_SOFT_CAP}
+                    />
+
                     <div className="rounded-xl border border-gray-200 bg-white p-6">
                         <h2 className="text-sm font-semibold text-gray-900 mb-4">Log a call</h2>
                         <LogCallForm projectId={lead.id} />
                     </div>
+
+                    {outreachMessages.length > 0 && (
+                        <div className="rounded-xl border border-gray-200 bg-white p-6">
+                            <h2 className="text-sm font-semibold text-gray-900 mb-4">
+                                Outreach ({outreachMessages.length})
+                            </h2>
+                            <ol className="space-y-3">
+                                {outreachMessages.map((m) => (
+                                    <li key={m.id} className="border-l-2 border-gray-100 pl-4">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
+                                                {m.channel === 'email' ? (
+                                                    <Mail className="h-3.5 w-3.5 text-gray-400" />
+                                                ) : (
+                                                    <MessageCircle className="h-3.5 w-3.5 text-gray-400" />
+                                                )}
+                                                {m.channel === 'email' ? 'Email' : 'WhatsApp'}
+                                                {m.subject ? ` · ${m.subject}` : ''}
+                                            </span>
+                                            <span className="text-xs text-gray-400">{relativeTime(m.createdAt)}</span>
+                                        </div>
+                                        {(m.openedAt || m.clickedAt) && (
+                                            <div className="mt-1 flex items-center gap-3 text-[11px] text-emerald-600">
+                                                {m.openedAt && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Mail className="h-3 w-3" /> Opened
+                                                    </span>
+                                                )}
+                                                {m.clickedAt && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <MousePointerClick className="h-3 w-3" /> Clicked
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+                    )}
 
                     <div className="rounded-xl border border-gray-200 bg-white p-6">
                         <h2 className="text-sm font-semibold text-gray-900 mb-4">

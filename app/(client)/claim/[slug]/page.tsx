@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
 import { trackEvent } from '@/lib/analytics/track'
+import { notifyProjectRepOnce } from '@/lib/sales/notifications'
 import type { Metadata } from 'next'
 import { HeroSection } from './components/hero-section'
 import { CustomizationSection } from './components/customization-section'
@@ -142,6 +143,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
 
     // Track claim page view — fire-and-forget
     trackEvent('claim.started', { slug, projectId: project.id }).catch(() => {})
+    // Notify the owning sales rep the prospect is on the claim page (first view only).
+    notifyProjectRepOnce(project.id, 'claim_started').catch(() => {})
 
     // Active state: full claim landing page
     return (

@@ -45,6 +45,30 @@ export interface SalesLeadRow {
     salesNextFollowupAt: string | null
     /** true if a matching claim row has paid_at IS NOT NULL */
     isPaid: boolean
+    /** Discovery pool: 'website' (no site) or 'automation' (scored). Null for legacy leads. */
+    pool: 'website' | 'automation' | null
+    /** Automation niche score 0-100 (automation pool only). */
+    nicheScore: number | null
+    /** Human-readable automation pitch angle (automation pool only). */
+    pitchAngle: string | null
+    /** Rep who discovered/owns this lead (soft ownership). */
+    assignedTo: string | null
+    /** projects.status — drives website-deliverable state (lead|queued|generating|review|approved|deployed|error). */
+    projectStatus: string
+    /** Automation plan lifecycle: null|queued|generating|ready|failed. */
+    planStatus: string | null
+    /** Public URL of the exported presentation PDF, when one has been rendered. */
+    presentationUrl: string | null
+    /** Geographic coordinates (from Google Places) for map pins. Null for legacy leads. */
+    lat: number | null
+    lng: number | null
+    /**
+     * Engagement signal for queue ranking:
+     * - 'interested': submitted an interest form or a claim exists (hottest)
+     * - 'engaged': opened/clicked an email or viewed the pitch/claim page
+     * - null: no tracked engagement
+     */
+    intent: 'interested' | 'engaged' | null
 }
 
 export interface LeadFilters {
@@ -52,6 +76,10 @@ export interface LeadFilters {
     search?: string
     industry?: string
     hasFollowup?: boolean
+    /** Restrict to a discovery pool. */
+    pool?: 'website' | 'automation'
+    /** Restrict to leads owned by a specific rep. */
+    assignedTo?: string
     limit?: number
 }
 
@@ -90,11 +118,29 @@ function extractPhone(data: Record<string, unknown> | null): string | null {
     )
 }
 
+/**
+ * Address can be stored as a plain string OR a structured object
+ * ({ street, city, state, postalCode, country, fullAddress }) depending on the
+ * discovery source. Normalize to a displayable string either way — rendering
+ * the raw object as a JSX child crashes React.
+ */
+function coerceAddress(value: unknown): string | null {
+    if (typeof value === 'string') return value || null
+    if (value && typeof value === 'object') {
+        const obj = value as Record<string, unknown>
+        if (typeof obj.fullAddress === 'string' && obj.fullAddress) return obj.fullAddress
+        const parts = [obj.street, obj.city, obj.state, obj.postalCode, obj.country]
+            .filter((p): p is string => typeof p === 'string' && p.length > 0)
+        return parts.length > 0 ? parts.join(', ') : null
+    }
+    return null
+}
+
 function extractAddress(data: Record<string, unknown> | null): string | null {
     return (
-        bd<string>(data, ['operationalData', 'contact', 'address']) ||
-        bd<string>(data, ['contactInfo', 'address']) ||
-        bd<string>(data, ['address']) ||
+        coerceAddress(bd(data, ['operationalData', 'contact', 'address'])) ||
+        coerceAddress(bd(data, ['contactInfo', 'address'])) ||
+        coerceAddress(bd(data, ['address'])) ||
         null
     )
 }
@@ -145,7 +191,59 @@ function rowToSalesLead(
         salesCallCount: (row.sales_call_count as number | null) ?? 0,
         salesNextFollowupAt: (row.sales_next_followup_at as string | null) ?? null,
         isPaid: paidSet.has(row.id as string),
+        pool: (row.pool as 'website' | 'automation' | null) ?? null,
+        nicheScore: (row.niche_score as number | null) ?? null,
+        pitchAngle: (row.pitch_angle as string | null) ?? null,
+        assignedTo: (row.assigned_to as string | null) ?? null,
+        projectStatus: (row.status as string | null) ?? 'lead',
+        planStatus: (row.plan_status as string | null) ?? null,
+        presentationUrl: (row.presentation_url as string | null) ?? null,
+        lat: (row.lat as number | null) ?? null,
+        lng: (row.lng as number | null) ?? null,
+        intent: (row.__intent as 'interested' | 'engaged' | null) ?? null,
     }
+}
+
+/**
+ * Compute an engagement level per project from tracked signals:
+ * interests + paid claims → 'interested'; email opens/clicks + pitch/claim
+ * page views → 'engaged'. Returns a map projectId → level.
+ */
+async function computeIntentMap(
+    rows: Array<{ id: string; slug: string | null }>,
+): Promise<Map<string, 'interested' | 'engaged'>> {
+    const map = new Map<string, 'interested' | 'engaged'>()
+    const ids = rows.map((r) => r.id)
+    if (ids.length === 0) return map
+    const slugToId = new Map<string, string>()
+    for (const r of rows) if (r.slug) slugToId.set(r.slug, r.id)
+    const slugs = Array.from(slugToId.keys())
+
+    const admin = createAdminClient() as any
+    const set = (id: string, level: 'interested' | 'engaged') => {
+        const cur = map.get(id)
+        if (level === 'interested' || cur !== 'interested') map.set(id, level)
+    }
+
+    const [interests, outreach, pitchEvents] = await Promise.all([
+        admin.from('interests').select('project_id').in('project_id', ids),
+        admin.from('outreach_messages').select('project_id, opened_at, clicked_at').in('project_id', ids),
+        slugs.length > 0
+            ? admin.from('pitch_events').select('site_slug, event_type').in('site_slug', slugs)
+            : Promise.resolve({ data: [] }),
+    ])
+
+    for (const r of interests.data || []) set(r.project_id as string, 'interested')
+    for (const r of outreach.data || []) {
+        if (r.opened_at || r.clicked_at) set(r.project_id as string, 'engaged')
+    }
+    for (const r of pitchEvents.data || []) {
+        const id = slugToId.get(r.site_slug as string)
+        if (!id) continue
+        if (r.event_type === 'interest_submitted') set(id, 'interested')
+        else set(id, 'engaged')
+    }
+    return map
 }
 
 // ---- Queries ----
@@ -203,15 +301,23 @@ export const getSalesLeads = cache(async (filters: LeadFilters = {}): Promise<Sa
     let q = admin
         .from('projects')
         .select(
-            'id, slug, business_data, quality_score, created_at, sales_status, sales_last_contact_at, sales_last_contact_by, sales_call_count, sales_next_followup_at',
+            'id, slug, business_data, quality_score, created_at, sales_status, sales_last_contact_at, sales_last_contact_by, sales_call_count, sales_next_followup_at, pool, niche_score, pitch_angle, assigned_to, lat, lng',
         )
-        .in('status', ['review', 'approved'])
+        // 'lead' = discovered contact not yet turned into a site; 'review'/'approved'
+        // = a generated demo exists. All three are workable in the sales pipeline.
+        .in('status', ['lead', 'review', 'approved'])
         .order('sales_last_contact_at', { ascending: true, nullsFirst: true })
         .order('quality_score', { ascending: false, nullsFirst: false })
         .limit(limit)
 
     if (filters.status && filters.status.length > 0) {
         q = q.in('sales_status', filters.status)
+    }
+    if (filters.pool) {
+        q = q.eq('pool', filters.pool)
+    }
+    if (filters.assignedTo) {
+        q = q.eq('assigned_to', filters.assignedTo)
     }
     if (filters.hasFollowup === true) {
         q = q.not('sales_next_followup_at', 'is', null)
@@ -253,12 +359,28 @@ export const getSalesLeads = cache(async (filters: LeadFilters = {}): Promise<Sa
         .map((r: Record<string, unknown>) => r.sales_last_contact_by as string | null)
         .filter((v: string | null): v is string => !!v)
 
-    const [emailMap, paidSet] = await Promise.all([
+    const rowsForIntent = filtered.map((r: Record<string, unknown>) => ({
+        id: r.id as string,
+        slug: (r.slug as string | null) ?? null,
+    }))
+
+    const [emailMap, paidSet, intentMap] = await Promise.all([
         getUserEmailMap(lastByIds),
         getPaidProjectIds(projectIds),
+        computeIntentMap(rowsForIntent),
     ])
+    // A paid claim is the strongest possible intent.
+    for (const id of paidSet) intentMap.set(id, 'interested')
 
-    return filtered.map((row: Record<string, unknown>) => rowToSalesLead(row, emailMap, paidSet))
+    const leads: SalesLeadRow[] = filtered.map((row: Record<string, unknown>) =>
+        rowToSalesLead({ ...row, __intent: intentMap.get(row.id as string) ?? null }, emailMap, paidSet),
+    )
+
+    // Intent-ranked queue: surface engaged leads first, preserving the existing
+    // oldest-contact-first order within each tier (Array.sort is stable).
+    const rank = (i: SalesLeadRow['intent']) => (i === 'interested' ? 2 : i === 'engaged' ? 1 : 0)
+    leads.sort((a, b) => rank(b.intent) - rank(a.intent))
+    return leads
 })
 
 export interface CallLogEntry {
@@ -284,7 +406,7 @@ export const getLeadDetail = cache(async (projectId: string): Promise<LeadDetail
     const { data: row } = await admin
         .from('projects')
         .select(
-            'id, slug, business_data, quality_score, created_at, sales_status, sales_last_contact_at, sales_last_contact_by, sales_call_count, sales_next_followup_at',
+            'id, slug, business_data, quality_score, created_at, status, sales_status, sales_last_contact_at, sales_last_contact_by, sales_call_count, sales_next_followup_at, pool, niche_score, pitch_angle, assigned_to, lat, lng, plan_status, presentation_url',
         )
         .eq('id', projectId)
         .maybeSingle()
