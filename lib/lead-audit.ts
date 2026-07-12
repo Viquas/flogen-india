@@ -16,7 +16,7 @@ const CHAT_SIGNATURES = [
   'intercom.io', 'tawk.to', 'crisp.chat', 'js.driftt.com', 'tidio.co',
 ]
 
-async function fetchHtmlWithTimeout(url: string): Promise<{ html: string; loadMs: number } | null> {
+async function fetchHtmlWithTimeout(url: string): Promise<{ html: string; loadMs: number; finalUrl: string } | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
   const start = Date.now()
@@ -27,7 +27,10 @@ async function fetchHtmlWithTimeout(url: string): Promise<{ html: string; loadMs
       return null
     }
     const html = await response.text()
-    return { html, loadMs: Date.now() - start }
+    // response.url is the FINAL url after redirects — needed for an accurate
+    // SSL check, since Places websiteUri is often http:// even when the site
+    // 301s to https://.
+    return { html, loadMs: Date.now() - start, finalUrl: response.url || url }
   } catch {
     return null
   } finally {
@@ -54,14 +57,16 @@ export async function auditWebsite(
     }
   }
 
-  const { html, loadMs } = fetched
+  const { html, loadMs, finalUrl } = fetched
   const lowerHtml = html.toLowerCase()
 
   return {
     has_booking: BOOKING_SIGNATURES.some(sig => lowerHtml.includes(sig)),
     has_chat: CHAT_SIGNATURES.some(sig => lowerHtml.includes(sig)),
     mobile_friendly: /<meta[^>]+name=["']viewport["']/i.test(html),
-    has_ssl: url.trim().toLowerCase().startsWith('https://'),
+    // Use the post-redirect URL: an http:// site that redirects to https:// is
+    // genuinely secure and must not be flagged as "no SSL".
+    has_ssl: finalUrl.trim().toLowerCase().startsWith('https://'),
     page_load_ms: loadMs,
     review_count: reviewCount,
     review_velocity_30d: reviewVelocity30d,

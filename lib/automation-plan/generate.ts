@@ -10,7 +10,7 @@
  * or the sales workspace status filters.
  */
 import { createAdminClient } from '@/lib/supabase/admin'
-import { trackedGenerateText } from '@/lib/ai/gateway'
+import { trackedGenerateText, persistMetrics } from '@/lib/ai/gateway'
 import { getModel } from '@/lib/ai/model-config'
 import { getNicheFit } from '@/lib/lead-scoring'
 import { notifyProjectRep } from '@/lib/sales/notifications'
@@ -127,13 +127,17 @@ export async function generateAutomationPlan(projectId: string): Promise<PlanGen
             nicheScore: (project.niche_score as number | null) ?? null,
         })
 
-        const { result } = await trackedGenerateText({
+        const { result, metrics } = await trackedGenerateText({
             model: getModel(PLAN_MODEL),
             prompt,
             maxOutputTokens: 4000,
             temperature: 0.4,
             callType: 'automation_plan',
         })
+
+        // Record the AI spend — without this, automation_plan calls never land
+        // in generation_costs and pipeline spend is undercounted.
+        await persistMetrics(metrics, projectId)
 
         const parsed = JSON.parse(stripCodeFences(result.text))
         const plan: AutomationPlan = AutomationPlanSchema.parse(parsed)
