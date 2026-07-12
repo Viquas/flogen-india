@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function getProjectRevisions(projectId: string) {
     const supabase = createAdminClient()
@@ -21,6 +22,7 @@ export async function getProjectRevisions(projectId: string) {
 }
 
 export async function restoreProjectRevision(projectId: string, revisionId: string) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // Fetch the revision

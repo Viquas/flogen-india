@@ -1,6 +1,7 @@
 'use server'
 
 import { listPromptVersions, setActiveVersion, createPromptVersion, seedInitialPrompts } from '@/lib/ai/prompt-manager'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { revalidatePath } from 'next/cache'
 import { PROMPT_NAMES } from './types'
 import type { PromptVersionRow } from './types'
@@ -27,6 +28,7 @@ export async function setActivePromptVersion(
     name: string,
     versionId: string
 ): Promise<{ success: boolean; error?: string }> {
+    await requireAdmin()
     const success = await setActiveVersion(name, versionId)
     if (success) {
         revalidatePath('/dashboard/prompts')
@@ -43,6 +45,7 @@ export async function createNewPromptVersion(
     content: string,
     changeNotes: string
 ): Promise<{ success: boolean; version?: number; error?: string }> {
+    await requireAdmin()
     const result = await createPromptVersion(name, content, changeNotes)
     if (result) {
         revalidatePath('/dashboard/prompts')

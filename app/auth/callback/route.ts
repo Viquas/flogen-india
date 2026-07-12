@@ -8,8 +8,17 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
   const rawNext = searchParams.get('next') ?? '/portal'
-  // Prevent open redirect — only allow relative paths
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/portal'
+  // Prevent open redirect — only allow same-origin relative paths. Note the
+  // backslash guard: `/\evil.com` passes a naive `//` check but the WHATWG URL
+  // parser treats `\` after `/` as `/`, resolving off-origin.
+  let next = '/portal'
+  if (rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.startsWith('/\\')) {
+    try {
+      if (new URL(rawNext, origin).origin === origin) next = rawNext
+    } catch {
+      /* keep default */
+    }
+  }
 
   if (code) {
     const response = NextResponse.redirect(new URL(next, origin))

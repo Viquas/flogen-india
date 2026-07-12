@@ -26,12 +26,15 @@ export async function POST(
         return Response.json({ error: 'Claim not found' }, { status: 404 })
     }
 
-    // Step 2: If already in a paid/post-paid state, return immediately
+    // Step 2: If already in a paid/post-paid state, return immediately.
+    // Do NOT include client_email — this endpoint takes only a (guessable-in-
+    // principle) claimId with no ownership proof, and the email is the value
+    // account creation trusts. The confirmation page supplies the email to the
+    // legitimate customer from its own server-side, claimId-scoped query.
     if (claim.status === 'paid' || claim.status === 'customizing' || claim.status === 'completed') {
         return Response.json({
             verified: true,
             status: claim.status,
-            email: claim.client_email,
         })
     }
 

@@ -106,6 +106,7 @@ export async function approveProject(projectId: string) {
 }
 
 export async function deployProjects(projectIds: string[]) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     const { error } = await supabase
@@ -130,6 +131,7 @@ export async function deployProjects(projectIds: string[]) {
  * Uses updateProjectWithCode which snapshots the previous version as a revision.
  */
 export async function saveEditModeChanges(projectId: string, newCode: string) {
+    await requireAdmin()
     const { updateProjectWithCode } = await import('@/lib/ai/generator')
     const result = await updateProjectWithCode(projectId, newCode)
 

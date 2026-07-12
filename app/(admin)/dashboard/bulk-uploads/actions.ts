@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createLogger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 const log = createLogger('bulk-upload')
 
@@ -83,6 +84,7 @@ export async function getBulkUploadLeads(
 }
 
 export async function deleteBulkUploadBatch(batchId: string) {
+  await requireAdmin()
   try {
     const supabase = createAdminClient()
 

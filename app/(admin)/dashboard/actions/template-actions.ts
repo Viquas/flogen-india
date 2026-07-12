@@ -25,6 +25,7 @@ export async function saveTemplate(payload: {
     sourceProjectId?: string
     changeNotes?: string
 }) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // If an id is provided, create a new version instead of a plain insert
@@ -83,6 +84,7 @@ export async function saveCleanedTemplate(payload: {
     businessData?: Json | null
     sourceProjectId?: string
 }) {
+    await requireAdmin()
     try {
         const cleanedCode = await cleanTemplateCode(payload.generatedCode, payload.industryTag)
         return await saveTemplate({

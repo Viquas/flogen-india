@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function getConfiguration(key: string) {
     const supabase = createAdminClient()
@@ -25,6 +26,7 @@ export async function getConfiguration(key: string) {
 }
 
 export async function saveConfiguration(key: string, value: string) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     const { error } = await supabase

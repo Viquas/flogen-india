@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function getBatches() {
     const supabase = createAdminClient()
@@ -20,6 +21,7 @@ export async function getBatches() {
 }
 
 export async function updateBatchAssignee(batchId: string, assignee: string | null) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     const { error } = await supabase

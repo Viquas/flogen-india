@@ -147,6 +147,7 @@ export async function POST(request: Request) {
 
         // Validate and upload files
         const fileUrls: string[] = []
+        const filePaths: string[] = []
 
         for (const file of files) {
             if (file.size > MAX_FILE_SIZE) {
@@ -191,12 +192,15 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: 'File upload failed' }, { status: 500 })
             }
 
-            // Get public URL
-            const { data: urlData } = admin.storage
+            // claim-uploads is a PRIVATE bucket — getPublicUrl yields a URL that
+            // 403s when fetched. Mint a signed URL (30d, covers the admin review
+            // window) and keep the raw path so it can be re-signed later.
+            const { data: signed } = await admin.storage
                 .from('claim-uploads')
-                .getPublicUrl(storagePath)
+                .createSignedUrl(storagePath, 60 * 60 * 24 * 30)
 
-            fileUrls.push(urlData.publicUrl)
+            if (signed?.signedUrl) fileUrls.push(signed.signedUrl)
+            filePaths.push(storagePath)
         }
 
         // Insert into client_requests
@@ -211,6 +215,7 @@ export async function POST(request: Request) {
                 content: {
                     description: description.trim(),
                     file_urls: fileUrls,
+                    file_paths: filePaths,
                     ...parsedMetadata,
                 },
             })

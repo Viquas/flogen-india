@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { createVersion, softDelete, getVersionHistory, restoreVersion, type VersionConfig } from '@/lib/versioning'
 import { createLogger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 const log = createLogger('dls-actions')
 
@@ -72,6 +73,7 @@ export async function createDesignLanguage(params: {
     stitch_project_id?: string
     is_default?: boolean
 }) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // If setting as default, unset any existing default for this industry
@@ -112,6 +114,7 @@ export async function updateDesignLanguage(id: string, params: {
     is_default?: boolean
     changeNotes?: string
 }) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // If setting as default, need to unset existing default for this industry
@@ -155,6 +158,7 @@ export async function updateDesignLanguage(id: string, params: {
 }
 
 export async function deleteDesignLanguage(id: string) {
+    await requireAdmin()
     const result = await softDelete(DLS_VERSION_CONFIG, id)
 
     if (!result.success) {
@@ -167,6 +171,7 @@ export async function deleteDesignLanguage(id: string) {
 }
 
 export async function toggleDefault(id: string, industryTag: string, isDefault: boolean) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     if (isDefault) {
@@ -235,6 +240,7 @@ export async function getDLSVersionHistory(dlsId: string) {
  * Restore a specific DLS version by making it the active one.
  */
 export async function restoreDLSVersion(versionId: string) {
+    await requireAdmin()
     const result = await restoreVersion(DLS_VERSION_CONFIG, versionId)
 
     if (!result.success) {

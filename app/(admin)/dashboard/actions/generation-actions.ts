@@ -10,6 +10,7 @@ import { requireAdmin } from '@/lib/auth/require-admin'
  * Moves them to 'error' so they can be retried via Fix All Errors or manual regeneration.
  */
 export async function resetStuckProjects(minutesThreshold = 10) {
+    await requireAdmin()
     const supabase = createAdminClient()
     const cutoff = new Date(Date.now() - minutesThreshold * 60 * 1000).toISOString()
 
@@ -61,6 +62,7 @@ export async function regenerateProject(projectId: string) {
 
 // FR-07: Batch Actions
 export async function regenerateProjects(projectIds: string[]) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // Clear any previous pending/processing queue_jobs so addBatch doesn't dedup
