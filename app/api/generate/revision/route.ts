@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { reviseWebsiteWithPatches, reviseWebsite } from '@/lib/ai/generator'
 import { withApiMiddleware, apiSuccess } from '@/lib/middleware/api'
-import { BadRequestError } from '@/lib/middleware/errors'
+import { BadRequestError, UnauthorizedError } from '@/lib/middleware/errors'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export const POST = withApiMiddleware(
     async (req, { body }) => {
+        try {
+            await requireAdmin()
+        } catch {
+            throw new UnauthorizedError()
+        }
+
         const { prompt, currentCode, currentJson, rules, model, projectId, imageUrls } = body as any
 
         if (!prompt) {

@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/require-admin'
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { isSuppressed } from '@/lib/outreach/suppression'
+import { unsubscribeToken } from '@/lib/outreach/unsubscribe-token'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +16,15 @@ export async function POST(request: NextRequest) {
 
   if (!projectId || !recipientEmail || !previewUrl) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
+  // Compliance gate: the global suppression list applies to every send path,
+  // including admin previews.
+  if (await isSuppressed(recipientEmail, 'email')) {
+    return NextResponse.json(
+      { error: 'This contact has unsubscribed and cannot be emailed.' },
+      { status: 400 }
+    )
   }
 
   // Fetch project data for the email
@@ -68,7 +79,8 @@ export async function POST(request: NextRequest) {
           </p>
           <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 32px 0;" />
           <p style="font-size: 12px; color: #9a9a9a;">
-            Sent by Flogen — AI Website Generator by Esso Digital
+            Sent by Flogen — AI Website Generator by Esso Digital<br />
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/unsubscribe?c=${encodeURIComponent(recipientEmail)}&ch=email&t=${unsubscribeToken(recipientEmail)}" style="color: #9a9a9a;">Unsubscribe</a>
           </p>
         </div>
       `,

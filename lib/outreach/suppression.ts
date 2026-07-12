@@ -47,8 +47,14 @@ export async function addSuppression(params: {
     reason: SuppressionReason
     source?: string
 }): Promise<void> {
-    const chForNorm = params.channel === 'whatsapp' ? 'whatsapp' : 'email'
-    const norm = params.channel === 'any' ? params.contact.trim().toLowerCase() : normalizeContact(params.contact, chForNorm)
+    // 'any' must normalize the same way isSuppressed() will later normalize the
+    // lookup (email vs phone), or the exact-match .eq() never finds the row —
+    // e.g. "+61 412 345 678" stored with spaces would never block "+61412345678".
+    const chForNorm: 'email' | 'whatsapp' =
+        params.channel === 'any'
+            ? (params.contact.includes('@') ? 'email' : 'whatsapp')
+            : params.channel
+    const norm = normalizeContact(params.contact, chForNorm)
     try {
         const admin = createAdminClient() as any
         // Upsert on (contact, channel) so repeated STOP/unsubscribe is idempotent.

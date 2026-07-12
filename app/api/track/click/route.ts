@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notifyProjectRep } from '@/lib/sales/notifications'
+import { getBaseUrl } from '@/lib/outreach/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,12 +10,21 @@ export async function GET(req: Request) {
     const messageId = url.searchParams.get('m')
     const target = url.searchParams.get('u')
 
-    // Only redirect to absolute http(s) URLs — never open redirect to arbitrary schemes.
+    // Only redirect within our own app. CTA links are always built from
+    // app-relative paths (outreach-composer absolute()), so an off-host target
+    // is never legitimate — allowing it would make this an open redirect that
+    // launders phishing links through our sending domain's reputation.
     let safeTarget = '/'
-    if (target) {
+    if (target && target.startsWith('/') && !target.startsWith('//')) {
+        // App-relative path — always safe, resolves against our own origin.
+        safeTarget = target
+    } else if (target) {
         try {
             const parsed = new URL(target)
-            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') safeTarget = parsed.toString()
+            const ownHosts = new Set([url.host, new URL(getBaseUrl()).host])
+            if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && ownHosts.has(parsed.host)) {
+                safeTarget = parsed.toString()
+            }
         } catch {
             /* fall back to '/' */
         }

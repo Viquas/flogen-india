@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateWebsiteCode } from '@/lib/ai/generator'
 import { BusinessDataSchema } from '@/lib/schemas/project'
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function POST(req: NextRequest) {
+    try {
+        await requireAdmin()
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
     try {
         const body = await req.json()
         const { rules, markdownContext, mode, model, ...otherData } = body

@@ -531,13 +531,19 @@ if (typeof process !== 'undefined') {
         try {
             const supabase = createAdminClient()
 
-            // Reset processing jobs older than 2 min (orphaned from previous server process)
-            const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+            // Reset orphaned processing jobs. 15-min threshold (not 2): on Vercel a
+            // cold-starting instance runs this while another warm instance may still
+            // be legitimately generating (up to maxDuration 800s) — a short window
+            // reclaims live jobs and double-processes them. Claude-claimed jobs are
+            // excluded: the local worker is a separate process that survives server
+            // restarts; the cron safety valve owns reclaiming those.
+            const staleThreshold = new Date(Date.now() - 15 * 60 * 1000).toISOString()
             const { data: staleJobs } = await supabase
                 .from('queue_jobs')
-                .update({ status: 'pending', updated_at: new Date().toISOString() })
+                .update({ status: 'pending', updated_at: new Date().toISOString(), claimed_by: null, claimed_at: null })
                 .eq('status', 'processing')
                 .lt('started_at', staleThreshold)
+                .or('claimed_by.is.null,claimed_by.eq.cron')
                 .select('id')
 
             if (staleJobs && staleJobs.length > 0) {

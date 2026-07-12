@@ -44,7 +44,10 @@ export async function GET(request: NextRequest) {
         // Jobs claimed by the local Claude worker get a longer 15-min window (CLAUDE_STUCK_MS)
         // before the safety valve reclaims them — Claude generation can legitimately run longer.
         const supabase = createAdminClient()
-        const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        // Stale threshold must exceed the longest legitimate run (maxDuration is
+        // 800s), or an overlapping cron invocation reclaims a job that is still
+        // generating and two concurrent runs stomp each other's output.
+        const staleThreshold = new Date(Date.now() - CLAUDE_STUCK_MS).toISOString()
         const claudeStaleThreshold = new Date(Date.now() - CLAUDE_STUCK_MS).toISOString()
 
         const { data: stuckNonClaudeJobs } = await supabase

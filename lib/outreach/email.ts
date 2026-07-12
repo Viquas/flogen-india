@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
+import { unsubscribeToken } from '@/lib/outreach/unsubscribe-token'
 
 /**
  * Tracked, compliant outbound email for sales outreach.
@@ -49,16 +50,22 @@ function buildEmailHtml(params: {
     const base = getBaseUrl()
     const sender = senderIdentity()
     const openPixel = `${base}/api/track/open?m=${params.messageId}`
-    const unsubUrl = `${base}/unsubscribe?c=${encodeURIComponent(params.to)}&ch=email`
+    const unsubUrl = `${base}/unsubscribe?c=${encodeURIComponent(params.to)}&ch=email&t=${unsubscribeToken(params.to)}`
 
     const paragraphs = params.bodyText
         .split(/\n{2,}/)
         .map((p) => `<p style="margin:0 0 16px;line-height:1.6;color:#1a1614;">${escapeHtml(p).replace(/\n/g, '<br/>')}</p>`)
         .join('')
 
+    // Absolutize relative CTA paths with the same base as the tracking link so
+    // the click route's same-host allowlist always matches.
+    const ctaAbsolute = params.ctaUrl?.startsWith('/')
+        ? `${base}${params.ctaUrl}`
+        : params.ctaUrl
+
     const ctaBlock =
-        params.ctaUrl
-            ? `<p style="margin:24px 0;"><a href="${base}/api/track/click?m=${params.messageId}&u=${encodeURIComponent(params.ctaUrl)}" style="background:#059669;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">${escapeHtml(params.ctaLabel || 'Take a look')}</a></p>`
+        ctaAbsolute
+            ? `<p style="margin:24px 0;"><a href="${base}/api/track/click?m=${params.messageId}&u=${encodeURIComponent(ctaAbsolute)}" style="background:#059669;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">${escapeHtml(params.ctaLabel || 'Take a look')}</a></p>`
             : ''
 
     const footerBits = [

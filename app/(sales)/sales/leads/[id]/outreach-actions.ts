@@ -13,7 +13,9 @@ const emailSchema = z.object({
     to: z.string().email(),
     subject: z.string().trim().min(1).max(200),
     bodyText: z.string().trim().min(1).max(8000),
-    ctaUrl: z.string().url().optional(),
+    // Absolute URL or app-relative path (relative is preferred: the email lib
+    // absolutizes it with getBaseUrl() so tracked redirects stay on-host)
+    ctaUrl: z.union([z.string().url(), z.string().regex(/^\/(?!\/)/)]).optional(),
     ctaLabel: z.string().trim().max(60).optional(),
 })
 
@@ -28,6 +30,30 @@ export async function sendLeadEmail(
     // Compliance gate: never send to a suppressed address.
     if (await isSuppressed(to, 'email')) {
         return { ok: false, error: 'This contact has unsubscribed and cannot be emailed.' }
+    }
+
+    // Sequence rails (cold-outreach policy): max 3 emails per lead, spaced
+    // at least 3 days apart.
+    const admin = createAdminClient() as any
+    const { data: priorEmails } = await admin
+        .from('outreach_messages')
+        .select('created_at')
+        .eq('project_id', projectId)
+        .eq('channel', 'email')
+        .eq('direction', 'out')
+        .order('created_at', { ascending: false })
+
+    const sentCount = priorEmails?.length ?? 0
+    if (sentCount >= 3) {
+        return { ok: false, error: 'Sequence limit reached — this lead has already received 3 emails.' }
+    }
+    if (sentCount > 0) {
+        const lastSent = new Date(priorEmails[0].created_at).getTime()
+        const threeDaysMs = 3 * 24 * 60 * 60 * 1000
+        if (Date.now() - lastSent < threeDaysMs) {
+            const daysLeft = Math.ceil((lastSent + threeDaysMs - Date.now()) / (24 * 60 * 60 * 1000))
+            return { ok: false, error: `Too soon — follow-ups must be spaced 3+ days apart (try again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}).` }
+        }
     }
 
     const res = await sendTrackedEmail({ projectId, repId: userId, to, subject, bodyText, ctaUrl, ctaLabel })

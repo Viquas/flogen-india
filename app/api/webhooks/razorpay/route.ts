@@ -116,6 +116,21 @@ async function handleAgentPayment(
     // Determine request type based on payment type
     const requestType = paymentType === 'domain_setup' ? 'domain_setup' : 'agent_call'
 
+    // Razorpay delivers webhooks at-least-once and this path never writes
+    // webhook_event_id (the claims-based dedup), so dedupe on the payment id
+    // to avoid queueing duplicate requests for a single charge.
+    const { data: existingRequest } = await supabase
+        .from('client_requests')
+        .select('id')
+        .eq('claim_id', claimId)
+        .eq('content->>payment_id', payment.id)
+        .maybeSingle()
+
+    if (existingRequest) {
+        console.log('[Webhook] Agent payment already processed:', payment.id)
+        return
+    }
+
     await supabase
         .from('client_requests')
         .insert({
@@ -168,8 +183,12 @@ async function handlePaymentCaptured(
         throw new Error('No claim found for order: ' + payment.order_id)
     }
 
-    // Status guard: only transition from order_created -> paid
-    if (claim.status !== 'order_created') {
+    // Status guard: allow order_created -> paid, and also cancelled -> paid.
+    // Razorpay Checkout lets a customer retry a declined attempt on the SAME
+    // order_id: payment.failed fires first (claim -> cancelled), then a
+    // successful retry fires payment.captured — that capture must still win,
+    // or the customer is charged while the claim stays cancelled forever.
+    if (claim.status !== 'order_created' && claim.status !== 'cancelled') {
         console.log('[Webhook] Claim already processed, status:', claim.status)
         return
     }

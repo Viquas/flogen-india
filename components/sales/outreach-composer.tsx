@@ -122,7 +122,11 @@ function EmailTab({
                 to,
                 subject,
                 bodyText: body,
-                ctaUrl: deliverablePath ? absolute(deliverablePath) : undefined,
+                // Pass the app-relative path — the server absolutizes it with
+                // getBaseUrl() so the CTA host always matches the click-tracking
+                // allowlist (window.location.origin here may be a preview deploy
+                // or alternate domain, which would break the tracked redirect).
+                ctaUrl: deliverablePath || undefined,
                 ctaLabel: pool === 'automation' ? 'See the plan' : 'View your website',
             })
             setResult(res)

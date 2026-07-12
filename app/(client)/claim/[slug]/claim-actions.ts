@@ -79,14 +79,33 @@ export async function createRazorpayOrder(input: {
     try {
         const supabase = createAdminClient()
 
-        // Idempotency check: reuse existing pending/order_created claim for same project
+        // Guard: never create a new order for a project that already has a
+        // successful claim — a paid customer revisiting the claim page must
+        // not be able to pay twice.
+        const { data: paidClaim } = await supabase
+            .from('claims')
+            .select('id, status')
+            .eq('project_id', projectId)
+            .in('status', ['paid', 'customizing', 'completed'])
+            .limit(1)
+            .maybeSingle()
+
+        if (paidClaim) {
+            return { success: false, error: 'This website has already been claimed and paid for.' }
+        }
+
+        // Idempotency check: reuse existing pending/order_created claim for same
+        // project. maybeSingle + newest-first: .single() errors when concurrent
+        // visitors created duplicate pending rows, which made every later call
+        // fall through to creating yet another claim.
         const { data: existingClaim } = await supabase
             .from('claims')
             .select('id, razorpay_order_id, status')
             .eq('project_id', projectId)
             .in('status', ['pending', 'order_created'])
+            .order('created_at', { ascending: false })
             .limit(1)
-            .single()
+            .maybeSingle()
 
         if (existingClaim?.razorpay_order_id) {
             // Already has a Razorpay order -- return it to avoid double-charge

@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
@@ -101,9 +102,16 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         // Paid but not completed — stay on main claim page (no redirect to /customize)
     }
 
-    // Build preview HTML for the hero iframe
+    // Build preview HTML for the hero iframe. Same constraint as /preview: the
+    // hero iframe is sandboxed without allow-same-origin, so its origin is
+    // "null" and a relative /preview-runtime.js resolves to "null/..." — the
+    // runtime never loads and the hero renders blank. Inject an absolute URL.
+    const h = await headers()
+    const host = h.get('host') || ''
+    const proto = h.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
+    const runtimeUrl = host ? `${proto}://${host}/preview-runtime.js` : '/preview-runtime.js'
     const previewHtml = project.generated_code
-        ? constructHtmlBoilerplate(project.generated_code)
+        ? constructHtmlBoilerplate(project.generated_code, { runtimeUrl })
         : null
 
     // Check if claim has expired

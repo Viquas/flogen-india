@@ -32,7 +32,16 @@ export async function generateScreenshot(
         const page = await browser.newPage()
         await page.setViewport({ width: 1280, height: 800 })
 
-        const html = constructHtmlBoilerplate(generatedCode)
+        // A page loaded via setContent has an opaque origin (like a srcdoc
+        // iframe), so a relative /preview-runtime.js resolves to "null/..."
+        // and never loads — the screenshot would capture an empty #root.
+        // Inject an absolute runtime URL from the deploy origin instead.
+        const base = (
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+        ).replace(/\/$/, '')
+        const html = constructHtmlBoilerplate(generatedCode, { runtimeUrl: `${base}/preview-runtime.js` })
         await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 })
         const buffer = await page.screenshot({ type: 'webp', quality: 80 })
 

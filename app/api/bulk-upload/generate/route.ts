@@ -3,10 +3,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { enrichBusinessData } from '@/lib/ai/enricher'
 import { generationQueue } from '@/lib/queue'
 import { createLogger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 const log = createLogger('bulk-upload')
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  }
   try {
     const { leadIds } = (await req.json()) as { leadIds: string[] }
 

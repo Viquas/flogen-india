@@ -123,7 +123,25 @@ export async function paginatedSearch(cfg: PaginatedSearchConfig): Promise<void>
   let apiExhausted = false
 
   while (counters.validPlaces.length < maxResults && !apiExhausted && counters.pagesFetched < maxApiPages) {
-    const page = await fetchOnePage(apiKey, searchQuery, pageToken || undefined, locationBias)
+    // Bounded retry with exponential backoff (scraping rule: max 3 attempts).
+    // Without it a single transient 429/5xx mid-run throws away every page
+    // already fetched and the whole discovery re-runs from page 1.
+    let page: Awaited<ReturnType<typeof fetchOnePage>> | null = null
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        page = await fetchOnePage(apiKey, searchQuery, pageToken || undefined, locationBias)
+        break
+      } catch (err) {
+        if (attempt === 3) throw err
+        const backoffMs = 2000 * 2 ** (attempt - 1)
+        logger.discovery.info('Places page fetch failed, retrying', {
+          label, attempt, backoffMs,
+          error: err instanceof Error ? err.message : String(err),
+        })
+        await new Promise(r => setTimeout(r, backoffMs))
+      }
+    }
+    if (!page) break
     counters.pagesFetched++
     const pagePlaces = page.places
     counters.totalFetched += pagePlaces.length

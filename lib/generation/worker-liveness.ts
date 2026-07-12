@@ -53,6 +53,11 @@ export async function claimJobForClaude(supabase: SupabaseClient, jobId: string)
         .update({
             claimed_by: 'claude',
             claimed_at: new Date().toISOString(),
+            // started_at must be set here: the cron safety valve reclaims stuck
+            // claude jobs via `started_at < threshold`, and NULL < x is never
+            // true in Postgres — without this, a dead worker's job is stuck
+            // 'processing' forever.
+            started_at: new Date().toISOString(),
             status: 'processing',
         })
         .eq('id', jobId)
