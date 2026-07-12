@@ -225,8 +225,14 @@ function EditorContent() {
 
         const supabase = createClient();
 
+        // Guard the fire-and-forget status check: when switching projects
+        // quickly, a slow resolution for the previous project must not flip
+        // the current project into a false "Generating…" state.
+        let cancelled = false;
+
         // Check initial status (fire-and-forget, doesn't block subscription)
         supabase.from('projects').select('status, generation_phase, generated_code').eq('id', activeProjectId).single().then(({ data }) => {
+            if (cancelled) return;
             if (data?.status === 'generating' || data?.status === 'queued') {
                 setIsStreaming(true);
                 if (data.generation_phase) {
@@ -262,6 +268,7 @@ function EditorContent() {
             .subscribe();
 
         return () => {
+            cancelled = true;
             supabase.removeChannel(channel);
         };
     }, [activeProjectId]);
