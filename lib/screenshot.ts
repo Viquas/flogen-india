@@ -18,6 +18,76 @@ import { logger } from '@/lib/logger'
 const CHROMIUM_URL = process.env.CHROMIUM_REMOTE_URL
     || 'https://github.com/nicehash/chromium-bin/releases/download/v133.0.0/chromium-v133.0-pack.tar'
 
+/**
+ * Screenshot an EXTERNAL live site (the prospect's real website) for "before/after"
+ * proof in outreach decks. Fail-soft: returns null on any error (bad URL, timeout,
+ * bot-block) — a missing before-shot must never break the pitch, and we never want a
+ * broken/blocked capture masquerading as the prospect's site.
+ */
+export async function captureExternalScreenshot(
+    url: string,
+    opts: { width?: number; height?: number } = {},
+): Promise<Buffer | null> {
+    const target = url.trim()
+    if (!/^https?:\/\//i.test(target)) return null
+
+    let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined
+    try {
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            executablePath: await chromium.executablePath(CHROMIUM_URL),
+            headless: true,
+        })
+        const page = await browser.newPage()
+        await page.setViewport({ width: opts.width ?? 1280, height: opts.height ?? 800 })
+        await page.setUserAgent(
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        )
+        const response = await page.goto(target, { waitUntil: 'networkidle2', timeout: 15000 })
+        // Don't capture an error/blocked page as if it were the real site.
+        if (response && response.status() >= 400) return null
+        const buffer = await page.screenshot({ type: 'webp', quality: 80 })
+        return Buffer.from(buffer)
+    } catch (err) {
+        logger.screenshot.error('External screenshot failed', {
+            url: target,
+            error: err instanceof Error ? err.message : String(err),
+        })
+        return null
+    } finally {
+        if (browser) await browser.close()
+    }
+}
+
+/**
+ * Capture the prospect's real site and store it as projects.audit_screenshot_url,
+ * for a "before/after" slide in the pitch deck. Fire-and-forget; fail-soft.
+ */
+export async function captureAuditScreenshot(
+    projectId: string,
+    siteUrl: string,
+): Promise<string | null> {
+    const buffer = await captureExternalScreenshot(siteUrl)
+    if (!buffer) return null
+
+    const supabase = createAdminClient()
+    const path = `${projectId}/before.webp`
+    const { error: uploadError } = await supabase.storage
+        .from('site-screenshots')
+        .upload(path, buffer, { contentType: 'image/webp', upsert: true })
+    if (uploadError) {
+        logger.screenshot.error('Before-screenshot upload failed', { projectId, error: uploadError.message })
+        return null
+    }
+
+    const { data } = supabase.storage.from('site-screenshots').getPublicUrl(path)
+    // Cast: audit_screenshot_url (migration 20260716000003) not yet in generated types.
+    await supabase.from('projects')
+        .update({ audit_screenshot_url: data.publicUrl } as never)
+        .eq('id', projectId)
+    return data.publicUrl
+}
+
 export async function generateScreenshot(
     projectId: string,
     generatedCode: string
@@ -61,9 +131,48 @@ export async function generateScreenshot(
 
         const { data } = supabase.storage.from('site-screenshots').getPublicUrl(path)
 
-        // Update project record with screenshot URL
+        // Mobile QA: re-render at 375px, capture a mobile preview, and flag horizontal
+        // overflow (a layout broken at phone width). CLAUDE.md requires every generated
+        // site to look good at 375px; this makes that checkable. Fail-soft — a mobile
+        // capture failure must not lose the desktop screenshot we already have.
+        let mobileUrl: string | null = null
+        let mobileOverflow: boolean | null = null
+        try {
+            await page.setViewport({ width: 375, height: 812 })
+            // Let the layout reflow to the narrow viewport before measuring/capturing.
+            await new Promise((r) => setTimeout(r, 300))
+            mobileOverflow = await page.evaluate(() => {
+                const el = document.documentElement
+                // +1px tolerance for sub-pixel rounding.
+                return el.scrollWidth > el.clientWidth + 1
+            })
+            const mobileBuffer = await page.screenshot({ type: 'webp', quality: 80 })
+            const mobilePath = `${projectId}/preview-mobile.webp`
+            const { error: mobileErr } = await supabase.storage
+                .from('site-screenshots')
+                .upload(mobilePath, mobileBuffer, { contentType: 'image/webp', upsert: true })
+            if (!mobileErr) {
+                mobileUrl = supabase.storage.from('site-screenshots').getPublicUrl(mobilePath).data.publicUrl
+            }
+            if (mobileOverflow) {
+                logger.screenshot.warn('Generated site overflows at 375px', { projectId })
+            }
+        } catch (mobileErr) {
+            logger.screenshot.error('Mobile QA capture failed', {
+                projectId,
+                error: mobileErr instanceof Error ? mobileErr.message : String(mobileErr),
+            })
+        }
+
+        // Update project record with desktop + mobile screenshots and the overflow flag.
+        // Cast: screenshot_url_mobile / mobile_overflow (migration 20260716000004) are
+        // not yet in the generated Supabase types.
         await supabase.from('projects')
-            .update({ screenshot_url: data.publicUrl })
+            .update({
+                screenshot_url: data.publicUrl,
+                screenshot_url_mobile: mobileUrl,
+                mobile_overflow: mobileOverflow,
+            } as never)
             .eq('id', projectId)
 
         return data.publicUrl

@@ -29,7 +29,7 @@ interface PresentationPageProps {
     params: Promise<{ slug: string }>
 }
 
-const COLUMNS = 'id, slug, business_data, industry, pitch_angle, pool, automation_plan, plan_status'
+const COLUMNS = 'id, slug, business_data, industry, pitch_angle, pool, automation_plan, plan_status, screenshot_url, audit_screenshot_url'
 
 // Cached lookup — dedupes between generateMetadata and the page render.
 // Cast to any: automation_plan/pool are new columns not yet in the generated
@@ -154,14 +154,58 @@ function nextStepSlide(business: DeckBusiness, slug: string): Slide {
     }
 }
 
+/** Before/after proof — the prospect's real site next to the generated demo. */
+function beforeAfterSlide(beforeUrl: string, afterUrl: string, business: DeckBusiness): Slide {
+    return {
+        body: (
+            <div className="s">
+                <div className="kicker">Before &amp; after</div>
+                <h2 className="display title">Here&rsquo;s {business.name} today — and reimagined.</h2>
+                <div className="cols" style={{ gap: '3cqw', alignItems: 'start' }}>
+                    <figure style={{ margin: 0 }}>
+                        <img
+                            src={beforeUrl}
+                            alt={`${business.name}'s current website`}
+                            style={{ width: '100%', borderRadius: '0.5rem', border: '1px solid var(--muted)' }}
+                        />
+                        <figcaption className="body" style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>
+                            Your site now
+                        </figcaption>
+                    </figure>
+                    <figure style={{ margin: 0 }}>
+                        <img
+                            src={afterUrl}
+                            alt={`A redesigned site for ${business.name}`}
+                            style={{ width: '100%', borderRadius: '0.5rem', border: '1px solid var(--muted)' }}
+                        />
+                        <figcaption className="body" style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>
+                            What we&rsquo;d build
+                        </figcaption>
+                    </figure>
+                </div>
+            </div>
+        ),
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /* Full deck: validated automation_plan present (~10 slides)           */
 /* ------------------------------------------------------------------ */
 
-function planSlides(plan: AutomationPlan, business: DeckBusiness, slug: string): Slide[] {
+function planSlides(
+    plan: AutomationPlan,
+    business: DeckBusiness,
+    slug: string,
+    media?: { beforeUrl?: string | null; afterUrl?: string | null },
+): Slide[] {
     const slides: Slide[] = []
 
     slides.push(coverSlide(business, 'Automation Growth Plan'))
+
+    // Before/after proof — only when we have BOTH the prospect's real site and a demo.
+    if (media?.beforeUrl && media?.afterUrl) {
+        slides.push(beforeAfterSlide(media.beforeUrl, media.afterUrl, business))
+    }
 
     // We studied your business
     slides.push({
@@ -422,7 +466,10 @@ export default async function AutomationPresentationPage({ params }: Presentatio
     // The public URL uses the slug when present; the route also resolves by id.
     const urlSlug = project.slug || project.id
     const slides = plan
-        ? planSlides(plan, business, urlSlug)
+        ? planSlides(plan, business, urlSlug, {
+              beforeUrl: project.audit_screenshot_url,
+              afterUrl: project.screenshot_url,
+          })
         : fallbackSlides(project, business, urlSlug)
 
     return (

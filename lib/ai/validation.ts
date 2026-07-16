@@ -1,6 +1,7 @@
 import { reviseWebsite } from './revision'
 import { classifyError, getFixPromptForError, ErrorType } from './error-classifier'
 import { GEMINI_FLASH } from './model-ids'
+import { detectPlaceholderContent } from './fabrication'
 
 /**
  * Server-side validation of generated React code.
@@ -49,6 +50,14 @@ export async function validateGeneratedCode(code: string): Promise<string | null
         if (pattern.test(processed)) {
             return `Runtime error pattern: ${message}`
         }
+    }
+
+    // 3b. Placeholder / fabricated content — a fake 555 phone, @example.com email,
+    // or "John Doe" testimonial destroys credibility. Flag so the auto-fix loop
+    // regenerates without it (CLAUDE.md: "No placeholder content").
+    const placeholder = detectPlaceholderContent(processed)
+    if (placeholder) {
+        return `Placeholder/fabricated content: ${placeholder}`
     }
 
     // 4. Check for hooks called inside conditions/loops/callbacks

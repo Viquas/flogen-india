@@ -45,7 +45,13 @@ ${JSON.stringify(businessData, null, 2)}
 ${industry || 'unknown'}${fit ? ` — known automation fit: ${fit.pitchTemplate} (niche weight ${fit.weight})` : ''}${nicheScore != null ? `, automation fit score ${nicheScore}/100` : ''}
 
 ## What our website audit observed
-${auditSignals ? JSON.stringify(auditSignals, null, 2) : 'No audit data — the business may not have a website.'}
+${
+        !auditSignals
+            ? 'No audit data — the business may not have a website.'
+            : auditSignals.reachable === false
+              ? 'We could not load their website (it was unreachable, blocked our request, or timed out). Treat all site-technical signals as UNKNOWN — do NOT claim faults like "no SSL" or "not mobile-friendly". Base the plan on their industry, hours, and review profile instead.'
+              : JSON.stringify(auditSignals, null, 2)
+    }
 
 ## Our salesperson's angle
 ${pitchAngle || 'none recorded'}
@@ -152,6 +158,19 @@ export async function generateAutomationPlan(projectId: string): Promise<PlanGen
             .eq('id', projectId)
 
         await notifyProjectRep(projectId, 'deliverable_ready', { deliverable: 'automation_plan' })
+
+        // Fire-and-forget: capture a "before" screenshot of the prospect's real
+        // site for the before/after deck slide. Dynamic import keeps Puppeteer out
+        // of this module's eager dependency graph (matches the generate routes).
+        const bd = (project.business_data as Record<string, unknown>) || {}
+        const website =
+            (bd.website as string | undefined) ||
+            ((bd.contactInfo as Record<string, unknown> | undefined)?.website as string | undefined)
+        if (website) {
+            import('@/lib/screenshot')
+                .then(({ captureAuditScreenshot }) => captureAuditScreenshot(projectId, website))
+                .catch(() => {})
+        }
 
         logger.queue.info('Automation plan generated', { projectId })
         return { success: true }
