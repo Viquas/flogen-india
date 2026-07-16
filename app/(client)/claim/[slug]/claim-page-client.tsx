@@ -50,7 +50,7 @@ export default function ClaimPageClient({
         setPaymentError(null)
     }
 
-    const handleProceedToPayment = async (_addMaintenance?: boolean) => {
+    const handleProceedToPayment = async (addMaintenance?: boolean) => {
         if (!selectedPlan || isProcessing) return
         setIsProcessing(true)
         setPaymentError(null)
@@ -59,6 +59,7 @@ export default function ClaimPageClient({
             const result = await createRazorpayOrder({
                 projectId,
                 plan: selectedPlan,
+                addMaintenance: addMaintenance ?? false,
             })
 
             if (!result.success) {

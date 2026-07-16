@@ -54,8 +54,16 @@ export default function UpsellClient({
                 return
             }
 
+            // Mode-aware key, matching the main checkout. The legacy single
+            // NEXT_PUBLIC_RAZORPAY_KEY_ID doesn't exist in this project's env, so the
+            // upsell modal previously opened with key: undefined and silently failed.
+            const razorpayMode = process.env.NEXT_PUBLIC_RAZORPAY_MODE || 'test'
+            const razorpayKey = razorpayMode === 'test'
+                ? process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY_ID
+                : process.env.NEXT_PUBLIC_RAZORPAY_LIVE_KEY_ID
+
             const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                key: razorpayKey,
                 order_id: result.orderId,
                 name: 'Sumosite',
                 description: 'Strategy Call',

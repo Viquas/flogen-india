@@ -1,22 +1,14 @@
-const TESTIMONIALS = [
-    {
-        quote: 'We went from no online presence to a professional site in under a week. Clients started calling the same day.',
-        role: 'Business Owner',
-        company: 'Local Law Firm',
-    },
-    {
-        quote: 'The website looked like we spent thousands on it. Our competitors are still asking who built it.',
-        role: 'Founder',
-        company: 'Boutique Dental Clinic',
-    },
-    {
-        quote: 'Fast, clean, and exactly what we needed. The customization process was effortless — we just sent our logo and colors.',
-        role: 'Managing Director',
-        company: 'Construction Company',
-    },
-]
+import { CLIENT_TESTIMONIALS, type Testimonial } from '@/lib/testimonials'
 
-export function TestimonialsSection() {
+interface TestimonialsSectionProps {
+    /** Real client testimonials only. When empty, the section renders nothing. */
+    testimonials?: Testimonial[]
+}
+
+export function TestimonialsSection({ testimonials = CLIENT_TESTIMONIALS }: TestimonialsSectionProps) {
+    // Never fabricate social proof — omit the section until real quotes exist.
+    if (testimonials.length === 0) return null
+
     return (
         <section className="px-4 py-14">
             <div className="max-w-4xl mx-auto">
@@ -28,7 +20,7 @@ export function TestimonialsSection() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
-                    {TESTIMONIALS.map((t) => (
+                    {testimonials.map((t) => (
                         <div key={t.company} className="flex flex-col justify-between">
                             {/* Quote */}
                             <div>

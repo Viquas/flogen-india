@@ -6,14 +6,11 @@ import type { PlanType } from '@/lib/claim-pricing'
 import {
     DISPLAY_PRICING,
     HOSTING_PRICING,
+    MAINTENANCE_PRICING,
     CURRENCY_SYMBOL,
     getDisplayTotal,
 } from '@/lib/claim-pricing'
 
-const MAINTENANCE_PRICE: Record<PlanType, number> = {
-    standard: 99,
-    pro: 149,
-}
 const MAINTENANCE_BENEFITS = [
     { icon: Wrench, label: 'Monthly content & design updates' },
     { icon: Zap, label: 'Performance monitoring' },
@@ -85,7 +82,7 @@ export function ConfirmationStep({
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-white/60">Maintenance Pack</span>
                             <span className="text-white/80">
-                                {CURRENCY_SYMBOL}{MAINTENANCE_PRICE[plan]}/mo
+                                {CURRENCY_SYMBOL}{MAINTENANCE_PRICING[plan].display}/mo
                             </span>
                         </div>
                     )}
@@ -112,7 +109,7 @@ export function ConfirmationStep({
                                     Maintenance Pack
                                 </span>
                                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#AF92FF]/15 text-[#AF92FF]">
-                                    {CURRENCY_SYMBOL}{MAINTENANCE_PRICE[plan]}/mo
+                                    {CURRENCY_SYMBOL}{MAINTENANCE_PRICING[plan].display}/mo
                                 </span>
                             </div>
                             <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${

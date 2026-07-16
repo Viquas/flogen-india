@@ -13,6 +13,17 @@ export const HOSTING_PRICING = {
     pro: { amount: 2900, display: '29' },         // $29/mo
 } as const
 
+/**
+ * Optional Maintenance Pack — a recurring MONTHLY add-on selected at checkout.
+ * Billed separately from the one-time website charge, so it is persisted on the
+ * claim (maintenance_selected / maintenance_monthly_cents) but NOT added to the
+ * Razorpay order amount.
+ */
+export const MAINTENANCE_PRICING = {
+    standard: { amount: 9900, display: '99' },    // $99/mo
+    pro: { amount: 14900, display: '149' },       // $149/mo
+} as const
+
 export const CURRENCY_SYMBOL = '$'
 
 export const CLAIM_WINDOW_DAYS = 5

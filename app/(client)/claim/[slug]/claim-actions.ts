@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRazorpayClient } from '@/lib/razorpay'
-import { calculateTotalCents, UPSELL_PRICING, type PlanType } from '@/lib/claim-pricing'
+import { calculateTotalCents, MAINTENANCE_PRICING, UPSELL_PRICING, type PlanType } from '@/lib/claim-pricing'
 import { z } from 'zod'
 
 const expiredFormSchema = z.object({
@@ -58,11 +58,13 @@ export async function submitExpiredClaimRequest(formData: FormData) {
 const orderSchema = z.object({
     projectId: z.string().uuid(),
     plan: z.enum(['standard', 'pro']),
+    addMaintenance: z.boolean().optional().default(false),
 })
 
 export async function createRazorpayOrder(input: {
     projectId: string
     plan: PlanType
+    addMaintenance?: boolean
 }): Promise<
     | { success: true; orderId: string; claimId: string }
     | { success: false; error: string }
@@ -73,8 +75,11 @@ export async function createRazorpayOrder(input: {
         return { success: false, error: 'Invalid input. Please check your selections.' }
     }
 
-    const { projectId, plan } = parsed.data
+    const { projectId, plan, addMaintenance } = parsed.data
     const amountCents = calculateTotalCents(plan)
+    // Maintenance is a recurring monthly add-on billed separately — record the
+    // opt-in, but do NOT add it to the one-time Razorpay charge.
+    const maintenanceMonthlyCents = addMaintenance ? MAINTENANCE_PRICING[plan].amount : null
 
     try {
         const supabase = createAdminClient()
@@ -108,7 +113,19 @@ export async function createRazorpayOrder(input: {
             .maybeSingle()
 
         if (existingClaim?.razorpay_order_id) {
-            // Already has a Razorpay order -- return it to avoid double-charge
+            // Already has a Razorpay order -- return it to avoid double-charge.
+            // Still capture the latest maintenance choice: it's a separate recurring
+            // add-on and doesn't affect the one-time order amount, so re-toggling it
+            // before re-confirming must not be lost.
+            await supabase
+                .from('claims')
+                // Cast: maintenance_* columns (migration 20260716000001) are not yet in
+                // the generated Supabase types until the DB is migrated + types regenerated.
+                .update({
+                    maintenance_selected: addMaintenance,
+                    maintenance_monthly_cents: maintenanceMonthlyCents,
+                } as never)
+                .eq('id', existingClaim.id)
             return {
                 success: true,
                 orderId: existingClaim.razorpay_order_id,
@@ -124,24 +141,30 @@ export async function createRazorpayOrder(input: {
             // Update the existing pending claim with latest selections
             await supabase
                 .from('claims')
+                // Cast: maintenance_* columns not yet in generated types (see above).
                 .update({
                     plan,
                     currency: 'USD',
                     amount_paise: amountCents,
-                })
+                    maintenance_selected: addMaintenance,
+                    maintenance_monthly_cents: maintenanceMonthlyCents,
+                } as never)
                 .eq('id', claimId)
         } else {
             // Create new claim record
             const { data: newClaim, error: insertError } = await supabase
                 .from('claims')
+                // Cast: maintenance_* columns not yet in generated types (see above).
                 .insert({
                     project_id: projectId,
                     plan,
                     currency: 'USD',
                     amount_paise: amountCents,
+                    maintenance_selected: addMaintenance,
+                    maintenance_monthly_cents: maintenanceMonthlyCents,
                     status: 'pending',
                     expires_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-                })
+                } as never)
                 .select('id')
                 .single()
 
