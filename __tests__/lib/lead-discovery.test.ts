@@ -81,6 +81,7 @@ describe('discoverLeads pool=automation', () => {
       cfg.counters.totalFetched = 1
     })
     ;(auditWebsite as any).mockResolvedValue({
+      reachable: true,
       has_booking: false, has_chat: false, mobile_friendly: false, has_ssl: false,
       page_load_ms: null, review_count: 40, review_velocity_30d: 5,
     })

@@ -16,8 +16,9 @@ import {
   requireApiKey, buildFallbackQuery, paginatedSearch,
   type PlaceResult, type PaginatedSearchConfig,
 } from '@/lib/google-places'
-import { scoreLead, getNicheFit, DEFAULT_NICHE_SCORE_THRESHOLD, type AuditSignals } from '@/lib/lead-scoring'
+import { scoreLead, getNicheFit, resolveNicheCategory, DEFAULT_NICHE_SCORE_THRESHOLD, type AuditSignals } from '@/lib/lead-scoring'
 import { auditWebsite } from '@/lib/lead-audit'
+import { findExistingPlaceIds } from '@/lib/discovery-dedup'
 
 export interface LeadDiscoveryConfig {
   query: string
@@ -238,16 +239,24 @@ async function scoreAutomationCandidates(
   const scored: ScoredLead[] = []
   let anyAttempted = false
 
-  // Businesses in categories outside the niche fit table are not
-  // automation-fit prospects at all — skip them without attempting an
-  // audit or counting them toward the "everything scored too low" case.
-  if (!getNicheFit(industry)) {
+  // Fast path: if neither the typed industry nor the batch's Google-verified types
+  // could ever match the niche table, skip the whole batch without any audits.
+  const typedMatches = !!getNicheFit(industry)
+  const batchHasNicheType =
+    typedMatches ||
+    places.some((p) => resolveNicheCategory(industry, [p.primaryType || '', ...(p.types || [])]))
+  if (!batchHasNicheType) {
     return { scored, anyAttempted: false }
   }
 
   for (const place of places) {
     const websiteUrl = place.websiteUri
     if (!websiteUrl) continue
+
+    // Prefer the rep's typed industry, but fall back to Google's verified category
+    // so a mistyped/broad search term doesn't silently drop qualifying leads.
+    const category = resolveNicheCategory(industry, [place.primaryType || '', ...(place.types || [])])
+    if (!category) continue
 
     anyAttempted = true
     const signals = await auditWebsite(
@@ -256,7 +265,7 @@ async function scoreAutomationCandidates(
       0, // review_velocity_30d: Google Places search doesn't return review timestamps;
          // busy-signal scoring relies on review_count only until a richer data source is added
     )
-    const result = scoreLead(industry, signals)
+    const result = scoreLead(category, signals)
     if (!result || result.score < threshold) continue
 
     scored.push({ place, nicheScore: result.score, pitchAngle: result.pitchAngle, auditSignals: signals })
@@ -288,13 +297,10 @@ export async function discoverLeads(config: LeadDiscoveryConfig): Promise<LeadDi
   const seenPlaceIds = new Set<string>()
 
   const dedupFn = async (placeIds: string[]): Promise<Set<string>> => {
-    const excludeIds = new Set<string>()
-    const { data: existing } = await supabase
-      .from('lead_lists').select('place_id').in('place_id', placeIds)
-    if (existing) {
-      for (const lead of existing) { if (lead.place_id) excludeIds.add(lead.place_id) }
-    }
-    return excludeIds
+    // Cross-table dedup: skip businesses already saved as a lead OR already a
+    // project (admin-generated or previously promoted), so the same business is
+    // never double-discovered across the two pipelines.
+    return findExistingPlaceIds(supabase, placeIds)
   }
 
   const locationBias = config.circle

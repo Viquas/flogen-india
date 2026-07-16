@@ -19,6 +19,12 @@ export interface PlaceResult {
   websiteUri?: string
   photos?: Array<{ name: string; widthPx: number; heightPx: number }>
   location?: { latitude: number; longitude: number }
+  /** Google-verified primary category, e.g. "dental_clinic". More reliable than the typed query. */
+  primaryType?: string
+  /** All Google category tags, e.g. ["dentist", "health"]. */
+  types?: string[]
+  /** "OPERATIONAL" | "CLOSED_TEMPORARILY" | "CLOSED_PERMANENTLY". */
+  businessStatus?: string
 }
 
 /** A geographic circle to bias/restrict a search toward (radius in metres, max 50000). */
@@ -55,7 +61,10 @@ const PLACES_URL = 'https://places.googleapis.com/v1/places:searchText'
 
 /** Union of all fields needed by both discovery and lead-discovery. */
 const FIELD_MASK =
-  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,places.photos,places.location,nextPageToken'
+  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,places.photos,places.location,places.primaryType,places.types,places.businessStatus,nextPageToken'
+
+/** Business statuses that mean the lead is dead — never scrape/pitch these. */
+const CLOSED_STATUSES = new Set(['CLOSED_PERMANENTLY', 'CLOSED_TEMPORARILY'])
 
 // -- fetchOnePage -----------------------------------------------------------
 
@@ -156,6 +165,14 @@ export async function paginatedSearch(cfg: PaginatedSearchConfig): Promise<void>
     counters.skippedFiltered += pagePlaces.length - candidates.length
 
     for (const p of pagePlaces) { if (p.id) seenPlaceIds.add(p.id) }
+
+    // Drop permanently/temporarily closed businesses — pitching a dead listing
+    // wastes generation spend and sales-rep time, and reads as low-quality outreach.
+    {
+      const before = candidates.length
+      candidates = candidates.filter(p => !(p.businessStatus && CLOSED_STATUSES.has(p.businessStatus)))
+      counters.skippedFiltered += before - candidates.length
+    }
 
     if (skipWithWebsite) {
       const before = candidates.length
