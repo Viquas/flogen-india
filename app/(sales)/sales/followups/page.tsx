@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { LeadStatusChip } from '@/components/sales/lead-status-chip'
 import { formatDateTime, relativeTime } from '@/lib/sales/format'
 import type { SalesStatus } from '@/lib/sales/get-leads'
+import { getFollowupQueue, type FollowupItem } from '@/lib/sales/followup-queue'
 
 interface FollowupRow {
     id: string
@@ -58,7 +59,10 @@ export default async function FollowupsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/sales-login')
 
-    const followups = await getMyFollowups(user.id)
+    const [followups, queue] = await Promise.all([
+        getMyFollowups(user.id),
+        getFollowupQueue(),
+    ])
     const overdue = followups.filter((f) => f.overdue)
     const upcoming = followups.filter((f) => !f.overdue)
 
@@ -75,7 +79,63 @@ export default async function FollowupsPage() {
                 <Section title="Overdue" items={overdue} highlight />
             )}
             <Section title="Upcoming" items={upcoming} />
+
+            <QueueSection
+                title="Email sequence — due to follow up"
+                emptyLabel="No email follow-ups due."
+                items={queue.emailFollowups}
+            />
+            <QueueSection
+                title="Claim abandoners — warm, unpaid"
+                emptyLabel="No abandoned claims right now."
+                items={queue.claimAbandoners}
+                highlight
+            />
         </div>
+    )
+}
+
+function QueueSection({
+    title,
+    items,
+    emptyLabel,
+    highlight,
+}: {
+    title: string
+    items: FollowupItem[]
+    emptyLabel: string
+    highlight?: boolean
+}) {
+    return (
+        <section
+            className={`rounded-xl border p-6 ${
+                highlight ? 'border-amber-200 bg-amber-50/40' : 'border-gray-200 bg-white'
+            }`}
+        >
+            <h2 className={`text-sm font-semibold mb-4 ${highlight ? 'text-amber-700' : 'text-gray-900'}`}>
+                {title} ({items.length})
+            </h2>
+            {items.length === 0 ? (
+                <p className="text-sm text-gray-400 py-6 text-center">{emptyLabel}</p>
+            ) : (
+                <ul className="divide-y divide-gray-100">
+                    {items.map((f) => (
+                        <li key={f.projectId} className="py-3 flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="font-medium text-gray-900 truncate">{f.businessName}</div>
+                                <div className="text-xs text-gray-500">{f.detail}</div>
+                            </div>
+                            <Link
+                                href={`/sales/leads/${f.projectId}`}
+                                className="text-xs rounded-md bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-500 shrink-0"
+                            >
+                                Open
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
     )
 }
 

@@ -12,9 +12,26 @@ interface OutreachComposerProps {
     phoneDigits: string
     slug: string | null
     pool: 'website' | 'automation' | null
+    /** Audit-grounded angle for this lead (automation pool). Drives personalized copy. */
+    pitchAngle: string | null
     senderName: string
     initialWhatsappCount: number
     whatsappCap: number
+}
+
+/**
+ * The stored pitch angle is the rep's internal angle, e.g.
+ *   "127 reviews (14 in the last 30 days), no online booking — that's AI booking territory."
+ * The text BEFORE the em-dash is the specific, prospect-safe proof; the text after is
+ * internal shorthand ("that's X territory") we must not put in a cold email. Returns the
+ * clean proof fragment ("127 reviews (14 in the last 30 days), no online booking").
+ */
+export function proofFragment(pitchAngle: string | null): string | null {
+    if (!pitchAngle) return null
+    const beforeDash = pitchAngle.split('—')[0].trim().replace(/[.,;]+$/, '').trim()
+    if (!beforeDash) return null
+    // Lowercase the first letter so it reads inside a sentence ("I noticed 127 reviews…").
+    return beforeDash.charAt(0).toLowerCase() + beforeDash.slice(1)
 }
 
 export function OutreachComposer({
@@ -24,6 +41,7 @@ export function OutreachComposer({
     phoneDigits,
     slug,
     pool,
+    pitchAngle,
     senderName,
     initialWhatsappCount,
     whatsappCap,
@@ -64,6 +82,7 @@ export function OutreachComposer({
                     senderName={senderName}
                     deliverablePath={deliverablePath}
                     pool={pool}
+                    pitchAngle={pitchAngle}
                 />
             ) : (
                 <WhatsappTab
@@ -73,6 +92,7 @@ export function OutreachComposer({
                     phoneDigits={phoneDigits}
                     deliverablePath={deliverablePath}
                     pool={pool}
+                    pitchAngle={pitchAngle}
                     initialCount={initialWhatsappCount}
                     cap={whatsappCap}
                 />
@@ -93,13 +113,16 @@ function EmailTab({
     senderName,
     deliverablePath,
     pool,
+    pitchAngle,
 }: {
     projectId: string
     businessName: string
     senderName: string
     deliverablePath: string | null
     pool: 'website' | 'automation' | null
+    pitchAngle: string | null
 }) {
+    const proof = pool === 'automation' ? proofFragment(pitchAngle) : null
     const [to, setTo] = useState('')
     const [subject, setSubject] = useState(
         pool === 'automation'
@@ -108,7 +131,10 @@ function EmailTab({
     )
     const [body, setBody] = useState(
         pool === 'automation'
-            ? `Hi,\n\nI came across ${businessName} and put together a quick plan for how a bit of automation (online booking, instant replies, missed-call text-back) could save you time and win more customers.\n\nTake a look — no commitment, you only pay if you love it.\n\nBest,\n${senderName}`
+            ? proof
+                // Audit-grounded: lead with the specific finding (problem → proof → CTA).
+                ? `Hi,\n\nI was looking at ${businessName} and noticed ${proof}.\n\nI put together a short plan showing how we'd handle that automatically — online booking, instant replies, and missed-call text-back so no enquiry slips away.\n\nTake a look — no commitment, you only pay if you love it.\n\nBest,\n${senderName}`
+                : `Hi,\n\nI came across ${businessName} and put together a quick plan for how a bit of automation (online booking, instant replies, missed-call text-back) could save you time and win more customers.\n\nTake a look — no commitment, you only pay if you love it.\n\nBest,\n${senderName}`
             : `Hi,\n\nI noticed ${businessName} doesn't have a website yet, so I built a working draft to show what's possible.\n\nHave a look and let me know what you think.\n\nBest,\n${senderName}`,
     )
     const [result, setResult] = useState<{ ok: boolean; error?: string } | null>(null)
@@ -135,6 +161,14 @@ function EmailTab({
 
     return (
         <div className="space-y-3">
+            {pitchAngle && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                        Angle from audit
+                    </p>
+                    <p className="text-xs text-emerald-900 mt-0.5">{pitchAngle}</p>
+                </div>
+            )}
             <input
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
@@ -185,6 +219,7 @@ function WhatsappTab({
     phoneDigits,
     deliverablePath,
     pool,
+    pitchAngle,
     initialCount,
     cap,
 }: {
@@ -194,13 +229,17 @@ function WhatsappTab({
     phoneDigits: string
     deliverablePath: string | null
     pool: 'website' | 'automation' | null
+    pitchAngle: string | null
     initialCount: number
     cap: number
 }) {
+    const proof = pool === 'automation' ? proofFragment(pitchAngle) : null
     const [count, setCount] = useState(initialCount)
     const [message, setMessage] = useState(
         pool === 'automation'
-            ? `Hi! I put together a quick plan showing how automation could help ${businessName} win more customers — mind if I send it over?`
+            ? proof
+                ? `Hi! I was looking at ${businessName} and noticed ${proof}. I put together a quick plan to fix that — mind if I send it over?`
+                : `Hi! I put together a quick plan showing how automation could help ${businessName} win more customers — mind if I send it over?`
             : `Hi! I built a free website draft for ${businessName} — want me to send you the link?`,
     )
     const [error, setError] = useState<string | null>(null)

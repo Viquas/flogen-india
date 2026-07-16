@@ -212,6 +212,7 @@ export default async function LeadDetailPage({ params }: PageProps) {
                         phoneDigits={phoneDigits}
                         slug={lead.slug}
                         pool={lead.pool}
+                        pitchAngle={lead.pitchAngle}
                         senderName={senderName}
                         initialWhatsappCount={whatsappCount}
                         whatsappCap={WHATSAPP_DAILY_SOFT_CAP}
