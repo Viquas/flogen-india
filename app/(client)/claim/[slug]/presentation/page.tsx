@@ -74,11 +74,16 @@ export async function generateMetadata({ params }: PresentationPageProps): Promi
 /* ------------------------------------------------------------------ */
 
 interface AuditSignalsLike {
+    reachable?: boolean
     has_booking?: boolean
     has_chat?: boolean
     mobile_friendly?: boolean
     has_ssl?: boolean
     page_load_ms?: number | null
+    has_title?: boolean
+    has_meta_description?: boolean
+    h1_count?: number
+    img_alt_coverage?: number | null
 }
 
 interface Finding {
@@ -88,6 +93,10 @@ interface Finding {
 
 function auditFindings(signals: AuditSignalsLike | null): Finding[] {
     if (!signals || typeof signals !== 'object') return []
+    // Site was never actually loaded (bot-block/timeout/DNS) — we cannot honestly
+    // claim any specific fault. Show no findings rather than fabricated ones; the
+    // deck omits the "what we found" slide entirely when this is empty.
+    if (signals.reachable === false) return []
     const findings: Finding[] = []
     if (signals.has_ssl === false) {
         findings.push({
@@ -117,6 +126,31 @@ function auditFindings(signals: AuditSignalsLike | null): Finding[] {
         findings.push({
             title: 'No instant answers',
             detail: 'No chat or quick-enquiry option means questions wait — and warm leads go cold.',
+        })
+    }
+    // SEO / on-page findings — only when the signal was actually captured.
+    if (signals.has_meta_description === false) {
+        findings.push({
+            title: 'Blank Google preview',
+            detail: 'With no meta description, Google shows a blank or scraped snippet in search — fewer people click through.',
+        })
+    }
+    if (signals.has_title === false) {
+        findings.push({
+            title: 'No page title',
+            detail: 'Search engines and browser tabs have nothing to show — the site looks unfinished and ranks poorly.',
+        })
+    }
+    if (typeof signals.h1_count === 'number' && signals.h1_count === 0) {
+        findings.push({
+            title: 'No clear headline',
+            detail: 'The page has no main heading, so visitors and Google both struggle to tell what the business does.',
+        })
+    }
+    if (typeof signals.img_alt_coverage === 'number' && signals.img_alt_coverage < 0.5) {
+        findings.push({
+            title: 'Images invisible to Google',
+            detail: 'Most images have no alt text, so search engines can’t read them and the site is harder to find.',
         })
     }
     return findings.slice(0, 4)
