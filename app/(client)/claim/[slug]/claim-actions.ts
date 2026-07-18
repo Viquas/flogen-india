@@ -2,7 +2,8 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRazorpayClient } from '@/lib/razorpay'
-import { calculateTotalCents, MAINTENANCE_PRICING, UPSELL_PRICING, type PlanType } from '@/lib/claim-pricing'
+import { calculateTotalCents, MAINTENANCE_PRICING, UPSELL_PRICING, CLAIM_WINDOW_DAYS, type PlanType } from '@/lib/claim-pricing'
+import { notifyProjectRep } from '@/lib/sales/notifications'
 import { z } from 'zod'
 
 const expiredFormSchema = z.object({
@@ -49,6 +50,86 @@ export async function submitExpiredClaimRequest(formData: FormData) {
         return { success: true as const }
     } catch (error) {
         console.error('[ClaimActions]', error)
+        return { success: false as const, errors: { form: ['Failed to submit. Please try again.'] } }
+    }
+}
+
+// --- Manual-payment interest capture ---
+
+const interestSchema = z.object({
+    name: z.string().trim().min(1, 'Name is required').max(100),
+    email: z.string().email('Valid email required'),
+    phone: z.string().trim().min(7, 'Valid phone number required').max(20),
+    projectId: z.string().uuid(),
+})
+
+/**
+ * "Get in touch" submission used when PAYMENT_MODE is 'manual' — there's no online
+ * checkout, so the prospect raises their hand and a rep arranges payment offline.
+ *
+ * Records a pending claim carrying the contact details (so the lead shows up in the
+ * sales warm-lead queue and can later be marked paid against the same row) and
+ * notifies the assigned rep.
+ */
+export async function submitInterestRequest(formData: FormData) {
+    const parsed = interestSchema.safeParse({
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        projectId: formData.get('projectId'),
+    })
+
+    if (!parsed.success) {
+        return { success: false as const, errors: parsed.error.flatten().fieldErrors }
+    }
+
+    try {
+        const supabase = createAdminClient()
+
+        // Don't create a second request if this project already has an open claim —
+        // update it so the rep sees the latest contact details on one row.
+        const { data: existing } = await supabase
+            .from('claims')
+            .select('id')
+            .eq('project_id', parsed.data.projectId)
+            .in('status', ['pending', 'order_created'])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        const contact = {
+            client_name: parsed.data.name,
+            client_email: parsed.data.email,
+            client_phone: parsed.data.phone,
+        }
+
+        if (existing) {
+            await supabase.from('claims').update(contact).eq('id', existing.id)
+        } else {
+            const { error } = await supabase.from('claims').insert({
+                project_id: parsed.data.projectId,
+                status: 'pending',
+                plan: 'standard',
+                // Manual payment: the real figure is agreed offline, so don't invent one.
+                amount_paise: 0,
+                currency: 'USD',
+                ...contact,
+                expires_at: new Date(Date.now() + CLAIM_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            if (error) {
+                console.error('[ClaimActions] interest request failed:', error)
+                return { success: false as const, errors: { form: ['Failed to submit. Please try again.'] } }
+            }
+        }
+
+        await notifyProjectRep(parsed.data.projectId, 'interest_submitted', {
+            email: parsed.data.email,
+            phone: parsed.data.phone,
+        })
+
+        return { success: true as const }
+    } catch (error) {
+        console.error('[ClaimActions] interest request failed:', error)
         return { success: false as const, errors: { form: ['Failed to submit. Please try again.'] } }
     }
 }

@@ -10,6 +10,7 @@ import { LogCallForm } from './log-call-form'
 import { SharePreviewButton } from './share-preview-button'
 import { DeliverableCard } from '@/components/sales/deliverable-card'
 import { OutreachComposer } from '@/components/sales/outreach-composer'
+import { MarkPaidButton } from '@/components/sales/mark-paid-button'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -143,6 +144,11 @@ export default async function LeadDetailPage({ params }: PageProps) {
                         </div>
 
                         <div className="mt-3 flex items-center gap-2">
+                            <MarkPaidButton
+                                projectId={lead.id}
+                                businessName={lead.businessName}
+                                isPaid={lead.isPaid}
+                            />
                             <SharePreviewButton slug={lead.slug} businessName={lead.businessName} />
                             {lead.slug && (
                                 <a

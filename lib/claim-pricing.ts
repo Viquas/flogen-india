@@ -26,6 +26,20 @@ export const MAINTENANCE_PRICING = {
 
 export const CURRENCY_SYMBOL = '$'
 
+/**
+ * How the claim page collects payment.
+ *   'manual'   — no online checkout. The prospect submits a contact request and a
+ *                rep arranges payment offline, then marks the lead paid in /sales.
+ *   'razorpay' — self-serve Razorpay checkout (the original flow).
+ *
+ * Defaults to 'manual'. Set NEXT_PUBLIC_PAYMENT_MODE=razorpay to re-enable
+ * self-serve checkout — the Razorpay code path is intact, just not rendered.
+ * NOTE: re-enabling requires migration 20260716000001 (claims maintenance columns)
+ * to be applied, or claim creation will fail.
+ */
+export const PAYMENT_MODE: 'manual' | 'razorpay' =
+    process.env.NEXT_PUBLIC_PAYMENT_MODE === 'razorpay' ? 'razorpay' : 'manual'
+
 export const CLAIM_WINDOW_DAYS = 5
 
 export type PlanType = 'standard' | 'pro'

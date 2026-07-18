@@ -86,8 +86,8 @@ export default async function FollowupsPage() {
                 items={queue.emailFollowups}
             />
             <QueueSection
-                title="Claim abandoners — warm, unpaid"
-                emptyLabel="No abandoned claims right now."
+                title="Warm leads — unpaid"
+                emptyLabel="No warm unpaid leads right now."
                 items={queue.claimAbandoners}
                 highlight
             />

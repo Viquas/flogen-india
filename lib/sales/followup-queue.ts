@@ -99,7 +99,7 @@ export async function getFollowupQueue(): Promise<FollowupQueue> {
     // --- Claim abandoners --------------------------------------------------
     const { data: openClaims } = await admin
         .from('claims')
-        .select('project_id, status, created_at, expires_at')
+        .select('project_id, status, created_at, expires_at, client_email')
         .in('status', ['pending', 'order_created'])
         .is('paid_at', null)
     const abandoners = (openClaims || []).filter((c: Record<string, unknown>) => {
@@ -148,7 +148,15 @@ export async function getFollowupQueue(): Promise<FollowupQueue> {
                 slug: ns?.slug ?? null,
                 businessName: ns?.name ?? 'Unknown business',
                 reason: 'claim_abandoned' as const,
-                detail: c.status === 'order_created' ? 'Opened checkout — didn’t pay' : 'Started a claim — didn’t finish',
+                // With manual payment the prospect submits contact details instead of
+                // checking out, so a pending claim WITH an email is a hand-raise, not
+                // an abandonment — label them differently so reps read the queue right.
+                detail:
+                    c.status === 'order_created'
+                        ? 'Opened checkout — didn’t pay'
+                        : c.client_email
+                          ? 'Requested contact — awaiting payment'
+                          : 'Started a claim — didn’t finish',
                 sortAt: (c.created_at as string | null) ?? null,
             }
         })
