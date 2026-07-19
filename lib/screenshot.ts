@@ -82,9 +82,16 @@ export async function captureAuditScreenshot(
 
     const { data } = supabase.storage.from('site-screenshots').getPublicUrl(path)
     // Cast: audit_screenshot_url (migration 20260716000003) not yet in generated types.
-    await supabase.from('projects')
+    const { error: colError } = await supabase.from('projects')
         .update({ audit_screenshot_url: data.publicUrl } as never)
         .eq('id', projectId)
+    if (colError) {
+        logger.screenshot.warn('Before-screenshot URL not persisted — is migration 20260716000003 applied?', {
+            projectId,
+            error: colError.message,
+        })
+        return null
+    }
     return data.publicUrl
 }
 
@@ -164,16 +171,28 @@ export async function generateScreenshot(
             })
         }
 
-        // Update project record with desktop + mobile screenshots and the overflow flag.
-        // Cast: screenshot_url_mobile / mobile_overflow (migration 20260716000004) are
-        // not yet in the generated Supabase types.
+        // Persist the desktop screenshot on its own FIRST. Writing it together with the
+        // mobile QA columns would mean a single rejected UPDATE (e.g. migration
+        // 20260716000004 not applied yet) silently loses screenshot_url too — every
+        // generated site would end up with no preview image.
         await supabase.from('projects')
+            .update({ screenshot_url: data.publicUrl })
+            .eq('id', projectId)
+
+        // Best-effort mobile QA columns. Cast: not in the generated types until the
+        // migration is applied and types regenerated.
+        const { error: qaError } = await supabase.from('projects')
             .update({
-                screenshot_url: data.publicUrl,
                 screenshot_url_mobile: mobileUrl,
                 mobile_overflow: mobileOverflow,
             } as never)
             .eq('id', projectId)
+        if (qaError) {
+            logger.screenshot.warn('Mobile QA columns not persisted — is migration 20260716000004 applied?', {
+                projectId,
+                error: qaError.message,
+            })
+        }
 
         return data.publicUrl
     } catch (err) {
