@@ -86,6 +86,19 @@ export async function submitInterestRequest(formData: FormData) {
     try {
         const supabase = createAdminClient()
 
+        // Already converted? Don't create a stray pending claim (the claim page
+        // normally redirects paid projects, but guard the action directly too).
+        const { data: paidClaim } = await supabase
+            .from('claims')
+            .select('id')
+            .eq('project_id', parsed.data.projectId)
+            .in('status', ['paid', 'customizing', 'completed'])
+            .limit(1)
+            .maybeSingle()
+        if (paidClaim) {
+            return { success: true as const }
+        }
+
         // Don't create a second request if this project already has an open claim —
         // update it so the rep sees the latest contact details on one row.
         const { data: existing } = await supabase

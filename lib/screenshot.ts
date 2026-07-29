@@ -19,6 +19,32 @@ const CHROMIUM_URL = process.env.CHROMIUM_REMOTE_URL
     || 'https://github.com/nicehash/chromium-bin/releases/download/v133.0.0/chromium-v133.0-pack.tar'
 
 /**
+ * True if a hostname points at a private / loopback / link-local / internal target.
+ * Used to refuse SSRF: captureExternalScreenshot drives a headless browser to a URL
+ * that ultimately derives from lead data (Places websiteUri, but also bulk-CSV and
+ * custom inputs), so an attacker-supplied "website" must not be able to make us load
+ * internal services or the cloud metadata endpoint and surface it in a deck.
+ */
+function isBlockedHost(hostname: string): boolean {
+    const h = hostname.toLowerCase().replace(/^\[|\]$/g, '') // strip IPv6 brackets
+    if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal')) {
+        return true
+    }
+    if (h === '::1' || h === '::' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80')) {
+        return true // IPv6 loopback / unique-local / link-local
+    }
+    const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+    if (m) {
+        const [a, b] = [Number(m[1]), Number(m[2])]
+        if (a === 127 || a === 10 || a === 0) return true // loopback / private / this-network
+        if (a === 169 && b === 254) return true // link-local incl. 169.254.169.254 metadata
+        if (a === 172 && b >= 16 && b <= 31) return true // private
+        if (a === 192 && b === 168) return true // private
+    }
+    return false
+}
+
+/**
  * Screenshot an EXTERNAL live site (the prospect's real website) for "before/after"
  * proof in outreach decks. Fail-soft: returns null on any error (bad URL, timeout,
  * bot-block) — a missing before-shot must never break the pitch, and we never want a
@@ -30,6 +56,17 @@ export async function captureExternalScreenshot(
 ): Promise<Buffer | null> {
     const target = url.trim()
     if (!/^https?:\/\//i.test(target)) return null
+    // SSRF guard: only load public hosts.
+    let parsed: URL
+    try {
+        parsed = new URL(target)
+    } catch {
+        return null
+    }
+    if (isBlockedHost(parsed.hostname)) {
+        logger.screenshot.warn('Refused external screenshot of a private/internal host', { host: parsed.hostname })
+        return null
+    }
 
     let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined
     try {

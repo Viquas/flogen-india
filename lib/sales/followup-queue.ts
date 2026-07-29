@@ -40,6 +40,23 @@ export function isEmailFollowupDue(agg: ProjectEmailAgg, nowMs: number, paid: Se
     return days >= FOLLOWUP_MIN_GAP_DAYS && days <= FOLLOWUP_STALE_DAYS
 }
 
+export interface AbandonerClaim {
+    projectId: string
+    clientEmail: string | null
+    expiresAtMs: number | null
+}
+
+/**
+ * Pure predicate: should this open (unpaid) claim show in the warm-leads queue?
+ * Manual-payment interest leads (pending claim WITH contact details) stay until
+ * worked; time-boxed checkout abandoners drop off once their window lapses.
+ */
+export function isAbandonerActive(c: AbandonerClaim, nowMs: number, paid: Set<string>): boolean {
+    if (paid.has(c.projectId)) return false
+    if (c.clientEmail) return true
+    return c.expiresAtMs == null || c.expiresAtMs > nowMs
+}
+
 export interface FollowupItem {
     projectId: string
     slug: string | null
@@ -102,11 +119,17 @@ export async function getFollowupQueue(): Promise<FollowupQueue> {
         .select('project_id, status, created_at, expires_at, client_email')
         .in('status', ['pending', 'order_created'])
         .is('paid_at', null)
-    const abandoners = (openClaims || []).filter((c: Record<string, unknown>) => {
-        if (paid.has(c.project_id as string)) return false
-        const exp = c.expires_at ? new Date(c.expires_at as string).getTime() : null
-        return exp == null || exp > nowMs // still within the claim window
-    })
+    const abandoners = (openClaims || []).filter((c: Record<string, unknown>) =>
+        isAbandonerActive(
+            {
+                projectId: c.project_id as string,
+                clientEmail: (c.client_email as string | null) ?? null,
+                expiresAtMs: c.expires_at ? new Date(c.expires_at as string).getTime() : null,
+            },
+            nowMs,
+            paid,
+        ),
+    )
 
     // --- Resolve business names + slugs for everything ---------------------
     const allIds = [...new Set([...dueEmailAggs.map((a) => a.projectId), ...abandoners.map((c: any) => c.project_id)])]

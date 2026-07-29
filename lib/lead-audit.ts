@@ -51,7 +51,10 @@ function hasMetaDescription(html: string): boolean {
 function imgAltCoverage(html: string): number | null {
   const imgTags = html.match(/<img\b[^>]*>/gi) || []
   if (imgTags.length === 0) return null
-  const withAlt = imgTags.filter((t) => /\balt\s*=\s*["'][^"']*\S[^"']*["']/i.test(t)).length
+  // "non-empty alt" = opening quote, optional whitespace, then a real char. Linear —
+  // avoids the ambiguous [^"']*\S[^"']* form which can backtrack O(n^2) on a long
+  // unterminated alt value.
+  const withAlt = imgTags.filter((t) => /\balt\s*=\s*["']\s*[^\s"']/i.test(t)).length
   return withAlt / imgTags.length
 }
 
