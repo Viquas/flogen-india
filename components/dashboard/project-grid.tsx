@@ -81,16 +81,24 @@ export function ProjectGrid({ projects, batchesMap = {} }: ProjectGridProps) {
             return
         }
 
+        // Guard against out-of-order/stale resolutions: an in-flight fetch that
+        // resolves after the query changed (or was cleared) must not overwrite
+        // the newer state. clearTimeout only cancels a not-yet-fired timer.
+        let cancelled = false
         const timeout = setTimeout(async () => {
             setIsSearching(true)
             const { data, success } = await searchProjects(searchQuery)
+            if (cancelled) return
             if (success && data) {
                 setSearchResults(data as unknown as Project[])
             }
             setIsSearching(false)
         }, 300)
 
-        return () => clearTimeout(timeout)
+        return () => {
+            cancelled = true
+            clearTimeout(timeout)
+        }
     }, [searchQuery])
 
     // Filter projects based on search and active tab

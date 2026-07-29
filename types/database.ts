@@ -618,6 +618,10 @@ export type Database = {
                     location: string | null
                     raw_data: Json | null
                     created_at: string
+                    pool: string
+                    niche_score: number | null
+                    pitch_angle: string | null
+                    audit_signals: Json | null
                 }
                 Insert: {
                     id?: string
@@ -635,6 +639,10 @@ export type Database = {
                     location?: string | null
                     raw_data?: Json | null
                     created_at?: string
+                    pool?: string
+                    niche_score?: number | null
+                    pitch_angle?: string | null
+                    audit_signals?: Json | null
                 }
                 Update: {
                     id?: string
@@ -652,6 +660,10 @@ export type Database = {
                     location?: string | null
                     raw_data?: Json | null
                     created_at?: string
+                    pool?: string
+                    niche_score?: number | null
+                    pitch_angle?: string | null
+                    audit_signals?: Json | null
                 }
                 Relationships: []
             }

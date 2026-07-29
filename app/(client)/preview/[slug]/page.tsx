@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
@@ -73,7 +74,17 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'
 
-    const baseHtml = constructHtmlBoilerplate(project.generated_code)
+    // The preview iframe is sandboxed WITHOUT allow-same-origin, so code inside it
+    // cannot read window.parent.location.origin (throws) and window.location.origin
+    // is "null" for a srcdoc iframe. Inject an ABSOLUTE runtime URL from the request
+    // host so the preview runtime always loads; otherwise it resolves to
+    // "null/preview-runtime.js" and the page renders blank.
+    const h = await headers()
+    const host = h.get('host') || ''
+    const proto = h.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
+    const runtimeUrl = host ? `${proto}://${host}/preview-runtime.js` : '/preview-runtime.js'
+
+    const baseHtml = constructHtmlBoilerplate(project.generated_code, { runtimeUrl })
     const expiresAt = project.claim_expires_at
         || addDays(new Date(), CLAIM_WINDOW_DAYS).toISOString()
 
@@ -88,7 +99,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
         <iframe
             srcDoc={injectedHtml}
             className="fixed inset-0 w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin allow-top-navigation"
+            sandbox="allow-scripts allow-top-navigation-by-user-activation"
             title={`Website preview for ${businessName}`}
         />
     )

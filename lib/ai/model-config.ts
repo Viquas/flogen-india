@@ -1,6 +1,8 @@
+import { generateText } from 'ai'
 import { openai, createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
 import { circuitBreaker } from './circuit-breaker'
+import { GEMINI_FLASH } from './model-ids'
 import { logger } from '@/lib/logger'
 
 const log = logger.ai.child('model-config')
@@ -35,16 +37,18 @@ interface FallbackEntry {
 /**
  * Build the ordered fallback chain based on available API keys.
  */
-function buildFallbackChain(): FallbackEntry[] {
+export function buildFallbackChain(): FallbackEntry[] {
     const chain: FallbackEntry[] = []
 
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-        chain.push({ provider: 'google', modelId: 'gemini-3-flash-preview', available: true })
+        chain.push({ provider: 'google', modelId: GEMINI_FLASH, available: true })
     }
     if (process.env.OPENROUTER_API_KEY) {
         chain.push({ provider: 'openrouter', modelId: 'moonshotai/kimi-k2.5', available: true })
     }
-    chain.push({ provider: 'openai', modelId: 'o3', available: !!process.env.OPENAI_API_KEY })
+    // Cost-guard: never fall back to o3 (~₹50/site). gpt-4o-mini is the
+    // cheap OpenAI terminus (~same price class as Gemini Flash).
+    chain.push({ provider: 'openai', modelId: 'gpt-4o-mini', available: !!process.env.OPENAI_API_KEY })
 
     return chain
 }
@@ -62,6 +66,53 @@ function createModel(provider: string, modelId: string) {
         default:
             return openai(modelId)
     }
+}
+
+/**
+ * Run generateText with automatic provider fallback.
+ *
+ * Tries the requested model first (if any), then each provider in the fallback
+ * chain, moving on when a call throws (e.g. Gemini free-tier quota 429). Records
+ * success/failure to the circuit breaker so repeated failures also steer future
+ * getModel() picks. Throws the last error only if EVERY provider fails.
+ *
+ * This is what makes generation resilient: without it, a quota-limited primary
+ * provider fails the whole job because the direct generateText call never retries.
+ */
+export async function generateTextWithFallback(
+    requestedModel: string | undefined,
+    params: Omit<Parameters<typeof generateText>[0], 'model'>,
+): Promise<{ text: string; usage: Awaited<ReturnType<typeof generateText>>['usage']; modelIdUsed: string }> {
+    const attempts: Array<{ provider: string; modelId: string }> = []
+    if (requestedModel && requestedModel !== 'default') {
+        attempts.push({ provider: resolveProvider(requestedModel), modelId: requestedModel })
+    }
+    for (const entry of buildFallbackChain()) {
+        if (entry.available && !attempts.some(a => a.modelId === entry.modelId)) {
+            attempts.push({ provider: entry.provider, modelId: entry.modelId })
+        }
+    }
+
+    let lastError: unknown
+    for (const attempt of attempts) {
+        try {
+            const model = createModel(attempt.provider, attempt.modelId)
+            const result = await generateText({ ...params, model } as Parameters<typeof generateText>[0])
+            circuitBreaker.recordSuccess(attempt.provider)
+            return { text: result.text, usage: result.usage, modelIdUsed: attempt.modelId }
+        } catch (err) {
+            circuitBreaker.recordFailure(attempt.provider)
+            log.warn('Generation attempt failed, trying next provider', {
+                provider: attempt.provider,
+                modelId: attempt.modelId,
+                error: err instanceof Error ? err.message : String(err),
+            })
+            lastError = err
+        }
+    }
+    throw lastError instanceof Error
+        ? lastError
+        : new Error('All AI providers failed for generateText')
 }
 
 // Select model based on available keys, with circuit breaker fallback
@@ -110,6 +161,6 @@ export const getModel = (modelId?: string) => {
     }
 
     // Absolute last resort (shouldn't happen if at least one key is configured)
-    log.error('No available providers, returning openai o3 as last resort')
-    return openai('o3')
+    log.error('No available providers, returning openai gpt-4o-mini as last resort')
+    return openai('gpt-4o-mini')
 }

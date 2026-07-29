@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { discoverBusinesses } from '@/lib/discovery'
 import { generationQueue } from '@/lib/queue'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export const maxDuration = 300 // 5 min (Vercel Pro)
 
 export async function POST(req: NextRequest) {
+    try {
+        await requireAdmin()
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
     try {
         const { query, skipWithWebsite, rules, structured, templateId } = await req.json()
 

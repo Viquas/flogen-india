@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generationQueue } from '@/lib/queue'
 
@@ -87,6 +88,11 @@ function buildFromText(text: string): Record<string, any> {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  }
   try {
     const body = await req.json()
     const data = typeof body?.data === 'string' ? body.data.trim() : ''

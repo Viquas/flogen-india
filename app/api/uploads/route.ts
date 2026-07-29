@@ -105,9 +105,10 @@ export async function POST(request: Request) {
             )
         }
 
-        // Generate safe filename
-        const ext = file.name.split('.').pop()?.toLowerCase() || detectedType
-        const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+        // Generate safe filename. Extension is the magic-byte-detected type,
+        // never the client-supplied file.name (which could carry traversal or
+        // an arbitrary extension into the storage key).
+        const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${detectedType}`
         const path = `${claimId}/${type}/${safeName}`
 
         // Upload to claim-uploads bucket using admin client (bypasses CORS)

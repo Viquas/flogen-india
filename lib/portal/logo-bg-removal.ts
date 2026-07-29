@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import { generateText } from 'ai'
 import { google } from '@ai-sdk/google'
+import { GEMINI_IMAGE } from '@/lib/ai/model-ids'
 
 interface BgRemovalResult {
     success: boolean
@@ -42,7 +43,7 @@ export async function removeLogoBackground(
 
         // Step 2: Call Gemini to replace background with green
         const { files } = await generateText({
-            model: google('gemini-2.0-flash-exp'),
+            model: google(GEMINI_IMAGE),
             messages: [
                 {
                     role: 'user',

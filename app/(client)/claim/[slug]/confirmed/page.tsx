@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { trackEvent } from '@/lib/analytics/track'
@@ -49,33 +47,23 @@ export default async function ConfirmedPage({ params, searchParams }: ConfirmedP
     const businessData = project.business_data as Record<string, unknown>
     const businessName = (businessData?.businessName as string) || 'Your Business'
 
-    // Find the most recent paid/order_created claim for this project
-    // Use claimId from search params if available, otherwise find latest
-    let claim
-    if (claimIdParam) {
-        const { data } = await supabase
-            .from('claims')
-            .select('id, status, plan, amount_paise, paid_at, client_email')
-            .eq('id', claimIdParam)
-            .eq('project_id', project.id)
-            .single()
-        claim = data
+    // Require an explicit claimId (the payment redirect always includes it).
+    // The previous "most recent paid claim" fallback let anyone who knew the
+    // public slug load /confirmed with no params and read the payer's email +
+    // claimId — the pair that createAccountAndLogin trusts. No fallback: an
+    // unparameterized or mismatched request is sent back to the claim page.
+    if (!claimIdParam) {
+        redirect(`/claim/${slug}`)
     }
 
-    if (!claim) {
-        // Fallback: find most recent non-expired claim
-        const { data } = await supabase
-            .from('claims')
-            .select('id, status, plan, amount_paise, paid_at, client_email')
-            .eq('project_id', project.id)
-            .in('status', ['order_created', 'paid', 'customizing', 'completed'])
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-        claim = data
-    }
+    const { data: claim } = await supabase
+        .from('claims')
+        .select('id, status, plan, amount_paise, paid_at, client_email')
+        .eq('id', claimIdParam)
+        .eq('project_id', project.id)
+        .in('status', ['paid', 'customizing', 'completed'])
+        .maybeSingle()
 
-    // If no valid claim found, redirect back to claim page
     if (!claim) {
         redirect(`/claim/${slug}`)
     }

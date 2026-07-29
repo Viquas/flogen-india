@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { updateProjectWithCode } from '@/lib/ai/project-persistence'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 
@@ -274,6 +275,7 @@ export async function updateRequestStatus(
     newStatus: 'in_progress' | 'completed',
     adminNotes?: string
 ): Promise<{ success: boolean; error?: string }> {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     const payload: Record<string, unknown> = {
@@ -302,6 +304,7 @@ export async function redeployProject(
     projectId: string,
     generatedCode: string
 ): Promise<{ success: boolean; error?: string }> {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // Step 1: Save code, create revision snapshot, increment version

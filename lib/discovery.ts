@@ -12,6 +12,7 @@ import {
   requireApiKey, buildFallbackQuery, paginatedSearch,
   type PlaceResult, type PaginatedSearchConfig,
 } from '@/lib/google-places'
+import { findExistingPlaceIds } from '@/lib/discovery-dedup'
 
 export type { DiscoveryResult }
 
@@ -42,17 +43,12 @@ export async function discoverBusinesses(config: DiscoveryConfig): Promise<Disco
   const seenPlaceIds = new Set<string>()
 
   const dedupFn = async (placeIds: string[]): Promise<Set<string>> => {
+    // Cross-table dedup: skip businesses already saved as a lead OR already a
+    // project (either json key casing), not just admin-generated projects.
     const unchecked = placeIds.filter(id => !alreadyGeneratedPlaceIds.has(id))
     if (unchecked.length > 0) {
-      const { data: existing } = await supabase
-        .from('projects').select('business_data')
-        .in('business_data->>placeId' as any, unchecked)
-      if (existing) {
-        for (const p of existing) {
-          const bd = p.business_data as any
-          if (bd?.placeId) alreadyGeneratedPlaceIds.add(bd.placeId)
-        }
-      }
+      const existing = await findExistingPlaceIds(supabase, unchecked)
+      for (const id of existing) alreadyGeneratedPlaceIds.add(id)
     }
     return alreadyGeneratedPlaceIds
   }
@@ -129,6 +125,7 @@ export async function discoverBusinesses(config: DiscoveryConfig): Promise<Disco
       internationalPhoneNumber: place.internationalPhoneNumber || null,
       nationalPhoneNumber: place.nationalPhoneNumber || null,
       industry: industryTerm,
+      photos: place.photos || null,
     } as any,
   }))
 

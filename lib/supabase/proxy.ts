@@ -57,24 +57,34 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/portal', request.url))
   }
 
-  // ---- Admin route protection ----
+  // ---- Admin + Sales route protection ----
   const isAdminRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/editor')
   const isAdminLoginPage = pathname === '/login'
+  const isSalesRoute = pathname.startsWith('/sales') && pathname !== '/sales-login'
+  const isSalesLoginPage = pathname === '/sales-login'
 
   // Unauthenticated admin requests → redirect to /login
   if (isAdminRoute && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Single role query for all admin-related routes (reused below)
-  if ((isAdminRoute || isAdminLoginPage) && user) {
+  // Unauthenticated sales requests → redirect to /sales-login
+  if (isSalesRoute && !user) {
+    return NextResponse.redirect(new URL('/sales-login', request.url))
+  }
+
+  // Single role query for all role-gated routes
+  if ((isAdminRoute || isAdminLoginPage || isSalesRoute || isSalesLoginPage) && user) {
     const admin = createAdminClientForMiddleware()
     const { data } = await (admin as any)
       .from('user_roles')
       .select('role')
       .eq('id', user.id)
-      .single()
-    const isUserAdmin = data?.role === 'admin'
+      .maybeSingle()
+    const role = data?.role as string | undefined
+    const isUserAdmin = role === 'admin'
+    const isUserSales = role === 'sales'
+    const hasSalesAccess = isUserAdmin || isUserSales
 
     // Non-admin on admin routes → redirect to /login
     if (isAdminRoute && !isUserAdmin) {
@@ -84,6 +94,16 @@ export async function updateSession(request: NextRequest) {
     // Admin on /login → redirect to dashboard
     if (isAdminLoginPage && isUserAdmin) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // No sales access on sales routes → kick back to sales login
+    if (isSalesRoute && !hasSalesAccess) {
+      return NextResponse.redirect(new URL('/sales-login', request.url))
+    }
+
+    // Sales-authorized user on sales login page → redirect to /sales
+    if (isSalesLoginPage && hasSalesAccess) {
+      return NextResponse.redirect(new URL('/sales', request.url))
     }
   }
 

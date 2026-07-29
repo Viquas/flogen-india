@@ -1,19 +1,10 @@
 import { generateText, streamText } from 'ai'
 import { getModel, resolveProvider } from './model-config'
 import { circuitBreaker } from './circuit-breaker'
+import { calculateCost } from './pricing'
 import { logger } from '@/lib/logger'
 
 const log = logger.ai.child('gateway')
-
-// Model pricing per 1M tokens (input/output)
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  'gemini-3.1-pro-preview': { input: 1.25, output: 5.0 },
-  'gemini-2.5-flash-preview-05-20': { input: 0.15, output: 0.6 },
-  'gpt-4o': { input: 2.5, output: 10.0 },
-  'gpt-4o-mini': { input: 0.15, output: 0.6 },
-  'o3': { input: 10.0, output: 40.0 },
-  'moonshotai/kimi-k2.5': { input: 0.6, output: 2.4 },
-}
 
 export interface GenerationMetrics {
   model: string
@@ -24,9 +15,10 @@ export interface GenerationMetrics {
   callType: string
 }
 
+// Single pricing source of truth lives in ./pricing.ts — this used to keep a
+// second, drifted table that disagreed (e.g. kimi-k2.5 was 3x off).
 function estimateCost(modelId: string, inputTokens: number, outputTokens: number): number {
-  const pricing = MODEL_PRICING[modelId] || { input: 2.0, output: 8.0 } // conservative default
-  return (inputTokens * pricing.input + outputTokens * pricing.output) / 1_000_000
+  return calculateCost(modelId, inputTokens, outputTokens)
 }
 
 // --- Retry helpers ---

@@ -223,11 +223,16 @@ function EditorContent() {
     useEffect(() => {
         if (!activeProjectId) return;
 
-        const checkStatusLoop = async () => {
-            const supabase = createClient();
+        const supabase = createClient();
 
-            // Check initial status
-            const { data } = await supabase.from('projects').select('status, generation_phase, generated_code').eq('id', activeProjectId).single();
+        // Guard the fire-and-forget status check: when switching projects
+        // quickly, a slow resolution for the previous project must not flip
+        // the current project into a false "Generating…" state.
+        let cancelled = false;
+
+        // Check initial status (fire-and-forget, doesn't block subscription)
+        supabase.from('projects').select('status, generation_phase, generated_code').eq('id', activeProjectId).single().then(({ data }) => {
+            if (cancelled) return;
             if (data?.status === 'generating' || data?.status === 'queued') {
                 setIsStreaming(true);
                 if (data.generation_phase) {
@@ -235,41 +240,36 @@ function EditorContent() {
                     setStreamingLog(prev => [...prev, { type: 'phase', message: data.generation_phase!, timestamp: 0 }]);
                 }
             }
+        });
 
-            const channel = supabase.channel(`editor_project_${activeProjectId}`)
-                .on(
-                    'postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'projects', filter: `id=eq.${activeProjectId}` },
-                    async (payload) => {
-                        if (payload.new) {
-                            if (payload.new.generation_phase) {
-                                setStreamingPhase(payload.new.generation_phase);
-                                setStreamingLog(prev => [...prev, { type: 'phase', message: payload.new.generation_phase, timestamp: Date.now() }]);
+        // Subscribe synchronously so cleanup always has a channel reference
+        const channel = supabase.channel(`editor_project_${activeProjectId}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'projects', filter: `id=eq.${activeProjectId}` },
+                async (payload) => {
+                    if (payload.new) {
+                        if (payload.new.generation_phase) {
+                            setStreamingPhase(payload.new.generation_phase);
+                            setStreamingLog(prev => [...prev, { type: 'phase', message: payload.new.generation_phase, timestamp: Date.now() }]);
+                        }
+                        if (payload.new.status === 'review' || payload.new.status === 'error') {
+                            const { data: fresh } = await supabase.from('projects').select('generated_code').eq('id', activeProjectId).single();
+                            if (fresh?.generated_code) {
+                                setGeneratedCode(fresh.generated_code);
+                                setSavedCode(fresh.generated_code);
+                                setCodeDirty(false);
                             }
-                            if (payload.new.status === 'review' || payload.new.status === 'error') {
-                                // Supabase Realtime drops large columns out of the payload. Fetch it directly to ensure we have it.
-                                const { data: fresh } = await supabase.from('projects').select('generated_code').eq('id', activeProjectId).single();
-                                if (fresh?.generated_code) {
-                                    setGeneratedCode(fresh.generated_code);
-                                    setSavedCode(fresh.generated_code);
-                                    setCodeDirty(false);
-                                }
-                                setIsStreaming(false);
-                            }
+                            setIsStreaming(false);
                         }
                     }
-                )
-                .subscribe();
-
-            return () => {
-                supabase.removeChannel(channel);
-            };
-        };
-
-        const cleanupPromise = checkStatusLoop();
+                }
+            )
+            .subscribe();
 
         return () => {
-            cleanupPromise.then(cleanup => cleanup && cleanup());
+            cancelled = true;
+            supabase.removeChannel(channel);
         };
     }, [activeProjectId]);
 
@@ -550,9 +550,9 @@ function EditorContent() {
                 }
             }
 
-            // Final flush
-            if (codeBuffer && codeBuffer !== generatedCode) {
-                setGeneratedCode(codeBuffer)
+            // Final flush — use functional update to avoid stale closure
+            if (codeBuffer) {
+                setGeneratedCode(prev => codeBuffer !== prev ? codeBuffer : prev)
             }
 
         } catch (err) {

@@ -2,7 +2,12 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAndSaveWebsite } from '@/lib/ai/generator'
+import { generateAutomationPlan } from '@/lib/automation-plan/generate'
+import { notifyProjectRep } from '@/lib/sales/notifications'
 import { logger } from '@/lib/logger'
+import { isClaudeLive } from '@/lib/generation/worker-liveness'
+import { selectHighValue, type Project } from '@/lib/generation/high-value'
+import { shouldCronSkip } from '@/lib/generation/router-scope'
 
 export interface QueueJob {
     id: string
@@ -11,8 +16,12 @@ export interface QueueJob {
     template_id: string | null
     status: 'pending' | 'processing' | 'completed' | 'failed'
     attempts: number
+    created_at?: string
     updated_at?: string
     model_id?: string | null  // repurposed as priority field (e.g. "1" = high priority)
+    claimed_by?: string | null
+    claimed_at?: string | null
+    job_type?: 'website' | 'automation_plan' | null  // null/absent = website (legacy rows)
 }
 
 // Max retry attempts before permanently failing a job
@@ -81,11 +90,13 @@ class GenerationQueue {
     async add(projectId: string, rules?: string, templateId?: string, priority: number = 0) {
         const supabase = createAdminClient()
 
-        // Dedup: skip if this project already has a pending/processing job
+        // Dedup: skip if this project already has a pending/processing website job
+        // (a pending automation-plan job must not block site generation)
         const { count: existing } = await supabase
             .from('queue_jobs')
             .select('id', { count: 'exact', head: true })
             .eq('project_id', projectId)
+            .eq('job_type', 'website')
             .in('status', ['pending', 'processing'])
 
         if (existing && existing > 0) {
@@ -135,6 +146,43 @@ class GenerationQueue {
         }
 
         await supabase.from('projects').update({ status: 'queued', generated_code: null }).eq('id', projectId)
+        this.process()
+    }
+
+    /**
+     * Enqueue an automation-plan generation job (job_type='automation_plan').
+     * Drives projects.plan_status only — never touches projects.status, so the
+     * lead keeps its place in the sales workspace while the plan generates.
+     */
+    async addPlanJob(projectId: string) {
+        // Untyped: job_type/plan_status are newer than the generated DB types
+        const supabase = createAdminClient() as any
+
+        const { count: existing } = await supabase
+            .from('queue_jobs')
+            .select('id', { count: 'exact', head: true })
+            .eq('project_id', projectId)
+            .eq('job_type', 'automation_plan')
+            .in('status', ['pending', 'processing'])
+
+        if (existing && existing > 0) {
+            logger.queue.info('Plan job already exists, skipping', { projectId })
+            return
+        }
+
+        const { error: insertError } = await supabase.from('queue_jobs').insert({
+            project_id: projectId,
+            rules: null,
+            status: 'pending',
+            attempts: 0,
+            job_type: 'automation_plan',
+        })
+        if (insertError) {
+            logger.queue.error('plan queue_jobs insert failed', { projectId, error: insertError.message })
+            throw new Error(insertError.message)
+        }
+
+        await supabase.from('projects').update({ plan_status: 'queued' }).eq('id', projectId)
         this.process()
     }
 
@@ -194,7 +242,7 @@ class GenerationQueue {
             if (insertError.message?.includes('duplicate key') || insertError.code === '23505') {
                 logger.queue.warn('Batch insert hit duplicate key, falling back to individual inserts')
                 // Fall back to individual inserts to skip just the duplicates
-                for (const id of projectIds) {
+                for (const id of newProjectIds) {
                     await this.add(id, rules, templateId)
                 }
                 return
@@ -228,6 +276,9 @@ class GenerationQueue {
         if (this.isProcessing) return
         this.isProcessing = true
         const supabase = createAdminClient()
+
+        // Compute once per run — cheap heartbeat check, not per-iteration.
+        const claudeLive = await isClaudeLive(supabase, Date.now())
 
         try {
             while (true) {
@@ -279,9 +330,39 @@ class GenerationQueue {
                     const pB = parsePriority(b.model_id)
                     if (pB !== pA) return pB - pA // higher priority first
                     return 0 // already sorted by created_at from DB
-                })
+                }) as unknown as QueueJob[]
 
-                const job = sorted[0] as unknown as QueueJob
+                // If Claude is live, work out which of these jobs' projects are in
+                // Claude's high-value scope, so the cron can leave them alone.
+                let highValueIds = new Set<string>()
+                if (claudeLive) {
+                    const projectIds = sorted.map((j) => j.project_id)
+                    const { data: projects, error: projectsError } = await supabase
+                        .from('projects')
+                        .select('id,is_high_value,niche_score,business_data')
+                        .in('id', projectIds)
+
+                    if (projectsError) {
+                        logger.queue.error('Failed to fetch projects for high-value scoping', { error: projectsError.message })
+                    } else if (projects) {
+                        const highValue = selectHighValue(projects as unknown as Project[])
+                        highValueIds = new Set(highValue.map((p) => p.id))
+                    }
+                }
+
+                const job = sorted.find(
+                    (j) => j.job_type === 'automation_plan' || !shouldCronSkip(j as { project_id: string; created_at: string }, {
+                        claudeLive,
+                        nowMs: Date.now(),
+                        highValueProjectIds: highValueIds,
+                    })
+                ) as QueueJob | undefined
+
+                if (!job) {
+                    // Everything remaining pending belongs to a live Claude worker's scope.
+                    logger.queue.info('All remaining pending jobs are in Claude scope, cron yielding')
+                    break
+                }
 
                 // 3. Mark as processing (optimistic lock — only succeeds if still 'pending')
                 const { data: updatedJob, error: updateError } = await supabase
@@ -291,6 +372,8 @@ class GenerationQueue {
                         attempts: (job.attempts || 0) + 1,
                         updated_at: new Date().toISOString(),
                         started_at: new Date().toISOString(),
+                        claimed_by: 'cron',
+                        claimed_at: new Date().toISOString(),
                     })
                     .eq('id', job.id)
                     .eq('status', 'pending')
@@ -316,12 +399,28 @@ class GenerationQueue {
         try {
             if (!job.project_id) throw new Error("QueueJob missing project_id")
 
-            await supabase.from('projects').update({ status: 'generating' }).eq('id', job.project_id)
+            if (job.job_type === 'automation_plan') {
+                // Plan jobs drive projects.plan_status only (inside the generator) —
+                // projects.status stays untouched so the lead keeps its CRM state.
+                const result = await generateAutomationPlan(job.project_id)
+                if (!result.success) {
+                    throw new Error(result.error || 'Plan generation failed')
+                }
+            } else {
+                await supabase.from('projects').update({ status: 'generating' }).eq('id', job.project_id)
 
-            const result = await generateAndSaveWebsite(job.project_id, undefined, job.rules || undefined, job.template_id || undefined)
+                // Template auto-routing now lives inside generateAndSaveWebsite, so every
+                // caller (cron, local worker, API) gets the cheap content-swap path. We just
+                // pass the job's explicit template_id (usually none) and let it route.
+                const result = await generateAndSaveWebsite(job.project_id, undefined, job.rules || undefined, job.template_id || undefined)
 
-            if (!result.success) {
-                throw new Error(result.error || 'Generation failed')
+                if (!result.success) {
+                    throw new Error(result.error || 'Generation failed')
+                }
+
+                // Close the loop: tell the assigned rep their demo site is ready
+                notifyProjectRep(job.project_id, 'deliverable_ready', { deliverable: 'website' })
+                    .catch(() => { /* notification failure must not fail the job */ })
             }
 
             // Mark job as completed
@@ -337,7 +436,8 @@ class GenerationQueue {
 
             if (currentAttempts < MAX_ATTEMPTS) {
                 // Exponential backoff: set updated_at to future timestamp so process loop skips it
-                const backoffMs = getBackoffMs(currentAttempts)
+                // Use attempt-1 so schedule is 30s, 60s, 120s (not 60s, 120s, 240s)
+                const backoffMs = getBackoffMs(currentAttempts - 1)
                 const retryAfter = new Date(Date.now() + backoffMs).toISOString()
                 logger.queue.warn('Job failed, scheduling retry with backoff', {
                     jobId: job.id,
@@ -356,7 +456,11 @@ class GenerationQueue {
                 }).eq('id', job.id)
 
                 if (job.project_id) {
-                    await supabase.from('projects').update({ status: 'queued' }).eq('id', job.project_id)
+                    if (job.job_type === 'automation_plan') {
+                        await (supabase.from('projects') as any).update({ plan_status: 'queued' }).eq('id', job.project_id)
+                    } else {
+                        await supabase.from('projects').update({ status: 'queued' }).eq('id', job.project_id)
+                    }
                 }
             } else {
                 // Permanently failed after MAX_ATTEMPTS
@@ -375,9 +479,16 @@ class GenerationQueue {
                 }).eq('id', job.id)
 
                 if (job.project_id) {
-                    await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
+                    if (job.job_type === 'automation_plan') {
+                        await (supabase.from('projects') as any).update({ plan_status: 'failed' }).eq('id', job.project_id)
+                    } else {
+                        await supabase.from('projects').update({ status: 'error' }).eq('id', job.project_id)
+                    }
                 }
             }
+        } finally {
+            // Restart the process loop to pick up any pending jobs
+            this.process()
         }
     }
 
@@ -420,13 +531,19 @@ if (typeof process !== 'undefined') {
         try {
             const supabase = createAdminClient()
 
-            // Reset processing jobs older than 2 min (orphaned from previous server process)
-            const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+            // Reset orphaned processing jobs. 15-min threshold (not 2): on Vercel a
+            // cold-starting instance runs this while another warm instance may still
+            // be legitimately generating (up to maxDuration 800s) — a short window
+            // reclaims live jobs and double-processes them. Claude-claimed jobs are
+            // excluded: the local worker is a separate process that survives server
+            // restarts; the cron safety valve owns reclaiming those.
+            const staleThreshold = new Date(Date.now() - 15 * 60 * 1000).toISOString()
             const { data: staleJobs } = await supabase
                 .from('queue_jobs')
-                .update({ status: 'pending', updated_at: new Date().toISOString() })
+                .update({ status: 'pending', updated_at: new Date().toISOString(), claimed_by: null, claimed_at: null })
                 .eq('status', 'processing')
                 .lt('started_at', staleThreshold)
+                .or('claimed_by.is.null,claimed_by.eq.cron')
                 .select('id')
 
             if (staleJobs && staleJobs.length > 0) {

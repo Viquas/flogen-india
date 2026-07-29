@@ -94,6 +94,10 @@ const CLASSIFICATION_RULES: Array<{ pattern: RegExp | ((error: string) => boolea
   { pattern: /truncated/i, type: ErrorType.MISSING_SECTIONS, promptTemplate: MISSING_SECTIONS_FIX_PROMPT },
   { pattern: /too short/i, type: ErrorType.MISSING_SECTIONS, promptTemplate: MISSING_SECTIONS_FIX_PROMPT },
 
+  // DATA_MAPPING patterns — placeholder/fabricated content should be replaced with
+  // real business data (the DATA_MAPPING prompt already covers "no invented data").
+  { pattern: /Placeholder\/fabricated content/i, type: ErrorType.DATA_MAPPING, promptTemplate: DATA_MAPPING_FIX_PROMPT },
+
   // TIMEOUT pattern
   { pattern: /timed? ?out/i, type: ErrorType.TIMEOUT, promptTemplate: TIMEOUT_FIX_PROMPT },
 ]

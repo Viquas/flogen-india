@@ -57,5 +57,9 @@ ashwini_*.txt
 failed_code.txt
 processed_output.txt
 supabase-*-log.txt
+supabase/.temp/
 *.dump
 .claude/worktrees/
+.worktrees/
+.migration/
+.env.local.*.bak

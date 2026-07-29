@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createLogger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 const log = createLogger('bulk-upload')
 
@@ -13,6 +14,11 @@ interface BulkUploadLead {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  }
   try {
     const { leads, filename, columnMapping } = (await req.json()) as {
       leads: BulkUploadLead[]

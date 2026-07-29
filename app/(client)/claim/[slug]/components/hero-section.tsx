@@ -52,7 +52,7 @@ export function HeroSection({ businessName, screenshotUrl, previewUrl, previewHt
                             <iframe
                                 srcDoc={previewHtml}
                                 className="w-full h-full bg-white pointer-events-none"
-                                sandbox="allow-scripts allow-same-origin"
+                                sandbox="allow-scripts"
                                 title={`Website preview for ${businessName}`}
                                 loading="eager"
                             />

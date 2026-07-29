@@ -209,7 +209,8 @@ async function executeGenerateStage(run: BatchRun): Promise<void> {
   if (!run.batch_id) throw new Error('Cannot generate: no batch_id set')
 
   // Calculate timeout: entries * 120s, floor 300s, ceiling 3600s
-  const timeoutMs = Math.min(Math.max(run.config.entries * 120, 300), 3600) * 1000
+  // Timeout: entries * 120s, floor 300s, ceiling 7200s (2 hours for large batches)
+  const timeoutMs = Math.min(Math.max(run.config.entries * 120, 300), 7200) * 1000
   const startTime = Date.now()
   const POLL_INTERVAL = 5000
   const STUCK_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes

@@ -13,7 +13,32 @@ export const HOSTING_PRICING = {
     pro: { amount: 2900, display: '29' },         // $29/mo
 } as const
 
+/**
+ * Optional Maintenance Pack — a recurring MONTHLY add-on selected at checkout.
+ * Billed separately from the one-time website charge, so it is persisted on the
+ * claim (maintenance_selected / maintenance_monthly_cents) but NOT added to the
+ * Razorpay order amount.
+ */
+export const MAINTENANCE_PRICING = {
+    standard: { amount: 9900, display: '99' },    // $99/mo
+    pro: { amount: 14900, display: '149' },       // $149/mo
+} as const
+
 export const CURRENCY_SYMBOL = '$'
+
+/**
+ * How the claim page collects payment.
+ *   'manual'   — no online checkout. The prospect submits a contact request and a
+ *                rep arranges payment offline, then marks the lead paid in /sales.
+ *   'razorpay' — self-serve Razorpay checkout (the original flow).
+ *
+ * Defaults to 'manual'. Set NEXT_PUBLIC_PAYMENT_MODE=razorpay to re-enable
+ * self-serve checkout — the Razorpay code path is intact, just not rendered.
+ * NOTE: re-enabling requires migration 20260716000001 (claims maintenance columns)
+ * to be applied, or claim creation will fail.
+ */
+export const PAYMENT_MODE: 'manual' | 'razorpay' =
+    process.env.NEXT_PUBLIC_PAYMENT_MODE === 'razorpay' ? 'razorpay' : 'manual'
 
 export const CLAIM_WINDOW_DAYS = 5
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generationQueue } from '@/lib/queue'
 
@@ -139,6 +140,11 @@ function buildBusinessData(place: Record<string, any>) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  }
   try {
     const body = await req.json()
     const url = typeof body?.url === 'string' ? body.url.trim() : ''

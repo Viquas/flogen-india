@@ -1,25 +1,35 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { generationQueue } from '@/lib/queue'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
 
 export async function GET() {
     try {
+        await requireAdmin()
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
+    try {
         const supabase = createAdminClient()
 
-        // 1. Reset stale processing jobs (stuck >2 min) back to pending
-        const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        // 1. Reset stale processing jobs back to pending. 15-min threshold (not 2):
+        // generation legitimately runs for many minutes (maxDuration 800s), and a
+        // shorter window would reclaim live jobs into double-processing. Claude-
+        // claimed jobs are excluded — the cron safety valve owns those.
+        const staleThreshold = new Date(Date.now() - 15 * 60 * 1000).toISOString()
         const { data: staleJobs } = await supabase
             .from('queue_jobs')
             .select('id, project_id')
             .eq('status', 'processing')
             .lt('started_at', staleThreshold)
+            .or('claimed_by.is.null,claimed_by.eq.cron')
 
         let resetCount = 0
         if (staleJobs && staleJobs.length > 0) {
             await supabase
                 .from('queue_jobs')
-                .update({ status: 'pending', updated_at: new Date().toISOString() })
+                .update({ status: 'pending', updated_at: new Date().toISOString(), claimed_by: null, claimed_at: null })
                 .in('id', staleJobs.map(j => j.id))
             resetCount = staleJobs.length
             logger.queue.info('Reset stale processing jobs back to pending', { count: resetCount })

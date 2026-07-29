@@ -1,8 +1,10 @@
 import { cache } from 'react'
+import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { constructHtmlBoilerplate } from '@/lib/utils/html-boilerplate'
 import { trackEvent } from '@/lib/analytics/track'
+import { notifyProjectRepOnce } from '@/lib/sales/notifications'
 import type { Metadata } from 'next'
 import { HeroSection } from './components/hero-section'
 import { CustomizationSection } from './components/customization-section'
@@ -100,9 +102,16 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         // Paid but not completed — stay on main claim page (no redirect to /customize)
     }
 
-    // Build preview HTML for the hero iframe
+    // Build preview HTML for the hero iframe. Same constraint as /preview: the
+    // hero iframe is sandboxed without allow-same-origin, so its origin is
+    // "null" and a relative /preview-runtime.js resolves to "null/..." — the
+    // runtime never loads and the hero renders blank. Inject an absolute URL.
+    const h = await headers()
+    const host = h.get('host') || ''
+    const proto = h.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
+    const runtimeUrl = host ? `${proto}://${host}/preview-runtime.js` : '/preview-runtime.js'
     const previewHtml = project.generated_code
-        ? constructHtmlBoilerplate(project.generated_code)
+        ? constructHtmlBoilerplate(project.generated_code, { runtimeUrl })
         : null
 
     // Check if claim has expired
@@ -142,6 +151,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
 
     // Track claim page view — fire-and-forget
     trackEvent('claim.started', { slug, projectId: project.id }).catch(() => {})
+    // Notify the owning sales rep the prospect is on the claim page (first view only).
+    notifyProjectRepOnce(project.id, 'claim_started').catch(() => {})
 
     // Active state: full claim landing page
     return (

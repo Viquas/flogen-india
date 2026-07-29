@@ -5,8 +5,10 @@ import { revalidatePath } from 'next/cache'
 import { reviseWebsite, updateProjectWithCode } from '@/lib/ai/generator'
 import { enrichBusinessData } from '@/lib/ai/enricher'
 import { regenerateProject } from './generation-actions'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function fixWebsiteErrors(projectId: string, rules?: string) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     const { data: project, error: fetchError } = await supabase
@@ -91,6 +93,7 @@ STRICT RULES:
  * Runs concurrently with a configurable concurrency limit.
  */
 export async function autoFixAllErrors(dateString?: string) {
+    await requireAdmin()
     const supabase = createAdminClient()
 
     // Query projects that need fixing: 'error' status, or 'review' with no generated code

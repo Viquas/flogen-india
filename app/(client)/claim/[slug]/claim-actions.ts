@@ -2,7 +2,8 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRazorpayClient } from '@/lib/razorpay'
-import { calculateTotalCents, UPSELL_PRICING, type PlanType } from '@/lib/claim-pricing'
+import { calculateTotalCents, MAINTENANCE_PRICING, UPSELL_PRICING, CLAIM_WINDOW_DAYS, type PlanType } from '@/lib/claim-pricing'
+import { notifyProjectRep } from '@/lib/sales/notifications'
 import { z } from 'zod'
 
 const expiredFormSchema = z.object({
@@ -53,16 +54,111 @@ export async function submitExpiredClaimRequest(formData: FormData) {
     }
 }
 
+// --- Manual-payment interest capture ---
+
+const interestSchema = z.object({
+    name: z.string().trim().min(1, 'Name is required').max(100),
+    email: z.string().email('Valid email required'),
+    phone: z.string().trim().min(7, 'Valid phone number required').max(20),
+    projectId: z.string().uuid(),
+})
+
+/**
+ * "Get in touch" submission used when PAYMENT_MODE is 'manual' — there's no online
+ * checkout, so the prospect raises their hand and a rep arranges payment offline.
+ *
+ * Records a pending claim carrying the contact details (so the lead shows up in the
+ * sales warm-lead queue and can later be marked paid against the same row) and
+ * notifies the assigned rep.
+ */
+export async function submitInterestRequest(formData: FormData) {
+    const parsed = interestSchema.safeParse({
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        projectId: formData.get('projectId'),
+    })
+
+    if (!parsed.success) {
+        return { success: false as const, errors: parsed.error.flatten().fieldErrors }
+    }
+
+    try {
+        const supabase = createAdminClient()
+
+        // Already converted? Don't create a stray pending claim (the claim page
+        // normally redirects paid projects, but guard the action directly too).
+        const { data: paidClaim } = await supabase
+            .from('claims')
+            .select('id')
+            .eq('project_id', parsed.data.projectId)
+            .in('status', ['paid', 'customizing', 'completed'])
+            .limit(1)
+            .maybeSingle()
+        if (paidClaim) {
+            return { success: true as const }
+        }
+
+        // Don't create a second request if this project already has an open claim —
+        // update it so the rep sees the latest contact details on one row.
+        const { data: existing } = await supabase
+            .from('claims')
+            .select('id')
+            .eq('project_id', parsed.data.projectId)
+            .in('status', ['pending', 'order_created'])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        const contact = {
+            client_name: parsed.data.name,
+            client_email: parsed.data.email,
+            client_phone: parsed.data.phone,
+        }
+
+        if (existing) {
+            await supabase.from('claims').update(contact).eq('id', existing.id)
+        } else {
+            const { error } = await supabase.from('claims').insert({
+                project_id: parsed.data.projectId,
+                status: 'pending',
+                plan: 'standard',
+                // Manual payment: the real figure is agreed offline, so don't invent one.
+                amount_paise: 0,
+                currency: 'USD',
+                ...contact,
+                expires_at: new Date(Date.now() + CLAIM_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            if (error) {
+                console.error('[ClaimActions] interest request failed:', error)
+                return { success: false as const, errors: { form: ['Failed to submit. Please try again.'] } }
+            }
+        }
+
+        await notifyProjectRep(parsed.data.projectId, 'interest_submitted', {
+            email: parsed.data.email,
+            phone: parsed.data.phone,
+        })
+
+        return { success: true as const }
+    } catch (error) {
+        console.error('[ClaimActions] interest request failed:', error)
+        return { success: false as const, errors: { form: ['Failed to submit. Please try again.'] } }
+    }
+}
+
 // --- Razorpay Order Creation ---
 
 const orderSchema = z.object({
     projectId: z.string().uuid(),
     plan: z.enum(['standard', 'pro']),
+    addMaintenance: z.boolean().optional().default(false),
 })
 
 export async function createRazorpayOrder(input: {
     projectId: string
     plan: PlanType
+    addMaintenance?: boolean
 }): Promise<
     | { success: true; orderId: string; claimId: string }
     | { success: false; error: string }
@@ -73,23 +169,57 @@ export async function createRazorpayOrder(input: {
         return { success: false, error: 'Invalid input. Please check your selections.' }
     }
 
-    const { projectId, plan } = parsed.data
+    const { projectId, plan, addMaintenance } = parsed.data
     const amountCents = calculateTotalCents(plan)
+    // Maintenance is a recurring monthly add-on billed separately — record the
+    // opt-in, but do NOT add it to the one-time Razorpay charge.
+    const maintenanceMonthlyCents = addMaintenance ? MAINTENANCE_PRICING[plan].amount : null
 
     try {
         const supabase = createAdminClient()
 
-        // Idempotency check: reuse existing pending/order_created claim for same project
+        // Guard: never create a new order for a project that already has a
+        // successful claim — a paid customer revisiting the claim page must
+        // not be able to pay twice.
+        const { data: paidClaim } = await supabase
+            .from('claims')
+            .select('id, status')
+            .eq('project_id', projectId)
+            .in('status', ['paid', 'customizing', 'completed'])
+            .limit(1)
+            .maybeSingle()
+
+        if (paidClaim) {
+            return { success: false, error: 'This website has already been claimed and paid for.' }
+        }
+
+        // Idempotency check: reuse existing pending/order_created claim for same
+        // project. maybeSingle + newest-first: .single() errors when concurrent
+        // visitors created duplicate pending rows, which made every later call
+        // fall through to creating yet another claim.
         const { data: existingClaim } = await supabase
             .from('claims')
             .select('id, razorpay_order_id, status')
             .eq('project_id', projectId)
             .in('status', ['pending', 'order_created'])
+            .order('created_at', { ascending: false })
             .limit(1)
-            .single()
+            .maybeSingle()
 
         if (existingClaim?.razorpay_order_id) {
-            // Already has a Razorpay order -- return it to avoid double-charge
+            // Already has a Razorpay order -- return it to avoid double-charge.
+            // Still capture the latest maintenance choice: it's a separate recurring
+            // add-on and doesn't affect the one-time order amount, so re-toggling it
+            // before re-confirming must not be lost.
+            await supabase
+                .from('claims')
+                // Cast: maintenance_* columns (migration 20260716000001) are not yet in
+                // the generated Supabase types until the DB is migrated + types regenerated.
+                .update({
+                    maintenance_selected: addMaintenance,
+                    maintenance_monthly_cents: maintenanceMonthlyCents,
+                } as never)
+                .eq('id', existingClaim.id)
             return {
                 success: true,
                 orderId: existingClaim.razorpay_order_id,
@@ -105,24 +235,30 @@ export async function createRazorpayOrder(input: {
             // Update the existing pending claim with latest selections
             await supabase
                 .from('claims')
+                // Cast: maintenance_* columns not yet in generated types (see above).
                 .update({
                     plan,
                     currency: 'USD',
                     amount_paise: amountCents,
-                })
+                    maintenance_selected: addMaintenance,
+                    maintenance_monthly_cents: maintenanceMonthlyCents,
+                } as never)
                 .eq('id', claimId)
         } else {
             // Create new claim record
             const { data: newClaim, error: insertError } = await supabase
                 .from('claims')
+                // Cast: maintenance_* columns not yet in generated types (see above).
                 .insert({
                     project_id: projectId,
                     plan,
                     currency: 'USD',
                     amount_paise: amountCents,
+                    maintenance_selected: addMaintenance,
+                    maintenance_monthly_cents: maintenanceMonthlyCents,
                     status: 'pending',
                     expires_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-                })
+                } as never)
                 .select('id')
                 .single()
 
@@ -182,7 +318,7 @@ const customizationSchema = z.object({
     phone: z.string().max(20).optional().default(''),
     email: z.string().email().or(z.literal('')).optional().default(''),
     address: z.string().max(500).optional().default(''),
-    whatsapp: z.string().max(20).optional().default(''),
+    whatsapp: z.string().regex(/^\+?[0-9\s\-().]{7,20}$/).or(z.literal('')).optional().default(''),
     photoUrls: z.array(z.string()).max(10).optional().default([]),
     notes: z.string().max(1000).optional().default(''),
     wantsBookingSystem: z.boolean().optional().default(false),

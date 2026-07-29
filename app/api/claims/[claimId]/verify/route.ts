@@ -26,12 +26,15 @@ export async function POST(
         return Response.json({ error: 'Claim not found' }, { status: 404 })
     }
 
-    // Step 2: If already in a paid/post-paid state, return immediately
+    // Step 2: If already in a paid/post-paid state, return immediately.
+    // Do NOT include client_email — this endpoint takes only a (guessable-in-
+    // principle) claimId with no ownership proof, and the email is the value
+    // account creation trusts. The confirmation page supplies the email to the
+    // legitimate customer from its own server-side, claimId-scoped query.
     if (claim.status === 'paid' || claim.status === 'customizing' || claim.status === 'completed') {
         return Response.json({
             verified: true,
             status: claim.status,
-            email: claim.client_email,
         })
     }
 
@@ -58,7 +61,11 @@ export async function POST(
         const clientName = (captured.notes as Record<string, string>)?.name
             || (captured.email ? captured.email.split('@')[0] : null)
 
-        await supabase
+        // Idempotency guard: only pre-paid states may transition to paid.
+        // 'cancelled' is included because a failed attempt (payment.failed
+        // webhook) followed by a successful retry on the same order must
+        // still be able to reach 'paid'.
+        const { data: updated } = await supabase
             .from('claims')
             .update({
                 status: 'paid',
@@ -69,7 +76,26 @@ export async function POST(
                 client_name: clientName || null,
             })
             .eq('id', claim.id)
-            .eq('status', 'order_created') // idempotency guard
+            .in('status', ['order_created', 'cancelled'])
+            .select('status')
+
+        if (!updated || updated.length === 0) {
+            // Update matched no rows — re-read so we report the real state
+            // instead of claiming 'paid' when the transition didn't happen.
+            const { data: current } = await supabase
+                .from('claims')
+                .select('status, client_email')
+                .eq('id', claim.id)
+                .single()
+            const nowPaid = current?.status === 'paid'
+                || current?.status === 'customizing'
+                || current?.status === 'completed'
+            return Response.json({
+                verified: nowPaid,
+                status: current?.status ?? claim.status,
+                email: current?.client_email ?? claim.client_email,
+            })
+        }
 
         // Step 7: Return verified
         return Response.json({

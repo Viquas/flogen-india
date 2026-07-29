@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { razorpayWebhookSecret } from '@/lib/razorpay'
+import { notifyProjectRep } from '@/lib/sales/notifications'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -115,6 +116,21 @@ async function handleAgentPayment(
     // Determine request type based on payment type
     const requestType = paymentType === 'domain_setup' ? 'domain_setup' : 'agent_call'
 
+    // Razorpay delivers webhooks at-least-once and this path never writes
+    // webhook_event_id (the claims-based dedup), so dedupe on the payment id
+    // to avoid queueing duplicate requests for a single charge.
+    const { data: existingRequest } = await supabase
+        .from('client_requests')
+        .select('id')
+        .eq('claim_id', claimId)
+        .eq('content->>payment_id', payment.id)
+        .maybeSingle()
+
+    if (existingRequest) {
+        console.log('[Webhook] Agent payment already processed:', payment.id)
+        return
+    }
+
     await supabase
         .from('client_requests')
         .insert({
@@ -159,7 +175,7 @@ async function handlePaymentCaptured(
     // Find claim by razorpay_order_id
     const { data: claim } = await supabase
         .from('claims')
-        .select('id, status')
+        .select('id, status, project_id')
         .eq('razorpay_order_id', payment.order_id)
         .single()
 
@@ -167,8 +183,12 @@ async function handlePaymentCaptured(
         throw new Error('No claim found for order: ' + payment.order_id)
     }
 
-    // Status guard: only transition from order_created -> paid
-    if (claim.status !== 'order_created') {
+    // Status guard: allow order_created -> paid, and also cancelled -> paid.
+    // Razorpay Checkout lets a customer retry a declined attempt on the SAME
+    // order_id: payment.failed fires first (claim -> cancelled), then a
+    // successful retry fires payment.captured — that capture must still win,
+    // or the customer is charged while the claim stays cancelled forever.
+    if (claim.status !== 'order_created' && claim.status !== 'cancelled') {
         console.log('[Webhook] Claim already processed, status:', claim.status)
         return
     }
@@ -192,6 +212,11 @@ async function handlePaymentCaptured(
         .eq('id', claim.id)
 
     console.log('[Webhook] Claim marked as paid:', claim.id)
+
+    // Notify the owning sales rep of the conversion (highest-value signal).
+    if (claim.project_id) {
+        await notifyProjectRep(claim.project_id, 'claim_paid', { amountPaise: payment.amount }).catch(() => {})
+    }
 }
 
 async function handlePaymentFailed(

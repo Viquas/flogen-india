@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Loader2, Sparkles, CheckCircle, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,10 +32,20 @@ export function ActiveBatchStatusBar({ runId, onDismiss }: ActiveBatchStatusBarP
         startedAt?: string
     } | null>(null)
 
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
     const poll = useCallback(async () => {
         try {
             const data = await getAutopilotProgress(runId)
-            if (data) setProgress(data as any)
+            if (data) {
+                setProgress(data as any)
+                // Stop the poller once the run reaches a terminal state — otherwise
+                // it keeps hitting the server every 3s until the admin dismisses.
+                if ((data as any).isComplete && intervalRef.current) {
+                    clearInterval(intervalRef.current)
+                    intervalRef.current = null
+                }
+            }
         } catch {
             // Ignore polling errors
         }
@@ -43,16 +53,12 @@ export function ActiveBatchStatusBar({ runId, onDismiss }: ActiveBatchStatusBarP
 
     useEffect(() => {
         poll()
-        const interval = setInterval(poll, 3000)
-        return () => clearInterval(interval)
-    }, [poll])
-
-    // Stop polling when complete
-    useEffect(() => {
-        if (progress?.isComplete) {
-            // No cleanup needed — interval already set with dependency on `poll`
+        intervalRef.current = setInterval(poll, 3000)
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current)
+            intervalRef.current = null
         }
-    }, [progress?.isComplete])
+    }, [poll])
 
     if (!progress) return null
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createLogger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 const log = createLogger('bulk-upload')
 
@@ -7,6 +8,11 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ batchId: string }> },
 ) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  }
   try {
     const { batchId } = await params
 

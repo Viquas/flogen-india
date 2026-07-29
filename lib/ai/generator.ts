@@ -2,7 +2,7 @@ import { generateText, streamText, Output } from 'ai'
 import { BusinessData, BusinessDataSchema } from '@/lib/schemas/project'
 import { z } from 'zod'
 import { enrichBusinessData } from './enricher'
-import { getModel } from './model-config'
+import { getModel, generateTextWithFallback } from './model-config'
 import { reviseWebsite } from './revision'
 import { validateAndAutoFix } from './validation'
 import { updateProjectWithCode } from './project-persistence'
@@ -12,6 +12,23 @@ import { getActivePrompt } from './prompt-manager'
 import { generateDLS } from './design-architect'
 import { CODE_GENERATOR_PROMPT } from './prompts/code-generator'
 import { logger } from '@/lib/logger'
+import { buildAuVoicePromptFragment } from './copy-voice'
+import { rankPhotos } from './photo-selection'
+import { selectKnowledge, type SelectedKnowledge } from './design-knowledge'
+
+// Optional image/voice/design context for a single generation call.
+// placesPhotos + placesApiKey enable ranking the business's OWN Google Places photos
+// as the preferred hero/gallery imagery; suburb personalizes AU voice. When no real
+// photos exist, the existing industry image system (image-registry/unsplash) supplies
+// imagery, so this context never has to fabricate a fallback.
+export interface GenerationImageContext {
+  category: string
+  businessId: string
+  placesPhotos?: Array<{ name: string; widthPx: number; heightPx: number }>
+  placesApiKey?: string
+  suburb?: string
+  knowledge?: SelectedKnowledge
+}
 
 // Generate website code based on business data (Supports Multi-Agent, Monolithic, and Modular Sections)
 export async function generateWebsiteCode(
@@ -19,9 +36,37 @@ export async function generateWebsiteCode(
     rules?: string,
     markdownContext?: string,
     model?: string,
-    onProgress?: (phase: string) => void
+    onProgress?: (phase: string) => void,
+    imageContext?: GenerationImageContext,
 ): Promise<{ code: string; promptVersionId: string; dls?: string }> {
-    const rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
+    let rulesSection = rules ? `\n\n## USER OVERRIDE RULES (PRIORITY):\n${rules}` : ''
+
+    if (imageContext) {
+        const voiceFragment = buildAuVoicePromptFragment(imageContext.suburb)
+        rulesSection += `\n\n${voiceFragment}`
+
+        // If we have the business's OWN photos (from Google Places), prefer them for
+        // hero/gallery. When absent, we intentionally fall through to the existing
+        // industry image system (lib/ai/image-registry + lib/ai/unsplash), already
+        // injected into the prompt below — we do NOT compete with it or fabricate a hero.
+        const ranked = imageContext.placesPhotos
+            ? rankPhotos(imageContext.placesPhotos)
+            : []
+        if (ranked.length > 0) {
+            const list = ranked.slice(0, 6).map((p, i) => `${i + 1}. ${p.url} (${p.widthPx}x${p.heightPx})`).join('\n')
+            rulesSection += `\n\n## REAL BUSINESS PHOTOS (actual photos of THIS business — these beat any stock image)
+Use photo #1 for the hero. Spread at least 2-3 of the remaining photos across the page (about section, gallery/collage, menu/service imagery) so the site unmistakably shows THEIR business, not stock. Only fall back to stock imagery for slots these photos can't cover.
+${list}`
+        }
+    }
+
+    // Section craft exemplars from the design-knowledge library. Injected into the DLS-mode
+    // and legacy monolithic prompts only (NOT the modular per-section loop, which would
+    // multiply token cost by re-sending the exemplar block on every section call).
+    const exemplarSection = imageContext?.knowledge?.exemplarBlock
+        ? '\n\n## QUALITY BAR — SECTION EXEMPLARS\nThe DLS names three section archetypes. These exemplars show the exact craft expected for them. Match their quality, structure, and boldness — adapted to THIS business\'s DLS values and content. Do not copy content verbatim.\n' + imageContext.knowledge.exemplarBlock
+        : ''
+
     let richData = businessData as unknown as { sections?: Record<string, unknown>[], brandIdentity?: Record<string, unknown>, $$manifest?: Record<string, unknown>, businessName?: string };
 
     // Load active prompt from DB (with cache/fallback)
@@ -31,7 +76,6 @@ export async function generateWebsiteCode(
     // If the data has 'sections', generate them individually to save tokens
     if (richData && richData.sections && Array.isArray(richData.sections)) {
         logger.ai.info('Modular SJSON detected, generating sections individually', { sectionCount: richData.sections.length });
-        const modelInstance = getModel(model);
 
         let componentsCodeMap: Record<string, string> = {};
 
@@ -60,13 +104,12 @@ ${rulesSection}
 5. Return ONLY RAW CODE. No markdown fences.`;
 
             try {
-                const { text, usage } = await generateText({
-                    model: modelInstance,
+                const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
                     system: systemPromptContent.replace('export default function GeneratedPage', `export function ${section.component}`),
                     prompt: sectionPrompt,
                 })
                 // Track cost for each section generation
-                await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId));
+                await recordCost(buildCostRecord(usage, modelIdUsed, 'generation', null, promptVersionId));
 
                 let code = text.trim();
                 if (code.startsWith('```')) {
@@ -151,7 +194,11 @@ export default function GeneratedPage() {
             }
 
             if (!dls) {
-                const dlsResult = await generateDLS(richData as Record<string, unknown>)
+                const dlsResult = await generateDLS(
+                    richData as Record<string, unknown>,
+                    imageContext?.businessId ?? (richData as any)?.id ?? (businessData as any)?.id,
+                    imageContext?.knowledge?.dlsBlock,
+                )
                 dls = dlsResult.dls
             }
 
@@ -192,6 +239,7 @@ export default function GeneratedPage() {
                 // Combine Code Generator prompt + DLS as system prompt
                 const dlsSystemPrompt = CODE_GENERATOR_PROMPT
                     + '\n\n## DESIGN LANGUAGE SPECIFICATION:\n' + dls
+                    + exemplarSection
                     + imageBlock
                     + rulesSection
 
@@ -209,14 +257,12 @@ EXECUTION PLAN:
 
 Generate the code now.`
 
-                const modelInstance = getModel(model)
-                const { text, usage } = await generateText({
-                    model: modelInstance,
+                const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
                     system: dlsSystemPrompt,
                     prompt: dlsUserPrompt,
                 })
                 // Track cost for DLS-powered generation
-                await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
+                await recordCost(buildCostRecord(usage, modelIdUsed, 'generation', null, promptVersionId))
 
                 let code = text.trim()
                 if (code.startsWith('```')) {
@@ -349,14 +395,12 @@ ${fewShotBlock}
 
 Generate the code now.`
 
-    const modelInstance = getModel(model)
-    const { text, usage } = await generateText({
-        model: modelInstance,
-        system: systemPromptContent + legacyImageBlock + rulesSection,
+    const { text, usage, modelIdUsed } = await generateTextWithFallback(model, {
+        system: systemPromptContent + legacyImageBlock + rulesSection + exemplarSection,
         prompt: userPrompt,
     })
     // Track cost for monolithic generation
-    await recordCost(buildCostRecord(usage, getModelId(modelInstance), 'generation', null, promptVersionId))
+    await recordCost(buildCostRecord(usage, modelIdUsed, 'generation', null, promptVersionId))
 
     let code = text.trim()
     if (code.startsWith('```')) {
@@ -626,10 +670,34 @@ async function _generateAndSaveWebsiteInner(
             data = project.business_data as BusinessData
         }
 
+        // Capture Places photos from the ORIGINAL business_data before enrichment
+        // can overwrite `data` with a schema-validated object that drops `photos`.
+        const originalPlacesPhotos = (data as any)?.photos ?? undefined
+
         await supabase
             .from('projects')
             .update({ status: 'generating' as const })
             .eq('id', projectId)
+
+        // Auto-route to an approved industry template when the caller didn't pass one.
+        // Centralized here so EVERY entry point (queue cron, local Claude worker,
+        // /api/generate) gets the cheap content-swap path consistently — previously
+        // this lived only in the queue's executeJob, so the worker did full generation.
+        if (!templateId) {
+            try {
+                const industry = (data as any)?.industry || (data as any)?.brandIdentity?.vibe?.industry || null
+                const { findApprovedTemplate } = await import('./template-routing')
+                const routed = await findApprovedTemplate(industry, supabase)
+                if (routed) {
+                    templateId = routed
+                    logger.ai.info('Auto-routed to approved template', { projectId, industry, templateId })
+                }
+            } catch (routeErr) {
+                logger.ai.warn('Template auto-route failed; continuing with full generation', {
+                    projectId, error: routeErr instanceof Error ? routeErr.message : String(routeErr),
+                })
+            }
+        }
 
         // --- TEMPLATE-BASED GENERATION (fast content-swap path) ---
         if (templateId) {
@@ -653,17 +721,27 @@ async function _generateAndSaveWebsiteInner(
                 const roundedClasses = [...new Set((templateCode.match(/rounded-\w+/g) || []))]
                 const isDarkTheme = (templateCode.match(/bg-(?:zinc|slate|gray|neutral|black)-[89]\d{2}/g) || []).length > 3
 
+                // Real Places photos for THIS business — content-swap must prefer these
+                // over stock imagery everywhere a slot can use one.
+                const templateRankedPhotos = originalPlacesPhotos ? rankPhotos(originalPlacesPhotos) : []
+                const realPhotosBlock = templateRankedPhotos.length > 0
+                    ? `\n## REAL BUSINESS PHOTOS (actual photos of THIS business — use these, not stock, for every image slot they can fill)\n${templateRankedPhotos.slice(0, 8).map((p, i) => `${i + 1}. ${p.url}`).join('\n')}\nFill the template's image slots (hero, gallery, service/menu photos) with these in order. Only fall back to a relevant Unsplash URL for a slot once every real photo above has been used.`
+                    : ''
+
                 const templateSystemPrompt = `You are a CODE EDITOR, not a designer. You will receive an existing React component and new business data. Your job is to MODIFY THE EXISTING CODE — not rewrite it from scratch.
 
 ## CRITICAL: MODIFY, DON'T REWRITE
 Start with the template code as your base. Make surgical edits to swap content. The output should be 80-90% identical code to the input template.
 
+## MAXIMIZE USE OF THE REAL DATA BELOW
+The business data below often has more in it than the template's default slots use — real review quotes, categories/secondary types, opening hours, price level, multiple photos. Don't leave a slot generic when the data has a real value for it: a template testimonial placeholder must become a REAL review's text + reviewer name if one exists; a services list should reflect the business's actual category/type, not the template's stock list; a photo slot must use a REAL photo (see below) before ever touching stock. Only fall back to generic-relevant copy for a slot when the data genuinely has nothing for it.
+
 ## WHAT TO CHANGE (ONLY these):
 - String literals: business name, tagline, descriptions, section headings
 - Service/product names, descriptions, and prices
-- Testimonial names, quotes, ratings
+- Testimonial names, quotes, ratings — use REAL review text/author from the data when present
 - Contact info: phone, email, address, hours
-- Image \`src\` URLs (use Unsplash URLs relevant to the new industry, keep onError fallbacks)
+- Image \`src\` URLs — see REAL BUSINESS PHOTOS below; only use Unsplash for slots with no real photo left
 - Icon component names (swap to match new industry, keep lucide-react)
 - Navigation link labels
 - Array items in data arrays (services list, menu items, FAQ items)
@@ -699,13 +777,14 @@ This is the ONE area where you MUST modify className strings if needed:
 ## CODE REQUIREMENTS:
 - Keep the single-file React component format
 - Keep \`export default function GeneratedPage()\`
-- All images need real Unsplash URLs with onError fallback
+- Every image slot: a REAL business photo (below) first, Unsplash only once those are used, with onError fallback
 - No placeholder "Lorem ipsum" text`
 
                 const templateUserPrompt = `## TEMPLATE CODE (your starting point — modify this, don't rewrite):
 ${templateCode}
+${realPhotosBlock}
 
-## NEW BUSINESS DATA (swap into the template above):
+## NEW BUSINESS DATA (swap into the template above — use every field that has a real value):
 ${JSON.stringify(data, null, 2)}
 
 ${rules ? `## ADDITIONAL RULES:\n${rules}` : ''}
@@ -776,6 +855,14 @@ Return the modified React code. Remember: modify the template code above, don't 
 
                 const enriched = await enrichBusinessData(data, activeRulesStr);
 
+                // Preserve the business's real Google Places photos across enrichment.
+                // The enrichment schema drops unknown fields; without this, the photos
+                // are lost on the first save and every retry/regeneration permanently
+                // falls back to stock imagery instead of the client's own photos.
+                if (Array.isArray(originalPlacesPhotos) && originalPlacesPhotos.length > 0) {
+                    (enriched as any).photos = originalPlacesPhotos
+                }
+
                 await supabase
                     .from('projects')
                     .update({ business_data: enriched as any })
@@ -791,7 +878,24 @@ Return the modified React code. Remember: modify the template code above, don't 
         // --- 2. GENERATION PHASE (Multi-Agent or Legacy) ---
         /* generation_phase removed */
 
-        const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined);
+        let knowledge: SelectedKnowledge | undefined
+        try {
+            knowledge = selectKnowledge(
+                String((data as any)?.industry || (data as any)?.brandIdentity?.vibe?.industry || 'business'),
+                projectId,
+            )
+        } catch (e) {
+            logger.ai.warn('design-knowledge unavailable, generating without it', { projectId, error: e instanceof Error ? e.message : String(e) })
+        }
+        const imageContext = {
+            category: String((data as any)?.industry || (data as any)?.vibe?.industry || 'business'),
+            businessId: projectId,
+            placesPhotos: Array.isArray(originalPlacesPhotos) ? originalPlacesPhotos : undefined,
+            placesApiKey: process.env.GOOGLE_PLACES_API_KEY,
+            suburb: undefined,
+            knowledge,
+        }
+        const genResult = await generateWebsiteCode(data, activeRules, undefined, undefined, undefined, imageContext);
 
         const code = typeof genResult === 'string' ? genResult : (genResult as { code: string; promptVersionId: string; dls?: string }).code
         const promptVersionId = typeof genResult === 'string' ? null : (genResult as { code: string; promptVersionId: string }).promptVersionId

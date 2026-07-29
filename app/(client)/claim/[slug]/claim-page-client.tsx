@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
-import type { PlanType } from '@/lib/claim-pricing'
+import { PAYMENT_MODE, type PlanType } from '@/lib/claim-pricing'
 import { trackClientEvent } from '@/lib/analytics/track'
 import { CountdownTimer } from './components/countdown-timer'
 import { PricingSection } from './components/pricing-section'
 import { ConfirmationStep } from './components/confirmation-step'
+import { InterestForm } from './components/interest-form'
 import { createRazorpayOrder } from './claim-actions'
 
 interface ClaimPageClientProps {
@@ -50,7 +51,7 @@ export default function ClaimPageClient({
         setPaymentError(null)
     }
 
-    const handleProceedToPayment = async (_addMaintenance?: boolean) => {
+    const handleProceedToPayment = async (addMaintenance?: boolean) => {
         if (!selectedPlan || isProcessing) return
         setIsProcessing(true)
         setPaymentError(null)
@@ -59,6 +60,7 @@ export default function ClaimPageClient({
             const result = await createRazorpayOrder({
                 projectId,
                 plan: selectedPlan,
+                addMaintenance: addMaintenance ?? false,
             })
 
             if (!result.success) {
@@ -101,6 +103,21 @@ export default function ClaimPageClient({
             setPaymentError('Something went wrong. Please try again.')
             setIsProcessing(false)
         }
+    }
+
+    // Manual payment: no online checkout — the prospect asks us to get in touch and
+    // a rep arranges payment offline, then marks the lead paid in /sales.
+    if (PAYMENT_MODE === 'manual') {
+        return (
+            <div className="space-y-0">
+                <section className="px-4 py-8">
+                    <CountdownTimer expiresAt={expiresAt} />
+                </section>
+                <section id="pricing" className="px-4 py-10 scroll-mt-4">
+                    <InterestForm projectId={projectId} businessName={businessName} />
+                </section>
+            </div>
+        )
     }
 
     return (

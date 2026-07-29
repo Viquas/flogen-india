@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { generateText } from 'ai'
 import { openai, createOpenAI } from '@ai-sdk/openai'
 import { google } from '@ai-sdk/google'
@@ -52,6 +53,11 @@ const getRefineModel = () => {
 }
 
 export async function POST(req: NextRequest) {
+    try {
+        await requireAdmin()
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
     try {
         const { projectId, message, imageUrls } = await req.json()
 

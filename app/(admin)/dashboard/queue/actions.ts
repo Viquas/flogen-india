@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import type { QueueStats, QueueJobDetail } from './types'
 
 /**
@@ -77,6 +78,7 @@ export async function getQueueJobs(
  * Retry a failed or stuck job by resetting it to pending.
  */
 export async function retryJob(jobId: string): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin()
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -103,6 +105,7 @@ export async function retryJob(jobId: string): Promise<{ success: boolean; error
  * Cancel a failed or stuck job by setting it to failed with a cancellation message.
  */
 export async function cancelJob(jobId: string): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin()
   const supabase = createAdminClient()
 
   const { error } = await supabase

@@ -10,6 +10,7 @@ import { fetchOnePage, requireApiKey, type PlaceResult } from '@/lib/google-plac
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createLogger } from '@/lib/logger'
 import { google } from '@ai-sdk/google'
+import { GEMINI_FLASH } from '@/lib/ai/model-ids'
 import { generateText } from 'ai'
 
 const log = createLogger('bulk-research')
@@ -97,7 +98,7 @@ Return a JSON object with these fields (use null for unknown):
 
 IMPORTANT: Return ONLY the JSON object, no markdown formatting, no code blocks.`
 
-  const model = google('gemini-2.5-flash-preview-05-20')
+  const model = google(GEMINI_FLASH)
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -206,10 +207,6 @@ export async function researchBatch(batchId: string): Promise<void> {
   let notFound = 0
   let failed = 0
 
-  // Concurrency pool
-  const pool: Promise<void>[] = []
-  let idx = 0
-
   async function processLead(lead: LeadRow) {
     try {
       // Mark as researching
@@ -255,26 +252,21 @@ export async function researchBatch(batchId: string): Promise<void> {
     await new Promise((r) => setTimeout(r, GEMINI_DELAY_MS))
   }
 
-  // Process with concurrency limit
-  for (const lead of leads) {
-    const task = processLead(lead)
-    pool.push(task)
-
-    if (pool.length >= CONCURRENCY) {
-      await Promise.race(pool)
-      // Remove settled promises
-      for (let i = pool.length - 1; i >= 0; i--) {
-        const settled = await Promise.race([
-          pool[i].then(() => true),
-          Promise.resolve(false),
-        ])
-        if (settled) pool.splice(i, 1)
+  // Process with bounded concurrency: a fixed set of workers each pull the
+  // next unprocessed lead. (The previous race-based pool never detected
+  // settled promises — Promise.resolve(false) always won the probe race — so
+  // after the first completion the "limit" degraded to unbounded concurrency.)
+  let nextLeadIndex = 0
+  const workers = Array.from(
+    { length: Math.min(CONCURRENCY, leads.length) },
+    async () => {
+      while (nextLeadIndex < leads.length) {
+        const lead = leads[nextLeadIndex++]
+        await processLead(lead)
       }
-    }
-  }
-
-  // Wait for remaining
-  await Promise.all(pool)
+    },
+  )
+  await Promise.all(workers)
 
   // Update batch summary
   const finalStatus = failed > 0 && (foundMaps + foundWeb + notFound) > 0

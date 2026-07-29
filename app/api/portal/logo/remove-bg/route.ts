@@ -42,6 +42,17 @@ export async function POST(request: Request) {
         // Download the logo — handle both signed URLs and storage paths
         let logoResponse: Response
         if (logoUrl.startsWith('http')) {
+            // Signed URLs must point at our own Supabase storage host — fetching
+            // arbitrary user-supplied URLs from the server is an SSRF vector
+            let requestedHost = ''
+            let allowedHost = ''
+            try {
+                requestedHost = new URL(logoUrl).host
+                allowedHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').host
+            } catch {}
+            if (!allowedHost || requestedHost !== allowedHost) {
+                return NextResponse.json({ error: 'logoUrl must be a claim-uploads storage URL' }, { status: 400 })
+            }
             logoResponse = await fetch(logoUrl)
         } else {
             // It's a storage path, download via admin client

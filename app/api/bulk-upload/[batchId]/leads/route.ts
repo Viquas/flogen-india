@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createLogger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 const log = createLogger('bulk-upload')
 
@@ -8,6 +9,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ batchId: string }> },
 ) {
+  try {
+    await requireAdmin()
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+  }
   try {
     const { batchId } = await params
 
@@ -40,7 +46,12 @@ export async function GET(
     }
 
     if (search) {
-      query = query.or(`business_name.ilike.%${search}%,industry.ilike.%${search}%,location.ilike.%${search}%`)
+      // Strip PostgREST filter-syntax delimiters so user input can't inject
+      // additional clauses into the .or() filter string
+      const safe = search.replace(/[,()]/g, ' ').trim()
+      if (safe) {
+        query = query.or(`business_name.ilike.%${safe}%,industry.ilike.%${safe}%,location.ilike.%${safe}%`)
+      }
     }
 
     const { data: leads, error: leadsError } = await query

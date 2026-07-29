@@ -293,6 +293,21 @@
   window.AvatarImage = function(p) { return React.createElement('img', { src: p.src, alt: p.alt || '', className: 'aspect-square h-full w-full object-cover ' + (p.className||'') }); };
   window.AvatarFallback = function(p) { return React.createElement('span', { className: 'flex h-full w-full items-center justify-center rounded-full bg-zinc-100 text-zinc-600 text-sm font-medium ' + (p.className||'') }, p.children); };
 
+  // ImageWithFallback: a resilient <img> the generator commonly emits. Without this
+  // shim the transpiled code throws "ImageWithFallback is not defined" and the whole
+  // preview iframe renders blank. Renders the image and swaps to a placeholder on error.
+  window.ImageWithFallback = function(p) {
+    var fallback = p.fallbackSrc || p.fallback || 'https://placehold.co/800x600/e4e4e7/71717a?text=Image';
+    return React.createElement('img', {
+      src: p.src || fallback,
+      alt: p.alt || '',
+      className: p.className || '',
+      style: p.style,
+      loading: p.loading || 'lazy',
+      onError: function(e) { if (e && e.target && e.target.src !== fallback) { e.target.src = fallback; } }
+    });
+  };
+
   window.Label = function(p) {
     var newProps = {};
     for (var k in p) { if (k !== 'className') newProps[k] = p[k]; }
@@ -435,8 +450,12 @@
         var codeDataEl = document.getElementById('user-code-data');
         var userCode = JSON.parse(codeDataEl.textContent);
 
-        // Scan for uppercase identifiers → populate window globals
-        var identPattern = /[<{\\s,(]([A-Z][a-zA-Z0-9]*)/g;
+        // Scan for uppercase identifiers → populate window globals.
+        // Word-boundary match catches component/icon references ANYWHERE
+        // (JSX <Gauge/>, arrays [Gauge], object values { icon: Gauge }, etc.).
+        // The old char-class regex missed whitespace-preceded names, so a single
+        // uncommon lucide icon (e.g. Gauge) would be undefined and blank the page.
+        var identPattern = /\b([A-Z][a-zA-Z0-9]*)/g;
         var match; var seen = {};
         while ((match = identPattern.exec(userCode)) !== null) {
           var name = match[1];
@@ -466,10 +485,12 @@
 
         var result = Babel.transform(fullCode, {
           presets: [
-            ['env', { targets: { esmodules: true }, modules: false, bugfixes: true }],
             ['react', { runtime: 'classic' }],
-            ['typescript', { isTSX: true, allExtensions: true }]
+            'typescript'
           ],
+          // TSX/JSX is detected from the .tsx filename (preset-typescript default),
+          // so no removed isTSX/allExtensions options are needed. Dropped preset-env:
+          // the iframe targets a modern browser, so JSX + TS stripping is all we need.
           filename: 'generated.tsx',
           configFile: false,
           babelrc: false
